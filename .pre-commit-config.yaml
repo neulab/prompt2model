@@ -1,0 +1,56 @@
+repos:
+  - repo: https://github.com/python/black.git
+    rev: 22.3.0
+    hooks:
+      - id: black
+        files: '\.py$'
+  - repo: https://github.com/PyCQA/flake8
+    rev: 5.0.4
+    hooks:
+      - id: flake8
+        name: flake8
+        additional_dependencies:
+          - flake8-absolute-import
+          - flake8-black>=0.1.1
+          - flake8-pep585>=0.1.6
+        entry: flake8
+        files: '\.py$'
+      - id: flake8
+        name: docstring
+        additional_dependencies:
+          - flake8-docstrings>=1.6
+        args:
+          - --docstring-convention=google
+          - --select=D
+        entry: flake8
+        files: '\.py$'
+      - id: flake8
+        name: future-import
+        additional_dependencies:
+          - flake8-future-import
+        args:
+          - --select=FI
+        entry: flake8
+        files: '\.py$'
+  - repo: https://github.com/pycqa/isort.git
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        files: '\.py$'
+  - repo: https://github.com/sondrelg/pep585-upgrade
+    rev: v1.0.1
+    hooks:
+      - id: upgrade-type-hints
+        files: '\.py$'
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v0.981'
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-requests
+        files: '\.py$'
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.5.1
+    hooks:
+    - id: markdownlint-cli2
+    - id: markdownlint-cli2-fix
