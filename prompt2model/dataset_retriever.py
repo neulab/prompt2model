@@ -1,2 +1,5 @@
-# Input: A system description (ideally with few shot-examples removed)
-# Output: A list of HuggingFace dataset links
+"""An interface for dataset retrievers.
+
+Input: A system description (ideally with few shot-examples removed)
+Output: A list of HuggingFace dataset links
+"""
