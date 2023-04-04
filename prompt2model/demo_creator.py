@@ -1,5 +1,9 @@
-# Input: A system description (optionally with few-shot examples)
-# Output:
-#    1) Path to local Jsonl file with training examples
-#    2) Path to local Jsonl file with validation examples
-#    3) Path to local Jsonl file with testing examples
+import transformers
+import gradio as gr
+
+# Input: A huggingface models
+# Output: A Gradio object
+
+
+def create_demo(model: transformers.PreTrainedModel) -> gr.Interface:
+    return gr.Interface()
