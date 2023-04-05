@@ -9,6 +9,13 @@ import datasets
 from prompt_parser import PromptSpec
 
 
-def retrieve_datasets(prompt_spec: PromptSpec) -> list[datasets.Dataset]:
-    # raise NotImplementedError
-    return []
+class DatasetRetriever:
+    """A class for retrieving datasets."""
+
+    def __init__(self):
+        """Construct a search index from HuggingFace Datasets."""
+        pass
+
+    def retrieve_datasets(self, prompt_spec: PromptSpec) -> list[datasets.Dataset]:
+        """Retrieve datasets from a prompt specification."""
+        return []

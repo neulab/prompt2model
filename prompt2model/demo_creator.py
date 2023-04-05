@@ -11,5 +11,8 @@ from prompt_parser import PromptSpec
 def create_demo(
     model: transformers.PreTrainedModel, prompt_spec: PromptSpec
 ) -> gr.Interface:
+    '''
+    Create a Gradio interface from a trained model and a prompt specification.
+    '''
     dummy_interface = gr.Interface(lambda input: None, "textbox", "label")
     return dummy_interface
