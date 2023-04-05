@@ -1,8 +1,9 @@
 """An interface for dataset retrieval.
 """
 
-import datasets
 from typing import Iterable
+
+import datasets
 
 from prompt_parser import PromptSpec
 

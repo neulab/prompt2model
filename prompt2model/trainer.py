@@ -1,9 +1,10 @@
 """An interface for trainers.
 """
 
+from typing import Any, Dict
+
 import datasets
 import transformers
-from typing import Dict, Any
 import wandb
 
 from prompt_parser import PromptSpec

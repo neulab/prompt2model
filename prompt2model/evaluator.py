@@ -1,8 +1,9 @@
 """An interface for automatic model evaluation.
 """
 
-import datasets
 from typing import Any, Dict, List
+
+import datasets
 
 from prompt_parser import PromptSpec
 

@@ -1,9 +1,10 @@
 """An interface for model selection.
 """
 
+from typing import Any, Dict, List
+
 import datasets
 import transformers
-from typing import Any, Dict, List
 
 from prompt_parser import PromptSpec
 from trainer import Trainer

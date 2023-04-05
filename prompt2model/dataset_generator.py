@@ -1,9 +1,10 @@
 """An interface for dataset generation.
 """
 
+from typing import Tuple
+
 import datasets
 import pandas as pd
-from typing import Tuple
 
 from prompt_parser import PromptSpec
 

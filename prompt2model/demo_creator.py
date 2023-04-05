@@ -1,8 +1,8 @@
 """An interface for creating Gradio demos automatically.
 """
 
-import transformers
 import gradio as gr
+import transformers
 
 from prompt_parser import PromptSpec
 
