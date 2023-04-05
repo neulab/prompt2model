@@ -1,3 +1,3 @@
 [flake8]
 max-line-length = 88
-extend-ignore = E203
+extend-ignore = E203,FI10,FI11,FI12,FI13,FI14,FI15,FI16,FI17,FI18

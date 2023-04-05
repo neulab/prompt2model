@@ -1,3 +1,6 @@
+"""An interface for trainers.
+"""
+
 import datasets
 import transformers
 from typing import Dict, Any

@@ -1,3 +1,6 @@
+"""An interface for dataset retrieval.
+"""
+
 import datasets
 from typing import Iterable
 

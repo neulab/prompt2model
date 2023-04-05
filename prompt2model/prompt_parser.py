@@ -1,3 +1,6 @@
+"""An interface for prompt parsing.
+"""
+
 from enum import Enum
 from typing import Dict, List
 

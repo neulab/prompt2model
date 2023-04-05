@@ -1,3 +1,6 @@
+"""An interface for model selection.
+"""
+
 import datasets
 import transformers
 from typing import Any, Dict, List

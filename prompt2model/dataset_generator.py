@@ -1,3 +1,6 @@
+"""An interface for dataset generation.
+"""
+
 import datasets
 import pandas as pd
 from typing import Tuple
