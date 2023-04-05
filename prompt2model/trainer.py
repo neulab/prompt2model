@@ -1,11 +1,10 @@
 """An interface for trainers.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 import datasets
 import transformers
-import wandb
 
 from prompt_parser import PromptSpec
 
@@ -22,7 +21,7 @@ class Trainer:
     def __init__(
         self,
         training: datasets.Dataset,
-        hyperparameter_choices: Dict[str, Any],
+        hyperparameter_choices: dict[str, Any],
         prompt_spec: PromptSpec,
     ):
         self.training = training

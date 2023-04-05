@@ -1,7 +1,7 @@
 """An interface for model selection.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 import datasets
 import transformers
@@ -32,7 +32,7 @@ class ModelSelector:
         self.prompt_spec = prompt_spec
         self.hyperparameter_choices = self._extract_hyperparameter_choices()
 
-    def _extract_hyperparameter_choices(self) -> Dict[str, List[Any]]:
+    def _extract_hyperparameter_choices(self) -> dict[str, list[Any]]:
         # TODO: Extract or infer from self.prompt_spec.
         # raise NotImplementedError
         return {

@@ -1,4 +1,5 @@
-"""An interface for creating Gradio demos automatically.
+"""An interface for creating Gradio demos automatically from a trained model
+and a prompt specification.
 """
 
 import gradio as gr
