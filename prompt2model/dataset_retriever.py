@@ -1,6 +1,8 @@
 import datasets
 from typing import Iterable
 
+from prompt_parser import PromptSpec
+
 # Input: A system description (ideally with few shot-examples removed)
 # Output: A list of datasets.Dataset objects
 

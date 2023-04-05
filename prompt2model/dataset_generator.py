@@ -2,6 +2,8 @@ import datasets
 import pandas as pd
 from typing import Tuple
 
+from prompt_parser import PromptSpec
+
 # Input: A system description (optionally with few-shot examples)
 # Output:
 #    1) training dataset (datasets.Dataset)

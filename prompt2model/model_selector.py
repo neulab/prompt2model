@@ -1,7 +1,8 @@
 import datasets
 import transformers
-from typing import Dict, List
+from typing import Any, Dict, List
 
+from prompt_parser import PromptSpec
 from trainer import Trainer
 
 # Input:
@@ -15,12 +16,31 @@ from trainer import Trainer
 #    transformers.PreTrainedModel
 
 
-def select_model(
-    training: datasets.Dataset,
-    validation: datasets.Dataset,
-    hyperparameter_choices=Dict[str, List],
-) -> transformers.PreTrainedModel:
-    # raise NotImplementedError
-    t = Trainer(training, hyperparameter_choices)
-    single_model = t.train_model()
-    return single_model
+class ModelSelector:
+    def __init__(
+        self,
+        training: datasets.Dataset,
+        validation: datasets.Dataset,
+        prompt_spec: PromptSpec,
+    ):
+        self.training = training
+        self.validation = validation
+        self.prompt_spec = prompt_spec
+        self.hyperparameter_choices = self._extract_hyperparameter_choices()
+
+    def _extract_hyperparameter_choices(self) -> Dict[str, List[Any]]:
+        # TODO: Extract or infer from self.prompt_spec.
+        # raise NotImplementedError
+        return {
+            "model": ["bert-base-uncased", "t5-base"],
+            "optimizer": ["adam", "sgd+m"],
+            "learning_rate": [0.0001, 0.001, 0.01],
+        }
+
+    def select_model(
+        self,
+    ) -> transformers.PreTrainedModel:
+        # raise NotImplementedError
+        t = Trainer(self.training, self.hyperparameter_choices, self.prompt_spec)
+        single_model = t.train_model()
+        return single_model
