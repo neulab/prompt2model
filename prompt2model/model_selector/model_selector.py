@@ -25,6 +25,7 @@ class ModelSelector:
     Select a good model based on validation metrics from among a set of
     hyperparameter choices.
     """
+
     def __init__(
         self,
         training_sets: list[datasets.Dataset],

@@ -6,6 +6,7 @@ from enum import Enum
 
 class TaskType(Enum):
     """High-level taxonomy of possible NLP model outputs"""
+
     TEXT_GENERATION = 1
     CLASSIFICATION = 2
     SEQUENCE_TAGGING = 3
@@ -14,6 +15,7 @@ class TaskType(Enum):
 
 class PromptSpec:
     """Parse and store structured information about the prompt."""
+
     def __init__(self):
         """
         Initialize with default prompt values. For example, we assume by

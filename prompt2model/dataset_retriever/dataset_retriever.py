@@ -14,7 +14,6 @@ class DatasetRetriever:
 
     def __init__(self):
         """Construct a search index from HuggingFace Datasets."""
-        pass
 
     def retrieve_datasets(self, prompt_spec: PromptSpec) -> list[datasets.Dataset]:
         """Retrieve datasets from a prompt specification."""

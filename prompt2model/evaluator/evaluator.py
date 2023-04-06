@@ -27,7 +27,7 @@ def evaluate_model(
     # raise NotImplementedError
     return {"accuracy": -1.0}
 
+
 def write_metrics(metrics_dict: dict[str, Any], metrics_path: str) -> None:
     """Write metrics to a file"""
     # raise NotImplementedError
-    pass

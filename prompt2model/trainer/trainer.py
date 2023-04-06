@@ -19,6 +19,7 @@ from prompt_parser import PromptSpec
 
 class Trainer:
     """Train a model with a fixed set of hyperparameters."""
+
     def __init__(
         self,
         training_datasets: list[datasets.Dataset],
@@ -39,6 +40,6 @@ class Trainer:
         raise NotImplementedError
 
     def train_model(self) -> transformers.PreTrainedModel:
-        """Train a model with the given hyperparameters and return it."""''
+        """Train a model with the given hyperparameters and return it.""" ""
         model = transformers.BertModel.from_pretrained("bert-base-uncased")
         return model
