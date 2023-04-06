@@ -20,8 +20,11 @@ import datasets
 from typing import Optional, List
 import openai
 
+
 class DatasetGenerator:
-    """A class for generating datasets from a prompt specification."""
+    """
+    A class for generating datasets from a prompt specification.
+    """
 
     def __init__(
         self,
@@ -46,14 +49,17 @@ class DatasetGenerator:
 
     @staticmethod
     def post_process(response: str):
-        """Post-process the response from the API"""
+        """
+        Post-process the response from the API
+        """
         start_quote = response.find('"')
         end_quote = response.find('"', start_quote + 1)
         content = response[start_quote + 1 : end_quote]
         return content
 
     def generate_examples(self, split: str = "train") -> datasets.Dataset:
-        """Generate examples for a given dataset split (train, validation, or test).
+        """
+        Generate examples for a given dataset split (train, validation, or test).
 
         Args:
             split (str): The dataset split to generate examples for. Must be one of "train", "val", or "test". Default is "train".
@@ -73,7 +79,7 @@ class DatasetGenerator:
 
         prompt = self.system_description
         if self.few_shot_examples:
-            prompt += "\n\nFew-Shot Examples:\n" + "\n".join(self.few_shot_examples)
+            prompt += "\nFew-Shot Examples:" + "\n".join(self.few_shot_examples)
 
         examples = []
         for _ in range(num_examples):
@@ -83,13 +89,14 @@ class DatasetGenerator:
                     prompt=prompt,
                     max_tokens=self.model_config["max_tokens"],
                     n=self.model_config["n"],
-                stop=self.model_config["stop"],
-                temperature=0.5,
-                random_seed=self.random_seed + {"train": 0, "val": 1, "test": 2}[split],
+                    stop=self.model_config["stop"],
+                    temperature=0.5,
+                    random_seed=self.random_seed
+                    + {"train": 0, "val": 1, "test": 2}[split],
+                )
+                .choices[0]
+                .text.strip()
             )
-            .choices[0]
-            .text.strip()
-        )
         examples.append(response)
 
         examples = [self.post_process(ex) for ex in examples]
@@ -98,26 +105,27 @@ class DatasetGenerator:
         return dataset
 
     def generate_datasets(self) -> datasets.DatasetDict:
-    """Generate training/validation/testing datasets from a prompt (which may
-    include a few demonstration examples). Use a Large Language Model to generate
-    a large number of examples.
+        """
+        Generate training/validation/testing datasets from a prompt (which may
+        include a few demonstration examples). Use a Large Language Model to generate
+        a large number of examples.
 
-    Returns:
-        datasets.DatasetDict: A DatasetDict including training, validation, and testing datasets.
-    """
-    train_examples = self.generate_examples(split="train")
-    val_examples = self.generate_examples(split="val")
-    test_examples = self.generate_examples(split="test")
+        Returns:
+            datasets.DatasetDict: A DatasetDict including training, validation, and testing datasets.
+        """
+        train_examples = self.generate_examples(split="train")
+        val_examples = self.generate_examples(split="val")
+        test_examples = self.generate_examples(split="test")
 
-    dataset_dict = datasets.DatasetDict(
-        {
-            "train": train_examples,
-            "validation": val_examples,
-            "test": test_examples,
-        }
-    )
+        dataset_dict = datasets.DatasetDict(
+            {
+                "train": train_examples,
+                "validation": val_examples,
+                "test": test_examples,
+            }
+        )
 
-    if self.output_dir:
-        dataset_dict.save_to_disk(self.output_dir)
+        if self.output_dir:
+            dataset_dict.save_to_disk(self.output_dir)
 
-    return dataset_dict
+        return dataset_dict
