@@ -9,7 +9,7 @@ Output:
 
 import datasets
 import pandas as pd
-from typing import Tuple
+
 from prompt_parser import PromptSpec
 
 
@@ -22,7 +22,7 @@ class DatasetGenerator:
 
     def generate_datasets(
         prompt_spec: PromptSpec,
-    ) -> Tuple[datasets.Dataset, datasets.Dataset, datasets.Dataset]:
+    ) -> datasets.DatasetDict:
         """Generate training/validation/testing datasets from a prompt (which may
         include a few demonstration examples). The typical implementation of this
         will use a Large Language Model to generate a large number of examples."""
