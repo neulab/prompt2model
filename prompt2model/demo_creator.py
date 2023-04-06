@@ -1,8 +1,18 @@
-"""An interface for demonstration creators.
-
-Input: A system description (optionally with few-shot examples)
-Output:
-   1) Path to local Jsonl file with training examples
-   2) Path to local Jsonl file with validation examples
-   3) Path to local Jsonl file with testing examples
+"""An interface for creating Gradio demos automatically from a trained model
+and a prompt specification.
 """
+
+import gradio as gr
+import transformers
+
+from prompt_parser import PromptSpec
+
+
+def create_demo(
+    model: transformers.PreTrainedModel, prompt_spec: PromptSpec
+) -> gr.Interface:
+    """
+    Create a Gradio interface from a trained model and a prompt specification.
+    """
+    dummy_interface = gr.Interface(lambda input: None, "textbox", "label")
+    return dummy_interface
