@@ -16,15 +16,12 @@ from typing import Any, Optional
 
 import datasets
 import transformers
-
 from prompt_parser.base import PromptSpec
 
 
 # pylint: disable=too-few-public-methods
 class ModelSelector(ABC):
-    """
-    Select a good model from among a set of hyperparameter choices.
-    """
+    """Select a good model from among a set of hyperparameter choices."""
 
     @abstractmethod
     def select_model(
@@ -32,18 +29,20 @@ class ModelSelector(ABC):
         hyperparameters: Optional[dict[str, list[Any]]],
         prompt_spec: Optional[PromptSpec],
     ) -> transformers.PreTrainedModel:
-        """
-        Select a model from among the hyperparameter choices, potentially
-        by calling a third-party library or API.
-        Hyperparameter choices may be set to a default value or inferred
-        from the prompt specification.
+        """Select a model among a set of hyperparameters (given or inferred).
+
+        Args:
+            hyperparameters: (Optional) A dictionary of hyperparameter choices.
+            prompt_spec: (Optional) A prompt to infer hyperparameters from.
+
+        Return:
+            transformers.PreTrainedModel: The selected model.
+
         """
 
 
 class DefaultParameterSelector(ModelSelector):
-    """
-    Uses a default set of parameters.
-    """
+    """Uses a default set of parameters."""
 
     def __init__(
         self,
@@ -70,9 +69,10 @@ class DefaultParameterSelector(ModelSelector):
         hyperparameters: Optional[dict[str, list[Any]]] = None,
         prompt_spec: Optional[PromptSpec] = None,
     ) -> transformers.PreTrainedModel:
-        """
-        Select a model from among the hyperparameter choices, potentially
-        by calling a third-party library or API.
+        """Use a pre-defined default set of hyperparameters.
+
+        Return:
+            transformers.PreTrainedModel: A model using fixed hyperparameters.
         """
         trainer = self.trainer_type(
             self.training_sets, self._default_hyperparameter_choices(), prompt_spec

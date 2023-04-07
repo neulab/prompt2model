@@ -6,8 +6,10 @@ import sys
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../prompt2model"))
 )
+
 # pylint: disable=wrong-import-position
 from run_locally import main  # noqa E402
+
 # pylint: enable=wrong-import-position
 
 

@@ -13,15 +13,12 @@ from typing import Optional
 
 import datasets
 import pandas as pd
-
 from prompt_parser import PromptSpec
 
 
 # pylint: disable=too-few-public-methods
 class DatasetGenerator(ABC):
-    """
-    A class for generating datasets from a prompt specification.
-    """
+    """A class for generating datasets from a prompt specification."""
 
     @abstractmethod
     def generate_datasets(
@@ -31,11 +28,17 @@ class DatasetGenerator(ABC):
         num_val_examples: Optional[int],
         num_test_examples: Optional[int],
     ) -> datasets.DatasetDict:
-        """Generate training/validation/testing datasets from a prompt (which
-        may include a few demonstration examples). Use a Large Language Model
-        to generate a large number of examples.
+        """Generate training/validation/testing datasets from a prompt.
+
+        Args:
+            prompt_spec (PromptSpec): A prompt specification.
+            num_train_examples (Optional[int]): Number of training examples.
+            num_val_examples (Optional[int]): Number of validation examples.
+            num_test_examples (Optional[int]): Number of test examples.
+
         Returns:
             datasets.DatasetDict: Includes train, validation, and test splits.
+
         """
 
 
@@ -48,9 +51,7 @@ class DatasetSplit(Enum):
 
 
 class BaseGenerator(DatasetGenerator):
-    """
-    A class for generating datasets from a prompt specification.
-    """
+    """A class for generating datasets from a prompt specification."""
 
     def __init__(
         self,
@@ -73,8 +74,16 @@ class BaseGenerator(DatasetGenerator):
         split: DatasetSplit,
     ) -> tuple[datasets.Dataset, datasets.Dataset, datasets.Dataset]:
         """Create empty versions of the datasets, for testing.
+
+        Args:
+            prompt_spec (PromptSpec): A prompt specification.
+            num_examples (Optional[int]): Number of examples in split.
+            split (DatasetSplit): Name of dataset split to generate.)
+
         Returns:
-            datasets.Dataset: A single dataset split."""
+            datasets.Dataset: A single dataset split.
+
+        """
         _ = prompt_spec, num_examples, split  # suppress unused variable warnings
         return datasets.Dataset.from_pandas(pd.DataFrame({}))
 
@@ -85,8 +94,14 @@ class BaseGenerator(DatasetGenerator):
         num_val_examples: Optional[int] = 1500,
         num_test_examples: Optional[int] = 500,
     ) -> datasets.DatasetDict:
-        """
-        Generate training/validation/testing datasets from a prompt.
+        """Generate training/validation/testing datasets from a prompt.
+
+        Args:
+            prompt_spec (PromptSpec): A prompt specification.
+            num_train_examples (Optional[int]): Number of training examples.
+            num_val_examples (Optional[int]): Number of validation examples.
+            num_test_examples (Optional[int]): Number of test examples.
+
         Returns:
             datasets.DatasetDict: Includes train, validation, and test splits.
         """

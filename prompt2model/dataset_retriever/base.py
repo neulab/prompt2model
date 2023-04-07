@@ -8,7 +8,6 @@ from abc import ABC, abstractmethod
 
 import datasets
 import pandas as pd
-
 from prompt_parser import PromptSpec
 
 
@@ -24,8 +23,14 @@ class DatasetRetriever(ABC):
     @abstractmethod
     def retrieve_datasets(self, prompt_spec: PromptSpec) -> list[datasets.Dataset]:
         """Retrieve datasets from a prompt specification.
+
+        Args:
+            prompt_spec (PromptSpec): A prompt specification.
+
         Returns:
-            list[datasets.DatasetDict]: A list of retrieved datasets."""
+            list[datasets.DatasetDict]: A list of retrieved datasets.
+
+        """
 
 
 class BaseRetriever(DatasetRetriever):
