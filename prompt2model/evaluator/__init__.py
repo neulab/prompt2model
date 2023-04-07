@@ -1,2 +1,2 @@
 """Import evaluator classes"""
-from .base import BaseEvaluator, Evaluator # noqa: F401
+from evaluator.base import BaseEvaluator, Evaluator # noqa: F401

@@ -1,2 +1,2 @@
 """Import model selector classes"""
-from .base import DefaultParameterSelector, ModelSelector # noqa: F401
+from model_selector.base import DefaultParameterSelector, ModelSelector # noqa: F401
