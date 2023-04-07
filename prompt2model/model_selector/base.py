@@ -12,7 +12,7 @@ Output:
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Type
+from typing import Any, Optional
 
 import datasets
 import transformers
@@ -47,7 +47,7 @@ class DefaultParameterSelector(ModelSelector):
 
     def __init__(
         self,
-        trainer_type: Type,
+        trainer_type: type,
         training_sets: list[datasets.Dataset],
         validation: datasets.Dataset,
     ):
