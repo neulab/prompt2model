@@ -68,7 +68,7 @@ class BaseGenerator(DatasetGenerator):
     def generate_examples(
         self,
         prompt_spec: PromptSpec,
-        num_examples: int,
+        num_examples: Optional[int],
         split: DatasetSplit,
     ) -> tuple[datasets.Dataset, datasets.Dataset, datasets.Dataset]:
         """Create empty versions of the datasets, for testing.
