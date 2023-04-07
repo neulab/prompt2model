@@ -1,7 +1,9 @@
 """An interface for prompt parsing.
 """
 
+from abc import abstractmethod
 from enum import Enum
+from typing import Protocol
 
 
 class TaskType(Enum):
@@ -13,9 +15,20 @@ class TaskType(Enum):
     SPAN_EXTRACTION = 4
 
 
-class PromptSpec:
+class PromptSpec(Protocol):
     """Parse and store structured information about the prompt."""
 
+<<<<<<< HEAD:prompt2model/prompt_parser.py
+=======
+    @abstractmethod
+    def parse_prompt(self, prompt: str) -> None:
+        """Parse the prompt and store the structured information."""
+
+
+class AllGenerationSpec:
+    """Parse and store structured information about the prompt."""
+
+>>>>>>> 57fdb40f84636aea3428db9df6b2fa2cebd57dcc:prompt2model/prompt_parser/base.py
     def __init__(self):
         """
         Initialize with default prompt values. For example, we assume by
@@ -24,5 +37,6 @@ class PromptSpec:
         self.task_type: TaskType = TaskType.TEXT_GENERATION
 
     def parse_prompt(self, prompt: str) -> None:
-        """Parse the prompt and store the structured information."""
+        """Assume that every task is text generation."""
+        _ = prompt
         self.task_type = TaskType.TEXT_GENERATION
