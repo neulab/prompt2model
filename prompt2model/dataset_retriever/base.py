@@ -11,6 +11,7 @@ import pandas as pd
 from prompt_parser import PromptSpec
 
 
+# pylint: disable=too-few-public-methods
 class DatasetRetriever(ABC):
     """A class for retrieving datasets.
 

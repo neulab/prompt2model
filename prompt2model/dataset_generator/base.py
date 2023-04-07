@@ -16,6 +16,7 @@ import pandas as pd
 from prompt_parser import PromptSpec
 
 
+# pylint: disable=too-few-public-methods
 class DatasetGenerator(ABC):
     """
     A class for generating datasets from a prompt specification.

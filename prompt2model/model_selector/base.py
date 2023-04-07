@@ -19,6 +19,7 @@ import transformers
 from prompt_parser.base import PromptSpec
 
 
+# pylint: disable=too-few-public-methods
 class ModelSelector(ABC):
     """
     Select a good model from among a set of hyperparameter choices.

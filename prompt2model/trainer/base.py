@@ -17,6 +17,7 @@ from prompt_parser import PromptSpec
 #    transformers.PreTrainedModel
 
 
+# pylint: disable=too-few-public-methods
 class Trainer(ABC):
     """Train a model with a fixed set of hyperparameters.
 

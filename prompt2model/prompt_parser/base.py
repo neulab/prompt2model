@@ -14,6 +14,7 @@ class TaskType(Enum):
     SPAN_EXTRACTION = 4
 
 
+# pylint: disable=too-few-public-methods
 class PromptSpec(ABC):
     """Parse and store structured information about the prompt."""
 
