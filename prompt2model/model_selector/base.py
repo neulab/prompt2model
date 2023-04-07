@@ -11,15 +11,15 @@ Output:
    A single model (transformers.PreTrainedModel)
 """
 
-from abc import abstractmethod
-from typing import Any, Optional, Protocol, Type
+from abc import ABC, abstractmethod
+from typing import Any, Optional, Type
 
 import datasets
 import transformers
 from prompt_parser.base import PromptSpec
 
 
-class ModelSelector(Protocol):
+class ModelSelector(ABC):
     """
     Select a good model from among a set of hyperparameter choices.
     """

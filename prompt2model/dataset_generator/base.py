@@ -7,16 +7,16 @@ Output:
    3) testing dataset
 """
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional, Protocol
+from typing import Optional
 
 import datasets
 import pandas as pd
 from prompt_parser import PromptSpec
 
 
-class DatasetGenerator(Protocol):
+class DatasetGenerator(ABC):
     """
     A class for generating datasets from a prompt specification.
     """

@@ -9,15 +9,15 @@ Output:
    Dictionary of metric values
 """
 
-from abc import abstractmethod
-from typing import Any, Optional, Protocol
+from abc import ABC, abstractmethod
+from typing import Any, Optional
 
 import datasets
 import transformers
 from prompt_parser.base import PromptSpec
 
 
-class Evaluator(Protocol):
+class Evaluator(ABC):
     """An interface for automatic model evaluation."""
 
     @abstractmethod

@@ -1,9 +1,8 @@
 """An interface for prompt parsing.
 """
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Protocol
 
 
 class TaskType(Enum):
@@ -15,7 +14,7 @@ class TaskType(Enum):
     SPAN_EXTRACTION = 4
 
 
-class PromptSpec(Protocol):
+class PromptSpec(ABC):
     """Parse and store structured information about the prompt."""
 
     @abstractmethod

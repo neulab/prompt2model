@@ -5,9 +5,8 @@ import sys
 
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../prompt2model"))
-) # noqa E128, E124, E402
-
-from run_locally import main
+)
+from run_locally import main  # noqa E402
 
 
 def test_integration():

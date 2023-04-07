@@ -1,8 +1,8 @@
 """An interface for trainers.
 """
 
-from abc import abstractmethod
-from typing import Any, Protocol
+from abc import ABC, abstractmethod
+from typing import Any
 
 import datasets
 import transformers
@@ -17,7 +17,7 @@ from prompt_parser import PromptSpec
 #    transformers.PreTrainedModel
 
 
-class Trainer(Protocol):
+class Trainer(ABC):
     """Train a model with a fixed set of hyperparameters.
 
     TO IMPLEMENT IN SUBCLASSES:

@@ -4,15 +4,14 @@ Input: A system description (ideally with few shot-examples removed)
 Output: A list of datasets.Dataset objects
 """
 
-from abc import abstractmethod
-from typing import Protocol
+from abc import ABC, abstractmethod
 
 import datasets
 import pandas as pd
 from prompt_parser import PromptSpec
 
 
-class DatasetRetriever(Protocol):
+class DatasetRetriever(ABC):
     """A class for retrieving datasets.
 
     TO IMPLEMENT IN SUBCLASSES:
