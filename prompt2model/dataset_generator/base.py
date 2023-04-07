@@ -9,7 +9,7 @@ Output:
 
 from abc import abstractmethod
 from enum import Enum
-from typing import Optional, Protocol
+from typing import Optional, Protocol, Tuple
 
 import datasets
 import pandas as pd
@@ -70,7 +70,7 @@ class BaseGenerator(DatasetGenerator):
         prompt_spec: PromptSpec,
         num_examples: int,
         split: DatasetSplit,
-    ) -> tuple[datasets.Dataset, datasets.Dataset, datasets.Dataset]:
+    ) -> Tuple[datasets.Dataset, datasets.Dataset, datasets.Dataset]:
         """Create empty versions of the datasets, for testing.
         Returns:
             datasets.Dataset: A single dataset split."""
