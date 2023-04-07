@@ -14,4 +14,4 @@ def test_integration():
     """Check that a end-to-end run with a single prompt doesn't throw an error.
     """
     prompt = ["Test prompt"]
-    main(prompt)
+    main(prompt, "")
