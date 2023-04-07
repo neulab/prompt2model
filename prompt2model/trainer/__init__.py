@@ -1,2 +1,2 @@
 """Import Trainer classes"""
-from trainer.base import BaseTrainer, Trainer # noqa: F401
+from trainer.base import BaseTrainer, Trainer  # noqa: F401
