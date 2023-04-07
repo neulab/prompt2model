@@ -29,7 +29,7 @@ class ModelSelector(Protocol):
     def select_model(
         self,
         hyperparameters: Optional[dict[str, list[Any]]],
-        prompt_spec: Optional[PromptSpec]
+        prompt_spec: Optional[PromptSpec],
     ) -> transformers.PreTrainedModel:
         """
         Select a model from among the hyperparameter choices, potentially
@@ -37,7 +37,6 @@ class ModelSelector(Protocol):
         Hyperparameter choices may be set to a default value or inferred
         from the prompt specification.
         """
-
 
 
 class DefaultParameterSelector(ModelSelector):
@@ -74,8 +73,8 @@ class DefaultParameterSelector(ModelSelector):
         Select a model from among the hyperparameter choices, potentially
         by calling a third-party library or API.
         """
-        trainer = self.trainer_type(self.training_sets,
-                                    self._default_hyperparameter_choices(),
-                                    prompt_spec)
+        trainer = self.trainer_type(
+            self.training_sets, self._default_hyperparameter_choices(), prompt_spec
+        )
         single_model = trainer.train_model()
         return single_model

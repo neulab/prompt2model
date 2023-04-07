@@ -1,2 +1,2 @@
-'''Import evaluator classes'''
+"""Import evaluator classes"""
 from .base import BaseEvaluator, Evaluator

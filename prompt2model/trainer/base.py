@@ -35,7 +35,7 @@ class Trainer(Protocol):
         self.training_datasets = training_datasets
         self.hyperparameter_choices = hyperparameter_choices
         self.wandb = None
- 
+
     def set_up_weights_and_biases(self) -> None:
         '''Set up Weights & Biases logging.'''
         self.wandb = None

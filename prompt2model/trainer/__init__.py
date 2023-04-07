@@ -1,2 +1,2 @@
-'''Import Trainer classes'''
-from .base import Trainer, BaseTrainer
+"""Import Trainer classes"""
+from .base import BaseTrainer, Trainer

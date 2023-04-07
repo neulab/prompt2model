@@ -1,2 +1,2 @@
-'''Import model selector classes'''
+"""Import model selector classes"""
 from .base import DefaultParameterSelector, ModelSelector

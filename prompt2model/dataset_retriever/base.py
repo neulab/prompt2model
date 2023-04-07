@@ -15,7 +15,7 @@ from prompt_parser import PromptSpec
 
 class DatasetRetriever(Protocol):
     """A class for retrieving datasets.
-    
+
     TO IMPLEMENT IN SUBCLASSES:
     def __init__(self):
     '''Construct a search index from HuggingFace Datasets.'''
@@ -36,5 +36,5 @@ class BaseRetriever(DatasetRetriever):
 
     def retrieve_datasets(self, prompt_spec: PromptSpec) -> list[datasets.Dataset]:
         """Return a single empty dataset for testing purposes."""
-        _ = prompt_spec # suppress unused variable warning
+        _ = prompt_spec  # suppress unused variable warning
         return [datasets.Dataset.from_pandas(pd.DataFrame({}))]

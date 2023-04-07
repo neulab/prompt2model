@@ -1,2 +1,2 @@
-'''Import PromptSpec classes'''
-from .base import PromptSpec, AllGenerationSpec
+"""Import PromptSpec classes"""
+from .base import AllGenerationSpec, PromptSpec
