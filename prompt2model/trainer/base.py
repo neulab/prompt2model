@@ -6,7 +6,6 @@ from typing import Any, Protocol
 
 import datasets
 import transformers
-
 from prompt_parser import PromptSpec
 
 # Input:

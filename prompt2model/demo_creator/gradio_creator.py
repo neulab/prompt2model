@@ -4,7 +4,6 @@ and a prompt specification.
 
 import gradio as gr
 import transformers
-
 from prompt_parser.base import PromptSpec
 
 
