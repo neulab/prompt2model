@@ -30,7 +30,7 @@ class Evaluator(ABC):
             model: The model to evaluate.
 
         Returns:
-            dict[str, Any]: A dictionary of metric values to return.
+            A dictionary of metric values to return.
 
         """
 

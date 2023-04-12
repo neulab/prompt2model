@@ -25,10 +25,10 @@ class DatasetRetriever(ABC):
         """Retrieve datasets from a prompt specification.
 
         Args:
-            prompt_spec (PromptSpec): A prompt specification.
+            prompt_spec: A prompt specification.
 
         Returns:
-            list[datasets.DatasetDict]: A list of retrieved datasets.
+            A list of retrieved datasets.
 
         """
 

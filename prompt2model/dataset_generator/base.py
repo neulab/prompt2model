@@ -25,7 +25,6 @@ class DatasetSplit(Enum):
     TEST = "test"
 
 
-# pylint: disable=too-few-public-methods
 class DatasetGenerator(ABC):
     """A class for generating datasets from a prompt specification."""
 

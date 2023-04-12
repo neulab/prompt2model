@@ -38,7 +38,7 @@ class ModelSelector(ABC):
             prompt_spec: (Optional) A prompt to infer hyperparameters from.
 
         Return:
-            transformers.PreTrainedModel: The selected model.
+            A model (with hyperparameters selected from the specified range).
 
         """
 
@@ -74,7 +74,7 @@ class DefaultParameterSelector(ModelSelector):
         """Use a pre-defined default set of hyperparameters.
 
         Return:
-            transformers.PreTrainedModel: A model using fixed hyperparameters.
+            A model trained using default hyperparameters.
         """
         trainer = self.trainer_type(
             self.training_sets, self._default_hyperparameter_choices(), prompt_spec
