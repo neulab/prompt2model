@@ -1,15 +1,4 @@
-"""An interface for model selection.
-
-Input:
-   1) training dataset (datasets.Dataset)
-   2) validation dataset (datasets.Dataset)
-   3) Dictionary-of-lists consisting of hyperparameter
-      values to consider (e.g. different base models to
-      consider, different optimizers, different LRs, etc)
-
-Output:
-   A single model (transformers.PreTrainedModel)
-"""
+"""An interface for model selection."""
 
 from __future__ import annotations  # noqa FI58
 

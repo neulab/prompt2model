@@ -1,11 +1,4 @@
-"""An interface for dataset generation.
-
-Input: A system description (optionally with few-shot examples)
-Output:
-   1) training dataset
-   2) validation dataset
-   3) testing dataset
-"""
+"""An interface for dataset generation."""
 
 from __future__ import annotations  # noqa FI58
 
@@ -48,7 +41,7 @@ class DatasetGenerator(ABC):
         """Generate data for a single named split of data.
 
         Args:
-            prompt_spec: A prompt specification.
+            prompt_spec: A prompt spec (containing a system description).
             num_examples: Number of examples in split.
             split: Name of dataset split to generate.)
 
