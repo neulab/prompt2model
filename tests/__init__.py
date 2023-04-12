@@ -1,1 +1,1 @@
-'''Init file for test scripts.'''
+"""Init file for test scripts."""

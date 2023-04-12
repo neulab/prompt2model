@@ -11,8 +11,10 @@ Output:
    A single model (transformers.PreTrainedModel)
 """
 
+from __future__ import annotations  # noqa FI58
+
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 import datasets
 import transformers
@@ -26,8 +28,8 @@ class ModelSelector(ABC):
     @abstractmethod
     def select_model(
         self,
-        hyperparameters: Optional[dict[str, list[Any]]],
-        prompt_spec: Optional[PromptSpec],
+        hyperparameters: dict[str, list[Any]] | None = None,
+        prompt_spec: PromptSpec | None = None,
     ) -> transformers.PreTrainedModel:
         """Select a model among a set of hyperparameters (given or inferred).
 
@@ -66,8 +68,8 @@ class DefaultParameterSelector(ModelSelector):
 
     def select_model(
         self,
-        hyperparameters: Optional[dict[str, list[Any]]] = None,
-        prompt_spec: Optional[PromptSpec] = None,
+        hyperparameters: dict[str, list[Any]] | None = None,
+        prompt_spec: PromptSpec | None = None,
     ) -> transformers.PreTrainedModel:
         """Use a pre-defined default set of hyperparameters.
 

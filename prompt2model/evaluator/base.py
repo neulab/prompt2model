@@ -9,8 +9,10 @@ Output:
    Dictionary of metric values
 """
 
+from __future__ import annotations  # noqa FI58
+
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 import datasets
 import transformers
@@ -49,8 +51,8 @@ class BaseEvaluator(Evaluator):
     def __init__(
         self,
         dataset: datasets.Dataset,
-        metrics: Optional[list[datasets.Metric]],
-        prompt_spec: Optional[PromptSpec],
+        metrics: list[datasets.Metric] | None = None,
+        prompt_spec: PromptSpec | None = None,
     ) -> None:
         """Initialize the evaluation setting.
 
