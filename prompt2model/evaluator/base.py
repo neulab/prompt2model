@@ -1,13 +1,4 @@
-"""An interface for automatic model evaluation.
-
-Input:
-   1) Trained model
-   2) Test set
-   3) Metrics to use (currently, inferred from PromptSpec)
-
-Output:
-   Dictionary of metric values
-"""
+"""An interface for automatic model evaluation."""
 
 from __future__ import annotations  # noqa FI58
 
