@@ -8,7 +8,7 @@ sys.path.insert(
 )
 
 # pylint: disable=wrong-import-position
-from run_locally import main  # noqa E402
+from run_locally import run_skeleton  # noqa E402
 
 # pylint: enable=wrong-import-position
 
@@ -16,4 +16,4 @@ from run_locally import main  # noqa E402
 def test_integration():
     """Check that a end-to-end run with a single prompt doesn't throw an error."""
     prompt = ["Test prompt"]
-    main(prompt, "")
+    run_skeleton(prompt, "")
