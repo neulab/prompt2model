@@ -1,2 +1,2 @@
-"""Import PromptSpec classes"""
-from .base import AllGenerationSpec, PromptSpec
+"""Import PromptSpec classes."""
+from prompt_parser.base import AllGenerationSpec, PromptSpec  # noqa: F401

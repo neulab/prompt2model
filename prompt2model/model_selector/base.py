@@ -1,52 +1,43 @@
-"""An interface for model selection.
+"""An interface for model selection."""
 
-Input:
-   1) training dataset (datasets.Dataset)
-   2) validation dataset (datasets.Dataset)
-   3) Dictionary-of-lists consisting of hyperparameter
-      values to consider (e.g. different base models to
-      consider, different optimizers, different LRs, etc)
+from __future__ import annotations  # noqa FI58
 
-Output:
-   A single model (transformers.PreTrainedModel)
-"""
-
-from abc import abstractmethod
-from typing import Any, Optional, Protocol, Type
+from abc import ABC, abstractmethod
+from typing import Any
 
 import datasets
 import transformers
-
 from prompt_parser.base import PromptSpec
 
 
-class ModelSelector(Protocol):
-    """
-    Select a good model from among a set of hyperparameter choices.
-    """
+# pylint: disable=too-few-public-methods
+class ModelSelector(ABC):
+    """Select a good model from among a set of hyperparameter choices."""
 
     @abstractmethod
     def select_model(
         self,
-        hyperparameters: Optional[dict[str, list[Any]]],
-        prompt_spec: Optional[PromptSpec],
+        hyperparameters: dict[str, list[Any]] | None = None,
+        prompt_spec: PromptSpec | None = None,
     ) -> transformers.PreTrainedModel:
-        """
-        Select a model from among the hyperparameter choices, potentially
-        by calling a third-party library or API.
-        Hyperparameter choices may be set to a default value or inferred
-        from the prompt specification.
+        """Select a model among a set of hyperparameters (given or inferred).
+
+        Args:
+            hyperparameters: (Optional) A dictionary of hyperparameter choices.
+            prompt_spec: (Optional) A prompt to infer hyperparameters from.
+
+        Return:
+            A model (with hyperparameters selected from the specified range).
+
         """
 
 
 class DefaultParameterSelector(ModelSelector):
-    """
-    Uses a default set of parameters.
-    """
+    """Uses a default set of parameters."""
 
     def __init__(
         self,
-        trainer_type: Type,
+        trainer_type: type,
         training_sets: list[datasets.Dataset],
         validation: datasets.Dataset,
     ):
@@ -66,12 +57,13 @@ class DefaultParameterSelector(ModelSelector):
 
     def select_model(
         self,
-        hyperparameters: Optional[dict[str, list[Any]]] = None,
-        prompt_spec: Optional[PromptSpec] = None,
+        hyperparameters: dict[str, list[Any]] | None = None,
+        prompt_spec: PromptSpec | None = None,
     ) -> transformers.PreTrainedModel:
-        """
-        Select a model from among the hyperparameter choices, potentially
-        by calling a third-party library or API.
+        """Use a pre-defined default set of hyperparameters.
+
+        Return:
+            A model trained using default hyperparameters.
         """
         trainer = self.trainer_type(
             self.training_sets, self._default_hyperparameter_choices(), prompt_spec
