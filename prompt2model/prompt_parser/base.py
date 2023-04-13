@@ -17,8 +17,6 @@ class TaskType(Enum):
 class PromptSpec(ABC):
     """Parse and store structured information about the prompt."""
 
-<<<<<<< HEAD:prompt2model/prompt_parser.py
-=======
     @abstractmethod
     def parse_prompt(self, prompt: str) -> None:
         """Parse the prompt and store the structured information."""
@@ -27,7 +25,6 @@ class PromptSpec(ABC):
 class AllGenerationSpec:
     """Parse and store structured information about the prompt."""
 
->>>>>>> 57fdb40f84636aea3428db9df6b2fa2cebd57dcc:prompt2model/prompt_parser/base.py
     def __init__(self):
         """By default, assume that every task is a text generation task."""
         self.task_type: TaskType = TaskType.TEXT_GENERATION
