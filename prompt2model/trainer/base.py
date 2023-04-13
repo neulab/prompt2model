@@ -2,11 +2,11 @@
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, dict
 
-import datasets
 import transformers
 import wandb
+from datasets import DatasetDict
 from prompt_parser import PromptSpec
 from torch.utils.data import DataLoader
 from transformers import HfArgumentParser, TrainingArguments
@@ -28,13 +28,14 @@ class Trainer(ABC):
 
     def __init__(
         self,
-        training_datasets: List[datasets.Dataset],
-        hyperparameter_choices: Dict[str, Any],
+        training_datasets: DatasetDict,
+        hyperparameter_choices: dict[str, Any],
         prompt_spec: PromptSpec,
     ) -> None:
-        """
-        Initialize trainer with training dataset(s), hyperparameters,
-        and a prompt specification.
+        """This is the base Constructor.
+
+        Initialize trainer with training dataset(s),
+        hyperparameters, and a prompt specification.
         """
         self.training_datasets = training_datasets
         self.hyperparameter_choices = hyperparameter_choices
@@ -42,29 +43,21 @@ class Trainer(ABC):
         self.wandb = None
 
     def set_up_weights_and_biases(self) -> None:
-        """
-        Set up Weights & Biases logging.
-        """
+        """Set up Weights & Biases logging."""
         wandb.init(project="my-project", config=self.hyperparameter_choices)
         self.wandb = wandb
         raise NotImplementedError
 
     @abstractmethod
     def train_model(self) -> transformers.PreTrainedModel:
-        """
-        Train a model with the given hyperparameters and return it.
-        """
+        """Train a model with the given hyperparameters and return it."""
 
 
 class BaseTrainer(Trainer):
-    """
-    This dummy trainer does not actually train anything.
-    """
+    """This dummy trainer does not actually train anything."""
 
     def train_model(self) -> transformers.PreTrainedModel:
-        """
-        This dummy trainer returns an untrained BERT-base model.
-        """
+        """This dummy trainer returns an untrained BERT-base model."""
         # Set up checkpointing
         output_dir = Path(self.hyperparameter_choices.get("output_dir", "./output"))
         output_dir.mkdir(parents=True, exist_ok=True)
