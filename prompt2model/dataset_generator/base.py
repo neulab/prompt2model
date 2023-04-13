@@ -94,8 +94,8 @@ class DatasetGenerator(ABC):
         return dataset_dict
 
 
-class BaseGenerator(DatasetGenerator):
-    """A class for generating datasets from a prompt specification."""
+class EmptyDatasetGenerator(DatasetGenerator):
+    """A class for generating empty datasets (for testing purposes)."""
 
     def set_random_seed(self, seed: int):
         """Set the random seed for reproducibility."""
