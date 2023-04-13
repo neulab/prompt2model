@@ -1,13 +1,11 @@
-"""An interface for prompt parsing.
-"""
+"""An interface for prompt parsing."""
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Protocol
 
 
 class TaskType(Enum):
-    """High-level taxonomy of possible NLP model outputs"""
+    """High-level taxonomy of possible NLP model outputs."""
 
     TEXT_GENERATION = 1
     CLASSIFICATION = 2
@@ -15,7 +13,8 @@ class TaskType(Enum):
     SPAN_EXTRACTION = 4
 
 
-class PromptSpec(Protocol):
+# pylint: disable=too-few-public-methods
+class PromptSpec(ABC):
     """Parse and store structured information about the prompt."""
 
 <<<<<<< HEAD:prompt2model/prompt_parser.py
@@ -30,10 +29,7 @@ class AllGenerationSpec:
 
 >>>>>>> 57fdb40f84636aea3428db9df6b2fa2cebd57dcc:prompt2model/prompt_parser/base.py
     def __init__(self):
-        """
-        Initialize with default prompt values. For example, we assume by
-        default that every task is a text generation task.
-        """
+        """By default, assume that every task is a text generation task."""
         self.task_type: TaskType = TaskType.TEXT_GENERATION
 
     def parse_prompt(self, prompt: str) -> None:

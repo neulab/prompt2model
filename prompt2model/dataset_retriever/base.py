@@ -1,19 +1,14 @@
-"""An interface for dataset retrieval.
+"""An interface for dataset retrieval."""
 
-Input: A system description (ideally with few shot-examples removed)
-Output: A list of datasets.Dataset objects
-"""
-
-from abc import abstractmethod
-from typing import Protocol
+from abc import ABC, abstractmethod
 
 import datasets
 import pandas as pd
-
 from prompt_parser import PromptSpec
 
 
-class DatasetRetriever(Protocol):
+# pylint: disable=too-few-public-methods
+class DatasetRetriever(ABC):
     """A class for retrieving datasets.
 
     TO IMPLEMENT IN SUBCLASSES:
@@ -24,8 +19,14 @@ class DatasetRetriever(Protocol):
     @abstractmethod
     def retrieve_datasets(self, prompt_spec: PromptSpec) -> list[datasets.Dataset]:
         """Retrieve datasets from a prompt specification.
+
+        Args:
+            prompt_spec: A prompt spec (containing a system description).
+
         Returns:
-            list[datasets.DatasetDict]: A list of retrieved datasets."""
+            A list of retrieved datasets.
+
+        """
 
 
 class BaseRetriever(DatasetRetriever):

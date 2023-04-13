@@ -9,26 +9,40 @@ Output:
    Dictionary of metric values
 """
 
-from abc import abstractmethod
-from typing import Any, Optional, Protocol
+from __future__ import annotations  # noqa FI58
+
+from abc import ABC, abstractmethod
+from typing import Any
 
 import datasets
 import transformers
-
 from prompt_parser.base import PromptSpec
 
 
-class Evaluator(Protocol):
+class Evaluator(ABC):
     """An interface for automatic model evaluation."""
 
     @abstractmethod
     def evaluate_model(self, model: transformers.PreTrainedModel) -> dict[str, Any]:
-        """Evaluate a model on a test set. The specific metrics to use are
-        specified or inferred from the PromptSpec."""
+        """Evaluate a model on a test set.
+
+        Args:
+            model: The model to evaluate.
+
+        Returns:
+            A dictionary of metric values to return.
+
+        """
 
     @abstractmethod
     def write_metrics(self, metrics_dict: dict[str, Any], metrics_path: str) -> None:
-        """Write or display metrics to a file"""
+        """Write or display metrics to a file.
+
+        Args:
+            metrics_dict: A dictionary of metrics to write.
+            metrics_path: The file path to write metrics to.
+
+        """
 
 
 class BaseEvaluator(Evaluator):
@@ -37,11 +51,17 @@ class BaseEvaluator(Evaluator):
     def __init__(
         self,
         dataset: datasets.Dataset,
-        metrics: list[datasets.Metric],
-        prompt_spec: Optional[PromptSpec],
+        metrics: list[datasets.Metric] | None = None,
+        prompt_spec: PromptSpec | None = None,
     ) -> None:
-        """Initialize with dataset and either a list of metrics or a prompt
-        specification, from which the list of metrics is inferred."""
+        """Initialize the evaluation setting.
+
+        Args:
+            dataset: The dataset to evaluate metrics on.
+            metrics: (Optional) The metrics to use.
+            prompt_spec: (Optional) A PromptSpec to infer the metrics from.
+
+        """
         self.test_data = dataset
         self.metrics = metrics
         self.prompt_spec = prompt_spec

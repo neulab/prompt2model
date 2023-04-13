@@ -1,41 +1,13 @@
-"""An interface for dataset generation.
+"""An interface for dataset generation."""
 
-Input: A system description (optionally with few-shot examples)
-Output:
-   1) training dataset
-   2) validation dataset
-   3) testing dataset
-"""
+from __future__ import annotations  # noqa FI58
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional, Protocol, Tuple
 
 import datasets
 import pandas as pd
-
 from prompt_parser import PromptSpec
-
-
-class DatasetGenerator(Protocol):
-    """
-    A class for generating datasets from a prompt specification.
-    """
-
-    @abstractmethod
-    def generate_datasets(
-        self,
-        prompt_spec: PromptSpec,
-        num_train_examples: Optional[int],
-        num_val_examples: Optional[int],
-        num_test_examples: Optional[int],
-    ) -> datasets.DatasetDict:
-        """Generate training/validation/testing datasets from a prompt (which
-        may include a few demonstration examples). Use a Large Language Model
-        to generate a large number of examples.
-        Returns:
-            datasets.DatasetDict: Includes train, validation, and test splits.
-        """
 
 
 class DatasetSplit(Enum):
@@ -46,57 +18,66 @@ class DatasetSplit(Enum):
     TEST = "test"
 
 
-class BaseGenerator(DatasetGenerator):
-    """
-    A class for generating datasets from a prompt specification.
-    """
+class DatasetGenerator(ABC):
+    """A class for generating datasets from a prompt specification."""
 
     def __init__(
         self,
-        model_config: Optional[dict] = None,
-        output_dir: Optional[str] = None,
+        model_config: dict | None = None,
+        output_dir: str | None = None,
     ):
         """Construct a dataset generator."""
         self.model_config = model_config
         self.output_dir = output_dir
         self.random_seed = 2023
 
-    def set_random_seed(self, seed: int):
-        """Set the random seed for reproducibility."""
-        self.random_seed = seed
-
+    @abstractmethod
     def generate_examples(
         self,
         prompt_spec: PromptSpec,
-        num_examples: int,
+        num_examples: int | None,
         split: DatasetSplit,
-    ) -> Tuple[datasets.Dataset, datasets.Dataset, datasets.Dataset]:
-        """Create empty versions of the datasets, for testing.
+    ) -> datasets.Dataset:
+        """Generate data for a single named split of data.
+
+        Args:
+            prompt_spec: A prompt spec (containing a system description).
+            num_examples: Number of examples in split.
+            split: Name of dataset split to generate.)
+
         Returns:
-            datasets.Dataset: A single dataset split."""
-        _ = prompt_spec, num_examples, split  # suppress unused variable warnings
-        return datasets.Dataset.from_pandas(pd.DataFrame({}))
+            A single dataset split.
+
+        """
 
     def generate_datasets(
         self,
         prompt_spec: PromptSpec,
-        num_train_examples: Optional[int] = 5000,
-        num_val_examples: Optional[int] = 1500,
-        num_test_examples: Optional[int] = 500,
+        num_examples: dict[DatasetSplit, int],
     ) -> datasets.DatasetDict:
-        """
-        Generate training/validation/testing datasets from a prompt.
+        """Generate training/validation/testing datasets from a prompt.
+
+        Args:
+            prompt_spec: A prompt specification.
+            num_examples: Number of examples per split (train/val/test/etc).
+
         Returns:
-            datasets.DatasetDict: Includes train, validation, and test splits.
+            A DatasetDict containing train, validation, and test splits.
         """
+        assert num_examples.keys() == {
+            DatasetSplit.TRAIN,
+            DatasetSplit.VAL,
+            DatasetSplit.TEST,
+        }
+
         train_examples = self.generate_examples(
-            prompt_spec, num_train_examples, split=DatasetSplit.TRAIN
+            prompt_spec, num_examples[DatasetSplit.TRAIN], split=DatasetSplit.TRAIN
         )
         val_examples = self.generate_examples(
-            prompt_spec, num_val_examples, split=DatasetSplit.VAL
+            prompt_spec, num_examples[DatasetSplit.VAL], split=DatasetSplit.VAL
         )
         test_examples = self.generate_examples(
-            prompt_spec, num_test_examples, split=DatasetSplit.TEST
+            prompt_spec, num_examples[DatasetSplit.TEST], split=DatasetSplit.TEST
         )
 
         dataset_dict = datasets.DatasetDict(
@@ -111,3 +92,37 @@ class BaseGenerator(DatasetGenerator):
             dataset_dict.save_to_disk(self.output_dir)
 
         return dataset_dict
+
+
+class BaseGenerator(DatasetGenerator):
+    """A class for generating datasets from a prompt specification."""
+
+    def set_random_seed(self, seed: int):
+        """Set the random seed for reproducibility."""
+        self.random_seed = seed
+
+    def generate_examples(
+        self,
+        prompt_spec: PromptSpec,
+        num_examples: int | None,
+        split: DatasetSplit,
+    ) -> datasets.Dataset:
+        """Create empty versions of the datasets, for testing.
+
+        Args:
+            prompt_spec: A prompt specification.
+            num_examples: Number of examples in split.
+            split: Name of dataset split to generate.)
+
+        Returns:
+            A single dataset split.
+
+        """
+        _ = prompt_spec, split  # suppress unused variable warnings
+        if num_examples is None:
+            raise NotImplementedError
+        else:
+            col_values = ["" for i in range(num_examples)]
+        # Construct empty-valued dataframe with length matching num_examples.
+        df = pd.DataFrame.from_dict({"test_col": col_values})
+        return datasets.Dataset.from_pandas(df)
