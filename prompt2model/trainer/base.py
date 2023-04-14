@@ -6,8 +6,6 @@ from typing import Any
 import datasets
 import transformers
 
-from prompt2model.prompt_parser import PromptSpec
-
 
 # pylint: disable=too-few-public-methods
 class Trainer(ABC):
@@ -18,6 +16,5 @@ class Trainer(ABC):
         self,
         training_datasets: list[datasets.Dataset],
         hyperparameter_choices: dict[str, Any],
-        prompt_spec: PromptSpec,
     ) -> transformers.PreTrainedModel:
         """Train a model with the given hyperparameters and return it."""

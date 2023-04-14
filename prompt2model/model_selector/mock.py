@@ -29,12 +29,11 @@ class MockModelSelector(ModelSelector):
             "learning_rate": 1e-4,
         }
 
-    def select_model(
+    def select_from_hyperparameters(
         self,
         training_sets: list[datasets.Dataset],
         validation: datasets.Dataset,
-        prompt_spec: PromptSpec,
-        hyperparameters: dict[str, list[Any]] | None = None,
+        hyperparameters: dict[str, list[Any]],
     ) -> transformers.PreTrainedModel:
         """Use a pre-defined default set of hyperparameters.
 
@@ -48,6 +47,22 @@ class MockModelSelector(ModelSelector):
             A model trained using default hyperparameters.
         """
         single_model = self.trainer.train_model(
-            training_sets, self._example_hyperparameter_choices(), prompt_spec
+            training_sets, self._example_hyperparameter_choices()
         )
         return single_model
+
+    def select_from_spec(
+        self,
+        training_sets: list[datasets.Dataset],
+        validation: datasets.Dataset,
+        prompt_spec: PromptSpec,
+    ) -> transformers.PreTrainedModel:
+        """The MockModelSelector cannot infer hyperparameters from the spec.
+
+        Args:
+            training_sets: One or more training datasets for the trainer.
+            validation: A dataset for computing validation metrics.
+            prompt_spec: (Optional) A prompt to infer hyperparameters from.
+            hyperparameters: (Optional) A dictionary of hyperparameter choices.
+        """
+        raise NotImplementedError

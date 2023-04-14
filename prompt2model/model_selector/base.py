@@ -16,22 +16,39 @@ class ModelSelector(ABC):
     """Select a good model from among a set of hyperparameter choices."""
 
     @abstractmethod
-    def select_model(
+    def select_from_hyperparameters(
         self,
         training_sets: list[datasets.Dataset],
         validation: datasets.Dataset,
-        prompt_spec: PromptSpec,
-        hyperparameters: dict[str, list[Any]] | None = None,
+        hyperparameters: dict[str, list[Any]],
     ) -> transformers.PreTrainedModel:
         """Select a model among a set of hyperparameters (given or inferred).
 
         Args:
             training_sets: One or more training datasets for the trainer.
             validation: A dataset for computing validation metrics.
-            prompt_spec: (Optional) A prompt to infer hyperparameters from.
-            hyperparameters: (Optional) A dictionary of hyperparameter choices.
+            hyperparameters: A dictionary of hyperparameter choices.
 
         Return:
             A model (with hyperparameters selected from the specified range).
+
+        """
+
+    @abstractmethod
+    def select_from_spec(
+        self,
+        training_sets: list[datasets.Dataset],
+        validation: datasets.Dataset,
+        prompt_spec: PromptSpec,
+    ) -> transformers.PreTrainedModel:
+        """Select a model among a set of hyperparameters (given or inferred).
+
+        Args:
+            training_sets: One or more training datasets for the trainer.
+            validation: A dataset for computing validation metrics.
+            prompt_spec: A prompt to infer hyperparameters from.
+
+        Return:
+            A model (with hyperparameters selected from the inferred range).
 
         """
