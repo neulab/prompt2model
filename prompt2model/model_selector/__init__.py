@@ -1,4 +1,5 @@
 """Import model selector classes."""
-from model_selector.base import DefaultParameterSelector, ModelSelector
+from model_selector.base import ModelSelector
+from model_selector.mock import MockModelSelector
 
-__all__ = ("DefaultParameterSelector", "ModelSelector")
+__all__ = ("MockModelSelector", "ModelSelector")

@@ -6,7 +6,7 @@ from prompt2model.dataset_generator import DatasetSplit, EmptyDatasetGenerator
 from prompt2model.dataset_retriever import MockRetriever
 from prompt2model.demo_creator.gradio_creator import create_gradio
 from prompt2model.evaluator import MockEvaluator
-from prompt2model.model_selector import DefaultParameterSelector
+from prompt2model.model_selector import MockModelSelector
 from prompt2model.prompt_parser import AllGenerationSpec, PromptSpec
 from prompt2model.trainer import BaseTrainer
 
@@ -76,7 +76,7 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
     all_training = retrieved_training + [generated_training]
 
     trainer = BaseTrainer()
-    selector = DefaultParameterSelector(trainer, all_training, validation)
+    selector = MockModelSelector(trainer, all_training, validation)
     model = selector.select_model(prompt_spec, hyperparameters={})
 
     evaluator = MockEvaluator(testing, [], prompt_spec)
