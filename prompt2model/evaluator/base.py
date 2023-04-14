@@ -5,22 +5,32 @@ from __future__ import annotations  # noqa FI58
 from abc import ABC, abstractmethod
 from typing import Any
 
+import datasets
 import transformers
+from prompt_parser import PromptSpec
 
 
 class Evaluator(ABC):
     """An interface for automatic model evaluation."""
 
     @abstractmethod
-    def evaluate_model(self, model: transformers.PreTrainedModel) -> dict[str, Any]:
-        """Evaluate a model on a test set.
+    def evaluate_model(
+        self,
+        dataset: datasets.Dataset,
+        model: transformers.PreTrainedModel,
+        metrics: list[datasets.Metric] | None = None,
+        prompt_spec: PromptSpec | None = None,
+    ) -> dict[str, Any]:
+        """Evaluate a model on a test set..
 
         Args:
+            dataset: The dataset to evaluate metrics on.
             model: The model to evaluate.
+            metrics: (Optional) The metrics to use.
+            prompt_spec: (Optional) A PromptSpec to infer the metrics from.
 
         Returns:
             A dictionary of metric values to return.
-
         """
 
     @abstractmethod
