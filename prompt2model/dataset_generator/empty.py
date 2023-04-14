@@ -1,7 +1,10 @@
+"""A class for generating empty datasets (for testing purposes)."""
+
 import datasets
+import pandas as pd
 from dataset_generator.base import DatasetGenerator, DatasetSplit
 from prompt_parser import PromptSpec
-import pandas as pd
+
 
 class EmptyDatasetGenerator(DatasetGenerator):
     """A class for generating empty datasets (for testing purposes)."""
