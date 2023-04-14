@@ -7,14 +7,6 @@ import datasets
 import transformers
 from prompt_parser import PromptSpec
 
-# Input:
-#    1) training dataset (datasets.Dataset)
-#    2) Dictionary consisting of hyperparameter values to use
-#       (e.g. base model, optimizer, LR, etc)
-#
-# Output:
-#    transformers.PreTrainedModel
-
 
 # pylint: disable=too-few-public-methods
 class Trainer(ABC):
