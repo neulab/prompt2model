@@ -36,7 +36,7 @@ class DatasetGenerator(ABC):
     def generate_examples(
         self,
         prompt_spec: PromptSpec,
-        num_examples: int | None,
+        num_examples: int,
         split: DatasetSplit,
     ) -> datasets.Dataset:
         """Generate data for a single named split of data.
@@ -84,7 +84,7 @@ class EmptyDatasetGenerator(DatasetGenerator):
     def generate_examples(
         self,
         prompt_spec: PromptSpec,
-        num_examples: int | None,
+        num_examples: int,
         split: DatasetSplit,
     ) -> datasets.Dataset:
         """Create empty versions of the datasets, for testing.
@@ -99,10 +99,7 @@ class EmptyDatasetGenerator(DatasetGenerator):
 
         """
         _ = prompt_spec, split  # suppress unused variable warnings
-        if num_examples is None:
-            raise NotImplementedError
-        else:
-            col_values = ["" for i in range(num_examples)]
+        col_values = ["" for i in range(num_examples)]
         # Construct empty-valued dataframe with length matching num_examples.
         df = pd.DataFrame.from_dict({"test_col": col_values})
         return datasets.Dataset.from_pandas(df)
