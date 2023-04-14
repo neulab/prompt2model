@@ -1,2 +1,6 @@
 """Import evaluator classes."""
-from evaluator.base import BaseEvaluator, Evaluator  # noqa: F401
+from evaluator.base import BaseEvaluator, Evaluator
+__all__ = (
+  'BaseEvaluator',
+  'Evaluator'
+)
