@@ -7,7 +7,7 @@ from prompt2model.dataset_retriever import MockRetriever
 from prompt2model.demo_creator.gradio_creator import create_gradio
 from prompt2model.evaluator import MockEvaluator
 from prompt2model.model_selector import MockModelSelector
-from prompt2model.prompt_parser import AllGenerationSpec, PromptSpec
+from prompt2model.prompt_parser import DefaultSpec, PromptSpec, TaskType
 from prompt2model.trainer import BaseTrainer
 
 parser = argparse.ArgumentParser()
@@ -51,8 +51,8 @@ def process_input_prompt(prompt_tokens: list[str]) -> PromptSpec:
     if start_quotations_present and end_quotations_present:
         prompt_str = prompt_str[1:-1]
 
-    prompt_spec = AllGenerationSpec()
-    prompt_spec.parse_prompt(prompt_str)
+    prompt_spec = DefaultSpec(TaskType.TEXT_GENERATION)
+    prompt_spec.parse_from_prompt(prompt_str)
     return prompt_spec
 
 
