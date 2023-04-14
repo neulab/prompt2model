@@ -76,9 +76,9 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
     all_training = retrieved_training + [generated_training]
 
     trainer = MockTrainer()
-    selector = MockModelSelector()
+    selector = MockModelSelector(trainer)
     model = selector.select_model(
-        trainer, all_training, validation, prompt_spec, hyperparameters={}
+        all_training, validation, prompt_spec, hyperparameters={}
     )
 
     evaluator = MockEvaluator()

@@ -9,7 +9,6 @@ import datasets
 import transformers
 
 from prompt2model.prompt_parser.base import PromptSpec
-from prompt2model.trainer import Trainer
 
 
 # pylint: disable=too-few-public-methods
@@ -19,7 +18,6 @@ class ModelSelector(ABC):
     @abstractmethod
     def select_model(
         self,
-        trainer: Trainer,
         training_sets: list[datasets.Dataset],
         validation: datasets.Dataset,
         prompt_spec: PromptSpec,
@@ -28,7 +26,6 @@ class ModelSelector(ABC):
         """Select a model among a set of hyperparameters (given or inferred).
 
         Args:
-            trainer: A trainer object.
             training_sets: One or more training datasets for the trainer.
             validation: A dataset for computing validation metrics.
             prompt_spec: (Optional) A prompt to infer hyperparameters from.
