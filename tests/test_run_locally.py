@@ -1,16 +1,6 @@
 """Testing integration of components locally."""
 
-import os
-import sys
-
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../prompt2model"))
-)
-
-# pylint: disable=wrong-import-position
-from run_locally import run_skeleton  # noqa E402
-
-# pylint: enable=wrong-import-position
+from prompt2model.run_locally import run_skeleton
 
 
 def test_integration():
