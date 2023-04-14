@@ -2,8 +2,9 @@
 
 import datasets
 import pandas as pd
-from dataset_generator.base import DatasetGenerator, DatasetSplit
-from prompt_parser import PromptSpec
+
+from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
+from prompt2model.prompt_parser import PromptSpec
 
 
 class EmptyDatasetGenerator(DatasetGenerator):

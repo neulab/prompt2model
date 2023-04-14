@@ -3,7 +3,8 @@
 from abc import ABC, abstractmethod
 
 import datasets
-from prompt_parser import PromptSpec
+
+from prompt2model.prompt_parser import PromptSpec
 
 
 # pylint: disable=too-few-public-methods

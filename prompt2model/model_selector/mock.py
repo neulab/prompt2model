@@ -4,9 +4,10 @@ from typing import Any
 
 import datasets
 import transformers
-from model_selector.base import ModelSelector
-from prompt_parser import PromptSpec
-from trainer import Trainer
+
+from prompt2model.model_selector.base import ModelSelector
+from prompt2model.prompt_parser import PromptSpec
+from prompt2model.trainer import Trainer
 
 
 class MockModelSelector(ModelSelector):

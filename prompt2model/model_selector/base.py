@@ -7,8 +7,9 @@ from typing import Any
 
 import datasets
 import transformers
-from prompt_parser.base import PromptSpec
-from trainer import Trainer
+
+from prompt2model.prompt_parser.base import PromptSpec
+from prompt2model.trainer import Trainer
 
 
 # pylint: disable=too-few-public-methods

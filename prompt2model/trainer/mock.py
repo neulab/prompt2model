@@ -4,8 +4,9 @@ from typing import Any
 
 import datasets
 import transformers
-from prompt_parser import PromptSpec
-from trainer import Trainer
+
+from prompt2model.prompt_parser import PromptSpec
+from prompt2model.trainer import Trainer
 
 
 class MockTrainer(Trainer):

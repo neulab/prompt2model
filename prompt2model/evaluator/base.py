@@ -7,7 +7,8 @@ from typing import Any
 
 import datasets
 import transformers
-from prompt_parser import PromptSpec
+
+from prompt2model.prompt_parser import PromptSpec
 
 
 class Evaluator(ABC):

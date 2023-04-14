@@ -3,8 +3,9 @@ from typing import Any
 
 import datasets
 import transformers
-from evaluator.base import Evaluator
-from prompt_parser import PromptSpec
+
+from prompt2model.evaluator.base import Evaluator
+from prompt2model.prompt_parser import PromptSpec
 
 
 class MockEvaluator(Evaluator):

@@ -6,8 +6,9 @@ from abc import ABC, abstractmethod
 from enum import Enum
 
 import datasets
-from prompt_parser import PromptSpec
-from utils.rng import seed_generator
+
+from prompt2model.prompt_parser import PromptSpec
+from prompt2model.utils.rng import seed_generator
 
 
 class DatasetSplit(Enum):
