@@ -1,6 +1,4 @@
 """Import PromptSpec classes."""
 from prompt_parser.base import AllGenerationSpec, PromptSpec  # noqa: F401
-__all__ = (
-  'AllGenerationSpec',
-  'PromptSpec'
-)
+
+__all__ = ("AllGenerationSpec", "PromptSpec")

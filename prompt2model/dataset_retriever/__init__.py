@@ -1,7 +1,4 @@
 """Import DatasetRetriever classes."""
-from dataset_retriever.base import BaseRetriever
-from dataset_retriever.base import DatasetRetriever
-__all__ = (
-    'BaseRetriever',
-    'DatasetRetriever'
-)
+from dataset_retriever.base import BaseRetriever, DatasetRetriever
+
+__all__ = ("BaseRetriever", "DatasetRetriever")
