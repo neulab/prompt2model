@@ -8,6 +8,7 @@ from typing import Any
 import datasets
 import transformers
 from prompt_parser.base import PromptSpec
+from trainer import Trainer
 
 
 # pylint: disable=too-few-public-methods
@@ -17,8 +18,8 @@ class ModelSelector(ABC):
     @abstractmethod
     def select_model(
         self,
+        prompt_spec: PromptSpec,
         hyperparameters: dict[str, list[Any]] | None = None,
-        prompt_spec: PromptSpec | None = None,
     ) -> transformers.PreTrainedModel:
         """Select a model among a set of hyperparameters (given or inferred).
 
@@ -37,12 +38,12 @@ class DefaultParameterSelector(ModelSelector):
 
     def __init__(
         self,
-        trainer_type: type,
+        trainer: Trainer,
         training_sets: list[datasets.Dataset],
         validation: datasets.Dataset,
     ):
         """Initialize with train/val datasets and a prompt specification."""
-        self.trainer_type = trainer_type
+        self.trainer = trainer
         self.training_sets = training_sets
         self.validation = validation
         self.default_hyperparameter_choices = self._default_hyperparameter_choices()
@@ -57,16 +58,15 @@ class DefaultParameterSelector(ModelSelector):
 
     def select_model(
         self,
+        prompt_spec: PromptSpec,
         hyperparameters: dict[str, list[Any]] | None = None,
-        prompt_spec: PromptSpec | None = None,
     ) -> transformers.PreTrainedModel:
         """Use a pre-defined default set of hyperparameters.
 
         Return:
             A model trained using default hyperparameters.
         """
-        trainer = self.trainer_type(
+        single_model = self.trainer.train_model(
             self.training_sets, self._default_hyperparameter_choices(), prompt_spec
         )
-        single_model = trainer.train_model()
         return single_model
