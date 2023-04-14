@@ -3,7 +3,7 @@
 import argparse
 
 from prompt2model.dataset_generator import DatasetSplit, EmptyDatasetGenerator
-from prompt2model.dataset_retriever import BaseRetriever
+from prompt2model.dataset_retriever import MockRetriever
 from prompt2model.demo_creator.gradio_creator import create_gradio
 from prompt2model.evaluator import BaseEvaluator
 from prompt2model.model_selector import DefaultParameterSelector
@@ -61,7 +61,7 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
     prompt_spec = process_input_prompt(prompt_tokens)
 
     # Retrieve and generate datasets
-    retriever = BaseRetriever()
+    retriever = MockRetriever()
     retrieved_training = retriever.retrieve_datasets(prompt_spec)
     generator = EmptyDatasetGenerator()
 
