@@ -65,27 +65,10 @@ class DatasetGenerator(ABC):
         Returns:
             A DatasetDict containing train, validation, and test splits.
         """
-        assert num_examples.keys() == {
-            DatasetSplit.TRAIN,
-            DatasetSplit.VAL,
-            DatasetSplit.TEST,
-        }
-
-        train_examples = self.generate_examples(
-            prompt_spec, num_examples[DatasetSplit.TRAIN], split=DatasetSplit.TRAIN
-        )
-        val_examples = self.generate_examples(
-            prompt_spec, num_examples[DatasetSplit.VAL], split=DatasetSplit.VAL
-        )
-        test_examples = self.generate_examples(
-            prompt_spec, num_examples[DatasetSplit.TEST], split=DatasetSplit.TEST
-        )
-
         dataset_dict = datasets.DatasetDict(
             {
-                DatasetSplit.TRAIN: train_examples,
-                DatasetSplit.VAL: val_examples,
-                DatasetSplit.TEST: test_examples,
+                split: self.generate_examples(prompt_spec, num, split=split)
+                for split, num in num_examples.items()
             }
         )
 
