@@ -8,7 +8,7 @@ from prompt2model.demo_creator.gradio_creator import create_gradio
 from prompt2model.evaluator import MockEvaluator
 from prompt2model.model_selector import MockModelSelector
 from prompt2model.prompt_parser import DefaultSpec, PromptSpec, TaskType
-from prompt2model.trainer import BaseTrainer
+from prompt2model.trainer import MockTrainer
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -75,7 +75,7 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
     )
     all_training = retrieved_training + [generated_training]
 
-    trainer = BaseTrainer()
+    trainer = MockTrainer()
     selector = MockModelSelector()
     model = selector.select_model(
         trainer, all_training, validation, prompt_spec, hyperparameters={}

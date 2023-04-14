@@ -1,4 +1,5 @@
 """Import Trainer classes."""
-from trainer.base import BaseTrainer, Trainer
+from trainer.base import Trainer
+from trainer.mock import MockTrainer
 
-__all__ = ("BaseTrainer", "Trainer")
+__all__ = ("MockTrainer", "Trainer")
