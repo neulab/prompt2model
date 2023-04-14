@@ -5,7 +5,7 @@ import argparse
 from prompt2model.dataset_generator import DatasetSplit, EmptyDatasetGenerator
 from prompt2model.dataset_retriever import MockRetriever
 from prompt2model.demo_creator.gradio_creator import create_gradio
-from prompt2model.evaluator import BaseEvaluator
+from prompt2model.evaluator import MockEvaluator
 from prompt2model.model_selector import DefaultParameterSelector
 from prompt2model.prompt_parser import AllGenerationSpec, PromptSpec
 from prompt2model.trainer import BaseTrainer
@@ -79,7 +79,7 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
     selector = DefaultParameterSelector(trainer, all_training, validation)
     model = selector.select_model(prompt_spec, hyperparameters={})
 
-    evaluator = BaseEvaluator(testing, [], prompt_spec)
+    evaluator = MockEvaluator(testing, [], prompt_spec)
     metrics_dict = evaluator.evaluate_model(model)
     evaluator.write_metrics(metrics_dict, metrics_output_path)
     create_gradio(model, prompt_spec)

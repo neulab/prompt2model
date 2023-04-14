@@ -1,4 +1,5 @@
 """Import evaluator classes."""
-from evaluator.base import BaseEvaluator, Evaluator
+from evaluator.base import Evaluator
+from evaluator.mock import MockEvaluator
 
-__all__ = ("BaseEvaluator", "Evaluator")
+__all__ = ("MockEvaluator", "Evaluator")
