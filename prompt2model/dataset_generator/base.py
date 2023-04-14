@@ -8,7 +8,7 @@ from enum import Enum
 import datasets
 import pandas as pd
 from prompt_parser import PromptSpec
-from utils.rng import ConstantSeedGenerator
+from utils.rng import seed_generator
 
 
 class DatasetSplit(Enum):
@@ -30,7 +30,7 @@ class DatasetGenerator(ABC):
         """Construct a dataset generator."""
         self.model_config = model_config
         self.output_dir = output_dir
-        self.seed_generator = ConstantSeedGenerator()
+        self.random_seed = seed_generator.get_seed()
 
     @abstractmethod
     def generate_examples(

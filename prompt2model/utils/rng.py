@@ -23,3 +23,6 @@ class ConstantSeedGenerator(SeedGenerator):
     def get_seed(self) -> int:
         """Return a constant random seed."""
         return self.seed
+
+
+seed_generator = ConstantSeedGenerator()
