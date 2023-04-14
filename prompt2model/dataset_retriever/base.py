@@ -9,12 +9,7 @@ from prompt_parser import PromptSpec
 
 # pylint: disable=too-few-public-methods
 class DatasetRetriever(ABC):
-    """A class for retrieving datasets.
-
-    TO IMPLEMENT IN SUBCLASSES:
-    def __init__(self):
-    '''Construct a search index from HuggingFace Datasets.'''
-    """
+    """A class for retrieving datasets."""
 
     @abstractmethod
     def retrieve_datasets(self, prompt_spec: PromptSpec) -> list[datasets.Dataset]:
