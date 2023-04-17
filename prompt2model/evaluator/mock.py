@@ -1,4 +1,6 @@
 """A dummy evaluator for testing purposes."""
+from __future__ import annotations  # noqa FI58
+
 from typing import Any
 
 import datasets
