@@ -46,6 +46,7 @@ class DatasetGenerator(ABC):
         self,
         prompt_spec: PromptSpec,
         num_examples: dict[DatasetSplit, int],
+        output_dir: str | None = None,
     ) -> datasets.DatasetDict:
         """Generate training/validation/testing datasets from a prompt.
 
