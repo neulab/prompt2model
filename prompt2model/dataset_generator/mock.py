@@ -7,7 +7,7 @@ from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
 from prompt2model.prompt_parser import PromptSpec
 
 
-class EmptyDatasetGenerator(DatasetGenerator):
+class MockDatasetGenerator(DatasetGenerator):
     """A class for generating empty datasets (for testing purposes)."""
 
     def generate_examples(

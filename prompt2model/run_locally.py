@@ -2,7 +2,7 @@
 
 import argparse
 
-from prompt2model.dataset_generator import DatasetSplit, EmptyDatasetGenerator
+from prompt2model.dataset_generator import DatasetSplit, MockDatasetGenerator
 from prompt2model.dataset_retriever import MockRetriever
 from prompt2model.demo_creator.gradio_creator import create_gradio
 from prompt2model.evaluator import MockEvaluator
@@ -64,7 +64,7 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
     # Retrieve and generate datasets
     retriever = MockRetriever()
     retrieved_training = retriever.retrieve_datasets(prompt_spec)
-    generator = EmptyDatasetGenerator()
+    generator = MockDatasetGenerator()
 
     num_examples = {
         DatasetSplit.TRAIN: 40,
