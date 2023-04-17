@@ -64,7 +64,7 @@ class DatasetGenerator(ABC):
             }
         )
 
-        if self.output_dir:
+        if output_dir:
             dataset_dict.save_to_disk(self.output_dir)
 
         return dataset_dict
