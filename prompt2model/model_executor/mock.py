@@ -13,6 +13,7 @@ class MockModelExecutor(ModelExecutor):
         self,
         model: transformers.PreTrainedModel,
         test_set: datasets.Dataset,
+        inputs_column: str,
     ) -> ModelOutputs:
         """Mock the execution of a model on a test set.
 
@@ -23,5 +24,5 @@ class MockModelExecutor(ModelExecutor):
         Returns:
             An object containing model outputs.
         """
-        predictions = [""] * len(test_set)
+        predictions = [""] * len(test_set[inputs_column])
         return ModelOutputs(predictions=predictions)
