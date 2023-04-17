@@ -82,12 +82,11 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
     model = selector.select_from_hyperparameters(all_training, validation, {})
 
     model_executor = MockModelExecutor()
-    TEST_COL = "test_col"
-    predictions = model_executor.make_predictions(model, testing, TEST_COL)
+    predictions = model_executor.make_predictions(model, testing, "input_col")
 
     evaluator = MockEvaluator()
     metrics_dict = evaluator.evaluate_model(
-        testing, TEST_COL, predictions, [], prompt_spec
+        testing, "output_col", predictions, [], prompt_spec
     )
     evaluator.write_metrics(metrics_dict, metrics_output_path)
     create_gradio(model, prompt_spec)

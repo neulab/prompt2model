@@ -18,7 +18,7 @@ class Evaluator(ABC):
     def evaluate_model(
         self,
         dataset: datasets.Dataset,
-        input_column: str,
+        gt_column: str,
         predictions: ModelOutputs,
         metrics: list[datasets.Metric] | None = None,
         prompt_spec: PromptSpec | None = None,
@@ -27,7 +27,7 @@ class Evaluator(ABC):
 
         Args:
             dataset: The dataset to evaluate metrics on.
-            input_column: The dataset column to use as input to the model.
+            gt_column: The dataset column to use as ground truth.
             predictions: Model outputs to evaluate.
             metrics: (Optional) The metrics to use.
             prompt_spec: (Optional) A PromptSpec to infer the metrics from.
