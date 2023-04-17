@@ -8,7 +8,6 @@ from enum import Enum
 import datasets
 
 from prompt2model.prompt_parser import PromptSpec
-from prompt2model.utils.rng import seed_generator
 
 
 class DatasetSplit(Enum):
@@ -21,7 +20,6 @@ class DatasetSplit(Enum):
 
 class DatasetGenerator(ABC):
     """A class for generating datasets from a prompt specification."""
-
 
     @abstractmethod
     def generate_examples(
