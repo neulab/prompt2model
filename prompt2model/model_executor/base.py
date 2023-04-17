@@ -9,21 +9,20 @@ import datasets
 import transformers
 
 
-class ModelOutputs:
-    """A class to hold model outputs."""
+from dataclasses import dataclass
 
-    def __init__(
-        self, predictions: list[Any], probabilities: list[Any] | None = None
-    ) -> None:
-        """Initialize ModelOutputs class.
-
-        Args:
-            predictions: A list of model predictions.
-            probabilities: (Optional) A list of model probabilities.
-        """
-        self.predictions = predictions
-        self.probabilities = probabilities
-
+@dataclass(frozen=True)
+class ModelOutput:
+    """A model output for a single example.
+    
+    Attributes:
+        prediction: The prediction by the model
+        confidence: A confidence value in the prediction (or None)
+        auxiliary_info: Any other auxiliary information provided by the model
+    """
+    prediction: Any
+    confidence: float | None
+    auxiliary_info: dict[str, Any]
 
 class ModelExecutor(ABC):
     """An interface for automatic model evaluation."""
@@ -34,7 +33,7 @@ class ModelExecutor(ABC):
         model: transformers.PreTrainedModel,
         test_set: datasets.Dataset,
         input_column: str,
-    ) -> ModelOutputs:
+    ) -> list[ModelOutput]:
         """Evaluate a model on a test set.
 
         Args:
@@ -43,5 +42,5 @@ class ModelExecutor(ABC):
             input_column: The dataset column to use as input to the model.
 
         Returns:
-            An object containing model outputs.
+            A list of model outputs, one for each element in the test set.
         """
