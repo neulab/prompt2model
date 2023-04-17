@@ -45,3 +45,5 @@ class Evaluator(ABC):
             metrics_path: The file path to write metrics to.
 
         """
+        with open(metrics_path, "w") as f:
+            json.dump(metrics_dict, f)
