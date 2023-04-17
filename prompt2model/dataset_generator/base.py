@@ -22,15 +22,6 @@ class DatasetSplit(Enum):
 class DatasetGenerator(ABC):
     """A class for generating datasets from a prompt specification."""
 
-    def __init__(
-        self,
-        model_config: dict | None = None,
-        output_dir: str | None = None,
-    ):
-        """Construct a dataset generator."""
-        self.model_config = model_config
-        self.output_dir = output_dir
-        self.random_seed = seed_generator.get_seed()
 
     @abstractmethod
     def generate_examples(
