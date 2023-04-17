@@ -2,6 +2,7 @@
 
 from __future__ import annotations  # noqa FI58
 
+import json
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -37,7 +38,7 @@ class Evaluator(ABC):
         """
 
     def write_metrics(self, metrics_dict: dict[str, Any], metrics_path: str) -> None:
-        """Not yet implemented, but this function writes metrics to a file.
+        """This function writes metrics to a file.
 
         Args:
             metrics_dict: A dictionary of metrics to write.
