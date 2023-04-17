@@ -36,9 +36,8 @@ class Evaluator(ABC):
             A dictionary of metric values to return.
         """
 
-    @abstractmethod
     def write_metrics(self, metrics_dict: dict[str, Any], metrics_path: str) -> None:
-        """Write or display metrics to a file.
+        """Not yet implemented, but this function writes metrics to a file.
 
         Args:
             metrics_dict: A dictionary of metrics to write.

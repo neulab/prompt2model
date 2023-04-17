@@ -37,7 +37,3 @@ class MockEvaluator(Evaluator):
             An empty dictionary (for testing purposes).
         """
         return {}
-
-    def write_metrics(self, metrics_dict: dict[str, Any], metrics_path: str) -> None:
-        """Do nothing."""
-        _ = metrics_dict, metrics_path  # suppress unused variable warnings
