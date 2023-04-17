@@ -6,6 +6,7 @@ from prompt2model.dataset_generator import DatasetSplit, EmptyDatasetGenerator
 from prompt2model.dataset_retriever import MockRetriever
 from prompt2model.demo_creator.gradio_creator import create_gradio
 from prompt2model.evaluator import MockEvaluator
+from prompt2model.model_executor import MockModelExecutor
 from prompt2model.model_selector import MockModelSelector
 from prompt2model.prompt_parser import DefaultSpec, PromptSpec, TaskType
 from prompt2model.trainer import MockTrainer
@@ -70,17 +71,21 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
         DatasetSplit.VAL: 5,
         DatasetSplit.TEST: 5,
     }
-    generated_training, validation, testing = generator.generate_datasets(
-        prompt_spec, num_examples
-    )
+    generated_data = dict(generator.generate_datasets(prompt_spec, num_examples))
+    generated_training = generated_data[DatasetSplit.TRAIN]
+    validation = generated_data[DatasetSplit.VAL]
+    testing = generated_data[DatasetSplit.TEST]
     all_training = retrieved_training + [generated_training]
 
     trainer = MockTrainer()
     selector = MockModelSelector(trainer)
     model = selector.select_from_hyperparameters(all_training, validation, {})
 
+    model_executor = MockModelExecutor()
+    predictions = model_executor.make_predictions(model, testing)
+
     evaluator = MockEvaluator()
-    metrics_dict = evaluator.evaluate_model(testing, model, [], prompt_spec)
+    metrics_dict = evaluator.evaluate_model(testing, predictions, [], prompt_spec)
     evaluator.write_metrics(metrics_dict, metrics_output_path)
     create_gradio(model, prompt_spec)
 

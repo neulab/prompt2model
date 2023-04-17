@@ -6,8 +6,8 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 import datasets
-import transformers
 
+from prompt2model.model_executor import ModelOutputs
 from prompt2model.prompt_parser import PromptSpec
 
 
@@ -18,7 +18,7 @@ class Evaluator(ABC):
     def evaluate_model(
         self,
         dataset: datasets.Dataset,
-        model: transformers.PreTrainedModel,
+        predictions: ModelOutputs,
         metrics: list[datasets.Metric] | None = None,
         prompt_spec: PromptSpec | None = None,
     ) -> dict[str, Any]:
@@ -26,7 +26,7 @@ class Evaluator(ABC):
 
         Args:
             dataset: The dataset to evaluate metrics on.
-            model: The model to evaluate.
+            predictions: Model outputs to evaluate.
             metrics: (Optional) The metrics to use.
             prompt_spec: (Optional) A PromptSpec to infer the metrics from.
 
