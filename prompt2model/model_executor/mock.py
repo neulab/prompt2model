@@ -3,7 +3,7 @@
 import datasets
 import transformers
 
-from prompt2model.model_executor import ModelExecutor, ModelOutputs
+from prompt2model.model_executor import ModelExecutor, ModelOutput
 
 
 class MockModelExecutor(ModelExecutor):
@@ -14,7 +14,7 @@ class MockModelExecutor(ModelExecutor):
         model: transformers.PreTrainedModel,
         test_set: datasets.Dataset,
         input_column: str,
-    ) -> ModelOutputs:
+    ) -> list[ModelOutput]:
         """Mock the execution of a model on a test set.
 
         Args:
@@ -25,5 +25,10 @@ class MockModelExecutor(ModelExecutor):
         Returns:
             An object containing model outputs.
         """
-        predictions = [""] * len(test_set[input_column])
-        return ModelOutputs(predictions=predictions)
+        predictions = []
+        for _ in range(len(test_set[input_column])):
+            model_output = ModelOutput(
+                prediction="", confidence=None, auxiliary_info={}
+            )
+            predictions.append(model_output)
+        return predictions

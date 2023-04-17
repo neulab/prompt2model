@@ -6,7 +6,7 @@ from typing import Any
 import datasets
 
 from prompt2model.evaluator.base import Evaluator
-from prompt2model.model_executor import ModelOutputs
+from prompt2model.model_executor import ModelOutput
 from prompt2model.prompt_parser import PromptSpec
 
 
@@ -20,7 +20,7 @@ class MockEvaluator(Evaluator):
         self,
         dataset: datasets.Dataset,
         gt_column: str,
-        predictions: ModelOutputs,
+        predictions: list[ModelOutput],
         metrics: list[datasets.Metric] | None = None,
         prompt_spec: PromptSpec | None = None,
     ) -> dict[str, Any]:
@@ -29,7 +29,7 @@ class MockEvaluator(Evaluator):
         Args:
             dataset: The dataset to evaluate metrics on.
             gt_column: The dataset column to use as ground truth.
-            predictions: Model outputs to evaluate.
+            predictions: Corresponding model outputs to evaluate.
             metrics: (Optional) The metrics to use.
             prompt_spec: (Optional) A PromptSpec to infer the metrics from.
 

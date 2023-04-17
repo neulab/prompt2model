@@ -3,26 +3,27 @@
 from __future__ import annotations  # noqa FI58
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Any
 
 import datasets
 import transformers
 
 
-from dataclasses import dataclass
-
 @dataclass(frozen=True)
 class ModelOutput:
     """A model output for a single example.
-    
+
     Attributes:
         prediction: The prediction by the model
         confidence: A confidence value in the prediction (or None)
         auxiliary_info: Any other auxiliary information provided by the model
     """
+
     prediction: Any
     confidence: float | None
     auxiliary_info: dict[str, Any]
+
 
 class ModelExecutor(ABC):
     """An interface for automatic model evaluation."""

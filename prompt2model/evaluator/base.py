@@ -8,7 +8,7 @@ from typing import Any
 
 import datasets
 
-from prompt2model.model_executor import ModelOutputs
+from prompt2model.model_executor import ModelOutput
 from prompt2model.prompt_parser import PromptSpec
 
 
@@ -20,7 +20,7 @@ class Evaluator(ABC):
         self,
         dataset: datasets.Dataset,
         gt_column: str,
-        predictions: ModelOutputs,
+        predictions: list[ModelOutput],
         metrics: list[datasets.Metric] | None = None,
         prompt_spec: PromptSpec | None = None,
     ) -> dict[str, Any]:
