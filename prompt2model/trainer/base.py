@@ -1,19 +1,11 @@
 """An interface for trainers."""
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any
 
 import datasets
 import transformers
-
-
-from pathlib import Path
-from typing import Any
-
-import transformers
-import wandb
-from datasets import DatasetDict
-from prompt_parser import PromptSpec
 from torch.utils.data import DataLoader
 from transformers import HfArgumentParser, TrainingArguments
 
