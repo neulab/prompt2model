@@ -5,12 +5,12 @@ from typing import Any
 import datasets
 import transformers
 
-from prompt2model.model_selector.base import ModelSelector
+from prompt2model.param_selector.base import ParamSelector
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.trainer import Trainer
 
 
-class MockModelSelector(ModelSelector):
+class MockParamSelector(ParamSelector):
     """Uses a default set of parameters."""
 
     def __init__(self, trainer: Trainer):
@@ -57,7 +57,7 @@ class MockModelSelector(ModelSelector):
         validation: datasets.Dataset,
         prompt_spec: PromptSpec,
     ) -> transformers.PreTrainedModel:
-        """The MockModelSelector cannot infer hyperparameters from the spec.
+        """The MockParamSelector cannot infer hyperparameters from the spec.
 
         Args:
             training_sets: One or more training datasets for the trainer.

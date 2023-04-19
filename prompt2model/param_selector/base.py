@@ -12,7 +12,7 @@ from prompt2model.prompt_parser.base import PromptSpec
 
 
 # pylint: disable=too-few-public-methods
-class ModelSelector(ABC):
+class ParamSelector(ABC):
     """Select a good model from among a set of hyperparameter choices."""
 
     @abstractmethod
