@@ -1,6 +1,12 @@
 """An interface for trainers."""
 
 from abc import ABC, abstractmethod
+from typing import Any
+
+import datasets
+import transformers
+
+
 from pathlib import Path
 from typing import Any
 
@@ -23,47 +29,42 @@ from transformers import HfArgumentParser, TrainingArguments
 # pylint: disable=too-few-public-methods
 
 
+# pylint: disable=too-few-public-methods
 class Trainer(ABC):
     """Train a model with a fixed set of hyperparameters."""
 
-    def __init__(
-        self,
-        training_datasets: DatasetDict,
-        hyperparameter_choices: dict[str, Any],
-        prompt_spec: PromptSpec,
-    ) -> None:
-        """This is the base Constructor.
-
-        Initialize trainer with training dataset(s),
-        hyperparameters, and a prompt specification.
-        """
-        self.training_datasets = training_datasets
-        self.hyperparameter_choices = hyperparameter_choices
-        self.prompt_spec = prompt_spec
-        self.wandb = None
-
-    def set_up_weights_and_biases(self) -> None:
-        """Set up Weights & Biases logging."""
-        wandb.init(project="my-project", config=self.hyperparameter_choices)
-        self.wandb = wandb
-        raise NotImplementedError
-
     @abstractmethod
-    def train_model(self) -> transformers.PreTrainedModel:
+    def train_model(
+        self,
+        training_datasets: list[datasets.Dataset],
+        hyperparameter_choices: dict[str, Any],
+    ) -> transformers.PreTrainedModel:
         """Train a model with the given hyperparameters and return it."""
 
 
 class BaseTrainer(Trainer):
-    """This dummy trainer does not actually train anything."""
+    """This provides a basic model trainer."""
 
-    def train_model(self) -> transformers.PreTrainedModel:
-        """This dummy trainer returns an untrained BERT-base model."""
+    def train_model(
+        self,
+        training_datasets: list[datasets.Dataset],
+        hyperparameter_choices: dict[str, Any],
+    ) -> transformers.PreTrainedModel:
+        """Train a sequence classification model (TODO(Chenyang): update).
+
+        Args:
+            training_datasets: A list of training datasets.
+            hyperparameter_choices: A dictionary of hyperparameter choices.
+
+        Returns:
+            A trained HuggingFace model.
+        """
         # Set up checkpointing
-        output_dir = Path(self.hyperparameter_choices.get("output_dir", "./output"))
+        output_dir = Path(hyperparameter_choices.get("output_dir", "./output"))
         output_dir.mkdir(parents=True, exist_ok=True)
-        checkpoint_file = self.hyperparameter_choices.get("checkpoint_file")
+        checkpoint_file = hyperparameter_choices.get("checkpoint_file")
         if checkpoint_file is not None:
-            checkpoint_dict = self.hyperparameter_choices.copy()
+            checkpoint_dict = hyperparameter_choices.copy()
             checkpoint_dict["output_dir"] = str(output_dir)
             parser = HfArgumentParser(TrainingArguments)
             checkpoint = parser.parse_dict(checkpoint_dict)
@@ -78,15 +79,15 @@ class BaseTrainer(Trainer):
         else:
             # Load the tokenizer and model
             tokenizer = transformers.AutoTokenizer.from_pretrained(
-                self.hyperparameter_choices["model"]
+                hyperparameter_choices["model"]
             )
             model = transformers.AutoModelForSequenceClassification.from_pretrained(
-                self.hyperparameter_choices["model"]
+                hyperparameter_choices["model"]
             )
 
             # Set up the optimizer
             optimizer = transformers.AdamW(
-                model.parameters(), lr=self.hyperparameter_choices["learning_rate"]
+                model.parameters(), lr=hyperparameter_choices["learning_rate"]
             )
 
             checkpoint = TrainingArguments(output_dir=output_dir)
@@ -94,9 +95,9 @@ class BaseTrainer(Trainer):
             global_step = 0
 
         # Train the model
-        batch_size = self.hyperparameter_choices.get("batch_size", 32)
+        batch_size = hyperparameter_choices.get("batch_size", 32)
         train_data_loader = DataLoader(
-            self.training_datasets["train"], batch_size=batch_size, shuffle=True
+            training_datasets, batch_size=batch_size, shuffle=True
         )
 
         for epoch in range(start_epoch, checkpoint.num_train_epochs):

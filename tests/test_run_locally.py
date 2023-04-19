@@ -1,19 +1,14 @@
 """Testing integration of components locally."""
 
 import os
-import sys
+import tempfile
 
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../prompt2model"))
-)
-
-# pylint: disable=wrong-import-position
-from run_locally import main  # noqa E402
-
-# pylint: enable=wrong-import-position
+from prompt2model.run_locally import run_skeleton
 
 
 def test_integration():
     """Check that a end-to-end run with a single prompt doesn't throw an error."""
     prompt = ["Test prompt"]
-    main(prompt, "")
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        metrics_output_path = os.path.join(tmpdirname, "metrics.json")
+        run_skeleton(prompt, metrics_output_path)

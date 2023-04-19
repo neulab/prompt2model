@@ -1,2 +1,5 @@
 """Import Trainer classes."""
-from trainer.base import BaseTrainer, Trainer  # noqa: F401
+from prompt2model.trainer.base import Trainer
+from prompt2model.trainer.mock import MockTrainer
+
+__all__ = ("MockTrainer", "Trainer")

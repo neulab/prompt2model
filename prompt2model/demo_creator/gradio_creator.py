@@ -2,7 +2,8 @@
 
 import gradio as gr
 import transformers
-from prompt_parser.base import PromptSpec
+
+from prompt2model.prompt_parser.base import PromptSpec
 
 
 def create_gradio(

@@ -1,3 +1,5 @@
 """Import model selector classes."""
-from model_selector.base import DefaultParameterSelector  # noqa: F401
-from model_selector.base import ModelSelector  # noqa: F401
+from prompt2model.model_selector.base import ModelSelector
+from prompt2model.model_selector.mock import MockModelSelector
+
+__all__ = ("MockModelSelector", "ModelSelector")

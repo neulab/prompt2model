@@ -18,18 +18,16 @@ class PromptSpec(ABC):
     """Parse and store structured information about the prompt."""
 
     @abstractmethod
-    def parse_prompt(self, prompt: str) -> None:
-        """Parse the prompt and store the structured information."""
+    def parse_from_prompt(self, prompt: str) -> None:
+        """Populate this class by parsing a prompt."""
 
 
-class AllGenerationSpec:
-    """Parse and store structured information about the prompt."""
+class DefaultSpec(PromptSpec):
+    """Use explicitly-set default settings."""
 
-    def __init__(self):
+    def __init__(self, task_type: TaskType):
         """By default, assume that every task is a text generation task."""
-        self.task_type: TaskType = TaskType.TEXT_GENERATION
+        self.task_type = task_type
 
-    def parse_prompt(self, prompt: str) -> None:
-        """Assume that every task is text generation."""
-        _ = prompt
-        self.task_type = TaskType.TEXT_GENERATION
+    def parse_from_prompt(self, prompt: str) -> None:
+        """Don't parse anything."""

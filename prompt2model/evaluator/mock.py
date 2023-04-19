@@ -1,21 +1,21 @@
-"""An interface for automatic model evaluation."""
-
+"""A dummy evaluator for testing purposes."""
 from __future__ import annotations  # noqa FI58
 
-import json
-from abc import ABC, abstractmethod
 from typing import Any
 
 import datasets
 
+from prompt2model.evaluator.base import Evaluator
 from prompt2model.model_executor import ModelOutput
 from prompt2model.prompt_parser import PromptSpec
 
 
-class Evaluator(ABC):
-    """An interface for automatic model evaluation."""
+class MockEvaluator(Evaluator):
+    """A dummy evaluator that always returns the same metric value."""
 
-    @abstractmethod
+    def __init__(self) -> None:
+        """Initialize the evaluation setting."""
+
     def evaluate_model(
         self,
         dataset: datasets.Dataset,
@@ -24,26 +24,16 @@ class Evaluator(ABC):
         metrics: list[datasets.Metric] | None = None,
         prompt_spec: PromptSpec | None = None,
     ) -> dict[str, Any]:
-        """Evaluate a model on a test set..
+        """Return empty metrics dictionary.
 
         Args:
             dataset: The dataset to evaluate metrics on.
             gt_column: The dataset column to use as ground truth.
-            predictions: Model outputs to evaluate.
+            predictions: Corresponding model outputs to evaluate.
             metrics: (Optional) The metrics to use.
             prompt_spec: (Optional) A PromptSpec to infer the metrics from.
 
         Returns:
-            A dictionary of metric values to return.
+            An empty dictionary (for testing purposes).
         """
-
-    def write_metrics(self, metrics_dict: dict[str, Any], metrics_path: str) -> None:
-        """This function writes metrics to a file.
-
-        Args:
-            metrics_dict: A dictionary of metrics to write.
-            metrics_path: The file path to write metrics to.
-
-        """
-        with open(metrics_path, "w") as f:
-            json.dump(metrics_dict, f)
+        return {}
