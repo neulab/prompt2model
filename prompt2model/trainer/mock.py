@@ -11,8 +11,13 @@ from prompt2model.trainer import Trainer
 class MockTrainer(Trainer):
     """This dummy trainer does not actually train anything."""
 
-    def __init__(self):
-        """Initialize a dummy BERT-based trainer."""
+    def __init__(self, retrieved_model: transformers.PreTrainedModel):
+        """Initialize a dummy model trainer.
+
+        Args:
+            retrieved_model: A model to use for training.
+        """
+        self.model = retrieved_model
         self.wandb = None
 
     def set_up_weights_and_biases(self) -> None:
@@ -25,14 +30,13 @@ class MockTrainer(Trainer):
         training_datasets: list[datasets.Dataset],
         hyperparameter_choices: dict[str, Any],
     ) -> transformers.PreTrainedModel:
-        """This dummy trainer returns an untrained BERT-base model.
+        """This dummy trainer returns the given model without any training.
 
         Args:
             training_datasets: A list of training datasets.
             hyperparameter_choices: A dictionary of hyperparameter choices.
 
         Returns:
-            A trained HuggingFace model.
+            A HuggingFace model.
         """
-        model = transformers.BertModel.from_pretrained("bert-base-uncased")
-        return model
+        return self.model

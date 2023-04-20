@@ -24,7 +24,6 @@ class MockParamSelector(ParamSelector):
     def _example_hyperparameter_choices(self) -> dict[str, Any]:
         """Example hyperparameters (for testing only)."""
         return {
-            "model": "t5-base",
             "optimizer": "AdamW",
             "learning_rate": 1e-4,
         }
