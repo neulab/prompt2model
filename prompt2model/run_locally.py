@@ -78,10 +78,10 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
     testing = generated_data[DatasetSplit.TEST]
     all_training = retrieved_training + [generated_training]
 
-    selector = MockModelRetriever()
-    retrieved_model = selector.retrieve(prompt_spec)
+    model_retriever = MockModelRetriever("cardiffnlp/twitter-roberta-base-sentiment")
+    retrieved_model_id = model_retriever.retrieve(prompt_spec)
 
-    trainer = MockTrainer(retrieved_model)
+    trainer = MockTrainer(retrieved_model_id)
     selector = MockParamSelector(trainer)
     model = selector.select_from_hyperparameters(all_training, validation, {})
 

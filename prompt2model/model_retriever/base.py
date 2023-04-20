@@ -2,8 +2,6 @@
 
 from abc import ABC, abstractmethod
 
-import transformers
-
 from prompt2model.prompt_parser.base import PromptSpec
 
 
@@ -15,13 +13,12 @@ class ModelRetriever(ABC):
     def retrieve(
         self,
         prompt: PromptSpec,
-    ) -> transformers.PreTrainedModel:
+    ) -> str:
         """Retrieve relevant models from HuggingFace.
 
         Args:
             prompt: A prompt to use to select relevant models.
 
         Return:
-            A relevant model.
-
+            A relevant model's HuggingFace ID string.
         """

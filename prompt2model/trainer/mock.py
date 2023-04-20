@@ -3,7 +3,7 @@
 from typing import Any
 
 import datasets
-import transformers
+from transformers import AutoModel, AutoTokenizer, PreTrainedModel
 
 from prompt2model.trainer import Trainer
 
@@ -11,13 +11,14 @@ from prompt2model.trainer import Trainer
 class MockTrainer(Trainer):
     """This dummy trainer does not actually train anything."""
 
-    def __init__(self, pretrained_model: transformers.PreTrainedModel):
+    def __init__(self, pretrained_model_id: str):
         """Initialize a dummy model trainer.
 
         Args:
-            pretrained_model: A model to use for training.
+            pretrained_model_id: A HuggingFace model ID to use for training.
         """
-        self.model = pretrained_model
+        self.model = AutoModel.from_pretrained(pretrained_model_id)
+        self.tokenizer = AutoModel.from_pretrained(pretrained_model_id)
         self.wandb = None
 
     def set_up_weights_and_biases(self) -> None:
@@ -29,7 +30,7 @@ class MockTrainer(Trainer):
         self,
         training_datasets: list[datasets.Dataset],
         hyperparameter_choices: dict[str, Any],
-    ) -> transformers.PreTrainedModel:
+    ) -> PreTrainedModel:
         """This dummy trainer returns the given model without any training.
 
         Args:

@@ -1,7 +1,5 @@
 """An interface for model selection."""
 
-from transformers import AutoModel, PreTrainedModel
-
 from prompt2model.model_retriever import ModelRetriever
 from prompt2model.prompt_parser.base import PromptSpec
 
@@ -9,19 +7,20 @@ from prompt2model.prompt_parser.base import PromptSpec
 class MockModelRetriever(ModelRetriever):
     """Select a fixed model from among a set of hyperparameter choices."""
 
+    def __init__(self, fixed_model_id: str):
+        """Initialize a dummy model that retrieves a fixed model ID."""
+        self.fixed_model_id = fixed_model_id
+
     def retrieve(
         self,
         prompt: PromptSpec,
-    ) -> PreTrainedModel:
+    ) -> str:
         """Select an arbitrary, fixed model from HuggingFace.
 
         Args:
             prompt: A prompt to use to select relevant models.
 
         Return:
-            A relevant model (here, we return an arbitrary, fixed model).
+            A relevant model's HuggingFace ID string.
         """
-        example_model = AutoModel.from_pretrained(
-            "cardiffnlp/twitter-roberta-base-sentiment"
-        )
-        return example_model
+        return self.fixed_model_id
