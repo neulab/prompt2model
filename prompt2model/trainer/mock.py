@@ -3,7 +3,7 @@
 from typing import Any
 
 import datasets
-from transformers import AutoModel, AutoTokenizer, PreTrainedModel
+from transformers import AutoModel, PreTrainedModel
 
 from prompt2model.trainer import Trainer
 
