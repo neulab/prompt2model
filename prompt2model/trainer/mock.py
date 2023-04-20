@@ -3,7 +3,8 @@
 from typing import Any
 
 import datasets
-from transformers import AutoModel, AutoTokenizer, PreTrainedModel
+from transformers import PreTrainedModel  # noqa
+from transformers import AutoModel, AutoTokenizer, PreTrainedTokenizer
 
 from prompt2model.trainer import Trainer
 
@@ -18,7 +19,7 @@ class MockTrainer(Trainer):
             pretrained_model_id: A HuggingFace model ID to use for training.
         """
         self.model = AutoModel.from_pretrained(pretrained_model_id)
-        self.tokenizer = AutoModel.from_pretrained(pretrained_model_id)
+        self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_id)
         self.wandb = None
 
     def set_up_weights_and_biases(self) -> None:
@@ -30,7 +31,7 @@ class MockTrainer(Trainer):
         self,
         training_datasets: list[datasets.Dataset],
         hyperparameter_choices: dict[str, Any],
-    ) -> PreTrainedModel:
+    ) -> tuple[PreTrainedModel, PreTrainedTokenizer]:
         """This dummy trainer returns the given model without any training.
 
         Args:
@@ -38,6 +39,6 @@ class MockTrainer(Trainer):
             hyperparameter_choices: A dictionary of hyperparameter choices.
 
         Returns:
-            A HuggingFace model.
+            A HuggingFace model and tokenizer.
         """
-        return self.model
+        return self.model, self.tokenizer
