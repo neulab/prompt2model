@@ -20,11 +20,13 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
 ]
 dependencies = [
-    "transformers==4.24.0",
     "datasets==2.11.0",
-    "pandas==1.5.3",
     "gradio==3.24.1",
+    "pandas==1.5.3",
+    "torch==2.0.0",
+    "transformers==4.24.0",
 ]
+
 dynamic = ["version"]
 
 [project.optional-dependencies]
