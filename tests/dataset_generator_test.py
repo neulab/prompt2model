@@ -29,28 +29,25 @@ def test_generate_datasets():
     with tempfile.TemporaryDirectory() as tmpdirname:
         output_dir = os.path.join(tmpdirname, "output")
         dataset_dict = dataset_generator.generate_datasets(
-            prompt_spec, num_examples, output_dir
+            prompt_spec=prompt_spec, num_examples=num_examples, output_dir=output_dir
         )
 
-        # Check that the dataset dict has the expected keys.
         assert set(dataset_dict.keys()) == {"train", "val", "test"}
-
-        # Check that the generated datasets have the expected number of examples.
         for split, num in num_examples.items():
-            assert len(dataset_dict[split.value]) == num
-
-        # Check that the generated datasets have the expected columns.
+            assert (
+                len(dataset_dict[split.value]) == num
+            ), f"Expected {num} examples for {split.value} split, but \
+                got {len(dataset_dict[split.value])}"
         expected_columns = {"input_col", "output_col"}
         for dataset in dataset_dict.values():
-            assert set(dataset.column_names) == expected_columns
-
-        # Check that the generated datasets have the expected empty values.
-        expected_values = pd.Series("", index=expected_columns)
-        for dataset in dataset_dict.values():
+            assert (
+                set(dataset.column_names) == expected_columns
+            ), f"Expected columns {expected_columns}, but got {dataset.column_names}"
+            expected_values = pd.Series("", index=expected_columns)
             for example in dataset:
-                assert example == expected_values.to_dict()
-
-        # Check that the dataset dict is saved to the output directory.
+                assert (
+                    example == expected_values.to_dict()
+                ), f"Expected example {expected_values.to_dict()}, but got {example}"
         assert os.path.isdir(output_dir)
         assert set(os.listdir(output_dir)) == {
             "dataset_dict.json",
@@ -80,9 +77,10 @@ def test_generate_examples():
     assert len(dataset) == num_examples
 
     # Check that the generated dataset has the expected columns.
-    assert set(dataset.column_names) == {"input_col", "output_col"}
+    expected_columns = {"input_col", "output_col"}
+    assert set(dataset.column_names) == expected_columns
 
     # Check that each example has the expected empty values.
-    expected_values = pd.Series("", index=dataset.column_names)
+    expected_values = pd.Series("", index=expected_columns)
     for example in dataset:
         assert example == expected_values.to_dict()
