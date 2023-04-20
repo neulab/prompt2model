@@ -7,7 +7,10 @@ from prompt2model.dataset_retriever import MockRetriever
 from prompt2model.demo_creator.gradio_creator import create_gradio
 from prompt2model.evaluator import MockEvaluator
 from prompt2model.model_executor import MockModelExecutor
+<<<<<<< HEAD
 from prompt2model.model_retriever import MockModelRetriever
+=======
+>>>>>>> vijay_rename_model_selector_param_selector
 from prompt2model.param_selector import MockParamSelector
 from prompt2model.prompt_parser import DefaultSpec, PromptSpec, TaskType
 from prompt2model.trainer import MockTrainer
