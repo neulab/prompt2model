@@ -1,0 +1,27 @@
+"""An interface for model selection."""
+
+from abc import ABC, abstractmethod
+
+import transformers
+
+from prompt2model.prompt_parser.base import PromptSpec
+
+
+# pylint: disable=too-few-public-methods
+class ModelRetriever(ABC):
+    """Select a good model from among a set of hyperparameter choices."""
+
+    @abstractmethod
+    def retrieve(
+        self,
+        prompt: PromptSpec,
+    ) -> transformers.PreTrainedModel:
+        """Retrieve relevant models from HuggingFace.
+
+        Args:
+            prompt: A prompt to use to select relevant models.
+
+        Return:
+            A relevant model.
+
+        """
