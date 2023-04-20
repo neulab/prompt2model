@@ -72,9 +72,9 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
         DatasetSplit.TEST: 5,
     }
     generated_data = dict(generator.generate_datasets(prompt_spec, num_examples))
-    generated_training = generated_data[DatasetSplit.TRAIN]
-    validation = generated_data[DatasetSplit.VAL]
-    testing = generated_data[DatasetSplit.TEST]
+    generated_training = generated_data[DatasetSplit.TRAIN.value]
+    validation = generated_data[DatasetSplit.VAL.value]
+    testing = generated_data[DatasetSplit.TEST.value]
     all_training = retrieved_training + [generated_training]
 
     trainer = MockTrainer()

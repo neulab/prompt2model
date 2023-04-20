@@ -25,6 +25,7 @@ dependencies = [
     "pandas==1.5.3",
     "gradio==3.24.1",
     "torch==2.0.0",
+    "pytest==7.3.1",
 ]
 dynamic = ["version"]
 
@@ -39,6 +40,7 @@ include = [
 ]
 exclude = [
     "*_test.py",
+    "test_*.py",
 ]
 only-packages = true
 

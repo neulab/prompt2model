@@ -57,7 +57,7 @@ class DatasetGenerator(ABC):
         """
         dataset_dict = datasets.DatasetDict(
             {
-                split: self.generate_examples(prompt_spec, num, split=split)
+                split.value: self.generate_examples(prompt_spec, num, split=split)
                 for split, num in num_examples.items()
             }
         )
