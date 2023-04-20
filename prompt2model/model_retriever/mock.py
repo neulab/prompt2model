@@ -8,7 +8,7 @@ class MockModelRetriever(ModelRetriever):
     """Select a fixed model from among a set of hyperparameter choices."""
 
     def __init__(self, fixed_model_id: str):
-        """Initialize a dummy model that retrieves a fixed model ID."""
+        """Initialize a dummy retriever that returns a fixed model ID."""
         self.fixed_model_id = fixed_model_id
 
     def retrieve(
