@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from prompt2model.prompt_parser.base import PromptSpec
+from prompt2model.prompt_parser import PromptSpec
 
 
 # pylint: disable=too-few-public-methods

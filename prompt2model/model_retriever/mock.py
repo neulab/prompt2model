@@ -1,7 +1,7 @@
 """An interface for model selection."""
 
 from prompt2model.model_retriever import ModelRetriever
-from prompt2model.prompt_parser.base import PromptSpec
+from prompt2model.prompt_parser import PromptSpec
 
 
 class MockModelRetriever(ModelRetriever):
