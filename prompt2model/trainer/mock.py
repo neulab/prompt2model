@@ -11,13 +11,13 @@ from prompt2model.trainer import Trainer
 class MockTrainer(Trainer):
     """This dummy trainer does not actually train anything."""
 
-    def __init__(self, retrieved_model: transformers.PreTrainedModel):
+    def __init__(self, pretrained_model: transformers.PreTrainedModel):
         """Initialize a dummy model trainer.
 
         Args:
-            retrieved_model: A model to use for training.
+            pretrained_model: A model to use for training.
         """
-        self.model = retrieved_model
+        self.model = pretrained_model
         self.wandb = None
 
     def set_up_weights_and_biases(self) -> None:
