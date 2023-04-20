@@ -18,7 +18,6 @@ class MockTrainer(Trainer):
             pretrained_model_id: A HuggingFace model ID to use for training.
         """
         self.model = AutoModel.from_pretrained(pretrained_model_id)
-        self.tokenizer = AutoModel.from_pretrained(pretrained_model_id)
         self.wandb = None
 
     def set_up_weights_and_biases(self) -> None:
