@@ -3,7 +3,8 @@
 from typing import Any
 
 import datasets
-import transformers
+from transformers import PreTrainedModel  # noqa
+from transformers import AutoModel, AutoTokenizer, PreTrainedTokenizer
 
 from prompt2model.trainer import Trainer
 
@@ -11,8 +12,14 @@ from prompt2model.trainer import Trainer
 class MockTrainer(Trainer):
     """This dummy trainer does not actually train anything."""
 
-    def __init__(self):
-        """Initialize a dummy BERT-based trainer."""
+    def __init__(self, pretrained_model_id: str):
+        """Initialize a dummy model trainer.
+
+        Args:
+            pretrained_model_id: A HuggingFace model ID to use for training.
+        """
+        self.model = AutoModel.from_pretrained(pretrained_model_id)
+        self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_id)
         self.wandb = None
 
     def set_up_weights_and_biases(self) -> None:
@@ -24,15 +31,14 @@ class MockTrainer(Trainer):
         self,
         training_datasets: list[datasets.Dataset],
         hyperparameter_choices: dict[str, Any],
-    ) -> transformers.PreTrainedModel:
-        """This dummy trainer returns an untrained BERT-base model.
+    ) -> tuple[PreTrainedModel, PreTrainedTokenizer]:
+        """This dummy trainer returns the given model without any training.
 
         Args:
             training_datasets: A list of training datasets.
             hyperparameter_choices: A dictionary of hyperparameter choices.
 
         Returns:
-            A trained HuggingFace model.
+            A HuggingFace model and tokenizer.
         """
-        model = transformers.BertModel.from_pretrained("bert-base-uncased")
-        return model
+        return self.model, self.tokenizer

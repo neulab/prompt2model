@@ -33,7 +33,7 @@ class MockParamSelector(ParamSelector):
         training_sets: list[datasets.Dataset],
         validation: datasets.Dataset,
         hyperparameters: dict[str, list[Any]],
-    ) -> transformers.PreTrainedModel:
+    ) -> tuple[transformers.PreTrainedModel, transformers.PreTrainedTokenizer]:
         """Use a pre-defined default set of hyperparameters.
 
         Args:
@@ -43,7 +43,7 @@ class MockParamSelector(ParamSelector):
             hyperparameters: (Optional) A dictionary of hyperparameter choices.
 
         Return:
-            A model trained using default hyperparameters.
+            A model and tokenizer (trained using default hyperparameters).
         """
         single_model = self.trainer.train_model(
             training_sets, self._example_hyperparameter_choices()
@@ -55,7 +55,7 @@ class MockParamSelector(ParamSelector):
         training_sets: list[datasets.Dataset],
         validation: datasets.Dataset,
         prompt_spec: PromptSpec,
-    ) -> transformers.PreTrainedModel:
+    ) -> tuple[transformers.PreTrainedModel, transformers.PreTrainedTokenizer]:
         """The MockParamSelector cannot infer hyperparameters from the spec.
 
         Args:
