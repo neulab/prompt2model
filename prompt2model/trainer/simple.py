@@ -4,7 +4,7 @@ from typing import Any
 
 import datasets
 import transformers
-from transformers import AutoModel, TrainingArguments, Trainer
+from transformers import AutoModel, TrainingArguments
 
 from prompt2model.trainer import Trainer
 
@@ -28,7 +28,6 @@ class SimpleTrainer(Trainer):
         Returns:
             A trained HuggingFace model.
         """
-
         # Extract hyperparameters
         batch_size = hyperparameter_choices["batch_size"]
         num_epochs = hyperparameter_choices["num_epochs"]
@@ -36,17 +35,20 @@ class SimpleTrainer(Trainer):
         weight_decay = hyperparameter_choices["weight_decay"]
 
         # Concatenate all training datasets
-        #! Why we need a list of datasets? I guess currently in our project, we
-        #! the first dataset is retrieved form `DatasetRetriever`, the scond is
-        #! from LLM's generation. At least, they should have a shared target
-        #! like 3-class classificaton. But could we concatenate them up in the
-        #! main pipeline into a single dataset, then pass it in?
+
+        # Why we need a list of datasets? I guess currently in our project, we
+        # the first dataset is retrieved form `DatasetRetriever`, the scond is
+        # from LLM's generation. At least, they should have a shared target
+        # like 3-class classificaton. But could we concatenate them up in the
+        # main pipeline into a single dataset, then pass it in?
         concatenated_dataset = datasets.concatenate_datasets(training_datasets)
 
         # Clear all parameters in the final layer and retrain it
         model = AutoModel.from_pretrained(self.model.base_model_prefix)
         model.classifier = transformers.Identity()
-        model.classifier.out_proj = transformers.Linear(model.config.hidden_size, self.num_labels)
+        model.classifier.out_proj = transformers.Linear(
+            model.config.hidden_size, self.num_labels
+        )
 
         # Set up training arguments and trainer
         training_args = TrainingArguments(
@@ -58,7 +60,7 @@ class SimpleTrainer(Trainer):
             weight_decay=weight_decay,
             push_to_hub=False,
         )
-        trainer = Trainer(
+        trainer = transformers.Trainer(
             model=model,
             args=training_args,
             train_dataset=concatenated_dataset,
