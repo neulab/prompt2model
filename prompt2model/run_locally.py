@@ -83,8 +83,10 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
 
     trainer = MockTrainer(retrieved_model_id)
     selector = MockParamSelector(trainer)
-    model = selector.select_from_hyperparameters(all_training, validation, {})
-    
+    model, tokenizer = selector.select_from_hyperparameters(
+        all_training, validation, {}
+    )
+
     model_executor = MockModelExecutor()
     predictions = model_executor.make_predictions(
         model, tokenizer, testing, "input_col"
