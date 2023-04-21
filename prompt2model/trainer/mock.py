@@ -15,7 +15,7 @@ class MockTrainer(Trainer):
         """Initialize a dummy model trainer.
 
         Args:
-            pretrained_model_name: A HuggingFace model ID to use for training.
+            pretrained_model_name: A HuggingFace model name.
         """
         self.model = AutoModel.from_pretrained(pretrained_model_name)
         self.wandb = None

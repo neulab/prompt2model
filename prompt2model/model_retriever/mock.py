@@ -25,6 +25,6 @@ class MockModelRetriever(ModelRetriever):
             prompt: A prompt to use to select relevant models.
 
         Return:
-            A relevant model's HuggingFace ID string.
+            A relevant model's HuggingFace model name.
         """
         return self.pretrained_model_name
