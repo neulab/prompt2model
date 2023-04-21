@@ -6,7 +6,7 @@ from typing import Any
 import datasets
 import transformers
 from torch.utils.data import DataLoader
-from transformers import HfArgumentParser, TrainingArguments
+from transformers import HfArgumentParser, TrainingArguments, AutoModel, AutoTokenizer, PreTrainedTokenizer
 
 from prompt2model.trainer import Trainer
 
@@ -14,8 +14,14 @@ from prompt2model.trainer import Trainer
 class SimpleTrainer(Trainer):
     """This is the simple trainer does not actually train anything."""
 
-    def __init__(self):
-        """Initialize a dummy BERT-based trainer."""
+    def __init__(self, pretrained_model_id: str):
+        """Initialize a simple model trainer.
+
+        Args:
+            pretrained_model_id: A HuggingFace model ID to use for training.
+        """
+        self.model = AutoModel.from_pretrained(pretrained_model_id)
+        self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_id)
         self.wandb = None
 
     def set_up_weights_and_biases(self) -> None:

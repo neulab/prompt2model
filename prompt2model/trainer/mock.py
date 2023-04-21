@@ -41,4 +41,5 @@ class MockTrainer(Trainer):
         Returns:
             A HuggingFace model and tokenizer.
         """
+        _ = training_datasets, hyperparameter_choices
         return self.model, self.tokenizer
