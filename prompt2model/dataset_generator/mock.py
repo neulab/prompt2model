@@ -25,10 +25,9 @@ class MockDatasetGenerator(DatasetGenerator):
 
         Returns:
             A single dataset split.
-
         """
         _ = prompt_spec, split  # suppress unused variable warnings
-        col_values = ["" for i in range(num_examples)]
+        col_values = [""] * num_examples
         # Construct empty-valued dataframe with length matching num_examples.
         df = pd.DataFrame.from_dict({"input_col": col_values, "output_col": col_values})
         return datasets.Dataset.from_pandas(df)

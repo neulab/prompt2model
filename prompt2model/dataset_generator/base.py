@@ -33,11 +33,10 @@ class DatasetGenerator(ABC):
         Args:
             prompt_spec: A prompt spec (containing a system description).
             num_examples: Number of examples in split.
-            split: Name of dataset split to generate.)
+            split: Name of dataset split to generate.
 
         Returns:
             A single dataset split.
-
         """
 
     def generate_datasets(
