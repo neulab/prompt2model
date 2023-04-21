@@ -1,11 +1,10 @@
 """This module provides a simple trainer."""
 
-from pathlib import Path
 from typing import Any
 
 import datasets
 import transformers
-from torch.utils.data import ConcatDataset, DataLoader
+from transformers import AutoModel, TrainingArguments, Trainer
 
 from prompt2model.trainer import Trainer
 
@@ -20,9 +19,7 @@ class SimpleTrainer(Trainer):
     ) -> transformers.PreTrainedModel:
         """Train a sequence classification model.
 
-        Use the self.model as a pretrained feature extractor
-        retrain the final layer from scratch to To solve the
-        inconsistency of pretraining and finetuning.
+        Clear all parameters in the final layer and retrain it.
 
         Args:
             training_datasets: A list of training datasets.
@@ -36,43 +33,40 @@ class SimpleTrainer(Trainer):
         batch_size = hyperparameter_choices["batch_size"]
         num_epochs = hyperparameter_choices["num_epochs"]
         learning_rate = hyperparameter_choices["learning_rate"]
-        device = hyperparameter_choices["device"]
+        weight_decay = hyperparameter_choices["weight_decay"]
 
         # Concatenate all training datasets
-        concatenated_dataset = ConcatDataset(training_datasets)
-
-        # Create dataloader
-        train_dataloader = DataLoader(concatenated_dataset, batch_size=batch_size, shuffle=True)
+        #! Why we need a list of datasets? I guess currently in our project, we
+        #! the first dataset is retrieved form `DatasetRetriever`, the scond is
+        #! from LLM's generation. At least, they should have a shared target
+        #! like 3-class classificaton. But could we concatenate them up in the
+        #! main pipeline into a single dataset, then pass it in?
+        concatenated_dataset = datasets.concatenate_datasets(training_datasets)
 
         # Clear all parameters in the final layer and retrain it
-        self.model.classifier = transformers.Identity()
-        self.model.classifier.out_proj = transformers.Linear(self.model.config.hidden_size, self.model.config.num_labels)
+        model = AutoModel.from_pretrained(self.model.base_model_prefix)
+        model.classifier = transformers.Identity()
+        model.classifier.out_proj = transformers.Linear(model.config.hidden_size, self.num_labels)
 
-        # Set up optimizer and scheduler
-        optimizer = transformers.AdamW(self.model.parameters(), lr=learning_rate)
-        scheduler = transformers.get_linear_schedule_with_warmup(
-            optimizer,
-            num_warmup_steps=0,
-            num_training_steps=len(train_dataloader) * num_epochs,
+        # Set up training arguments and trainer
+        training_args = TrainingArguments(
+            output_dir="./results",
+            evaluation_strategy="epoch",
+            learning_rate=learning_rate,
+            per_device_train_batch_size=batch_size,
+            num_train_epochs=num_epochs,
+            weight_decay=weight_decay,
+            push_to_hub=False,
+        )
+        trainer = Trainer(
+            model=model,
+            args=training_args,
+            train_dataset=concatenated_dataset,
+            tokenizer=self.tokenizer,
         )
 
-        # Set device and precision
-        self.model.to(device)
-        self.model.train()
-        transformers.set_seed(42)
-
         # Train the model
-        for epoch in range(num_epochs):
-            for step, batch in enumerate(train_dataloader):
-                batch = {k: v.to(device) for k, v in batch.items()}
-
-                outputs = self.model(**batch)
-                loss = outputs.loss
-                loss.backward()
-
-                optimizer.step()
-                scheduler.step()
-                optimizer.zero_grad()
+        trainer.train()
 
         # Return the trained model
-        return self.model
+        return trainer.model
