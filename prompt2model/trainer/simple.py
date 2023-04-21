@@ -14,14 +14,14 @@ from prompt2model.trainer import Trainer
 class SimpleTrainer(Trainer):
     """This is the simple trainer does not actually train anything."""
 
-    def __init__(self, pretrained_model_id: str):
+    def __init__(self, pretrained_model_name: str):
         """Initialize a simple model trainer.
 
         Args:
-            pretrained_model_id: A HuggingFace model ID to use for training.
+            pretrained_model_name: A HuggingFace model name to use for training.
         """
-        self.model = AutoModel.from_pretrained(pretrained_model_id)
-        self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_id)
+        self.model = AutoModel.from_pretrained(pretrained_model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name)
         self.wandb = None
 
     def set_up_weights_and_biases(self) -> None:
