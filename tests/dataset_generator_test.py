@@ -1,31 +1,30 @@
-"""Testing DatasetGenerator through DatasetGenerator."""
+"""Testing DatasetGenerator through SimpleDatsetGenerator."""
 
 import os
 import tempfile
 
-import pandas as pd
-
 from prompt2model.dataset_generator.base import DatasetSplit
-from prompt2model.dataset_generator.mock import MockDatasetGenerator
+from prompt2model.dataset_generator.simple import SimpleDatasetGenerator
 
 
 def test_generate_datasets():
-    """Test the `generate_datasets()` function of a `MockDatasetGenerator` object.
+    """Test the `generate_datasets()` function of a `SimpleDatasetGenerator` object.
 
-    This function generates datasets by creating a specified
-    number of examples foreach split of the data, which includes
-    train, validation, and test. It uses "None"as the prompt
+    This function generates movie comments datasets by creating a specified
+    number of examples for each split of the data, which includes
+    train, validation, and test. It uses a simple prompt
     specification and saves the generated datasets to a temporary
     directory. Afterward, the function checks whether the dataset
     dictionary contains all the expected keys, each split has the
     anticipated number of examples, every dataset has the anticipated
-    columns, each example has the expected empty values, and
-    whether the dataset dictionary is saved to the output directory.
+    columns, each example is not empty, and whether the dataset dictionary
+    is saved to the output directory.
     """
+    api_key = "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"
     prompt_spec = None
     num_examples = {DatasetSplit.TRAIN: 10, DatasetSplit.VAL: 5, DatasetSplit.TEST: 3}
 
-    dataset_generator = MockDatasetGenerator()
+    dataset_generator = SimpleDatasetGenerator(api_key)
     with tempfile.TemporaryDirectory() as tmpdirname:
         output_dir = os.path.join(tmpdirname, "output")
         dataset_dict = dataset_generator.generate_datasets(
@@ -43,11 +42,8 @@ def test_generate_datasets():
             assert (
                 set(dataset.column_names) == expected_columns
             ), f"Expected columns {expected_columns}, but got {dataset.column_names}"
-            expected_values = pd.Series("", index=expected_columns)
             for example in dataset:
-                assert (
-                    example == expected_values.to_dict()
-                ), f"Expected example {expected_values.to_dict()}, but got {example}"
+                assert example["output_col"] != "", "Expected example to not be empty"
         assert os.path.isdir(output_dir)
         assert set(os.listdir(output_dir)) == {
             "dataset_dict.json",
@@ -58,19 +54,20 @@ def test_generate_datasets():
 
 
 def test_generate_examples():
-    """Test the `generate_examples()` function of a `MockDatasetGenerator` object.
+    """Test the `generate_examples()` function of a `SimpleDatasetGenerator` object.
 
-    This function generates examples for a specified split of the data
-    (train, validation, or test) using "None" as the prompt specification
+    This function generates movie comments examples for a specified split of the data
+    (train, validation, or test) using a simple prompt specification
     and saves them to a temporary directory. Then, it checks that the
     generated dataset has the expected number of examples, the expected
-    columns, and each example has the expected empty values.
+    columns, and each example is not empty.
     """
+    api_key = "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"
     prompt_spec = None
-    num_examples = 10
+    num_examples = 3
     split = DatasetSplit.TRAIN
 
-    dataset_generator = MockDatasetGenerator()
+    dataset_generator = SimpleDatasetGenerator(api_key)
     dataset = dataset_generator.generate_examples(prompt_spec, num_examples, split)
 
     # Check that the generated dataset has the expected number of examples.
@@ -80,7 +77,6 @@ def test_generate_examples():
     expected_columns = {"input_col", "output_col"}
     assert set(dataset.column_names) == expected_columns
 
-    # Check that each example has the expected empty values.
-    expected_values = pd.Series("", index=expected_columns)
+    # Check that each example is not empty.
     for example in dataset:
-        assert example == expected_values.to_dict()
+        assert example["output_col"] != "", "Expected example to not be empty"

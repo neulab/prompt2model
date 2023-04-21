@@ -3,6 +3,7 @@
 import datasets
 import openai
 import pandas as pd
+from tqdm import tqdm
 
 from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
 from prompt2model.prompt_parser import PromptSpec
@@ -42,9 +43,9 @@ class SimpleDatasetGenerator(DatasetGenerator):
         prompt = "please give me some movie comments"
 
         examples = []  # type: list[str]
-        while len(examples) < num_examples:
+        for _ in tqdm(range(num_examples)):
             response = openai.Completion.create(
-                engine="davinci-2.0",
+                engine="davinci",
                 prompt=prompt,
                 max_tokens=1024,
                 n=1,
