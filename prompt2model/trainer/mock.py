@@ -11,13 +11,13 @@ from prompt2model.trainer import Trainer
 class MockTrainer(Trainer):
     """This dummy trainer does not actually train anything."""
 
-    def __init__(self, pretrained_model_id: str):
+    def __init__(self, pretrained_model_name: str):
         """Initialize a dummy model trainer.
 
         Args:
-            pretrained_model_id: A HuggingFace model ID to use for training.
+            pretrained_model_name: A HuggingFace model ID to use for training.
         """
-        self.model = AutoModel.from_pretrained(pretrained_model_id)
+        self.model = AutoModel.from_pretrained(pretrained_model_name)
         self.wandb = None
 
     def set_up_weights_and_biases(self) -> None:
@@ -37,6 +37,6 @@ class MockTrainer(Trainer):
             hyperparameter_choices: A dictionary of hyperparameter choices.
 
         Returns:
-            A HuggingFace model.
+            A pretrained HuggingFace model.
         """
         return self.model
