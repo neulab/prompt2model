@@ -19,7 +19,7 @@ class Trainer(ABC):
         self,
         training_datasets: list[datasets.Dataset],
         hyperparameter_choices: dict[str, Any],
-    ) -> transformers.PreTrainedModel:
+    ) -> tuple[transformers.PreTrainedModel, transformers.PreTrainedTokenizer]:
         """Train a model with the given hyperparameters and return it."""
 
 
