@@ -12,7 +12,7 @@ from prompt2model.prompt_parser.base import PromptSpec
 
 
 # pylint: disable=too-few-public-methods
-class ModelSelector(ABC):
+class ParamSelector(ABC):
     """Select a good model from among a set of hyperparameter choices."""
 
     @abstractmethod
@@ -21,7 +21,7 @@ class ModelSelector(ABC):
         training_sets: list[datasets.Dataset],
         validation: datasets.Dataset,
         hyperparameters: dict[str, list[Any]],
-    ) -> transformers.PreTrainedModel:
+    ) -> tuple[transformers.PreTrainedModel, transformers.PreTrainedTokenizer]:
         """Select a model among a set of hyperparameters (given or inferred).
 
         Args:
@@ -30,7 +30,7 @@ class ModelSelector(ABC):
             hyperparameters: A dictionary of hyperparameter choices.
 
         Return:
-            A model (with hyperparameters selected from the specified range).
+            A model and tokenizer (with hyperparameters from given range).
 
         """
 
@@ -40,7 +40,7 @@ class ModelSelector(ABC):
         training_sets: list[datasets.Dataset],
         validation: datasets.Dataset,
         prompt_spec: PromptSpec,
-    ) -> transformers.PreTrainedModel:
+    ) -> tuple[transformers.PreTrainedModel, transformers.PreTrainedTokenizer]:
         """Select a model among a set of hyperparameters (given or inferred).
 
         Args:
@@ -49,6 +49,6 @@ class ModelSelector(ABC):
             prompt_spec: A prompt to infer hyperparameters from.
 
         Return:
-            A model (with hyperparameters selected from the inferred range).
+            A model and tokenizer (with hyperparameters from inferred range).
 
         """

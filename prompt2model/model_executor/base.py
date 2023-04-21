@@ -32,6 +32,7 @@ class ModelExecutor(ABC):
     def make_predictions(
         self,
         model: transformers.PreTrainedModel,
+        tokenizer: transformers.PreTrainedTokenizer,
         test_set: datasets.Dataset,
         input_column: str,
     ) -> list[ModelOutput]:
@@ -39,6 +40,7 @@ class ModelExecutor(ABC):
 
         Args:
             model: The model to evaluate.
+            tokenizer: The model's associated tokenizer.
             test_set: The dataset to make predictions on.
             input_column: The dataset column to use as input to the model.
 

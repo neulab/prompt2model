@@ -7,7 +7,8 @@ from prompt2model.dataset_retriever import MockRetriever
 from prompt2model.demo_creator.gradio_creator import create_gradio
 from prompt2model.evaluator import MockEvaluator
 from prompt2model.model_executor import MockModelExecutor
-from prompt2model.model_selector import MockModelSelector
+from prompt2model.model_retriever import MockModelRetriever
+from prompt2model.param_selector import MockParamSelector
 from prompt2model.prompt_parser import DefaultSpec, PromptSpec, TaskType
 from prompt2model.trainer import MockTrainer
 
@@ -77,12 +78,19 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
     testing = generated_data[DatasetSplit.TEST.value]
     all_training = retrieved_training + [generated_training]
 
-    trainer = MockTrainer()
-    selector = MockModelSelector(trainer)
-    model = selector.select_from_hyperparameters(all_training, validation, {})
+    model_retriever = MockModelRetriever("cardiffnlp/twitter-roberta-base-sentiment")
+    retrieved_model_id = model_retriever.retrieve(prompt_spec)
+
+    trainer = MockTrainer(retrieved_model_id)
+    selector = MockParamSelector(trainer)
+    model, tokenizer = selector.select_from_hyperparameters(
+        all_training, validation, {}
+    )
 
     model_executor = MockModelExecutor()
-    predictions = model_executor.make_predictions(model, testing, "input_col")
+    predictions = model_executor.make_predictions(
+        model, tokenizer, testing, "input_col"
+    )
 
     evaluator = MockEvaluator()
     metrics_dict = evaluator.evaluate_model(
