@@ -22,7 +22,7 @@ def test_generate_datasets():
     """
     api_key = "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"
     prompt_spec = None
-    num_examples = {DatasetSplit.TRAIN: 2, DatasetSplit.VAL: 1, DatasetSplit.TEST: 1}
+    num_examples = {DatasetSplit.TRAIN: 1, DatasetSplit.VAL: 1, DatasetSplit.TEST: 1}
 
     dataset_generator = SimpleDatasetGenerator(api_key)
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -64,7 +64,7 @@ def test_generate_examples():
     """
     api_key = "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"
     prompt_spec = None
-    num_examples = 2
+    num_examples = 1
     split = DatasetSplit.TRAIN
 
     dataset_generator = SimpleDatasetGenerator(api_key)

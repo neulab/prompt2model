@@ -1,7 +1,7 @@
 """A simple dataset generator that uses OpenAI's GPT-3.5 API."""
 
 import openai
-from datasets import ClassLabel, Dataset, DatasetInfo
+from datasets import Dataset
 from tqdm import tqdm
 
 from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
@@ -62,34 +62,13 @@ class SimpleDatasetGenerator(DatasetGenerator):
         for _ in tqdm(range(num_examples)):
             comment_response = self.generate_example(prompt)
             comment = comment_response.choices[0].text.strip()
-            label_prompt = f"Here is a comment: {comment} If it's positive,\
-                please give me '1'. If it's negative, please give me '0'."
+            label_prompt = (
+                f"Here is a comment: {comment} If it's positive,"
+                + " please give me '1'. If it's negative, please give me '0'."
+            )
             label_response = self.generate_example(label_prompt)
-            pseudo_label = label_response.choices[0].text.strip()
+            pseudo_label = 1 if ("1" in label_response.choices[0].text.strip()) else 0
             examples.append(comment)
             pseudo_labels.append(pseudo_label)
 
-        dataset_info = DatasetInfo(
-            features={
-                "input_col": {
-                    "description": "Generated movie comments",
-                    "type": "string",
-                },
-                "label": {
-                    "description": "Label of the movie comment\
-                        (0: negative, 1: positive)",
-                    "type": ClassLabel(names=["negative", "positive"]),
-                },
-            },
-            split={
-                split: {
-                    "num_examples": num_examples,
-                    "description": f"{split} split generated using OpenAI's GPT-3 API",
-                },
-            },
-        )
-
-        return Dataset.from_dict(
-            {"input_col": examples, "output_col": pseudo_labels},
-            dataset_info=dataset_info,
-        )
+        return Dataset.from_dict({"input_col": examples, "output_col": pseudo_labels})
