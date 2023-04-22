@@ -60,9 +60,12 @@ class SimpleDatasetGenerator(DatasetGenerator):
         examples = []  # type: list[str]
         pseudo_labels = []  # type: list[int]
         for _ in tqdm(range(num_examples)):
-            response = self.generate_example(prompt)
-            comment = response.choices[0].text.strip()
-            pseudo_label = int(response.choices[1].text.strip())
+            comment_response = self.generate_example(prompt)
+            comment = comment_response.choices[0].text.strip()
+            label_prompt = f"Here is a comment: {comment} If it's positive,\
+                please give me '1'. If it's negative, please give me '0'."
+            label_response = self.generate_example(label_prompt)
+            pseudo_label = label_response.choices[0].text.strip()
             examples.append(comment)
             pseudo_labels.append(pseudo_label)
 
