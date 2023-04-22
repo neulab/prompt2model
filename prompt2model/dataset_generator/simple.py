@@ -1,8 +1,7 @@
 """A simple dataset generator that uses OpenAI's GPT-3.5 API."""
 
-import datasets
 import openai
-import pandas as pd
+from datasets import ClassLabel, Dataset, DatasetInfo
 from tqdm import tqdm
 
 from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
@@ -20,13 +19,31 @@ class SimpleDatasetGenerator(DatasetGenerator):
         """
         openai.api_key = api_key
 
+    def generate_example(self, prompt: str) -> openai.Completion:
+        """Generate an exmaple and its pseudo_label using OpenAI's GPT-3 API.
+
+        Args:
+            prompt: A prompt asking for an example and its pseudo_label.
+
+        Returns:
+            A response object containing a generated example and its pseudo_label.
+        """
+        response = openai.Completion.create(
+            engine="text-davinci-002",
+            prompt=prompt,
+            max_tokens=1024,
+            n=1,
+            stop=None,
+            temperature=0.5,
+        )
+        return response
 
     def generate_examples(
         self,
         prompt_spec: PromptSpec,
         num_examples: int,
         split: DatasetSplit,
-    ) -> datasets.Dataset:
+    ) -> Dataset:
         """Generate examples using GPT-3.5.
 
         Args:
@@ -41,33 +58,35 @@ class SimpleDatasetGenerator(DatasetGenerator):
         prompt = "please give me some movie comments"
 
         examples = []  # type: list[str]
-        pseudo_labels = []  # type: list[str]
+        pseudo_labels = []  # type: list[int]
         for _ in tqdm(range(num_examples)):
-            message_response = openai.Completion.create(
-                engine="text-davinci-003",
-                prompt=prompt,
-                max_tokens=1024,
-                n=1,
-                stop=None,
-                temperature=0.5,
-            )
-            comment = message_response.choices[0].text.strip()
+            response = self.generate_example(prompt)
+            comment = response.choices[0].text.strip()
+            pseudo_label = int(response.choices[1].text.strip())
             examples.append(comment)
-            label_response = openai.Completion.create(
-                engine="text-davinci-003",
-                prompt=f"Here is a comment: {comment} If\
-                    it's postive, please give me '1'. If\
-                    it's negtive, please give me '0'.",
-                max_tokens=1024,
-                n=1,
-                stop=None,
-                temperature=0.5,
-            )
-            pseudo_label = label_response.choices[0].text.strip()
             pseudo_labels.append(pseudo_label)
 
-        df = pd.DataFrame.from_dict(
-            {"input_col": examples, "output_col": pseudo_labels}
+        dataset_info = DatasetInfo(
+            features={
+                "input_col": {
+                    "description": "Generated movie comments",
+                    "type": "string",
+                },
+                "label": {
+                    "description": "Label of the movie comment\
+                        (0: negative, 1: positive)",
+                    "type": ClassLabel(names=["negative", "positive"]),
+                },
+            },
+            split={
+                split: {
+                    "num_examples": num_examples,
+                    "description": f"{split} split generated using OpenAI's GPT-3 API",
+                },
+            },
         )
 
-        return datasets.Dataset.from_pandas(df)
+        return Dataset.from_dict(
+            {"input_col": examples, "output_col": pseudo_labels},
+            dataset_info=dataset_info,
+        )
