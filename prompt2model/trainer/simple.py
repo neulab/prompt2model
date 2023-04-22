@@ -4,7 +4,9 @@ from typing import Any
 
 import datasets
 import transformers
-from transformers import AutoModel, TrainingArguments
+from transformers import AutoModel
+from transformers import Trainer as TransTrainer
+from transformers import TrainingArguments
 
 from prompt2model.trainer import Trainer
 
@@ -60,7 +62,7 @@ class SimpleTrainer(Trainer):
             weight_decay=weight_decay,
             push_to_hub=False,
         )
-        trainer = transformers.Trainer(
+        trainer = TransTrainer(
             model=model,
             args=training_args,
             train_dataset=concatenated_dataset,
