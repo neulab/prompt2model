@@ -1,7 +1,6 @@
 """A class for generating empty datasets (for testing purposes)."""
 
 import datasets
-import pandas as pd
 
 from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
 from prompt2model.prompt_parser import PromptSpec
@@ -29,5 +28,6 @@ class MockDatasetGenerator(DatasetGenerator):
         _ = prompt_spec, split  # suppress unused variable warnings
         col_values = [""] * num_examples
         # Construct empty-valued dataframe with length matching num_examples.
-        df = pd.DataFrame.from_dict({"input_col": col_values, "output_col": col_values})
-        return datasets.Dataset.from_pandas(df)
+        return datasets.Dataset.from_dict(
+            {"input_col": col_values, "output_col": col_values}
+        )
