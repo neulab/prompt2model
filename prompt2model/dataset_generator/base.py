@@ -4,6 +4,7 @@ from __future__ import annotations  # noqa FI58
 
 from abc import ABC, abstractmethod
 from enum import Enum
+from pathlib import Path
 
 import datasets
 
@@ -62,6 +63,8 @@ class DatasetGenerator(ABC):
         )
 
         if output_dir:
-            dataset_dict.save_to_disk(output_dir)
+            save_dir = Path(output_dir)
+            save_dir.mkdir(parents=True, exist_ok=True)
+            dataset_dict.save_to_disk(str(save_dir))
 
         return dataset_dict

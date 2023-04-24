@@ -20,9 +20,9 @@ def test_generate_datasets():
     columns, each example is not empty, and whether the dataset dictionary
     is saved to the output directory.
     """
-    api_key = "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"
+    api_key = "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"
     prompt_spec = None
-    num_examples = {DatasetSplit.TRAIN: 1, DatasetSplit.VAL: 1, DatasetSplit.TEST: 1}
+    num_examples = {DatasetSplit.TRAIN: 1, DatasetSplit.VAL: 1, DatasetSplit.TEST: 0}
 
     dataset_generator = SimpleDatasetGenerator(api_key)
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -62,7 +62,7 @@ def test_generate_examples():
     generated dataset has the expected number of examples, the expected
     columns, and each example is not empty.
     """
-    api_key = "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"
+    api_key = "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"
     prompt_spec = None
     num_examples = 1
     split = DatasetSplit.TRAIN
