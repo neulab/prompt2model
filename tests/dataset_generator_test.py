@@ -8,6 +8,8 @@ from unittest.mock import patch
 
 from prompt2model.dataset_generator.base import DatasetSplit
 from prompt2model.dataset_generator.classify import ClassifyTaskGenerator
+from prompt2model.dataset_generator.generate import GenerateTaskGenerator
+from prompt2model.dataset_generator.simple import OpenAIDatasetGenerator
 
 
 class MockCompletion:
@@ -54,19 +56,41 @@ def mock_example(prompt: str, content: dict) -> MockCompletion:
 
 
 mock_classify_example = partial(
-    mock_example, content={"comment": "This is a great movie!", "label": 1}
+    mock_example, content={"example": "This is a great movie!", "label": 1}
 )
 mock_generation_example = partial(
-    mock_example, content={"input": "我爱你", "out": "I love you."}
+    mock_example, content={"input": "我爱你", "output": "I love you."}
 )
 
 
-@patch(
-    "prompt2model.dataset_generator.classify.ClassifyTaskGenerator.generate_example",
-    side_effect=mock_classify_example,
-)
-def test_generate_datasets(mocked_generate_example):
-    """Test the `generate_datasets()` function of `ClassificationTaskGenerator`.
+def check_generate_examples(dataset_generator: OpenAIDatasetGenerator):
+    """Test the `generate_examples()` function of `OpenAIDatasetGenerator`.
+
+    This function generates a Dataset for a specified split of the data
+    (train, validation, or test) using a simple prompt specification
+    and saves them to a temporary directory. Then, it checks that the
+    generated dataset has the expected number of examples, the expected
+    columns, and each example is not empty.
+    """
+    prompt_spec = None
+    num_examples = 1
+    split = DatasetSplit.TRAIN
+    dataset = dataset_generator.generate_examples(prompt_spec, num_examples, split)
+
+    # Check that the generated dataset has the expected number of examples.
+    assert len(dataset) == num_examples
+
+    # Check that the generated dataset has the expected columns.
+    expected_columns = {"input_col", "output_col"}
+    assert set(dataset.column_names) == expected_columns
+
+    # Check that each example is not empty.
+    for example in dataset:
+        assert example["output_col"] != "", "Expected example to not be empty"
+
+
+def check_generate_datasets(dataset_generator: OpenAIDatasetGenerator):
+    """Test the `generate_datasets()` function of `OpenAIDatasetGenerator`.
 
     This function generates movie comments datasets by creating a specified
     number of examples for each split of the data, which includes
@@ -78,12 +102,8 @@ def test_generate_datasets(mocked_generate_example):
     columns, each example is not empty, and whether the dataset dictionary
     is saved to the output directory.
     """
-    api_key = None
     prompt_spec = None
     num_examples = {DatasetSplit.TRAIN: 1, DatasetSplit.VAL: 1, DatasetSplit.TEST: 0}
-
-    dataset_generator = ClassifyTaskGenerator(api_key)
-
     with tempfile.TemporaryDirectory() as tmpdirname:
         output_dir = os.path.join(tmpdirname, "output")
         dataset_dict = dataset_generator.generate_datasets(
@@ -112,34 +132,32 @@ def test_generate_datasets(mocked_generate_example):
         }
 
 
-@patch(
-    "prompt2model.dataset_generator.classify.ClassifyTaskGenerator.generate_example",
-    side_effect=mock_classify_example,
-)
-def test_generate_examples(mocked_generate_example):
-    """Test the `generate_examples()` function of `ClassificationTaskGenerator`.
+def test_Classification_and_Generation():
+    """Checks the classification functionality of the dataset generator.
 
-    This function generates movie comments examples for a specified split of the data
-    (train, validation, or test) using a simple prompt specification
-    and saves them to a temporary directory. Then, it checks that the
-    generated dataset has the expected number of examples, the expected
-    columns, and each example is not empty.
+    The function mocks the generate_example function.
+    It checks the generation of datasets and examples for classification.
     """
-    api_key = None
-    prompt_spec = None
-    num_examples = 1
-    split = DatasetSplit.TRAIN
 
-    dataset_generator = ClassifyTaskGenerator(api_key)
-    dataset = dataset_generator.generate_examples(prompt_spec, num_examples, split)
+    @patch(
+        "prompt2model.dataset_generator.simple.OpenAIDatasetGenerator.generate_example",
+        side_effect=mock_classify_example,
+    )
+    def check_classification(mocked_generate_example=None):
+        api_key = None
+        dataset_generator = ClassifyTaskGenerator(api_key)
+        check_generate_datasets(dataset_generator)
+        check_generate_examples(dataset_generator)
 
-    # Check that the generated dataset has the expected number of examples.
-    assert len(dataset) == num_examples
+    @patch(
+        "prompt2model.dataset_generator.simple.OpenAIDatasetGenerator.generate_example",
+        side_effect=mock_generation_example,
+    )
+    def check_generation(mocked_generate_example=None):
+        api_key = None
+        dataset_generator = GenerateTaskGenerator(api_key)
+        check_generate_datasets(dataset_generator)
+        check_generate_examples(dataset_generator)
 
-    # Check that the generated dataset has the expected columns.
-    expected_columns = {"input_col", "output_col"}
-    assert set(dataset.column_names) == expected_columns
-
-    # Check that each example is not empty.
-    for example in dataset:
-        assert example["output_col"] != "", "Expected example to not be empty"
+    check_classification()
+    check_generation()

@@ -49,21 +49,19 @@ class OpenAIDatasetGenerator(DatasetGenerator, ABC):
             response (openai.Completion): The response object returned by OpenAI API.
 
         Returns:
-            A tuple of (input, output), where:
-            - input is the generated input string extracted from the
-            response, or "" if not found.
-            - output is the generated output string int extracted from
-            the response, or "" if not found.
+            A tuple of (str, str), the first string is the input of generation task
+            or exmaple of classification task. The second string is the output of
+            generation task or label of classification task.
         """
 
     def generate_example(self, prompt: str) -> openai.Completion:
-        """Generate an exmaple and its pseudo_label using OpenAI's GPT-3 API.
+        """Generate a response using OpenAI's GPT-3 API.
 
         Args:
-            prompt: A prompt asking for an example and its pseudo_label.
+            prompt: A prompt asking for a response.
 
         Returns:
-            A response object containing a generated example and its pseudo_label.
+            A response object.
         """
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -87,7 +85,7 @@ class OpenAIDatasetGenerator(DatasetGenerator, ABC):
             split: Name of dataset split to generate.
 
         Returns:
-            A single dataset split with exmaples and pseudo_labels.
+            A single dataset.
         """
         _ = prompt_spec, split  # suppress unused variable warnings
         natrual_instruction = (
@@ -111,13 +109,13 @@ class OpenAIDatasetGenerator(DatasetGenerator, ABC):
                     self.current_api_call += 1
                 response = self.generate_example(prompt)
                 input_col, output_col = self.response_mining(response)
-                if (input != "") and (output_col != ""):
+                if (input_col != "") and (output_col != ""):
                     input_cols.append(input_col)
                     output_cols.append(output_col)
                     break
                 else:
                     print(
-                        "No input or output found",
+                        "No input_col or output_col found",
                         f"for {example_index + 1} th example",
                     )
 

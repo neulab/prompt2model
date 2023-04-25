@@ -8,7 +8,7 @@ from prompt2model.dataset_generator.simple import OpenAIDatasetGenerator
 
 
 class GenerateTaskGenerator(OpenAIDatasetGenerator):
-    """A dataset generator for examples and pesudo-label for classification tasks."""
+    """A dataset generator for input and output for generation tasks."""
 
     def generate_prompt(
         self, natrual_instruction: str, few_shot_examples: list[str] = None
@@ -63,7 +63,8 @@ class GenerateTaskGenerator(OpenAIDatasetGenerator):
             if input and output:
                 return input, output
             else:
-                raise ValueError("No examples or pseudo_labels found")
+                print("No input or output found")
+                raise ValueError("No input or output found")
         except (
             json.JSONDecodeError,
             IndexError,
@@ -71,5 +72,4 @@ class GenerateTaskGenerator(OpenAIDatasetGenerator):
             ValueError,
             AttributeError,
         ):
-            # Catch specific exceptions that you expect to occur
             return "", ""
