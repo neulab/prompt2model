@@ -3,8 +3,11 @@
 from abc import ABC, abstractmethod
 
 import openai
+from datasets import Dataset
+from tqdm import tqdm
 
-from prompt2model.dataset_generator.base import DatasetGenerator
+from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
+from prompt2model.prompt_parser import PromptSpec
 
 
 class OpenAIDatasetGenerator(DatasetGenerator, ABC):
@@ -38,14 +41,29 @@ class OpenAIDatasetGenerator(DatasetGenerator, ABC):
             The generated prompt string.
         """
 
+    @abstractmethod
+    def response_mining(self, response: openai.Completion) -> tuple[str, str]:
+        """Extracts the generated input and output from an OpenAI API response.
+
+        Args:
+            response (openai.Completion): The response object returned by OpenAI API.
+
+        Returns:
+            A tuple of (input, output), where:
+            - input is the generated input string extracted from the
+            response, or "" if not found.
+            - output is the generated output string int extracted from
+            the response, or "" if not found.
+        """
+
     def generate_example(self, prompt: str) -> openai.Completion:
         """Generate an exmaple and its pseudo_label using OpenAI's GPT-3 API.
 
         Args:
-            prompt: A prompt asking for expected fileds.
+            prompt: A prompt asking for an example and its pseudo_label.
 
         Returns:
-            A openai.Completion object.
+            A response object containing a generated example and its pseudo_label.
         """
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -55,17 +73,52 @@ class OpenAIDatasetGenerator(DatasetGenerator, ABC):
         )
         return response
 
-    @abstractmethod
-    def response_mining(self, response: openai.Completion) -> tuple[str, int]:
-        """Extracts expected fileds from an OpenAI API response.
+    def generate_examples(
+        self,
+        prompt_spec: PromptSpec,
+        num_examples: int,
+        split: DatasetSplit,
+    ) -> Dataset:
+        """Generate examples using GPT-3.5.
 
         Args:
-            response (openai.Completion): The response object returned by OpenAI API.
+            prompt_spec: A prompt specification.
+            num_examples: Number of examples in split.
+            split: Name of dataset split to generate.
 
         Returns:
-            A tuple of strings (generated_example, pseudo_label), where:
-            - generated_example is the generated example string extracted from the
-            response, or "" if not found.
-            - pseudo_label is the pseudo label int extracted from the response,
-            or -1 if not found.
+            A single dataset split with exmaples and pseudo_labels.
         """
+        _ = prompt_spec, split  # suppress unused variable warnings
+        natrual_instruction = (
+            ""  # Get it from prompt_spec, current hard-coded in generate_prompt
+        )
+        few_shot_examples = [
+            ""
+        ]  # Get it from prompt_spec, current hard-coded in generate_prompt
+        prompt = self.generate_prompt(natrual_instruction, few_shot_examples)
+
+        input_cols = []  # type: list[str]
+        output_cols = []  # type: list[str]
+        for example_index in tqdm(range(num_examples), desc="Generating examples"):
+            while True:
+                if self.current_api_call >= self.max_api_call:
+                    print("Maximum number of API calls reached.")
+                    return Dataset.from_dict(
+                        {"input_col": input_cols, "output_col": output_cols}
+                    )
+                else:
+                    self.current_api_call += 1
+                response = self.generate_example(prompt)
+                input_col, output_col = self.response_mining(response)
+                if (input != "") and (output_col != ""):
+                    input_cols.append(input_col)
+                    output_cols.append(output_col)
+                    break
+                else:
+                    print(
+                        "No input or output found",
+                        f"for {example_index + 1} th example",
+                    )
+
+        return Dataset.from_dict({"input_col": input_cols, "output_col": output_cols})

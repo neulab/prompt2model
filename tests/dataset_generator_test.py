@@ -3,10 +3,11 @@
 import json
 import os
 import tempfile
+from functools import partial
 from unittest.mock import patch
 
 from prompt2model.dataset_generator.base import DatasetSplit
-from prompt2model.dataset_generator.classify import ClassifyDatasetGenerator
+from prompt2model.dataset_generator.classify import ClassifyTaskGenerator
 
 
 class MockCompletion:
@@ -32,7 +33,7 @@ class MockCompletion:
         return _string
 
 
-def mock_generate_example(prompt: str) -> MockCompletion:
+def mock_example(prompt: str, content: dict) -> MockCompletion:
     """Generate a mock completion object containing a choice with example content.
 
     This function creates a `MockCompletion` object with a `content` attribute set to
@@ -41,22 +42,31 @@ def mock_generate_example(prompt: str) -> MockCompletion:
 
     Args:
         prompt: A mocked prompt that won't be used.
+        content: The example content to be returned.
 
     Returns:
         a `MockCompletion` object.
     """
     _ = prompt
-    example_content = json.dumps({"comment": "This is a great movie!", "label": 1})
+    example_content = json.dumps(content)
     mock_completion = MockCompletion(content=example_content)
     return mock_completion
 
 
+mock_classify_example = partial(
+    mock_example, content={"comment": "This is a great movie!", "label": 1}
+)
+mock_generation_example = partial(
+    mock_example, content={"input": "我爱你", "out": "I love you."}
+)
+
+
 @patch(
-    "prompt2model.dataset_generator.classify.ClassifyDatasetGenerator.generate_example",
-    side_effect=mock_generate_example,
+    "prompt2model.dataset_generator.classify.ClassifyTaskGenerator.generate_example",
+    side_effect=mock_classify_example,
 )
 def test_generate_datasets(mocked_generate_example):
-    """Test the `generate_datasets()` function of a `SimpleDatasetGenerator` object.
+    """Test the `generate_datasets()` function of `ClassificationTaskGenerator`.
 
     This function generates movie comments datasets by creating a specified
     number of examples for each split of the data, which includes
@@ -72,7 +82,7 @@ def test_generate_datasets(mocked_generate_example):
     prompt_spec = None
     num_examples = {DatasetSplit.TRAIN: 1, DatasetSplit.VAL: 1, DatasetSplit.TEST: 0}
 
-    dataset_generator = ClassifyDatasetGenerator(api_key)
+    dataset_generator = ClassifyTaskGenerator(api_key)
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         output_dir = os.path.join(tmpdirname, "output")
@@ -103,11 +113,11 @@ def test_generate_datasets(mocked_generate_example):
 
 
 @patch(
-    "prompt2model.dataset_generator.classify.ClassifyDatasetGenerator.generate_example",
-    side_effect=mock_generate_example,
+    "prompt2model.dataset_generator.classify.ClassifyTaskGenerator.generate_example",
+    side_effect=mock_classify_example,
 )
 def test_generate_examples(mocked_generate_example):
-    """Test the `generate_examples()` function of a `SimpleDatasetGenerator` object.
+    """Test the `generate_examples()` function of `ClassificationTaskGenerator`.
 
     This function generates movie comments examples for a specified split of the data
     (train, validation, or test) using a simple prompt specification
@@ -120,7 +130,7 @@ def test_generate_examples(mocked_generate_example):
     num_examples = 1
     split = DatasetSplit.TRAIN
 
-    dataset_generator = ClassifyDatasetGenerator(api_key)
+    dataset_generator = ClassifyTaskGenerator(api_key)
     dataset = dataset_generator.generate_examples(prompt_spec, num_examples, split)
 
     # Check that the generated dataset has the expected number of examples.

@@ -7,7 +7,7 @@ import openai
 from prompt2model.dataset_generator.simple import OpenAIDatasetGenerator
 
 
-class ClassifyTaskGenerator(OpenAIDatasetGenerator):
+class GenerateTaskGenerator(OpenAIDatasetGenerator):
     """A dataset generator for examples and pesudo-label for classification tasks."""
 
     def generate_prompt(
@@ -22,49 +22,46 @@ class ClassifyTaskGenerator(OpenAIDatasetGenerator):
         Returns:
             The generated prompt string.
         """
-        natrual_instruction = (
-            "please give me a movie comment. If  it's If it's positive, "
-            "please give a label 1. Otherwise, give a label 0."
-        )  # Get it from prompt_spec
+        # Get natrual_instruction and few_shot_examples from prompt_spec
+        natrual_instruction = "Give me some translation from Chinese to English"
         few_shot_examples = [
-            "comment: 'This movie is great!' label: 1",
-            "comment: 'This movie is bad!' label: 0",
-        ]  # Get it from prompt_spec
+            "input: '人生苦短，我用 Python', output: 'Life is short, I use Python.'",
+            "input: '明天是周末', output: 'Tomorrow is weekend.'",
+        ]
         example_string = " ".join(few_shot_examples) if few_shot_examples else "NA"
         prompt = (
             f"Requirement: {natrual_instruction} \n"
             f"Few-Shot Examples: {example_string} \n"
-            "comment: \n"
-            "label: \n"
-            "Please answer me in JSON format, with `comment` and `label` keys."
+            "input: \n"
+            "output: \n"
+            "Please answer me in JSON format, with `input` and `output` keys."
         )
         return prompt
 
-    def response_mining(self, response: openai.Completion) -> tuple[str, int]:
-        """Extracts the generated example and pseudo label from an OpenAI API response.
+    def response_mining(self, response: openai.Completion) -> tuple[str, str]:
+        """Extracts the generated input and output from an OpenAI API response.
 
         Args:
             response (openai.Completion): The response object returned by OpenAI API.
 
         Returns:
-            A tuple of (generated_example, pseudo_label), where:
-            - generated_example is the generated example string extracted from the
+            A tuple of (input, output), where:
+            - input is the generated input string extracted from the
             response, or "" if not found.
-            - pseudo_label is the pseudo label int extracted from the response,
-            or -1 if not found.
+            - output is the generated output string int extracted from
+            the response, or "" if not found.
         """
         try:
             response_dict = json.loads(response.choices[0]["message"]["content"])
             keys = response_dict.keys()
-            generated_example = None
-            pseudo_label = -1
+            input = output = None
             for key in keys:
-                if "comment" in key.lower():
-                    generated_example = response_dict[key]
-                elif "label" in key.lower():
-                    pseudo_label = int(response_dict[key])
-            if generated_example and pseudo_label:
-                return generated_example, pseudo_label
+                if "input" in key.lower():
+                    input = response_dict[key]
+                elif "output" in key.lower():
+                    output = response_dict[key]
+            if input and output:
+                return input, output
             else:
                 raise ValueError("No examples or pseudo_labels found")
         except (
@@ -75,4 +72,4 @@ class ClassifyTaskGenerator(OpenAIDatasetGenerator):
             AttributeError,
         ):
             # Catch specific exceptions that you expect to occur
-            return "", -1
+            return "", ""
