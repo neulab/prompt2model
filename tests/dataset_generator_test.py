@@ -6,7 +6,7 @@ import tempfile
 from unittest.mock import patch
 
 from prompt2model.dataset_generator.base import DatasetSplit
-from prompt2model.dataset_generator.simple import SimpleDatasetGenerator
+from prompt2model.dataset_generator.classify import ClassifyDatasetGenerator
 
 
 class MockCompletion:
@@ -52,7 +52,7 @@ def mock_generate_example(prompt: str) -> MockCompletion:
 
 
 @patch(
-    "prompt2model.dataset_generator.simple.SimpleDatasetGenerator.generate_example",
+    "prompt2model.dataset_generator.classify.ClassifyDatasetGenerator.generate_example",
     side_effect=mock_generate_example,
 )
 def test_generate_datasets(mocked_generate_example):
@@ -72,7 +72,7 @@ def test_generate_datasets(mocked_generate_example):
     prompt_spec = None
     num_examples = {DatasetSplit.TRAIN: 1, DatasetSplit.VAL: 1, DatasetSplit.TEST: 0}
 
-    dataset_generator = SimpleDatasetGenerator(api_key)
+    dataset_generator = ClassifyDatasetGenerator(api_key)
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         output_dir = os.path.join(tmpdirname, "output")
@@ -103,7 +103,7 @@ def test_generate_datasets(mocked_generate_example):
 
 
 @patch(
-    "prompt2model.dataset_generator.simple.SimpleDatasetGenerator.generate_example",
+    "prompt2model.dataset_generator.classify.ClassifyDatasetGenerator.generate_example",
     side_effect=mock_generate_example,
 )
 def test_generate_examples(mocked_generate_example):
@@ -120,7 +120,7 @@ def test_generate_examples(mocked_generate_example):
     num_examples = 1
     split = DatasetSplit.TRAIN
 
-    dataset_generator = SimpleDatasetGenerator(api_key)
+    dataset_generator = ClassifyDatasetGenerator(api_key)
     dataset = dataset_generator.generate_examples(prompt_spec, num_examples, split)
 
     # Check that the generated dataset has the expected number of examples.
