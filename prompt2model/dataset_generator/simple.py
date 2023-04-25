@@ -83,9 +83,7 @@ class SimpleDatasetGenerator(DatasetGenerator):
             ValueError: If no examples or pseudo_labels are found in the response.
         """
         try:
-            response_dict = json.loads(
-                json.loads(str(response.choices[0]))["message"]["content"]
-            )
+            response_dict = json.loads(response.choices[0]["message"]["content"])
             keys = response_dict.keys()
             generated_example = None
             pseudo_label = -1

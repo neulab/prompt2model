@@ -1,13 +1,61 @@
 """Testing DatasetGenerator through SimpleDatasetGenerator."""
 
+import json
 import os
 import tempfile
+from unittest.mock import patch
 
 from prompt2model.dataset_generator.base import DatasetSplit
 from prompt2model.dataset_generator.simple import SimpleDatasetGenerator
 
 
-def test_generate_datasets():
+class MockCompletion:
+    """Mock openai completion object."""
+
+    def __init__(self, content: str):
+        """Initialize a new instance of MockCompletion class.
+
+        Args:
+            content: The mocked content to be returned, i.e.,
+            json.dumps({"comment": "This is a great movie!",
+            "label": 1}).
+        """
+        self.choices = [{"message": {"content": content}}]
+
+    def __repr__(self):
+        """Return a string representation of the MockCompletion object.
+
+        Returns:
+            _string: A string representation of the object, including its choices.
+        """
+        _string = f"<MockObject choices={self.choices}>"
+        return _string
+
+
+def mock_generate_example(prompt: str) -> MockCompletion:
+    """Generate a mock completion object containing a choice with example content.
+
+    This function creates a `MockCompletion` object with a `content` attribute set to
+    a JSON string representing an example label and comment. The `MockCompletion`
+    object is then returned.
+
+    Args:
+        prompt: A mocked prompt that won't be used.
+
+    Returns:
+        a `MockCompletion` object.
+    """
+    _ = prompt
+    example_content = json.dumps({"comment": "This is a great movie!", "label": 1})
+    mock_completion = MockCompletion(content=example_content)
+    return mock_completion
+
+
+@patch(
+    "prompt2model.dataset_generator.simple.SimpleDatasetGenerator.generate_example",
+    side_effect=mock_generate_example,
+)
+def test_generate_datasets(mocked_generate_example):
     """Test the `generate_datasets()` function of a `SimpleDatasetGenerator` object.
 
     This function generates movie comments datasets by creating a specified
@@ -20,11 +68,12 @@ def test_generate_datasets():
     columns, each example is not empty, and whether the dataset dictionary
     is saved to the output directory.
     """
-    api_key = "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"
+    api_key = None
     prompt_spec = None
     num_examples = {DatasetSplit.TRAIN: 1, DatasetSplit.VAL: 1, DatasetSplit.TEST: 0}
 
     dataset_generator = SimpleDatasetGenerator(api_key)
+
     with tempfile.TemporaryDirectory() as tmpdirname:
         output_dir = os.path.join(tmpdirname, "output")
         dataset_dict = dataset_generator.generate_datasets(
@@ -33,10 +82,10 @@ def test_generate_datasets():
 
         assert set(dataset_dict.keys()) == {"train", "val", "test"}
         for split, num in num_examples.items():
-            assert (
-                len(dataset_dict[split.value]) == num
-            ), f"Expected {num} examples for {split.value} split, but \
-                got {len(dataset_dict[split.value])}"
+            assert len(dataset_dict[split.value]) == num, (
+                f"Expected {num} examples for {split.value} split, but"
+                f" got {len(dataset_dict[split.value])}"
+            )
         expected_columns = {"input_col", "output_col"}
         for dataset in dataset_dict.values():
             assert (
@@ -53,7 +102,11 @@ def test_generate_datasets():
         }
 
 
-def test_generate_examples():
+@patch(
+    "prompt2model.dataset_generator.simple.SimpleDatasetGenerator.generate_example",
+    side_effect=mock_generate_example,
+)
+def test_generate_examples(mocked_generate_example):
     """Test the `generate_examples()` function of a `SimpleDatasetGenerator` object.
 
     This function generates movie comments examples for a specified split of the data
@@ -62,7 +115,7 @@ def test_generate_examples():
     generated dataset has the expected number of examples, the expected
     columns, and each example is not empty.
     """
-    api_key = "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"
+    api_key = None
     prompt_spec = None
     num_examples = 1
     split = DatasetSplit.TRAIN
