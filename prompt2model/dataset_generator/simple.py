@@ -13,13 +13,19 @@ from prompt2model.prompt_parser import PromptSpec
 class SimpleDatasetGenerator(DatasetGenerator):
     """A simple dataset generator that uses OpenAI's GPT-3.5 API."""
 
-    def __init__(self, api_key: str):
-        """Initialize an OpenAI API client with the provided API key.
+    def __init__(self, api_key: str, max_api_call: int = None):
+        """Initialize an OpenAI client with an API key and max API call allowed.
 
         Args:
             api_key: A valid OpenAI API key.
+            max_api_call: The maximum number of API calls allowed. Defaults to 3000.
         """
         openai.api_key = api_key
+        if max_api_call:
+            self.max_api_call = max_api_call
+        else:
+            self.max_api_call = 3000
+        self.current_api_call = 0
 
     def generate_prompt(
         self, natrual_instruction: str, few_shot_examples: list[str] = None
@@ -132,8 +138,15 @@ class SimpleDatasetGenerator(DatasetGenerator):
 
         examples = []  # type: list[str]
         pseudo_labels = []  # type: list[int]
-        for _ in tqdm(range(num_examples), desc="Generating examples"):
+        for example_index in tqdm(range(num_examples), desc="Generating examples"):
             while True:
+                if self.current_api_call >= self.max_api_call:
+                    print("Maximum number of API calls reached.")
+                    return Dataset.from_dict(
+                        {"input_col": examples, "output_col": pseudo_labels}
+                    )
+                else:
+                    self.current_api_call += 1
                 response = self.generate_example(prompt)
                 generated_example, pseudo_label = self.response_mining(response)
                 if (generated_example != "") and (pseudo_label != -1):
@@ -141,6 +154,9 @@ class SimpleDatasetGenerator(DatasetGenerator):
                     pseudo_labels.append(pseudo_label)
                     break
                 else:
-                    print(f"No examples or pseudo_labels found for {_ + 1} th example")
+                    print(
+                        "No examples or pseudo_labels found",
+                        f"for {example_index + 1} th example",
+                    )
 
         return Dataset.from_dict({"input_col": examples, "output_col": pseudo_labels})
