@@ -4,28 +4,13 @@ from typing import Any
 
 import datasets
 from transformers import PreTrainedModel  # noqa
-from transformers import AutoModel, AutoTokenizer, PreTrainedTokenizer
+from transformers import PreTrainedTokenizer
 
 from prompt2model.trainer import Trainer
 
 
 class MockTrainer(Trainer):
     """This dummy trainer does not actually train anything."""
-
-    def __init__(self, pretrained_model_id: str):
-        """Initialize a dummy model trainer.
-
-        Args:
-            pretrained_model_id: A HuggingFace model ID to use for training.
-        """
-        self.model = AutoModel.from_pretrained(pretrained_model_id)
-        self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_id)
-        self.wandb = None
-
-    def set_up_weights_and_biases(self) -> None:
-        """Set up Weights & Biases logging."""
-        self.wandb = None
-        raise NotImplementedError
 
     def train_model(
         self,
@@ -41,4 +26,5 @@ class MockTrainer(Trainer):
         Returns:
             A HuggingFace model and tokenizer.
         """
+        _ = training_datasets, hyperparameter_choices
         return self.model, self.tokenizer
