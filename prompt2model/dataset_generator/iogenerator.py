@@ -1,6 +1,7 @@
 """A simple dataset generator that uses OpenAI's GPT-3.5 API."""
 
 import json
+import logging
 
 import openai
 
@@ -11,21 +12,21 @@ class InputOutputGenerator(OpenAIDatasetGenerator):
     """A dataset generator for input and output for NLG / NLI tasks."""
 
     def generate_prompt(
-        self, natrual_instruction: str, few_shot_examples: list[str] = None
+        self, natural_instruction: str, few_shot_examples: list[str] = None
     ) -> str:
         """Generates a prompt string.
 
         Args:
-            natrual_instruction: The natural language instruction for the prompt.
+            natural_instruction: The natural language instruction for the prompt.
             few_shot_examples: A list of few-shot examples. Defaults to None.
 
         Returns:
             The generated prompt string.
         """
-        # Get natrual_instruction and few_shot_examples from prompt_spec
+        # Get natural_instruction and few_shot_examples from prompt_spec
         example_string = " ".join(few_shot_examples) if few_shot_examples else "NA"
         prompt = (
-            f"Requirement: {natrual_instruction} \n"
+            f"Requirement: {natural_instruction} \n"
             f"Few-Shot Examples: {example_string} \n"
             "input: \n"
             "output: \n"
@@ -58,7 +59,7 @@ class InputOutputGenerator(OpenAIDatasetGenerator):
             if input and output:
                 return input, output
             else:
-                print("No input or output found")
+                logging.warning("No input or output found")
                 raise ValueError("No input or output found")
         except (
             json.JSONDecodeError,
