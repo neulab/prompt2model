@@ -23,7 +23,7 @@ class ClassifyTaskGenerator(OpenAIDatasetGenerator):
             The generated prompt string.
         """
         natrual_instruction = (
-            "please give me a movie comment. If  it's If it's positive, "
+            "please give me a movie comment. If it's If it's positive, "
             "please give a label 1. Otherwise, give a label 0."
         )  # Get it from prompt_spec
         few_shot_examples = [
