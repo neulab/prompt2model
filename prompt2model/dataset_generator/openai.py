@@ -88,7 +88,7 @@ class OpenAIDatasetGenerator(DatasetGenerator, ABC):
         _ = split  # suppress unused variable warnings
 
         # expect to parse natural_instruction and few_shot_examples from prompt_spec
-        # natural_instruction, few_shot_examples = prompt_spec.parse_from_prompt
+        # natural_instruction, few_shot_examples = prompt_spec.parse_from_prompt()
         # currently hard-coded
         natural_instruction = (
             "Give me some translation from Chinese to English."
