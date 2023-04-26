@@ -87,12 +87,19 @@ class OpenAIDatasetGenerator(DatasetGenerator, ABC):
         Returns:
             A single dataset.
         """
-        _ = prompt_spec, split  # suppress unused variable warnings
+        _ = split  # suppress unused variable warnings
+
+        # expect to parse natrual_instruction and few_shot_examples from prompt_spec
+        # natrual_instruction, few_shot_examples = prompt_spec.parse_from_prompt
+        # currently hard-coded
         natrual_instruction = (
-            ""  # Get it from prompt_spec, current hard-coded in generate_prompt
+            "Give me some translation from Chinese to English."
+            " Input Chinese and output English."
         )
+        # Get it from prompt_spec, current hard-coded in generate_prompt
         few_shot_examples = [
-            ""
+            "input: '人生苦短，我用 Python', output: 'Life is short, I use Python.'",
+            "input: '明天是周末', output: 'Tomorrow is weekend.'",
         ]  # Get it from prompt_spec, current hard-coded in generate_prompt
         prompt = self.generate_prompt(natrual_instruction, few_shot_examples)
 
@@ -109,7 +116,7 @@ class OpenAIDatasetGenerator(DatasetGenerator, ABC):
                     self.current_api_call += 1
                 response = self.generate_example(prompt)
                 input_col, output_col = self.response_mining(response)
-                if (input_col != "") and (output_col != ""):
+                if input_col != "" and output_col != "":
                     input_cols.append(input_col)
                     output_cols.append(output_col)
                     break

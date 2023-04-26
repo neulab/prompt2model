@@ -4,11 +4,11 @@ import json
 
 import openai
 
-from prompt2model.dataset_generator.simple import OpenAIDatasetGenerator
+from prompt2model.dataset_generator.openai import OpenAIDatasetGenerator
 
 
-class GenerateTaskGenerator(OpenAIDatasetGenerator):
-    """A dataset generator for input and output for generation tasks."""
+class InputOutputGenerator(OpenAIDatasetGenerator):
+    """A dataset generator for input and output for NLG / NLI tasks."""
 
     def generate_prompt(
         self, natrual_instruction: str, few_shot_examples: list[str] = None
@@ -23,11 +23,6 @@ class GenerateTaskGenerator(OpenAIDatasetGenerator):
             The generated prompt string.
         """
         # Get natrual_instruction and few_shot_examples from prompt_spec
-        natrual_instruction = "Give me some translation from Chinese to English"
-        few_shot_examples = [
-            "input: '人生苦短，我用 Python', output: 'Life is short, I use Python.'",
-            "input: '明天是周末', output: 'Tomorrow is weekend.'",
-        ]
         example_string = " ".join(few_shot_examples) if few_shot_examples else "NA"
         prompt = (
             f"Requirement: {natrual_instruction} \n"
