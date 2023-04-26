@@ -1,6 +1,6 @@
 """A simple dataset generator that uses OpenAI's GPT-3.5 API."""
 
-import json
+from abc import ABC, abstractmethod
 
 import openai
 from datasets import Dataset
@@ -10,17 +10,24 @@ from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
 from prompt2model.prompt_parser import PromptSpec
 
 
-class SimpleDatasetGenerator(DatasetGenerator):
-    """A simple dataset generator that uses OpenAI's GPT-3.5 API."""
+class OpenAIDatasetGenerator(DatasetGenerator, ABC):
+    """A abstract class for dataset generator using OpenAI's GPT-3.5 API."""
 
-    def __init__(self, api_key: str):
-        """Initialize an OpenAI API client with the provided API key.
+    def __init__(self, api_key: str, max_api_call: int = None):
+        """Initialize an OpenAI client with an API key and max API call allowed.
 
         Args:
             api_key: A valid OpenAI API key.
+            max_api_call: The maximum number of API calls allowed. Defaults to 3000.
         """
         openai.api_key = api_key
+        if max_api_call:
+            self.max_api_call = max_api_call
+        else:
+            self.max_api_call = 3000
+        self.current_api_call = 0
 
+    @abstractmethod
     def generate_prompt(
         self, natrual_instruction: str, few_shot_examples: list[str] = None
     ) -> str:
@@ -33,24 +40,28 @@ class SimpleDatasetGenerator(DatasetGenerator):
         Returns:
             The generated prompt string.
         """
-        example_string = " ".join(few_shot_examples) if few_shot_examples else "NA"
-        prompt = (
-            f"Requirement: {natrual_instruction} \n"
-            f"Few-Shot Examples: {example_string} \n"
-            "New Example: \n"
-            "Label: \n"
-            "Please answer me in JSON format."
-        )
-        return prompt
 
-    def generate_example(self, prompt: str) -> openai.Completion:
-        """Generate an exmaple and its pseudo_label using OpenAI's GPT-3 API.
+    @abstractmethod
+    def response_mining(self, response: openai.Completion) -> tuple[str, str]:
+        """Extracts the generated input and output from an OpenAI API response.
 
         Args:
-            prompt: A prompt asking for an example and its pseudo_label.
+            response (openai.Completion): The response object returned by OpenAI API.
 
         Returns:
-            A response object containing a generated example and its pseudo_label.
+            A tuple of (str, str), the first string is the input of generation task
+            or exmaple of classification task. The second string is the output of
+            generation task or label of classification task.
+        """
+
+    def generate_example(self, prompt: str) -> openai.Completion:
+        """Generate a response using OpenAI's GPT-3 API.
+
+        Args:
+            prompt: A prompt asking for a response.
+
+        Returns:
+            A response object.
         """
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -59,48 +70,6 @@ class SimpleDatasetGenerator(DatasetGenerator):
             ],
         )
         return response
-
-    def response_mining(self, response: openai.Completion) -> tuple[str, int]:
-        """Extracts the generated example and pseudo label from an OpenAI API response.
-
-        Args:
-            response (openai.Completion): The response object returned by OpenAI API.
-
-        Returns:
-            A tuple of strings (generated_example, pseudo_label), where:
-            - generated_example is the generated example string extracted from the
-            response, or "" if not found.
-            - pseudo_label is the pseudo label int extracted from the response,
-            or -1 if not found.
-
-        Raises:
-            ValueError: If no examples or pseudo_labels are found in the response.
-        """
-        try:
-            response_dict = json.loads(
-                json.loads(str(response.choices[0]))["message"]["content"]
-            )
-            keys = response_dict.keys()
-            generated_example = None
-            pseudo_label = -1
-            for key in keys:
-                if "comment" in key.lower():
-                    generated_example = response_dict[key]
-                elif "label" in key.lower():
-                    pseudo_label = int(response_dict[key])
-            if generated_example and pseudo_label:
-                return generated_example, pseudo_label
-            else:
-                raise ValueError("No examples or pseudo_labels found")
-        except (
-            json.JSONDecodeError,
-            IndexError,
-            TypeError,
-            ValueError,
-            AttributeError,
-        ):
-            # Catch specific exceptions that you expect to occur
-            return "", -1
 
     def generate_examples(
         self,
@@ -116,31 +85,38 @@ class SimpleDatasetGenerator(DatasetGenerator):
             split: Name of dataset split to generate.
 
         Returns:
-            A single dataset split with exmaples and pseudo_labels.
+            A single dataset.
         """
         _ = prompt_spec, split  # suppress unused variable warnings
         natrual_instruction = (
-            "please give me a movie comment. If  it's If it's positive, "
-            "please give a label '1'. Otherwise, give a label '0'."
-        )  # Get it from prompt_spec
+            ""  # Get it from prompt_spec, current hard-coded in generate_prompt
+        )
         few_shot_examples = [
-            "This movie is great!",
-            "This movie is bad!",
-        ]  # Get it from prompt_spec
-
+            ""
+        ]  # Get it from prompt_spec, current hard-coded in generate_prompt
         prompt = self.generate_prompt(natrual_instruction, few_shot_examples)
 
-        examples = []  # type: list[str]
-        pseudo_labels = []  # type: list[int]
-        for _ in tqdm(range(num_examples), desc="Generating examples"):
+        input_cols = []  # type: list[str]
+        output_cols = []  # type: list[str]
+        for example_index in tqdm(range(num_examples), desc="Generating examples"):
             while True:
+                if self.current_api_call >= self.max_api_call:
+                    print("Maximum number of API calls reached.")
+                    return Dataset.from_dict(
+                        {"input_col": input_cols, "output_col": output_cols}
+                    )
+                else:
+                    self.current_api_call += 1
                 response = self.generate_example(prompt)
-                generated_example, pseudo_label = self.response_mining(response)
-                if (generated_example != "") and (pseudo_label != -1):
-                    examples.append(generated_example)
-                    pseudo_labels.append(pseudo_label)
+                input_col, output_col = self.response_mining(response)
+                if (input_col != "") and (output_col != ""):
+                    input_cols.append(input_col)
+                    output_cols.append(output_col)
                     break
                 else:
-                    print(f"No examples or pseudo_labels found for {_ + 1} th example")
+                    print(
+                        "No input_col or output_col found",
+                        f"for {example_index + 1} th example",
+                    )
 
-        return Dataset.from_dict({"input_col": examples, "output_col": pseudo_labels})
+        return Dataset.from_dict({"input_col": input_cols, "output_col": output_cols})
