@@ -12,7 +12,7 @@ from prompt2model.prompt_parser import PromptSpec
 
 
 class OpenAIDatasetGenerator(DatasetGenerator):
-    """A abstract class for NLP dataset generator using OpenAI's GPT-3.5 API."""
+    """A abstract class for NLP dataset generation using OpenAI's GPT-3.5 API."""
 
     def __init__(self, api_key: str, max_api_call: int = 3000):
         """Initialize an OpenAI client with an API key and max API call allowed.
