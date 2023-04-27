@@ -12,7 +12,7 @@ from prompt2model.prompt_parser import PromptSpec
 
 
 class OpenAIDatasetGenerator(DatasetGenerator, ABC):
-    """A abstract class for dataset generator using OpenAI's GPT-3.5 API."""
+    """A abstract class for NLP dataset generator using OpenAI's GPT-3.5 API."""
 
     def __init__(self, api_key: str, max_api_call: int = 3000):
         """Initialize an OpenAI client with an API key and max API call allowed.
@@ -94,11 +94,10 @@ class OpenAIDatasetGenerator(DatasetGenerator, ABC):
             "Give me some translation from Chinese to English."
             " Input Chinese and output English."
         )
-        # Get it from prompt_spec, current hard-coded in generate_prompt
         few_shot_examples = [
             "input: '人生苦短，我用 Python', output: 'Life is short, I use Python.'",
             "input: '明天是周末', output: 'Tomorrow is weekend.'",
-        ]  # Get it from prompt_spec, current hard-coded in generate_prompt
+        ]
         prompt = self.generate_prompt(natural_instruction, few_shot_examples)
 
         input_cols = []  # type: list[str]

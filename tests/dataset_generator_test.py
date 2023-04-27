@@ -54,10 +54,10 @@ def mock_example(prompt: str, content: dict) -> MockCompletion:
     return mock_completion
 
 
-mock_NLI_example = partial(
+mock_classification_example = partial(
     mock_example, content={"input": "This is a great movie!", "output": 1}
 )
-mock_NLG_example = partial(
+mock_translation_example = partial(
     mock_example, content={"input": "我爱你", "output": "I love you."}
 )
 
@@ -131,32 +131,37 @@ def check_generate_datasets(dataset_generator: OpenAIDatasetGenerator):
         }
 
 
-def test_NLI_and_NLG_Dataset_Generation():
-    """Checks the functionality of InputOutputGenerator.
+@patch(
+    "prompt2model.dataset_generator.openai.OpenAIDatasetGenerator.generate_example",
+    side_effect=mock_translation_example,
+)
+def test_translation_dataset_generation(mocked_generate_example):
+    """Test translation dataset generation using the OpenAIDatasetGenerator.
 
-    The function mocks the generate_example function.
-    It checks the generation of datasets and examples.
+    Args:
+        mocked_generate_example: None used parameter.
+        But test_translation_dataset_generation should require one
+        positional argument.
     """
+    api_key = None
+    dataset_generator = InputOutputGenerator(api_key)
+    check_generate_datasets(dataset_generator)
+    check_generate_examples(dataset_generator)
 
-    @patch(
-        "prompt2model.dataset_generator.openai.OpenAIDatasetGenerator.generate_example",
-        side_effect=mock_NLI_example,
-    )
-    def check_NLI(mocked_generate_example=None):
-        api_key = None
-        dataset_generator = InputOutputGenerator(api_key)
-        check_generate_datasets(dataset_generator)
-        check_generate_examples(dataset_generator)
 
-    @patch(
-        "prompt2model.dataset_generator.openai.OpenAIDatasetGenerator.generate_example",
-        side_effect=mock_NLG_example,
-    )
-    def check_NLG(mocked_generate_example=None):
-        api_key = None
-        dataset_generator = InputOutputGenerator(api_key)
-        check_generate_datasets(dataset_generator)
-        check_generate_examples(dataset_generator)
+@patch(
+    "prompt2model.dataset_generator.openai.OpenAIDatasetGenerator.generate_example",
+    side_effect=mock_classification_example,
+)
+def test_classification_dataset_generation(mocked_generate_example):
+    """Test classification dataset generation using the OpenAIDatasetGenerator.
 
-    check_NLG()
-    check_NLI()
+    Args:
+        mocked_generate_example: None used parameter.
+        But test_classification_dataset_generation should require one
+        positional argument.
+    """
+    api_key = None
+    dataset_generator = InputOutputGenerator(api_key)
+    check_generate_datasets(dataset_generator)
+    check_generate_examples(dataset_generator)
