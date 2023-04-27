@@ -1,7 +1,7 @@
 """A simple dataset generator that uses OpenAI's GPT-3.5 API."""
 
+import json
 import logging
-from abc import ABC, abstractmethod
 
 import openai
 from datasets import Dataset
@@ -11,7 +11,7 @@ from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
 from prompt2model.prompt_parser import PromptSpec
 
 
-class OpenAIDatasetGenerator(DatasetGenerator, ABC):
+class OpenAIDatasetGenerator(DatasetGenerator):
     """A abstract class for NLP dataset generator using OpenAI's GPT-3.5 API."""
 
     def __init__(self, api_key: str, max_api_call: int = 3000):
@@ -25,7 +25,6 @@ class OpenAIDatasetGenerator(DatasetGenerator, ABC):
         self.max_api_call = max_api_call
         self.api_call_counter = 0
 
-    @abstractmethod
     def generate_prompt(
         self, natural_instruction: str, few_shot_examples: list[str] = None
     ) -> str:
@@ -38,19 +37,52 @@ class OpenAIDatasetGenerator(DatasetGenerator, ABC):
         Returns:
             The generated prompt string.
         """
+        # Get natural_instruction and few_shot_examples from prompt_spec
+        example_string = " ".join(few_shot_examples) if few_shot_examples else "NA"
+        prompt = (
+            f"Requirement: {natural_instruction} \n"
+            f"Few-Shot Examples: {example_string} \n"
+            "sample: \n"
+            "annotation: \n"
+            "Please answer me in JSON format, with `sample` and `annotation` keys."
+        )
+        return prompt
 
-    @abstractmethod
     def response_mining(self, response: openai.Completion) -> tuple[str, str]:
-        """Extracts the generated input and output from an OpenAI API response.
+        """Extracts the generated sample and annotation from an OpenAI API response.
 
         Args:
             response (openai.Completion): The response object returned by OpenAI API.
 
         Returns:
-            A tuple of (str, str), the first string is the input of generation task
-            or exmaple of classification task. The second string is the output of
-            generation task or label of classification task.
+            A tuple of (sample, annotation), where:
+            - sample is the generated example string extracted from the
+            response, or "" if not found.
+            - annotation is the generated label/annotation string int extracted from
+            the response, or "" if not found.
         """
+        try:
+            response_dict = json.loads(response.choices[0]["message"]["content"])
+            keys = response_dict.keys()
+            sample = annotation = None
+            for key in keys:
+                if "sample" in key.lower():
+                    sample = response_dict[key]
+                elif "annotation" in key.lower():
+                    annotation = response_dict[key]
+            if sample and annotation:
+                return sample, annotation
+            else:
+                logging.warning("No sample or annotation found")
+                raise ValueError("No sample or annotation found")
+        except (
+            json.JSONDecodeError,
+            IndexError,
+            TypeError,
+            ValueError,
+            AttributeError,
+        ):
+            return "", ""
 
     def generate_example(self, prompt: str) -> openai.Completion:
         """Generate a response using OpenAI's GPT-3 API.
@@ -86,10 +118,6 @@ class OpenAIDatasetGenerator(DatasetGenerator, ABC):
             A single dataset.
         """
         _ = split  # suppress unused variable warnings
-
-        # expect to parse natural_instruction and few_shot_examples from prompt_spec
-        # natural_instruction, few_shot_examples = prompt_spec.parse_from_prompt()
-        # currently hard-coded
         natural_instruction = (
             "Give me some translation from Chinese to English."
             " Input Chinese and output English."

@@ -7,7 +7,6 @@ from functools import partial
 from unittest.mock import patch
 
 from prompt2model.dataset_generator.base import DatasetSplit
-from prompt2model.dataset_generator.iogenerator import InputOutputGenerator
 from prompt2model.dataset_generator.openai import OpenAIDatasetGenerator
 
 
@@ -55,10 +54,10 @@ def mock_example(prompt: str, content: dict) -> MockCompletion:
 
 
 mock_classification_example = partial(
-    mock_example, content={"input": "This is a great movie!", "output": 1}
+    mock_example, content={"sample": "This is a great movie!", "annotation": 1}
 )
 mock_translation_example = partial(
-    mock_example, content={"input": "我爱你", "output": "I love you."}
+    mock_example, content={"sample": "我爱你", "annotation": "I love you."}
 )
 
 
@@ -144,7 +143,7 @@ def test_translation_dataset_generation(mocked_generate_example):
         positional argument.
     """
     api_key = None
-    dataset_generator = InputOutputGenerator(api_key)
+    dataset_generator = OpenAIDatasetGenerator(api_key)
     check_generate_datasets(dataset_generator)
     check_generate_examples(dataset_generator)
 
@@ -162,6 +161,6 @@ def test_classification_dataset_generation(mocked_generate_example):
         positional argument.
     """
     api_key = None
-    dataset_generator = InputOutputGenerator(api_key)
+    dataset_generator = OpenAIDatasetGenerator(api_key)
     check_generate_datasets(dataset_generator)
     check_generate_examples(dataset_generator)
