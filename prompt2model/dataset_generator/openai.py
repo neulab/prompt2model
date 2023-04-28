@@ -19,7 +19,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
         Args:
             api_key: A valid OpenAI API key.
-            max_api_calls: The maximum number of API calls allowed. Defaults to 3000.
+            max_api_calls: The maximum number of API calls allowed,
+                or None for unlimited.
         """
         openai.api_key = api_key
         self.max_api_calls = max_api_calls
@@ -129,23 +130,10 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             A single dataset.
         """
         _ = split  # suppress unused variable warnings
-        instruction = (
-            "Give me some translation from Chinese to English."
-            " Input Chinese and output English."
-        )
-        examples = [
-            "input: '人生苦短，我用 Python', output: 'Life is short, I use Python.'",
-            "input: '明天是周末', output: 'Tomorrow is weekend.'",
-        ]
-        prompt_template = (
-            "Requirement: {instruction} \n"
-            "Few-Shot Examples: {examples} \n"
-            "sample: \n"
-            "annotation: \n"
-            "Please answer me in JSON format, with `sample` and `annotation` keys."
-        )
         prompt = self.generate_prompt(
-            instruction=instruction, examples=examples, prompt_template=prompt_template
+            instruction=prompt_spec.instruction,
+            examples=prompt_spec.examples,
+            prompt_template=prompt_spec.prompt_template,
         )
 
         input_cols = []  # type: list[str]

@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from prompt2model.dataset_generator.base import DatasetSplit
 from prompt2model.dataset_generator.openai import OpenAIDatasetGenerator
+from prompt2model.prompt_parser import MockPromptSpec
 
 
 class MockCompletion:
@@ -70,7 +71,7 @@ def check_generate_examples(dataset_generator: OpenAIDatasetGenerator):
     generated dataset has the expected number of examples, the expected
     columns, and each example is not empty.
     """
-    prompt_spec = None
+    prompt_spec = MockPromptSpec()
     num_examples = 1
     split = DatasetSplit.TRAIN
     dataset = dataset_generator.generate_examples(prompt_spec, num_examples, split)
@@ -100,7 +101,7 @@ def check_generate_datasets(dataset_generator: OpenAIDatasetGenerator):
     columns, each example is not empty, and whether the dataset dictionary
     is saved to the output directory.
     """
-    prompt_spec = None
+    prompt_spec = MockPromptSpec()
     num_examples = {DatasetSplit.TRAIN: 1, DatasetSplit.VAL: 1, DatasetSplit.TEST: 0}
     with tempfile.TemporaryDirectory() as tmpdirname:
         output_dir = os.path.join(tmpdirname, "output")
