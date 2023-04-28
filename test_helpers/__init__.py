@@ -1,4 +1,4 @@
 """Import Trainer classes."""
-from test_helpers.mock_openai import mock_openai_response
+from test_helpers.mock_openai import MockCompletion, mock_openai_response
 
-__all__ = ("mock_openai_response")
+__all__ = ("MockCompletion", "mock_openai_response")
