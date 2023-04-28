@@ -4,6 +4,7 @@ from __future__ import annotations  # noqa FI58
 
 from abc import ABC, abstractmethod
 from enum import Enum
+from pathlib import Path
 
 import datasets
 
@@ -33,11 +34,10 @@ class DatasetGenerator(ABC):
         Args:
             prompt_spec: A prompt spec (containing a system description).
             num_examples: Number of examples in split.
-            split: Name of dataset split to generate.)
+            split: Name of dataset split to generate.
 
         Returns:
             A single dataset split.
-
         """
 
     def generate_datasets(
@@ -57,12 +57,14 @@ class DatasetGenerator(ABC):
         """
         dataset_dict = datasets.DatasetDict(
             {
-                split: self.generate_examples(prompt_spec, num, split=split)
+                split.value: self.generate_examples(prompt_spec, num, split=split)
                 for split, num in num_examples.items()
             }
         )
 
         if output_dir:
-            dataset_dict.save_to_disk(output_dir)
+            save_dir = Path(output_dir)
+            save_dir.mkdir(parents=True, exist_ok=True)
+            dataset_dict.save_to_disk(str(save_dir))
 
         return dataset_dict
