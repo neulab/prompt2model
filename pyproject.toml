@@ -53,5 +53,5 @@ packages = ["prompt2model"]
 path = "prompt2model/version.py"
 
 [tool.pytest.ini_options]
-pythonpath = ["test_helpers"]
-testpaths = ["tests"]
+pythonpath = ["prompt2model/test_helpers"]
+testpaths = ["prompt2model/tests"]
