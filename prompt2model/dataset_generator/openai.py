@@ -14,41 +14,52 @@ from prompt2model.prompt_parser import PromptSpec
 class OpenAIDatasetGenerator(DatasetGenerator):
     """A abstract class for NLP dataset generation using OpenAI's GPT-3.5 API."""
 
-    def __init__(self, api_key: str, max_api_call: int = 3000):
+    def __init__(self, api_key: str, max_api_calls: int = None):
         """Initialize an OpenAI client with an API key and max API call allowed.
 
         Args:
             api_key: A valid OpenAI API key.
-            max_api_call: The maximum number of API calls allowed. Defaults to 3000.
+            max_api_calls: The maximum number of API calls allowed. Defaults to 3000.
         """
         openai.api_key = api_key
-        self.max_api_call = max_api_call
+        self.max_api_calls = max_api_calls
         self.api_call_counter = 0
 
     def generate_prompt(
-        self, natural_instruction: str, few_shot_examples: list[str] = None
+        self,
+        instruction: str,
+        examples: list[str] = None,
+        prompt_template: str = None,
     ) -> str:
         """Generates a prompt string.
 
         Args:
-            natural_instruction: The natural language instruction for the prompt.
-            few_shot_examples: A list of few-shot examples. Defaults to None.
+            instruction: The natural language instruction for the prompt.
+            examples: A list of few-shot examples. Defaults to None.
+            prompt_template: A string template for the prompt. Defaults to None.
+                Prompt_template must contains `instruction` and `examples` fields.
 
         Returns:
             The generated prompt string.
         """
-        # Get natural_instruction and few_shot_examples from prompt_spec
-        example_string = " ".join(few_shot_examples) if few_shot_examples else "NA"
-        prompt = (
-            f"Requirement: {natural_instruction} \n"
-            f"Few-Shot Examples: {example_string} \n"
-            "sample: \n"
-            "annotation: \n"
-            "Please answer me in JSON format, with `sample` and `annotation` keys."
+        # Set default prompt template if not provided
+        if not prompt_template:
+            prompt_template = (
+                "Requirement: {instruction} \n"
+                "Few-Shot Examples: {examples} \n"
+                "sample: \n"
+                "annotation: \n"
+                "Please answer me in JSON format, with `sample` and `annotation` keys."
+            )
+
+        # Replace placeholders in prompt template with actual values
+        example_string = " ".join(examples) if examples else "NA"
+        prompt = prompt_template.format(
+            instruction=instruction, examples=example_string
         )
         return prompt
 
-    def response_mining(self, response: openai.Completion) -> tuple[str, str]:
+    def extract_response(self, response: openai.Completion) -> tuple[str, str]:
         """Extracts the generated sample and annotation from an OpenAI API response.
 
         Args:
@@ -73,7 +84,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             if sample and annotation:
                 return sample, annotation
             else:
-                logging.warning("No sample or annotation found")
+                logging.error("No sample or annotation found")
                 raise ValueError("No sample or annotation found")
         except (
             json.JSONDecodeError,
@@ -85,7 +96,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             return "", ""
 
     def generate_example(self, prompt: str) -> openai.Completion:
-        """Generate a response using OpenAI's GPT-3 API.
+        """Generate a response using OpenAI's gpt-3.5-turbo.
 
         Args:
             prompt: A prompt asking for a response.
@@ -118,21 +129,30 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             A single dataset.
         """
         _ = split  # suppress unused variable warnings
-        natural_instruction = (
+        instruction = (
             "Give me some translation from Chinese to English."
             " Input Chinese and output English."
         )
-        few_shot_examples = [
+        examples = [
             "input: '人生苦短，我用 Python', output: 'Life is short, I use Python.'",
             "input: '明天是周末', output: 'Tomorrow is weekend.'",
         ]
-        prompt = self.generate_prompt(natural_instruction, few_shot_examples)
+        prompt_template = (
+            "Requirement: {instruction} \n"
+            "Few-Shot Examples: {examples} \n"
+            "sample: \n"
+            "annotation: \n"
+            "Please answer me in JSON format, with `sample` and `annotation` keys."
+        )
+        prompt = self.generate_prompt(
+            instruction=instruction, examples=examples, prompt_template=prompt_template
+        )
 
         input_cols = []  # type: list[str]
         output_cols = []  # type: list[str]
         for example_index in tqdm(range(num_examples), desc="Generating examples"):
             while True:
-                if self.api_call_counter >= self.max_api_call:
+                if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
                     logging.warning("Maximum number of API calls reached.")
                     return Dataset.from_dict(
                         {"input_col": input_cols, "output_col": output_cols}
@@ -140,7 +160,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 else:
                     self.api_call_counter += 1
                 response = self.generate_example(prompt)
-                input_col, output_col = self.response_mining(response)
+                input_col, output_col = self.extract_response(response)
                 if input_col != "" and output_col != "":
                     input_cols.append(input_col)
                     output_cols.append(output_col)
