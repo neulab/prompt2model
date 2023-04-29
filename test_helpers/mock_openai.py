@@ -7,17 +7,17 @@ class MockCompletion:
     """Mock openai completion object."""
 
     def __init__(self, content: str):
-        """Initialize a new instance of MockCompletion class.
+        """Initialize a new instance of `MockCompletion` class.
 
         Args:
             content: The mocked content to be returned, i.e.,
-            json.dumps({"comment": "This is a great movie!",
-            "label": 1}).
+            `json.dumps({"comment": "This is a great movie!",
+            "label": 1})`.
         """
         self.choices = [{"message": {"content": content}}]
 
     def __repr__(self):
-        """Return a string representation of the MockCompletion object.
+        """Return a string representation of the `MockCompletion` object.
 
         Returns:
             _string: A string representation of the object, including its choices.
