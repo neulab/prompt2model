@@ -88,7 +88,7 @@ def check_generate_datasets(dataset_generator: OpenAIDatasetGenerator):
 
 
 @patch(
-    "prompt2model.dataset_generator.openai.OpenAIDatasetGenerator.generate_example",
+    "prompt2model.utils.openai_tools.generate_example",
     side_effect=mock_translation_example,
 )
 def test_translation_dataset_generation(mocked_generate_example):
@@ -106,7 +106,7 @@ def test_translation_dataset_generation(mocked_generate_example):
 
 
 @patch(
-    "prompt2model.dataset_generator.openai.OpenAIDatasetGenerator.generate_example",
+    "prompt2model.utils.openai_tools.generate_example",
     side_effect=mock_classification_example,
 )
 def test_classification_dataset_generation(mocked_generate_example):
