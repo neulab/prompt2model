@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
 from prompt2model.prompt_parser import PromptSpec
-from prompt2model.utils.openai_tools import generate_openai_chat_completion
+from prompt2model.utils.openai_tools import ChatGPTAgent
 
 
 class OpenAIDatasetGenerator(DatasetGenerator):
@@ -23,8 +23,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             max_api_calls: The maximum number of API calls allowed,
                 or None for unlimited.
         """
-        self.api_key = api_key
-        openai.api_key = self.api_key
+        self.chat_gpt_agent = ChatGPTAgent(api_key)
         self.max_api_calls = max_api_calls
         self.api_call_counter = 0
 
@@ -132,7 +131,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     )
                 else:
                     self.api_call_counter += 1
-                response = generate_openai_chat_completion(self.api_key, prompt)
+                response = self.chat_gpt_agent.generate_openai_chat_completion(prompt)
                 input_col, output_col = self.extract_response(response)
                 if input_col != "" and output_col != "":
                     input_cols.append(input_col)
