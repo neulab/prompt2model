@@ -3,7 +3,7 @@
 import openai
 
 
-def generate_openai_chat_completion(prompt: str) -> openai.Completion:
+def generate_openai_chat_completion(api_key: str, prompt: str) -> openai.Completion:
     """Generate a chat completion using OpenAI's gpt-3.5-turbo.
 
     Args:
@@ -12,6 +12,7 @@ def generate_openai_chat_completion(prompt: str) -> openai.Completion:
     Returns:
         A response object.
     """
+    openai.api_key = api_key
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
