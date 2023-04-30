@@ -8,6 +8,7 @@ from datasets import Dataset
 from tqdm import tqdm
 
 from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
+from prompt2model.utils.openai_tools import generate_example
 from prompt2model.prompt_parser import PromptSpec
 
 
@@ -96,23 +97,6 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         ):
             return "", ""
 
-    def generate_example(self, prompt: str) -> openai.Completion:
-        """Generate a response using OpenAI's gpt-3.5-turbo.
-
-        Args:
-            prompt: A prompt asking for a response.
-
-        Returns:
-            A response object.
-        """
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "user", "content": f"{prompt}"},
-            ],
-        )
-        return response
-
     def generate_examples(
         self,
         prompt_spec: PromptSpec,
@@ -147,7 +131,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     )
                 else:
                     self.api_call_counter += 1
-                response = self.generate_example(prompt)
+                response = generate_example(prompt)
                 input_col, output_col = self.extract_response(response)
                 if input_col != "" and output_col != "":
                     input_cols.append(input_col)
