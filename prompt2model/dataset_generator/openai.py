@@ -23,7 +23,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             max_api_calls: The maximum number of API calls allowed,
                 or None for unlimited.
         """
-        openai.api_key = api_key
+        self.api_key = api_key
+        openai.api_key = self.api_key
         self.max_api_calls = max_api_calls
         self.api_call_counter = 0
 
@@ -131,7 +132,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     )
                 else:
                     self.api_call_counter += 1
-                response = generate_openai_chat_completion(prompt)
+                response = generate_openai_chat_completion(self.api_key, prompt)
                 input_col, output_col = self.extract_response(response)
                 if input_col != "" and output_col != "":
                     input_cols.append(input_col)
