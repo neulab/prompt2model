@@ -1,7 +1,10 @@
+"""Tools for accessing OpenAI's API."""
+
 import openai
 
-def generate_example(prompt: str) -> openai.Completion:
-    """Generate a response using OpenAI's gpt-3.5-turbo.
+
+def generate_openai_chat_completion(prompt: str) -> openai.Completion:
+    """Generate a chat completion using OpenAI's gpt-3.5-turbo.
 
     Args:
         prompt: A prompt asking for a response.
