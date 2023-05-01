@@ -2,6 +2,8 @@
 
 from __future__ import annotations  # noqa FI58
 
+import json
+
 import openai
 
 from prompt2model.prompt_parser.base import PromptSpec, TaskType
@@ -135,9 +137,22 @@ NO DEMONSTRATION.
                 2) Demonstrations: (Optional) demonstrations parsed from the
                    API response.
         """
-        raise NotImplementedError
-        response_text = ""
-        return response_text, response_text
+        response_text = json.loads(response.choices[0]["message"]["content"])
+        demonstration_string = response_text.split("2) Demonstrations:")[1].strip()
+        instruction_string = (
+            response_text.split("2) Demonstrations:")[0]
+            .strip()
+            .split("1) Instruction:")[1]
+            .strip()
+        )
+
+        if demonstration_string == "NO DEMONSTRATION.":
+            # This special output sequence means "demonstration is None".
+            demonstration_string = None
+
+        # TODO(Vijay): Change to regex
+
+        return instruction_string, demonstration_string
 
     def parse_from_prompt(self, prompt: str) -> None:
         """Parse the prompt into an instruction and demonstrations."""
