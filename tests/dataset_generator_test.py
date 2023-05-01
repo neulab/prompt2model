@@ -6,7 +6,7 @@ from functools import partial
 from unittest.mock import patch
 
 from prompt2model.dataset_generator.base import DatasetSplit
-from prompt2model.dataset_generator.openai import OpenAIDatasetGenerator
+from prompt2model.dataset_generator.openai_gpt import OpenAIDatasetGenerator
 from prompt2model.prompt_parser import MockPromptSpec
 from test_helpers import mock_openai_response
 
