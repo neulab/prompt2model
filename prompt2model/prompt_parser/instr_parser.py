@@ -139,6 +139,11 @@ NO DEMONSTRATION.
                    API response.
         """
         response_text = json.loads(response.choices[0]["message"]["content"])
+        # This regex pattern matches any text that's either between
+        # "1) Instruction:" and "2) Demonstrations:" or after
+        # "2) Demonstrations:". An arbitrary amount of uncaptured whitespace is
+        # allowed immediately after "1)" or "2)" or after the colon following
+        # each section header (e.g. "Instruction:").
         pattern = r"1\)\s*Instruction[:]\s*(.+)\s*2\)\s*Demonstrations[:]\s*(.+)"
         matches = re.findall(pattern, response_text, re.DOTALL)
         assert len(matches) == 1
