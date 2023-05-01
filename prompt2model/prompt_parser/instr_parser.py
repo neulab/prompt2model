@@ -146,11 +146,11 @@ NO DEMONSTRATION.
             .strip()
         )
 
+        # TODO(Vijay): Change to regex for better readability.
+
         if demonstration_string == "NO DEMONSTRATION.":
             # This special output sequence means "demonstration is None".
             demonstration_string = None
-
-        # TODO(Vijay): Change to regex
 
         return instruction_string, demonstration_string
 
