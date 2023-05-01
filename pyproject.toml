@@ -51,3 +51,7 @@ packages = ["prompt2model"]
 
 [tool.hatch.version]
 path = "prompt2model/version.py"
+
+[tool.pytest.ini_options]
+pythonpath = ["prompt2model/test_helpers"]
+testpaths = ["prompt2model/tests"]
