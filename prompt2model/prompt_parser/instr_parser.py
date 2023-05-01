@@ -3,6 +3,7 @@
 from __future__ import annotations  # noqa FI58
 
 import json
+import re
 
 import openai
 
@@ -138,20 +139,16 @@ NO DEMONSTRATION.
                    API response.
         """
         response_text = json.loads(response.choices[0]["message"]["content"])
-        demonstration_string = response_text.split("2) Demonstrations:")[1].strip()
-        instruction_string = (
-            response_text.split("2) Demonstrations:")[0]
-            .strip()
-            .split("1) Instruction:")[1]
-            .strip()
-        )
-
-        # TODO(Vijay): Change to regex for better readability.
-
+        pattern = r"1\)\s*Instruction[:]\s*(.+)\s*2\)\s*Demonstrations[:]\s*(.+)"
+        matches = re.findall(pattern, response_text, re.DOTALL)
+        assert len(matches) == 1
+        assert len(matches[0]) == 2
+        instruction_string, demonstration_string = matches[0]
+        instruction_string = instruction_string.strip()
+        demonstration_string = demonstration_string.strip()
         if demonstration_string == "NO DEMONSTRATION.":
             # This special output sequence means "demonstration is None".
             demonstration_string = None
-
         return instruction_string, demonstration_string
 
     def parse_from_prompt(self, prompt: str) -> None:
