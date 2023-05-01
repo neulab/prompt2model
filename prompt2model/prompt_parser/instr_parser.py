@@ -2,34 +2,32 @@
 
 from __future__ import annotations  # noqa FI58
 
-from enum import Enum
-
 import openai
 
-from prompt2model.prompt_parser.base import PromptSpec
-
-
-class TaskType(Enum):
-    """High-level taxonomy of possible NLP model outputs."""
-
-    TEXT_GENERATION = 1
-    CLASSIFICATION = 2
-    SEQUENCE_TAGGING = 3
-    SPAN_EXTRACTION = 4
+from prompt2model.prompt_parser.base import PromptSpec, TaskType
+from prompt2model.utils import ChatGPTAgent
 
 
 # pylint: disable=too-few-public-methods
 class OpenAIInstructionParser(PromptSpec):
     """Parse the prompt to separate instructions from task demonstrations."""
 
-    def __init__(self, task_type: TaskType):
+    def __init__(self, task_type: TaskType, api_key: str | None = None):
         """By default, assume that every task is a text generation task."""
         self.task_type = task_type
         self.instruction: str | None = None
         self.demonstration: str | None = None
+        self.api_key: str | None = api_key
 
-    def get_prompt_for_instruction_parsing(self, prompt: str) -> tuple[str, str]:
-        """A (GPT-3) prompt for separating instructions from demonstrations."""
+    def get_prompt_for_instruction_parsing(self, prompt: str) -> str:
+        """A (GPT-3) prompt for separating instructions from demonstrations.
+
+        Args:
+            prompt: A user-generated prompt asking for a response.
+
+        Returns:
+            A prompt to instruct GPT-3 to parse the user's provided prompt.
+        """
         prefix = '''"Prompts" are a description of a task provided to an AI language model to guide its performance. Prompts typically consist of two components: a task "instruction" and, optionally, a few "demonstrations" (examples to illustrate the task). I want to segment prompts into these two components. For each prompt, return a line starting with "1) Instruction: " and a line starting with "2) Demonstrations: ". If no demonstration is provided, write "NO DEMONSTRATION.". When demonstrations are provided, only include examples where the full input-output pair is given; ignore partial examples written with the intent of being completed by the AI language model. Otherwise, match the formatting, word selection, and punctuation used in the original prompt.
 
 ------
@@ -121,8 +119,9 @@ NO DEMONSTRATION.
 ------
 
 '''  # noqa: E501
-        filled_template = f'''Prompt: """\n{prompt}\n"""\n\nParsed Outputs: '''
-        return prefix, filled_template
+        filled_template = f'''Prompt: """\n{prompt}\n"""\n\nParsed Outputs:\n'''
+        final_prompt = prefix + filled_template
+        return final_prompt
 
     def extract_response(self, response: openai.Completion) -> tuple[str, str | None]:
         """Parse stuctured fields from the OpenAI API response.
@@ -136,19 +135,14 @@ NO DEMONSTRATION.
                 2) Demonstrations: (Optional) demonstrations parsed from the
                    API response.
         """
+        raise NotImplementedError
         response_text = ""
         return response_text, response_text
 
     def parse_from_prompt(self, prompt: str) -> None:
         """Parse the prompt into an instruction and demonstrations."""
-        prefix, filled_template = self.get_prompt_for_instruction_parsing(prompt)
+        parsing_prompt_for_chatgpt = self.get_prompt_for_instruction_parsing(prompt)
 
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": f"{prefix}"},
-                {"role": "user", "content": filled_template},
-            ],
-            temperature=0,
-        )
+        chat_api = ChatGPTAgent(self.api_key)
+        response = chat_api.generate_openai_chat_completion(parsing_prompt_for_chatgpt)
         self.instruction, self.demonstration = self.extract_response(response)

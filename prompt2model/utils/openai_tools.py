@@ -1,12 +1,14 @@
 """Tools for accessing OpenAI's API."""
 
+from __future__ import annotations  # noqa FI58
+
 import openai
 
 
 class ChatGPTAgent:
     """A class for accessing OpenAI's ChatCompletion API."""
 
-    def __init__(self, api_key):
+    def __init__(self, api_key: str | None):
         """Initialize ChatGPTAgent with an API key."""
         openai.api_key = api_key
 
