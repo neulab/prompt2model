@@ -27,17 +27,17 @@ class OpenAIInstructionParser(PromptSpec):
         self.demonstration: str | None = None
         self.api_key: str | None = api_key
 
-    def get_prompt_for_instruction_parsing(self, prompt: str) -> str:
+    def get_prompt_for_instruction_parsing(self, user_prompt: str) -> str:
         """A (GPT-3) prompt for separating instructions from demonstrations.
 
         Args:
-            prompt: A user-generated prompt asking for a response.
+            user_prompt: A user-generated prompt asking for a response.
 
         Returns:
             A prompt to instruct GPT-3 to parse the user's provided prompt.
         """
         filled_template = construct_single_demonstration(
-            prompt, None, None, input_only=True
+            user_prompt, None, None, input_only=True
         )
         final_prompt = construct_full_parsing_prompt() + filled_template
         return final_prompt
