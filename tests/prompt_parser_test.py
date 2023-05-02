@@ -50,7 +50,7 @@ def test_instruction_parser_with_demonstration(mocked_parsing_method):
         == """- Fifth of November 2024 -> 11/05/2024
 - Jan. 9 2023 -> 01/09/2023
 - Christmas 2016 -> 12/25/2016"""
-    ), breakpoint()
+    )
     assert mocked_parsing_method.call_count == 1
 
 
