@@ -31,10 +31,12 @@ def test_instruction_parser_with_demonstration(mocked_parsing_method):
     Args:
         mocked_parsing_method: Mocked function for parsing a prompt using GPT.
     """
-    prompt = """Convert each date from an informal description into a MM/DD/YYYY format.
-Fifth of November 2024 -> 11/05/2024
-Jan. 9 2023 -> 01/09/2023
-Christmas 2016 -> 12/25/2016"""
+    prompt = """
+    Convert each date from an informal description into a MM/DD/YYYY format.
+    Fifth of November 2024 -> 11/05/2024
+    Jan. 9 2023 -> 01/09/2023
+    Christmas 2016 -> 12/25/2016
+    """
     prompt_spec = OpenAIInstructionParser(task_type=TaskType.TEXT_GENERATION)
     prompt_spec.parse_from_prompt(prompt)
 
