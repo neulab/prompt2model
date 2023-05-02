@@ -9,7 +9,12 @@ class ChatGPTAgent:
     """A class for accessing OpenAI's ChatCompletion API."""
 
     def __init__(self, api_key: str | None):
-        """Initialize ChatGPTAgent with an API key."""
+        """Initialize ChatGPTAgent with an API key.
+        
+        Args:
+            api_key: A valid OpenAI API key. If you don't want to pass in your `OPENAI_API_KEY `,
+             please `export  OPENAI_API_KEY=<your key>` in your command line.
+        """
         openai.api_key = api_key
 
     def generate_openai_chat_completion(self, prompt: str) -> openai.Completion:
