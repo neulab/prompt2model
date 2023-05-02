@@ -6,13 +6,16 @@ from unittest.mock import patch
 from prompt2model.prompt_parser import OpenAIInstructionParser, TaskType
 from test_helpers import mock_openai_response
 
-gpt3_response_with_demonstrations = """1) Instruction:
+gpt3_response_with_demonstrations = """
+1) Instruction:
 Convert each date from an informal description into a MM/DD/YYYY format.
 
 2) Demonstrations:
 - Fifth of November 2024 -> 11/05/2024
 - Jan. 9 2023 -> 01/09/2023
-- Christmas 2016 -> 12/25/2016"""
+- Christmas 2016 -> 12/25/2016
+"""
+
 mock_prompt_parsing_example_with_demonstrations = partial(
     mock_openai_response, content=gpt3_response_with_demonstrations
 )
