@@ -5,13 +5,13 @@ from typing import Any
 import datasets
 import transformers
 from transformers import AutoModel
-from transformers import Trainer as TransTrainer
+from transformers import Trainer
 from transformers import TrainingArguments
 
-from prompt2model.trainer import Trainer
+from prompt2model.trainer import Model_Trainer
 
 
-class SimpleTrainer(Trainer):
+class SimpleTrainer(Model_Trainer):
     """This is a simple trainer."""
 
     def train_model(
@@ -62,7 +62,7 @@ class SimpleTrainer(Trainer):
             weight_decay=weight_decay,
             push_to_hub=False,
         )
-        trainer = TransTrainer(
+        trainer = Trainer(
             model=model,
             args=training_args,
             train_dataset=concatenated_dataset,
