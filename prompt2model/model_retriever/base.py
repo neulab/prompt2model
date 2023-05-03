@@ -20,5 +20,5 @@ class ModelRetriever(ABC):
             prompt: A prompt to use to select relevant models.
 
         Return:
-            A relevant model's HuggingFace ID string.
+            A relevant model's name on HuggingFace.
         """
