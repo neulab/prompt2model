@@ -12,7 +12,9 @@ class DatasetRetriever(ABC):
     """A class for retrieving datasets."""
 
     @abstractmethod
-    def retrieve_dataset_dict(self, prompt_spec: PromptSpec) -> list[datasets.DatasetDict]:
+    def retrieve_dataset_dict(
+        self, prompt_spec: PromptSpec
+    ) -> list[datasets.DatasetDict]:
         """Retrieve DatasetDicts from a prompt specification.
 
         Args:
