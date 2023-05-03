@@ -1,20 +1,17 @@
+"""A trainer for text2text models."""
+
 from typing import Any
 
-import torch
 import datasets
 import transformers
 from datasets import concatenate_datasets
-from transformers import TrainingArguments, T5Tokenizer, T5ForConditionalGeneration
-from transformers import Trainer
+from transformers import Trainer, TrainingArguments
+
 from prompt2model.model_trainer import ModelTrainer
 
 
 class TextToTextTrainer(ModelTrainer):
     """This is a simple trainer for a T5 based text2text model."""
-
-    def __init__(self, pretrained_model_name: str):
-        self.tokenizer = T5Tokenizer.from_pretrained(pretrained_model_name)
-        self.model = T5ForConditionalGeneration.from_pretrained(pretrained_model_name)
 
     def train_model(
         self,
@@ -53,22 +50,26 @@ class TextToTextTrainer(ModelTrainer):
                 padding="max_length",
                 truncation=True,
                 max_length=hyperparameter_choices.get("max_length", 128),
-                return_tensors="pt"
+                return_tensors="pt",
             )
             targets = self.tokenizer(
                 examples["output_col"],
                 padding="max_length",
                 truncation=True,
                 max_length=hyperparameter_choices.get("max_length", 128),
-                return_tensors="pt"
+                return_tensors="pt",
             )
-            return {"input_ids": inputs.input_ids, "attention_mask": inputs.attention_mask, "labels": targets.input_ids}
+            return {
+                "input_ids": inputs.input_ids,
+                "attention_mask": inputs.attention_mask,
+                "labels": targets.input_ids,
+            }
 
-        processed_dataset = shuffled_dataset.map(preprocess_function, batched=True, num_proc=4)
+        processed_dataset = shuffled_dataset.map(
+            preprocess_function, batched=True, num_proc=4
+        )
         trainer = Trainer(
-            model=self.model,
-            args=training_args,
-            train_dataset=processed_dataset
+            model=self.model, args=training_args, train_dataset=processed_dataset
         )
         trainer.train()
         return self.model, self.tokenizer
