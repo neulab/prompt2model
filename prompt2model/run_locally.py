@@ -3,6 +3,7 @@
 import argparse
 
 from prompt2model.dataset_generator import DatasetSplit, MockDatasetGenerator
+from prompt2model.dataset_processer import MockPrcesser
 from prompt2model.dataset_retriever import MockRetriever
 from prompt2model.demo_creator.gradio_creator import create_gradio
 from prompt2model.evaluator import MockEvaluator
@@ -64,18 +65,28 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
 
     # Retrieve and generate datasets
     retriever = MockRetriever()
-    retrieved_training = retriever.retrieve_datasets(prompt_spec)
-    generator = MockDatasetGenerator()
+    retrieved_dataset_dicts = retriever.retrieve_dataset_dict(prompt_spec)
 
+    generator = MockDatasetGenerator()
     num_examples = {
         DatasetSplit.TRAIN: 40,
         DatasetSplit.VAL: 5,
         DatasetSplit.TEST: 5,
     }
-    generated_data = dict(generator.generate_datasets(prompt_spec, num_examples))
-    generated_training = generated_data[DatasetSplit.TRAIN.value]
-    validation = generated_data[DatasetSplit.VAL.value]
-    testing = generated_data[DatasetSplit.TEST.value]
+    generated_dataset_dicts = generator.generate_dataset_dict(prompt_spec, num_examples)
+
+    processer = MockPrcesser()
+    retrieved_dataset_dicts, generated_dataset_dicts = processer.process_dataset_dict(
+        instruction="", dataset_dicts=[retrieved_dataset_dicts, generated_dataset_dicts]
+    )
+
+    retrieved_training = [
+        dataset_dict["train"] for dataset_dict in retrieved_dataset_dicts
+    ]
+
+    generated_training = generated_dataset_dicts[DatasetSplit.TRAIN.value]
+    validation = generated_dataset_dicts[DatasetSplit.VAL.value]
+    testing = generated_dataset_dicts[DatasetSplit.TEST.value]
     all_training = retrieved_training + [generated_training]
 
     model_retriever = MockModelRetriever("cardiffnlp/twitter-roberta-base-sentiment")

@@ -1,10 +1,8 @@
-"""An interface for dataset retrieval."""
+"""An interface for dataset processer."""
 
 from abc import ABC, abstractmethod
 
 import datasets
-
-from prompt2model.prompt_parser import PromptSpec
 
 
 # pylint: disable=too-few-public-methods
@@ -12,12 +10,15 @@ class BasePrcesser(ABC):
     """A class for post-processing datasets."""
 
     @abstractmethod
-    def process_datasets(self, prompt_spec: PromptSpec) -> list[datasets.Dataset]:
-        """Retrieve datasets from a prompt specification.
+    def process_dataset_dict(
+        self, instruction: str, dataset_dicts: list[datasets.DatasetDict]
+    ) -> list[datasets.DatasetDict]:
+        """Post-process a list of DatasetDicts.
 
         Args:
-            prompt_spec: A prompt spec (containing a system description).
+            instruction: The instruction to convert example into a text2text fashion.
+            dataset_dicts: A list of DatasetDicts (generated or retrieved).
 
         Returns:
-            A list of retrieved datasets.
+            A list of DatasetDicts, all examples are converted into text2text fashion.
         """

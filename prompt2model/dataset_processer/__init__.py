@@ -1,5 +1,5 @@
 """Import DatasetRetriever classes."""
-from prompt2model.dataset_retriever.base import DatasetRetriever
-from prompt2model.dataset_retriever.mock import MockRetriever
+from prompt2model.dataset_processer.base import BasePrcesser
+from prompt2model.dataset_processer.mock import MockPrcesser
 
-__all__ = ("DatasetRetriever", "MockRetriever")
+__all__ = ("BasePrcesser", "MockPrcesser")
