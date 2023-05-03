@@ -6,7 +6,7 @@ from unittest.mock import patch
 from prompt2model.prompt_parser import OpenAIInstructionParser, TaskType
 from test_helpers import mock_openai_response
 
-gpt3_response_with_demonstrations = """
+GPT3_RESPONSE_WITH_DEMONSTRATIONS = """
 1) Instruction:
 Convert each date from an informal description into a MM/DD/YYYY format.
 
@@ -15,9 +15,17 @@ Convert each date from an informal description into a MM/DD/YYYY format.
 - Jan. 9 2023 -> 01/09/2023
 - Christmas 2016 -> 12/25/2016
 """
+GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS = """1) Instruction:
+Turn the given fact into a question by a simple rearrangement of words. This typically involves replacing some part of the given fact with a WH word. For example, replacing the subject of the provided fact with the word "what" can form a valid question. Don't be creative! You just need to rearrange the words to turn the fact into a question - easy! Don't just randomly remove a word from the given fact to form a question. Remember that your question must evaluate scientific understanding. Pick a word or a phrase in the given fact to be the correct answer, then make the rest of the question. You can also form a question without any WH words. For example, 'A radio converts electricity into?'
+
+2) Demonstrations:
+NO DEMONSTRATION."""  # noqa: E501
 
 mock_prompt_parsing_example_with_demonstrations = partial(
-    mock_openai_response, content=gpt3_response_with_demonstrations
+    mock_openai_response, content=GPT3_RESPONSE_WITH_DEMONSTRATIONS
+)
+mock_prompt_parsing_example_without_demonstrations = partial(
+    mock_openai_response, content=GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS
 )
 
 
@@ -52,16 +60,6 @@ def test_instruction_parser_with_demonstration(mocked_parsing_method):
 - Christmas 2016 -> 12/25/2016"""
     )
     assert mocked_parsing_method.call_count == 1
-
-
-gpt3_response_without_demonstrations = """1) Instruction:
-Turn the given fact into a question by a simple rearrangement of words. This typically involves replacing some part of the given fact with a WH word. For example, replacing the subject of the provided fact with the word "what" can form a valid question. Don't be creative! You just need to rearrange the words to turn the fact into a question - easy! Don't just randomly remove a word from the given fact to form a question. Remember that your question must evaluate scientific understanding. Pick a word or a phrase in the given fact to be the correct answer, then make the rest of the question. You can also form a question without any WH words. For example, 'A radio converts electricity into?'
-
-2) Demonstrations:
-NO DEMONSTRATION."""  # noqa: E501
-mock_prompt_parsing_example_without_demonstrations = partial(
-    mock_openai_response, content=gpt3_response_without_demonstrations
-)
 
 
 @patch(
