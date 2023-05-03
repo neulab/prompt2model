@@ -4,8 +4,8 @@ import torch
 import datasets
 import transformers
 from datasets import concatenate_datasets
-from transformers import TrainingArguments, T5Tokenizer
-from transformers import T5Tokenizer, T5ForConditionalGeneration
+from transformers import TrainingArguments, T5Tokenizer, T5ForConditionalGeneration
+from transformers import Trainer
 from prompt2model.model_trainer import ModelTrainer
 
 
@@ -47,11 +47,28 @@ class TextToTextTrainer(ModelTrainer):
         training_dataset = concatenate_datasets(training_datasets)
         shuffled_dataset = training_dataset.shuffle(seed=42)
 
-        for example in shuffled_dataset:
-            print(example)
-            input_ids = self.tokenizer(example["input_col"], return_tensors="pt").input_ids
-            labels = self.tokenizer(example["output_col"], return_tensors="pt").input_ids
+        def preprocess_function(examples):
+            inputs = self.tokenizer(
+                examples["input_col"],
+                padding="max_length",
+                truncation=True,
+                max_length=hyperparameter_choices.get("max_length", 128),
+                return_tensors="pt"
+            )
+            targets = self.tokenizer(
+                examples["output_col"],
+                padding="max_length",
+                truncation=True,
+                max_length=hyperparameter_choices.get("max_length", 128),
+                return_tensors="pt"
+            )
+            return {"input_ids": inputs.input_ids, "attention_mask": inputs.attention_mask, "labels": targets.input_ids}
 
-            # the forward function automatically creates the correct decoder_input_ids
-            loss = self.model(input_ids=input_ids, labels=labels).loss
-            loss.item()
+        processed_dataset = shuffled_dataset.map(preprocess_function, batched=True, num_proc=4)
+        trainer = Trainer(
+            model=self.model,
+            args=training_args,
+            train_dataset=processed_dataset
+        )
+        trainer.train()
+        return self.model, self.tokenizer
