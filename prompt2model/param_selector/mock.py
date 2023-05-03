@@ -5,9 +5,9 @@ from typing import Any
 import datasets
 import transformers
 
+from prompt2model.model_trainer import ModelTrainer
 from prompt2model.param_selector.base import ParamSelector
 from prompt2model.prompt_parser import PromptSpec
-from prompt2model.trainer import ModelTrainer
 
 
 class MockParamSelector(ParamSelector):
