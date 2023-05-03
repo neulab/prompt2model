@@ -4,55 +4,17 @@ import torch
 import datasets
 import transformers
 from datasets import concatenate_datasets
-from transformers import Trainer, TrainingArguments, T5Tokenizer
-
+from transformers import TrainingArguments, T5Tokenizer
+from transformers import T5Tokenizer, T5ForConditionalGeneration
 from prompt2model.model_trainer import ModelTrainer
-
-from functools import partial
-
-from transformers import (
-    DataCollator,
-    Trainer,
-    TrainingArguments
-)
-
-def T2TDataCollator(batch):
-    """
-    Take a list of samples from a Dataset and collate them into a batch.
-    Returns:
-        A dictionary of tensors
-    """
-    print(batch)
-    input_ids = torch.stack([example['input_ids'] for example in batch])
-    lm_labels = torch.stack([example['target_ids'] for example in batch])
-    lm_labels[lm_labels[:, :] == 0] = -100
-    attention_mask = torch.stack([example['attention_mask'] for example in batch])
-    decoder_attention_mask = torch.stack([example['target_attention_mask'] for example in batch])
-
-
-    return {
-        'input_ids': input_ids,
-        'attention_mask': attention_mask,
-        'lm_labels': lm_labels,
-        'decoder_attention_mask': decoder_attention_mask
-    }
-
-def convert_to_features(example_batch, tokenizer):
-    input_encodings = tokenizer.batch_encode_plus(example_batch['input_col'], pad_to_max_length=True, max_length=512)
-    target_encodings = tokenizer.batch_encode_plus(example_batch['output_col'], pad_to_max_length=True, max_length=16)
-
-    encodings = {
-        'input_ids': input_encodings['input_ids'],
-        'attention_mask': input_encodings['attention_mask'],
-        'target_ids': target_encodings['input_ids'],
-        'target_attention_mask': target_encodings['attention_mask']
-    }
-
-    return encodings
 
 
 class TextToTextTrainer(ModelTrainer):
     """This is a simple trainer for a T5 based text2text model."""
+
+    def __init__(self, pretrained_model_name: str):
+        self.tokenizer = T5Tokenizer.from_pretrained(pretrained_model_name)
+        self.model = T5ForConditionalGeneration.from_pretrained(pretrained_model_name)
 
     def train_model(
         self,
@@ -82,23 +44,14 @@ class TextToTextTrainer(ModelTrainer):
             save_steps=1000,
         )
 
-        # Concatenate and preprocess the training datasets
         training_dataset = concatenate_datasets(training_datasets)
         shuffled_dataset = training_dataset.shuffle(seed=42)
-        preprocessed_dataset = shuffled_dataset.map(partial(convert_to_features, tokenizer=self.tokenizer), batched=True)
-        columns = ['input_ids', 'target_ids', 'attention_mask', 'target_attention_mask']
-        preprocessed_dataset.set_format(type='torch', columns=columns)
 
+        for example in shuffled_dataset:
+            print(example)
+            input_ids = self.tokenizer(example["input_col"], return_tensors="pt").input_ids
+            labels = self.tokenizer(example["output_col"], return_tensors="pt").input_ids
 
-        trainer = Trainer(
-            model=self.model,
-            args=training_args,
-            train_dataset=preprocessed_dataset,
-            data_collator=T2TDataCollator,
-        )
-
-        # Train the model
-        trainer.train()
-
-        # Return the trained model and tokenizer
-        return self.model, self.tokenizer
+            # the forward function automatically creates the correct decoder_input_ids
+            loss = self.model(input_ids=input_ids, labels=labels).loss
+            loss.item()
