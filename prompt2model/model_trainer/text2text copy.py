@@ -1,17 +1,40 @@
 from typing import Any
 
 import torch
-import nlp
 import datasets
 import transformers
 from datasets import concatenate_datasets
 from transformers import Trainer, TrainingArguments, T5Tokenizer
 
 from prompt2model.model_trainer import ModelTrainer
-from datasets import DatasetDict
 
 from functools import partial
 
+from transformers import (
+    DataCollator,
+    Trainer,
+    TrainingArguments
+)
+
+def T2TDataCollator(batch):
+    """
+    Take a list of samples from a Dataset and collate them into a batch.
+    Returns:
+        A dictionary of tensors
+    """
+    input_ids = torch.stack([example['input_ids'] for example in batch])
+    lm_labels = torch.stack([example['target_ids'] for example in batch])
+    lm_labels[lm_labels[:, :] == 0] = -100
+    attention_mask = torch.stack([example['attention_mask'] for example in batch])
+    decoder_attention_mask = torch.stack([example['target_attention_mask'] for example in batch])
+
+
+    return {
+        'input_ids': input_ids,
+        'attention_mask': attention_mask,
+        'lm_labels': lm_labels,
+        'decoder_attention_mask': decoder_attention_mask
+    }
 
 def convert_to_features(example_batch, tokenizer):
     input_encodings = tokenizer.batch_encode_plus(example_batch['input_col'], pad_to_max_length=True, max_length=512)
@@ -61,22 +84,16 @@ class TextToTextTrainer(ModelTrainer):
         # Concatenate and preprocess the training datasets
         training_dataset = concatenate_datasets(training_datasets)
         shuffled_dataset = training_dataset.shuffle(seed=42)
-        preprocessed_dataset = preprocess_dataset(shuffled_dataset, self.tokenizer)
+        preprocessed_dataset = shuffled_dataset.map(partial(convert_to_features, tokenizer=self.tokenizer), batched=True)
+        columns = ['input_ids', 'target_ids', 'attention_mask', 'target_attention_mask']
+        preprocessed_dataset.set_format(type='torch', columns=columns)
 
-        def data_collator(batch, tokenizer):
-            inputs = [example["input_ids"] for example in batch]
-            attention_masks = [example["attention_mask"] for example in batch]
-
-            return{
-                "input_ids": inputs,
-                "attention_mask": attention_masks,
-            }
 
         trainer = Trainer(
             model=self.model,
             args=training_args,
             train_dataset=preprocessed_dataset,
-            data_collator=partial(data_collator, tokenizer=self.tokenizer),
+            data_collator=T2TDataCollator,
         )
 
         # Train the model
