@@ -1,76 +1,94 @@
-"""This module provides a simple trainer."""
+"""This module provides a T5 model trainer."""
 
 from typing import Any
 
 import datasets
 import transformers
-from transformers import AutoModel
-from transformers import Trainer
-from transformers import TrainingArguments
+from datasets import concatenate_datasets
+from transformers import Trainer, TrainingArguments
 
-from prompt2model.trainer import Model_Trainer
+from prompt2model.trainer import ModelTrainer
 
 
-class SimpleTrainer(Model_Trainer):
-    """This is a simple trainer."""
+def preprocess_dataset(
+    dataset: datasets.Dataset, tokenizer: transformers.AutoTokenizer
+):
+    """Preprocesses the given dataset using the given tokenizer.
+
+    Args:
+    - dataset: A dictionary-like object containing the input and output columns.
+    - tokenizer: A tokenizer object that can encode the input and output texts.
+
+    Returns:
+    - A `datasets.Dataset` object containing the preprocessed data with:
+      - "input_ids": A list of token IDs for the encoded input texts.
+      - "attention_mask": A list of 0s and 1s indicating which tokens are padding.
+      - "labels": A list of token IDs for the encoded output texts.
+    """
+    inputs = dataset["input_col"]
+    outputs = dataset["output_col"]
+    input_encodings = tokenizer(inputs, truncation=True, padding=True, max_length=128)
+    output_encodings = tokenizer(outputs, truncation=True, padding=True, max_length=128)
+
+    return datasets.Dataset.from_dict(
+        {
+            "input_ids": input_encodings["input_ids"],
+            "attention_mask": input_encodings["attention_mask"],
+            "labels": output_encodings["input_ids"],
+        }
+    )
+
+
+class TextToTextTrainer(ModelTrainer):
+    """This is a simple trainer for a T5 based text2text model."""
 
     def train_model(
         self,
         training_datasets: list[datasets.Dataset],
         hyperparameter_choices: dict[str, Any],
-    ) -> transformers.PreTrainedModel:
-        """Train a sequence classification model.
-
-        Clear all parameters in the final layer and retrain it.
+    ) -> tuple[transformers.PreTrainedModel, transformers.PreTrainedTokenizer]:
+        """Train a text2text T5 based model.
 
         Args:
-            training_datasets: A list of training datasets.
+            training_datasets: Training `Dataset`s, with `input_col` and `output_col`.
             hyperparameter_choices: A dictionary of hyperparameter choices.
 
         Returns:
             A trained HuggingFace model.
         """
-        # Extract hyperparameters
-        batch_size = hyperparameter_choices["batch_size"]
-        num_epochs = hyperparameter_choices["num_epochs"]
-        learning_rate = hyperparameter_choices["learning_rate"]
-        weight_decay = hyperparameter_choices["weight_decay"]
-
-        # Concatenate all training datasets
-
-        # Why we need a list of datasets? I guess currently in our project, we
-        # the first dataset is retrieved form `DatasetRetriever`, the scond is
-        # from LLM's generation. At least, they should have a shared target
-        # like 3-class classificaton. But could we concatenate them up in the
-        # main pipeline into a single dataset, then pass it in?
-        concatenated_dataset = datasets.concatenate_datasets(training_datasets)
-
-        # Clear all parameters in the final layer and retrain it
-        model = AutoModel.from_pretrained(self.model.base_model_prefix)
-        model.classifier = transformers.Identity()
-        model.classifier.out_proj = transformers.Linear(
-            model.config.hidden_size, self.num_labels
-        )
-
-        # Set up training arguments and trainer
         training_args = TrainingArguments(
             output_dir="./results",
-            evaluation_strategy="epoch",
-            learning_rate=learning_rate,
-            per_device_train_batch_size=batch_size,
-            num_train_epochs=num_epochs,
-            weight_decay=weight_decay,
-            push_to_hub=False,
+            num_train_epochs=hyperparameter_choices["num_train_epochs"],
+            per_device_train_batch_size=hyperparameter_choices["batch_size"],
+            warmup_steps=hyperparameter_choices["warmup_steps"],
+            weight_decay=hyperparameter_choices["weight_decay"],
+            logging_dir="./logs",
+            logging_steps=1000,
+            evaluation_strategy="steps",
+            eval_steps=1000,
+            save_strategy="steps",
+            save_steps=1000,
         )
+
+        # Concatenate and preprocess the training datasets
+        training_dataset = concatenate_datasets(training_datasets)
+        shuffled_dataset = training_dataset.shuffle(seed=42, buffer_size=1000)
+        preprocessed_dataset = preprocess_dataset(shuffled_dataset, self.tokenizer)
+
+        # Create the trainer
         trainer = Trainer(
-            model=model,
+            model=self.model,
             args=training_args,
-            train_dataset=concatenated_dataset,
-            tokenizer=self.tokenizer,
+            train_dataset=preprocessed_dataset,
+            data_collator=lambda data: {
+                "input_ids": data["input_ids"],
+                "attention_mask": data["attention_mask"],
+                "labels": data["labels"],
+            },
         )
 
         # Train the model
         trainer.train()
 
-        # Return the trained model
-        return trainer.model
+        # Return the trained model and tokenizer
+        return self.model, self.tokenizer
