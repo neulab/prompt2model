@@ -4,17 +4,17 @@ from __future__ import annotations  # noqa FI58
 
 METAPROMPT_INSTRUCTION = (
     '"Prompts" are a description of a task provided to an AI language'
-    + " model to guide its performance. Prompts typically consist of two"
-    + ' components: a task "instruction" and, optionally, a few'
-    + ' "demonstrations" (examples to illustrate the task). I want to'
-    + " segment prompts into these two components. For each prompt, return"
-    + ' a line starting with "1) Instruction: " and a line starting with "2)'
-    + ' Demonstrations: ". If no demonstration is provided, write'
-    + ' "NO DEMONSTRATION.". When demonstrations are provided, only'
-    + " include examples where the full input-output pair is given; ignore"
-    + " partial examples written with the intent of being completed by the"
-    + " AI language model. Otherwise, match the formatting, word selection,"
-    + " and punctuation used in the original prompt."
+    " model to guide its performance. Prompts typically consist of two"
+    ' components: a task "instruction" and, optionally, a few'
+    ' "demonstrations" (examples to illustrate the task). I want to'
+    " segment prompts into these two components. For each prompt, return"
+    ' a line starting with "1) Instruction: " and a line starting with "2)'
+    ' Demonstrations: ". If no demonstration is provided, write'
+    ' "NO DEMONSTRATION.". When demonstrations are provided, only'
+    " include examples where the full input-output pair is given; ignore"
+    " partial examples written with the intent of being completed by the"
+    " AI language model. Otherwise, match the formatting, word selection,"
+    " and punctuation used in the original prompt."
 )
 
 METAPROMPT_EXAMPLES = [
@@ -66,8 +66,10 @@ User: [Insert user's question]
 
 Agent:""",
         {
-            "Instruction": "You are an expert baker answering users' "
-            + "questions. Reply as agent.",
+            "Instruction": (
+                "You are an expert baker answering users' "
+                + "questions. Reply as agent."
+            ),
             "Demonstrations": """User: Hey can you help me with something
 
 Agent: Sure! What do you need help with?
