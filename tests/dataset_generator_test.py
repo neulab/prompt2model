@@ -1,4 +1,4 @@
-"""Testing DatasetGenerator through SimpleDatasetGenerator."""
+"""Testing DatasetGeneratr."""
 
 import os
 import tempfile
