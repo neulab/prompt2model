@@ -6,7 +6,7 @@ import datasets
 from transformers import PreTrainedModel  # noqa
 from transformers import PreTrainedTokenizer
 
-from prompt2model.trainer import ModelTrainer
+from prompt2model.model_trainer import ModelTrainer
 
 
 class MockTrainer(ModelTrainer):

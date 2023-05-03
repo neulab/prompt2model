@@ -1,5 +1,3 @@
-"""This module provides a T5 model trainer."""
-
 from typing import Any
 
 import datasets
@@ -7,11 +5,14 @@ import transformers
 from datasets import concatenate_datasets
 from transformers import Trainer, TrainingArguments
 
-from prompt2model.trainer import ModelTrainer
+from prompt2model.model_trainer import ModelTrainer
+from datasets import DatasetDict
+
+from functools import partial
 
 
 def preprocess_dataset(
-    dataset: datasets.Dataset, tokenizer: transformers.AutoTokenizer
+    example, tokenizer: transformers.AutoTokenizer
 ):
     """Preprocesses the given dataset using the given tokenizer.
 
@@ -25,18 +26,15 @@ def preprocess_dataset(
       - "attention_mask": A list of 0s and 1s indicating which tokens are padding.
       - "labels": A list of token IDs for the encoded output texts.
     """
-    inputs = dataset["input_col"]
-    outputs = dataset["output_col"]
+    inputs = example["input_col"]
+    outputs = example["output_col"]
     input_encodings = tokenizer(inputs, truncation=True, padding=True, max_length=128)
     output_encodings = tokenizer(outputs, truncation=True, padding=True, max_length=128)
+    example["input_ids"] = input_encodings["input_ids"]
+    example["attention_mask"] = input_encodings["attention_mask"]
+    example["labels"] = output_encodings["input_ids"]
+    return example
 
-    return datasets.Dataset.from_dict(
-        {
-            "input_ids": input_encodings["input_ids"],
-            "attention_mask": input_encodings["attention_mask"],
-            "labels": output_encodings["input_ids"],
-        }
-    )
 
 
 class TextToTextTrainer(ModelTrainer):
@@ -58,10 +56,10 @@ class TextToTextTrainer(ModelTrainer):
         """
         training_args = TrainingArguments(
             output_dir="./results",
-            num_train_epochs=hyperparameter_choices["num_train_epochs"],
-            per_device_train_batch_size=hyperparameter_choices["batch_size"],
-            warmup_steps=hyperparameter_choices["warmup_steps"],
-            weight_decay=hyperparameter_choices["weight_decay"],
+            num_train_epochs=hyperparameter_choices.get("num_train_epochs", 1),
+            per_device_train_batch_size=hyperparameter_choices.get("batch_size", 1),
+            warmup_steps=hyperparameter_choices.get("warmup_steps", 0),
+            weight_decay=hyperparameter_choices.get("weight_decay", 0.01),
             logging_dir="./logs",
             logging_steps=1000,
             evaluation_strategy="steps",
@@ -72,19 +70,24 @@ class TextToTextTrainer(ModelTrainer):
 
         # Concatenate and preprocess the training datasets
         training_dataset = concatenate_datasets(training_datasets)
-        shuffled_dataset = training_dataset.shuffle(seed=42, buffer_size=1000)
-        preprocessed_dataset = preprocess_dataset(shuffled_dataset, self.tokenizer)
+        shuffled_dataset = training_dataset.shuffle(seed=42)
+        preprocess_dataset = shuffled_dataset.map(partial(preprocess_dataset, tokenizer=self.tokenizer), batched=True)
 
-        # Create the trainer
+        def data_collator(batch):
+            print(batch)
+            inputs = [example["input_ids"] for example in batch]
+            attention_masks = [example["attention_mask"] for example in batch]
+
+            return{
+                "input_ids": inputs,
+                "attention_mask": attention_masks,
+            }
+
         trainer = Trainer(
             model=self.model,
             args=training_args,
-            train_dataset=preprocessed_dataset,
-            data_collator=lambda data: {
-                "input_ids": data["input_ids"],
-                "attention_mask": data["attention_mask"],
-                "labels": data["labels"],
-            },
+            train_dataset=preprocess_dataset,
+            data_collator=partial(data_collator),
         )
 
         # Train the model
