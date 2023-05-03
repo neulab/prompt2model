@@ -18,8 +18,8 @@ mock_translation_example = partial(
 )
 
 
-def check_generate_examples(dataset_generator: OpenAIDatasetGenerator):
-    """Test the `generate_examples()` function of `OpenAIDatasetGenerator`.
+def check_generate_dataset(dataset_generator: OpenAIDatasetGenerator):
+    """Test the `generate_dataset()` function of `OpenAIDatasetGenerator`.
 
     This function generates a Dataset for a specified split of the data
     (train, validation, or test) using a simple prompt specification
@@ -30,7 +30,7 @@ def check_generate_examples(dataset_generator: OpenAIDatasetGenerator):
     prompt_spec = MockPromptSpec()
     num_examples = 1
     split = DatasetSplit.TRAIN
-    dataset = dataset_generator.generate_examples(prompt_spec, num_examples, split)
+    dataset = dataset_generator.generate_dataset(prompt_spec, num_examples, split)
 
     # Check that the generated dataset has the expected number of examples.
     assert len(dataset) == num_examples
@@ -44,8 +44,8 @@ def check_generate_examples(dataset_generator: OpenAIDatasetGenerator):
         assert example["output_col"] != "", "Expected example to not be empty"
 
 
-def check_generate_datasets(dataset_generator: OpenAIDatasetGenerator):
-    """Test the `generate_datasets()` function of `OpenAIDatasetGenerator`.
+def check_generate_dataset_dict(dataset_generator: OpenAIDatasetGenerator):
+    """Test the `generate_dataset_dict()` function of `OpenAIDatasetGenerator`.
 
     This function generates movie comments datasets by creating a specified
     number of examples for each split of the data, which includes
@@ -61,7 +61,7 @@ def check_generate_datasets(dataset_generator: OpenAIDatasetGenerator):
     num_examples = {DatasetSplit.TRAIN: 1, DatasetSplit.VAL: 1, DatasetSplit.TEST: 0}
     with tempfile.TemporaryDirectory() as tmpdirname:
         output_dir = os.path.join(tmpdirname, "output")
-        dataset_dict = dataset_generator.generate_datasets(
+        dataset_dict = dataset_generator.generate_dataset_dict(
             prompt_spec=prompt_spec, num_examples=num_examples, output_dir=output_dir
         )
 
@@ -101,8 +101,8 @@ def test_translation_dataset_generation(mocked_generate_example):
     """
     api_key = None
     dataset_generator = OpenAIDatasetGenerator(api_key)
-    check_generate_datasets(dataset_generator)
-    check_generate_examples(dataset_generator)
+    check_generate_dataset_dict(dataset_generator)
+    check_generate_dataset(dataset_generator)
 
 
 @patch(
@@ -119,5 +119,5 @@ def test_classification_dataset_generation(mocked_generate_example):
     """
     api_key = None
     dataset_generator = OpenAIDatasetGenerator(api_key)
-    check_generate_datasets(dataset_generator)
-    check_generate_examples(dataset_generator)
+    check_generate_dataset_dict(dataset_generator)
+    check_generate_dataset(dataset_generator)

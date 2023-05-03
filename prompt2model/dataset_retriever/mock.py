@@ -13,8 +13,8 @@ class MockRetriever(DatasetRetriever):
     def __init__(self):
         """Construct a mock dataset retriever."""
 
-    def retrieve_datasets(self, prompt_spec: PromptSpec) -> list[datasets.Dataset]:
-        """Return a single empty dataset for testing purposes."""
+    def retrieve_dataset_dict(self, prompt_spec: PromptSpec) -> list[datasets.DatasetDict]:
+        """Return a single empty DatasetDict for testing purposes."""
         _ = prompt_spec  # suppress unused vaiable warning
-        test_df = pd.DataFrame.from_dict({"input_col": [""], "output_col": [""]})
-        return [datasets.Dataset.from_pandas(test_df)]
+        mock_dataset = datasets.Dataset.from_dict({"input_col": [""], "output_col": [""]})
+        return [datasets.DatasetDict({"train": mock_dataset, "val": mock_dataset, "test": mock_dataset})]

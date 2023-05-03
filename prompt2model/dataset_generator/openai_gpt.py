@@ -97,13 +97,13 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         ):
             return "", ""
 
-    def generate_examples(
+    def generate_dataset(
         self,
         prompt_spec: PromptSpec,
         num_examples: int,
         split: DatasetSplit,
     ) -> Dataset:
-        """Generate examples using GPT-3.5.
+        """Generate a single dataset using GPT-3.5.
 
         Args:
             prompt_spec: A prompt specification.

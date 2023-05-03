@@ -64,7 +64,8 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
 
     # Retrieve and generate datasets
     retriever = MockRetriever()
-    retrieved_training = retriever.retrieve_datasets(prompt_spec)
+    retrieved_dataset_dicts = retriever.retrieve_dataset_dict(prompt_spec)
+    retrieved_training = [dataset_dict["train"] for dataset_dict in retrieved_dataset_dicts]
     generator = MockDatasetGenerator()
 
     num_examples = {
@@ -72,7 +73,7 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
         DatasetSplit.VAL: 5,
         DatasetSplit.TEST: 5,
     }
-    generated_data = dict(generator.generate_datasets(prompt_spec, num_examples))
+    generated_data = dict(generator.generate_dataset_dict(prompt_spec, num_examples))
     generated_training = generated_data[DatasetSplit.TRAIN.value]
     validation = generated_data[DatasetSplit.VAL.value]
     testing = generated_data[DatasetSplit.TEST.value]
