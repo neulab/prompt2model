@@ -120,4 +120,4 @@ def construct_full_parsing_prompt():
         prompt_sections.append(
             construct_single_demonstration(prompt, instruction, demonstration)
         )
-    return "\n\n------\n\n".join(prompt)
+    return "\n\n------\n\n".join(prompt_sections)
