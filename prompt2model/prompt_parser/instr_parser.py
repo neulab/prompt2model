@@ -16,7 +16,6 @@ from prompt2model.prompt_parser.instr_parser_prompt import (  # isort: split
 )
 
 
-# pylint: disable=too-few-public-methods
 class OpenAIInstructionParser(PromptSpec):
     """Parse the prompt to separate instructions from task demonstrations."""
 
