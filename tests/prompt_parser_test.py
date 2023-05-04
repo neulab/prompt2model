@@ -14,15 +14,15 @@ GPT3_RESPONSE_WITH_DEMONSTRATIONS = (
 
 GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS = (
     '{"Instruction": "Turn the given fact into a question by a simple rearrangement'
-    " of words. This typically involves replacing some part of the given fact with"
-    " a WH word. For example, replacing the subject of the provided fact with the word"
-    ' "what" can form a valid question. Don\'t be creative! You just need to rearrange'
-    " the words to turn the fact into a question - easy! Don't just randomly remove a"
-    " word from the given fact to form a question. Remember that your question must"
-    " evaluate scientific understanding. Pick a word or a phrase in the given fact to"
-    " be the correct answer, then make the rest of the question. You can also form a"
-    " question without any WH words. For example, 'A radio converts electricity"
-    ' into?\'", "Demonstrations": "N/A"}'
+    " of words. This typically involves replacing some part of the given fact with a"
+    " WH word. For example, replacing the subject of the provided fact with the word"
+    ' \\"what\\" can form a valid question. Don\'t be creative! You just need to'
+    " rearrange the words to turn the fact into a question - easy! Don't just"
+    " randomly remove a word from the given fact to form a question. Remember that"
+    " your question must evaluate scientific understanding. Pick a word or a phrase"
+    " in the given fact to be the correct answer, then make the rest of the question."
+    " You can also form a question without any WH words. For example, 'A radio"
+    ' converts electricity into?\'", "Demonstrations": "N/A"}'
 )
 
 mock_prompt_parsing_example_with_demonstrations = partial(
