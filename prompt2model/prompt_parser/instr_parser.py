@@ -28,7 +28,7 @@ class OpenAIInstructionParser(PromptSpec):
         """Parse stuctured fields from the OpenAI API response.
 
         Args:
-            response (openai.Completion): OpenAI API response.
+            response: OpenAI API response.
 
         Returns:
             tuple[str, str | None]: Tuple consisting of:
@@ -49,7 +49,17 @@ class OpenAIInstructionParser(PromptSpec):
         return instruction_string, demonstration_string
 
     def parse_from_prompt(self, prompt: str) -> None:
-        """Parse the prompt into an instruction and demonstrations."""
+        """Parse prompt into specific fields, stored as class member variables.
+
+        Args:
+            prompt: User prompt to parse into two specific fields:
+                    "instruction" and "demonstrations".
+
+        Returns:
+            None: this void function directly stores the parsed fields into
+            the class's member variables `instruction` and `demonstration.
+
+        """
         parsing_prompt_for_chatgpt = construct_prompt_for_instruction_parsing(prompt)
 
         chat_api = ChatGPTAgent(self.api_key)
