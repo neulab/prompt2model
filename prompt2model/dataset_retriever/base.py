@@ -15,7 +15,7 @@ class DatasetRetriever(ABC):
     def retrieve_dataset_dict(
         self, prompt_spec: PromptSpec
     ) -> list[datasets.DatasetDict]:
-        """Retrieve DatasetDicts from a prompt specification.
+        """Retrieve full dataset splits (e.g. train/dev/test) from a prompt.
 
         Args:
             prompt_spec: A prompt spec (containing a system description).

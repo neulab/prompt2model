@@ -3,7 +3,7 @@
 import argparse
 
 from prompt2model.dataset_generator import DatasetSplit, MockDatasetGenerator
-from prompt2model.dataset_processor import MockPrcessor
+from prompt2model.dataset_processor import MockProcessor
 from prompt2model.dataset_retriever import MockRetriever
 from prompt2model.demo_creator.gradio_creator import create_gradio
 from prompt2model.evaluator import MockEvaluator
@@ -75,8 +75,8 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
     }
     generated_dataset_dicts = generator.generate_dataset_dict(prompt_spec, num_examples)
 
-    processer = MockPrcessor()
-    retrieved_dataset_dicts, generated_dataset_dicts = processer.process_dataset_dict(
+    processor = MockProcessor()
+    retrieved_dataset_dicts, generated_dataset_dicts = processor.process_dataset_dict(
         instruction="", dataset_dicts=[retrieved_dataset_dicts, generated_dataset_dicts]
     )
 
