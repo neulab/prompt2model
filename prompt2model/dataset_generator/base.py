@@ -23,7 +23,7 @@ class DatasetGenerator(ABC):
     """A class for generating datasets from a prompt specification."""
 
     @abstractmethod
-    def generate_dataset(
+    def generate_dataset_split(
         self,
         prompt_spec: PromptSpec,
         num_examples: int,
@@ -46,7 +46,7 @@ class DatasetGenerator(ABC):
         num_examples: dict[DatasetSplit, int],
         output_dir: str | None = None,
     ) -> datasets.DatasetDict:
-        """Generate a DatasetDict from a prompt.
+        """Generate full dataset splits (e.g. train/dev/test) from a prompt.
 
         Args:
             prompt_spec: A prompt specification.
@@ -57,7 +57,7 @@ class DatasetGenerator(ABC):
         """
         dataset_dict = datasets.DatasetDict(
             {
-                split.value: self.generate_dataset(prompt_spec, num, split=split)
+                split.value: self.generate_dataset_split(prompt_spec, num, split=split)
                 for split, num in num_examples.items()
             }
         )
