@@ -23,7 +23,7 @@ class DatasetGenerator(ABC):
     """A class for generating datasets from a prompt specification."""
 
     @abstractmethod
-    def generate_dataset(
+    def generate_dataset_split(
         self,
         prompt_spec: PromptSpec,
         num_examples: int,
