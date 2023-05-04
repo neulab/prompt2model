@@ -5,15 +5,15 @@ from typing import Any
 import datasets
 import transformers
 
+from prompt2model.model_trainer import ModelTrainer
 from prompt2model.param_selector.base import ParamSelector
 from prompt2model.prompt_parser import PromptSpec
-from prompt2model.trainer import Trainer
 
 
 class MockParamSelector(ParamSelector):
     """Uses a default set of parameters."""
 
-    def __init__(self, trainer: Trainer):
+    def __init__(self, trainer: ModelTrainer):
         """Initialize with train/val datasets and a prompt specification.
 
         Args:
