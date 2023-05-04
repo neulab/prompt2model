@@ -6,20 +6,24 @@ from unittest.mock import patch
 from prompt2model.prompt_parser import OpenAIInstructionParser, TaskType
 from test_helpers import mock_openai_response
 
-GPT3_RESPONSE_WITH_DEMONSTRATIONS = """
-1) Instruction:
-Convert each date from an informal description into a MM/DD/YYYY format.
+GPT3_RESPONSE_WITH_DEMONSTRATIONS = (
+    '{"Instruction": "Convert each date from an informal description into a'
+    ' MM/DD/YYYY format.", "Demonstrations": "Fifth of November 2024 ->'
+    ' 11/05/2024\nJan. 9 2023 -> 01/09/2023\nChristmas 2016 -> 12/25/2016"}'
+)
 
-2) Demonstrations:
-- Fifth of November 2024 -> 11/05/2024
-- Jan. 9 2023 -> 01/09/2023
-- Christmas 2016 -> 12/25/2016
-"""
-GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS = """1) Instruction:
-Turn the given fact into a question by a simple rearrangement of words. This typically involves replacing some part of the given fact with a WH word. For example, replacing the subject of the provided fact with the word "what" can form a valid question. Don't be creative! You just need to rearrange the words to turn the fact into a question - easy! Don't just randomly remove a word from the given fact to form a question. Remember that your question must evaluate scientific understanding. Pick a word or a phrase in the given fact to be the correct answer, then make the rest of the question. You can also form a question without any WH words. For example, 'A radio converts electricity into?'
-
-2) Demonstrations:
-NO DEMONSTRATION."""  # noqa: E501
+GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS = (
+    '{"Instruction": "Turn the given fact into a question by a simple rearrangement'
+    " of words. This typically involves replacing some part of the given fact with"
+    " a WH word. For example, replacing the subject of the provided fact with the word"
+    ' "what" can form a valid question. Don\'t be creative! You just need to rearrange'
+    " the words to turn the fact into a question - easy! Don't just randomly remove a"
+    " word from the given fact to form a question. Remember that your question must"
+    " evaluate scientific understanding. Pick a word or a phrase in the given fact to"
+    " be the correct answer, then make the rest of the question. You can also form a"
+    " question without any WH words. For example, 'A radio converts electricity"
+    ' into?\'", "Demonstrations": "N/A"}'
+)
 
 mock_prompt_parsing_example_with_demonstrations = partial(
     mock_openai_response, content=GPT3_RESPONSE_WITH_DEMONSTRATIONS
@@ -39,12 +43,10 @@ def test_instruction_parser_with_demonstration(mocked_parsing_method):
     Args:
         mocked_parsing_method: Mocked function for parsing a prompt using GPT.
     """
-    prompt = """
-    Convert each date from an informal description into a MM/DD/YYYY format.
-    Fifth of November 2024 -> 11/05/2024
-    Jan. 9 2023 -> 01/09/2023
-    Christmas 2016 -> 12/25/2016
-    """
+    prompt = """Convert each date from an informal description into a MM/DD/YYYY format.
+Fifth of November 2024 -> 11/05/2024
+Jan. 9 2023 -> 01/09/2023
+Christmas 2016 -> 12/25/2016"""
     prompt_spec = OpenAIInstructionParser(task_type=TaskType.TEXT_GENERATION)
     prompt_spec.parse_from_prompt(prompt)
 
@@ -55,9 +57,9 @@ def test_instruction_parser_with_demonstration(mocked_parsing_method):
     )
     assert (
         prompt_spec.demonstration
-        == """- Fifth of November 2024 -> 11/05/2024
-- Jan. 9 2023 -> 01/09/2023
-- Christmas 2016 -> 12/25/2016"""
+        == """Fifth of November 2024 -> 11/05/2024
+Jan. 9 2023 -> 01/09/2023
+Christmas 2016 -> 12/25/2016"""
     )
     assert mocked_parsing_method.call_count == 1
 

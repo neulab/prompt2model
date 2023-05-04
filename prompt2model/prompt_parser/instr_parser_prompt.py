@@ -2,19 +2,20 @@
 
 from __future__ import annotations  # noqa FI58
 
+import json
+
 METAPROMPT_INSTRUCTION = (
-    '"Prompts" are a description of a task provided to an AI language'
-    " model to guide its performance. Prompts typically consist of two"
-    ' components: a task "instruction" and, optionally, a few'
-    ' "demonstrations" (examples to illustrate the task). I want to'
-    " segment prompts into these two components. For each prompt, return"
-    ' a line starting with "1) Instruction: " and a line starting with "2)'
-    ' Demonstrations: ". If no demonstration is provided, write'
-    ' "NO DEMONSTRATION.". When demonstrations are provided, only'
-    " include examples where the full input-output pair is given; ignore"
-    " partial examples written with the intent of being completed by the"
-    " AI language model. Otherwise, match the formatting, word selection,"
-    " and punctuation used in the original prompt."
+    '"Prompts" are a description of a task provided to an AI language model to guide'
+    " its performance. Prompts typically consist of two components: a task"
+    ' "instruction" and, optionally, a few "demonstrations" (examples to illustrate'
+    " the task). I want to segment prompts into these two components. For each prompt,"
+    " respond with a JSON dictionary containing two fields: the instruction (with JSON"
+    ' key "Instruction") and the demonstrations (with JSON key "Demonstrations"). If no'
+    ' demonstrations are provided, return "N/A" for the demonstrations field. When'
+    " demonstrations are provided, only include examples where the full input-output"
+    " pair is given; ignore partial examples written with the intent of being"
+    " completed by the AI language model. Otherwise, match the formatting, word"
+    " selection, and punctuation used in the original prompt."
 )
 
 METAPROMPT_EXAMPLES = [
@@ -83,7 +84,7 @@ Agent: For most cakes, the oven should be preheated to 350°F (177°C).""",
         "You are given a list of integers. A list is shown by comma-separated numbers between two brackets. For example, [7,3,6] is a list. The number in location one is 7, the number in location two is 3, and the number in location three is 6. You should answer with a list such that every element at each location is equal to the product of elements at every other location in the input array. For example, if a list has four numbers, the answer you give should be created like this: First element of your list = product of second, third, and fourth elements in the given list. Second element of your list = product of First, third and fourth elements in the given list, etc.",  # noqa: E501
         {
             "Instruction": "You are given a list of integers. A list is shown by comma-separated numbers between two brackets. For example, [7,3,6] is a list. The number in location one is 7, the number in location two is 3, and the number in location three is 6. You should answer with a list such that every element at each location is equal to the product of elements at every other location in the input array. For example, if a list has four numbers, the answer you give should be created like this: First element of your list = product of second, third, and fourth elements in the given list. Second element of your list = product of First, third and fourth elements in the given list, etc.",  # noqa: E501
-            "Demonstrations": "NO DEMONSTRATION.",
+            "Demonstrations": "N/A",
         },
     ),
 ]
@@ -91,33 +92,33 @@ Agent: For most cakes, the oven should be preheated to 350°F (177°C).""",
 
 def construct_single_demonstration(
     user_prompt: str,
-    instruction: str | None,
-    demonstrations: str | None,
+    parse_dict: dict[str, str] | None,
     input_only: bool = False,
 ) -> str:
     """Format a demonstration or prediction example to give to an LLM."""
-    if demonstrations is None:
-        formatted_demonstrations = "NO DEMONSTRATIONS."
-    else:
-        formatted_demonstrations = demonstrations
     input_part = f'''Prompt: """\n{user_prompt}\n"""\n\nParsed Outputs:\n'''
-    output_part = (
-        f"""\n1) Instruction:\n{instruction}\n"""
-        + f"""\n2) Demonstrations:\n{formatted_demonstrations}\n"""
-    )
     if input_only:
         return input_part
-    else:
-        return input_part + output_part
+    output_part = json.dumps(parse_dict)
+    return input_part + output_part
 
 
-def construct_full_parsing_prompt():
-    """Construct a full prompt for the instruction parsing task."""
+def construct_prompt_for_instruction_parsing(user_prompt: str) -> str:
+    """A (GPT-3) prompt for separating instructions from demonstrations.
+
+    Args:
+        user_prompt: A user-generated prompt asking for a response.
+
+    Returns:
+        A prompt to instruct GPT-3 to parse the user's provided prompt.
+    """
     prompt_sections = [METAPROMPT_INSTRUCTION]
     for prompt, correct_parse in METAPROMPT_EXAMPLES:
-        instruction = correct_parse["Instruction"]
-        demonstration = correct_parse["Demonstrations"]
         prompt_sections.append(
-            construct_single_demonstration(prompt, instruction, demonstration)
+            construct_single_demonstration(prompt, correct_parse, input_only=False)
         )
+    prediction_template = construct_single_demonstration(
+        user_prompt, None, input_only=True
+    )
+    prompt_sections.append(prediction_template)
     return "\n\n------\n\n".join(prompt_sections)
