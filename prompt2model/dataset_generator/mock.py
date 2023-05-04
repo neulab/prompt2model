@@ -9,7 +9,7 @@ from prompt2model.prompt_parser import PromptSpec
 class MockDatasetGenerator(DatasetGenerator):
     """A class for generating empty datasets (for testing purposes)."""
 
-    def generate_dataset(
+    def generate_dataset_split(
         self,
         prompt_spec: PromptSpec,
         num_examples: int,

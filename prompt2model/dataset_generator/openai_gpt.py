@@ -97,7 +97,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         ):
             return "", ""
 
-    def generate_dataset(
+    def generate_dataset_split(
         self,
         prompt_spec: PromptSpec,
         num_examples: int,

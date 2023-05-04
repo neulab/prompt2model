@@ -19,7 +19,7 @@ mock_translation_example = partial(
 
 
 def check_generate_dataset(dataset_generator: OpenAIDatasetGenerator):
-    """Test the `generate_dataset()` function of `OpenAIDatasetGenerator`.
+    """Test the `generate_dataset_split()` function of `OpenAIDatasetGenerator`.
 
     This function generates a Dataset for a specified split of the data
     (train, validation, or test) using a simple prompt specification
@@ -30,7 +30,7 @@ def check_generate_dataset(dataset_generator: OpenAIDatasetGenerator):
     prompt_spec = MockPromptSpec()
     num_examples = 1
     split = DatasetSplit.TRAIN
-    dataset = dataset_generator.generate_dataset(prompt_spec, num_examples, split)
+    dataset = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
 
     # Check that the generated dataset has the expected number of examples.
     assert len(dataset) == num_examples
