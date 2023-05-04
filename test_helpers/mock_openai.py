@@ -1,7 +1,5 @@
 """Tools for mocking OpenAI API responses (for testing purposes)."""
 
-import json
-
 
 class MockCompletion:
     """Mock openai completion object."""
@@ -26,7 +24,7 @@ class MockCompletion:
         return _string
 
 
-def mock_openai_response(prompt: str, content: dict) -> MockCompletion:
+def mock_openai_response(prompt: str, content: str) -> MockCompletion:
     """Generate a mock completion object containing a choice with example content.
 
     This function creates a `MockCompletion` object with a `content` attribute set to
@@ -35,12 +33,11 @@ def mock_openai_response(prompt: str, content: dict) -> MockCompletion:
 
     Args:
         prompt: A mocked prompt that won't be used.
-        content: The example content to be returned.
+        content: The example string to be returned.
 
     Returns:
         a `MockCompletion` object.
     """
     _ = prompt
-    example_content = json.dumps(content)
-    mock_completion = MockCompletion(content=example_content)
+    mock_completion = MockCompletion(content=content)
     return mock_completion
