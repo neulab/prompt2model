@@ -4,6 +4,7 @@ from typing import Any
 
 import datasets
 import transformers
+import torch
 from datasets import concatenate_datasets
 from transformers import Trainer, TrainingArguments
 
