@@ -46,7 +46,7 @@ class DatasetGenerator(ABC):
         num_examples: dict[DatasetSplit, int],
         output_dir: str | None = None,
     ) -> datasets.DatasetDict:
-        """Generate a DatasetDict from a prompt.
+        """Generate full dataset splits (e.g. train/dev/test) from a prompt.
 
         Args:
             prompt_spec: A prompt specification.
