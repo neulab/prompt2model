@@ -83,7 +83,7 @@ class TextToTextTrainer(ModelTrainer):
         )
 
         # Set up optimizer
-        optimizer = transformers.AdamW(self.model.parameters())
+        optimizer = torch.optim.AdamW(self.model.parameters())
 
         # Concatenate and shuffle training datasets
         training_dataset = concatenate_datasets(training_datasets)
