@@ -1,5 +1,9 @@
 """Testing TextToTextTrainer."""
 
+import os
+import shutil
+import tempfile
+
 import datasets
 from transformers import T5ForConditionalGeneration, T5Tokenizer
 
@@ -13,22 +17,30 @@ def test_text_to_text_trainer():
     and verifying that the trained model is a T5ForConditionalGeneration model and
     the trained tokenizer is a T5Tokenizer model.
     """
-    trainer = TextToTextTrainer("t5-small")
+    with tempfile.TemporaryDirectory() as cache_dir:
+        # Create a TextToTextTrainer instance with the cache directory
+        trainer = TextToTextTrainer("t5-small")
+        training_datasets = [
+            datasets.Dataset.from_dict(
+                {
+                    "input_col": ["translate apple to french"] * 2,
+                    "output_col": ["pomme"] * 2,
+                }
+            ),
+        ]
 
-    training_datasets = [
-        datasets.Dataset.from_dict(
-            {
-                "input_col": ["translate apple to french"] * 2,
-                "output_col": ["pomme"] * 2,
-            }
-        ),
-    ]
+        # Train the TextToTextTrainer instance on the training dataset
+        trained_model, trained_tokenizer = trainer.train_model(
+            training_datasets, {"output_dir": cache_dir}
+        )
 
-    # Train the TextToTextTrainer instance on the training dataset
-    trained_model, trained_tokenizer = trainer.train_model(training_datasets, {})
+        # Verify that the trained model is a T5ForConditionalGeneration model
+        assert isinstance(trained_model, T5ForConditionalGeneration)
 
-    # Verify that the trained model is a T5ForConditionalGeneration model
-    assert isinstance(trained_model, T5ForConditionalGeneration)
+        # Verify that the trained tokenizer is a T5Tokenizer model
+        assert isinstance(trained_tokenizer, T5Tokenizer)
 
-    # Verify that the trained tokenizer is a T5Tokenizer model
-    assert isinstance(trained_tokenizer, T5Tokenizer)
+    # Delete the wandb cache directory
+    wandb_cache_dir = "./wandb"
+    if os.path.exists(wandb_cache_dir):
+        shutil.rmtree(wandb_cache_dir)

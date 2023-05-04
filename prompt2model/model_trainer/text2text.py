@@ -1,117 +1,101 @@
-"""A simple trainer for text-to-text models."""
+"""This module provides a T5 model trainer."""
 
 from typing import Any
 
 import datasets
-import torch
 import transformers
 from datasets import concatenate_datasets
-from transformers import T5ForConditionalGeneration, T5Tokenizer
+from transformers import Trainer, TrainingArguments
 
 from prompt2model.model_trainer import ModelTrainer
 
 
+def preprocess_dataset(
+    dataset: datasets.Dataset, tokenizer: transformers.AutoTokenizer
+):
+    """Preprocesses the given dataset using the given tokenizer.
+
+    Args:
+        dataset: A dictionary-like object containing the input and output columns.
+        tokenizer: A tokenizer object that can encode the input and output texts.
+
+    Returns:
+        A `datasets.Dataset` object containing the preprocessed data with:
+            "input_ids": A list of token IDs for the encoded input texts.
+            "attention_mask": A list of 0s and 1s indicating which tokens are padding.
+            "labels": A list of token IDs for the encoded output texts.
+    """
+    inputs = dataset["input_col"]
+    outputs = dataset["output_col"]
+    input_encodings = tokenizer(inputs, truncation=True, padding=True, max_length=128)
+    output_encodings = tokenizer(outputs, truncation=True, padding=True, max_length=128)
+
+    return datasets.Dataset.from_dict(
+        {
+            "input_ids": input_encodings["input_ids"],
+            "attention_mask": input_encodings["attention_mask"],
+            "labels": output_encodings["input_ids"],
+        }
+    )
+
+
 class TextToTextTrainer(ModelTrainer):
-    """This is a simple trainer for a T5-based text-to-text model."""
+    """This is a simple trainer for a T5 based text2text model."""
 
     def __init__(self, pretrained_model_name: str):
-        """Initialize a model trainer.
+        """Initializes a new instance of t5 model.
 
         Args:
-            pretrained_model_name: A HuggingFace model name to use for training.
+            pretrained_model_name: t5 model name.
         """
-        self.model = T5ForConditionalGeneration.from_pretrained(pretrained_model_name)
-        self.tokenizer = T5Tokenizer.from_pretrained(pretrained_model_name)
-        self.wandb = None
-
-    def prepare_inputs(
-        self,
-        input_text: str,
-        output_text: str,
-        max_length: int = 100,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Preprocess input and output text using the model's tokenizer.
-
-        Args:
-            input_text: Input text.
-            output_text: Output text.
-            max_length: Maximum length of the encoded text.
-
-        Returns:
-            A tuple containing the input and output tensors.
-        """
-        input_encoding = self.tokenizer(
-            input_text,
-            padding="longest",
-            max_length=max_length,
-            truncation=True,
-            return_tensors="pt",
+        self.model = transformers.T5ForConditionalGeneration.from_pretrained(
+            pretrained_model_name
         )
-        target_encoding = self.tokenizer(
-            output_text,
-            padding="longest",
-            max_length=max_length,
-            truncation=True,
-            return_tensors="pt",
-        )
-        input_ids, attention_mask = (
-            input_encoding.input_ids,
-            input_encoding.attention_mask,
-        )
-        labels = target_encoding.input_ids
-        labels[labels == self.tokenizer.pad_token_id] = -100
-        return input_ids, attention_mask, labels
+        self.tokenizer = transformers.T5Tokenizer.from_pretrained(pretrained_model_name)
 
     def train_model(
         self,
         training_datasets: list[datasets.Dataset],
         hyperparameter_choices: dict[str, Any],
     ) -> tuple[transformers.PreTrainedModel, transformers.PreTrainedTokenizer]:
-        """Train a text-to-text T5-based model.
+        """Train a text2text T5 based model.
 
         Args:
             training_datasets: Training `Dataset`s, with `input_col` and `output_col`.
             hyperparameter_choices: A dictionary of hyperparameter choices.
 
         Returns:
-            A trained HuggingFace model and its tokenizer.
+            A trained HuggingFace model.
         """
-        # Set up training arguments
-        training_args = transformers.TrainingArguments(
-            output_dir="./results",
+        training_args = TrainingArguments(
+            output_dir=hyperparameter_choices.get("output_dir", "./result"),
             num_train_epochs=hyperparameter_choices.get("num_train_epochs", 1),
+            per_device_train_batch_size=hyperparameter_choices.get("batch_size", 1),
+            warmup_steps=hyperparameter_choices.get("warmup_steps", 0),
+            weight_decay=hyperparameter_choices.get("weight_decay", 0.01),
+            logging_dir=hyperparameter_choices.get("logging_dir", "./logs"),
+            logging_steps=1000,
+            evaluation_strategy="steps",
+            eval_steps=1000,
+            save_strategy="steps",
+            save_steps=1000,
         )
 
-        # Set up optimizer
-        optimizer = torch.optim.AdamW(self.model.parameters())
-
-        # Concatenate and shuffle training datasets
+        # Concatenate and preprocess the training datasets
         training_dataset = concatenate_datasets(training_datasets)
         shuffled_dataset = training_dataset.shuffle(seed=42)
+        preprocessed_dataset = preprocess_dataset(shuffled_dataset, self.tokenizer)
+
+        # Create the trainer
+        trainer = Trainer(
+            model=self.model,
+            args=training_args,
+            train_dataset=preprocessed_dataset,
+            data_collator=transformers.DataCollatorForSeq2Seq(tokenizer=self.tokenizer),
+        )
 
         # Train the model
-        for epoch in range(training_args.num_train_epochs):
-            for step, example in enumerate(shuffled_dataset):
-                # Prepare inputs and labels
-                input_ids, attention_mask, labels = self.prepare_inputs(
-                    example["input_col"],
-                    example["output_col"],
-                    max_length=hyperparameter_choices.get("max_length", 100),
-                )
+        trainer.train()
 
-                # Compute loss and update parameters
-                optimizer.zero_grad()
-                loss = self.model(
-                    input_ids=input_ids,
-                    attention_mask=attention_mask,
-                    labels=labels,
-                ).loss
-                loss.backward()
-                optimizer.step()
-
-                # Print loss every 1000 steps
-                if step % 1000 == 0:
-                    print(f"Epoch {epoch}, Step {step}: Loss {loss.item()}")
-
-        # Return trained model and its tokenizer
+        # Return the trained model and tokenizer
         return self.model, self.tokenizer
