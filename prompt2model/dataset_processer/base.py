@@ -1,4 +1,4 @@
-"""An interface for dataset processer."""
+"""An interface for dataset processor."""
 
 from abc import ABC, abstractmethod
 

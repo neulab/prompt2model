@@ -1,11 +1,11 @@
-"""A mock dataset processer for testing purposes."""
+"""A mock dataset processor for testing purposes."""
 
 import datasets
 
-from prompt2model.dataset_processer.base import BasePrcesser
+from prompt2model.dataset_processor.base import BasePrcesser
 
 
-class MockPrcesser(BasePrcesser):
+class MockProcessor(BasePrcesser):
     """A class for retrieving datasets."""
 
     def process_dataset_dict(
