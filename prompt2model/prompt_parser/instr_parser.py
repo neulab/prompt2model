@@ -65,3 +65,4 @@ class OpenAIInstructionParser(PromptSpec):
         chat_api = ChatGPTAgent(self.api_key)
         response = chat_api.generate_openai_chat_completion(parsing_prompt_for_chatgpt)
         self.instruction, self.demonstration = self.extract_response(response)
+        return None
