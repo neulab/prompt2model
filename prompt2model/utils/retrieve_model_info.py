@@ -8,11 +8,11 @@ from pathlib import Path
 from huggingface_hub import HfApi
 
 
-def main(modelId: str, cache_dir: str = None) -> None:
+def main(pretrained_model_name: str, cache_dir: str = None) -> None:
     """Downloads and caches a Hugging Face model's metadata.
 
     Args:
-        modelId: HuggingFace ModelId, like "gpt2" or "facebook/roscoe-512-roberta-base".
+        pretrained_model_name: HuggingFace pretrained_model_name.
         cache_dir: A directory to cache the metadata.
     """
     if cache_dir is None:
@@ -20,13 +20,13 @@ def main(modelId: str, cache_dir: str = None) -> None:
     cache_path = Path.cwd() / cache_dir
     cache_path.mkdir(parents=True, exist_ok=True)
 
-    if len(modelId.split("/")) == 2:
-        _, model_name = modelId.split("/")
+    if len(pretrained_model_name.split("/")) == 2:
+        _, model_name = pretrained_model_name.split("/")
     else:
-        model_name = modelId
+        model_name = pretrained_model_name
 
     subprocess.run(
-        ["git", "clone", f"https://huggingface.co/{modelId}"],
+        ["git", "clone", f"https://huggingface.co/{pretrained_model_name}"],
         env=dict(os.environ, GIT_LFS_SKIP_SMUDGE="1"),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -51,12 +51,12 @@ def main(modelId: str, cache_dir: str = None) -> None:
         print(readme_content)
 
     api = HfApi()
-    model_meta = api.model_info(modelId)
+    model_meta = api.model_info(pretrained_model_name)
     downloads = model_meta.downloads
-    print(modelId, downloads)
+    print(pretrained_model_name, downloads)
 
     model_info = {
-        "modelId": modelId,
+        "pretrained_model_name": pretrained_model_name,
         "description": readme_content,
         "size": size,
         "downloads": downloads,
