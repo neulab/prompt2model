@@ -3,6 +3,7 @@
 from __future__ import annotations  # noqa FI58
 
 import json
+import logging
 
 import openai
 
