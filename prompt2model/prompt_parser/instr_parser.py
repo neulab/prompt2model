@@ -18,7 +18,16 @@ class OpenAIInstructionParser(PromptSpec):
     """Parse the prompt to separate instructions from task demonstrations."""
 
     def __init__(self, task_type: TaskType, api_key: str | None = None):
-        """By default, assume that every task is a text generation task."""
+        """Initialize the prompt spec with empty parsed fields.
+
+        We initialize the "instruction" and "demonstration" fields with None.
+        These fields can be populated with the parse_from_prompt method.
+
+        Args:
+            task_type: Set a constant task type to use for all prompts.
+            api_key: A valid OpenAI API key. Alternatively, set as None and
+                     set the environment variable `OPENAI_API_KEY=<your key>`.
+        """
         self.task_type = task_type
         self.instruction: str | None = None
         self.demonstration: str | None = None
