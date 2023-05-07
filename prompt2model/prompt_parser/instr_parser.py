@@ -49,6 +49,7 @@ class OpenAIInstructionParser(PromptSpec):
         try:
             response_json = json.loads(response_text, strict=False)
         except json.decoder.JSONDecodeError:
+            logging.error("API response was not a valid JSON")
             raise ValueError(f"API response was not a valid JSON: {response_text}")
         instruction_string = response_json["Instruction"].strip()
         demonstration_string = response_json["Demonstrations"].strip()
