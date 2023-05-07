@@ -27,15 +27,15 @@ class MockCompletion:
 def mock_openai_response(prompt: str, content: str) -> MockCompletion:
     """Generate a mock completion object containing a choice with example content.
 
-   This function creates a `MockCompletion` object with a `content` attribute set to
-   an LLM completion string.
+    This function creates a `MockCompletion` object with a `content` attribute set to
+    an LLM completion string.
 
     Args:
         prompt: A mocked prompt that won't be used.
         content: The example string to be returned.
 
     Returns:
-        a `MockCompletion` object.
+        A mock completion object simulating an OpenAI ChatCompletion API response.
     """
     _ = prompt
     mock_completion = MockCompletion(content=content)
