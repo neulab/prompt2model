@@ -98,11 +98,13 @@ def construct_single_demonstration(
     """Format a demonstration or prediction example to give to an LLM.
 
     Args:
-        user_prompt: A prompt describing the task, as a string.
-        parse_dict: A parsing dictionary containing the elements
-            needed to parse the prompt, in dictionary format.
+        user_prompt: A textual prompt describing the task.
+        parse_dict: A parsing dictionary containing the correct prompt parse
+                    corresponding to the given `user_prompt`.
         input_only: Whether the returned string should only contain
-            the input part. Defaults to False.
+                    the input part. Defaults to False. This should be set to
+                    true when constructing the final prediction template to be
+                    completed by the LLM.
     """
     input_part = f'''Prompt: """\n{user_prompt}\n"""\n\nParsed Outputs:\n'''
     if input_only:
