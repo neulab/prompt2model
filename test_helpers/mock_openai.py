@@ -28,10 +28,7 @@ def mock_openai_response(prompt: str, content: str) -> MockCompletion:
     """Generate a mock completion object containing a choice with example content.
 
    This function creates a `MockCompletion` object with a `content` attribute set to
-    a JSON string representing an input text and its annotation. The `MockCompletion`
-    object is then returned.
-    a JSON string representing an example label and comment. The `MockCompletion`
-    object is then returned.
+   an LLM completion string.
 
     Args:
         prompt: A mocked prompt that won't be used.
