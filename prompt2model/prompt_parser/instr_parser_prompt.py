@@ -95,7 +95,15 @@ def construct_single_demonstration(
     parse_dict: dict[str, str] | None,
     input_only: bool = False,
 ) -> str:
-    """Format a demonstration or prediction example to give to an LLM."""
+    """Format a demonstration or prediction example to give to an LLM.
+
+    Args:
+        user_prompt: A prompt describing the task, as a string.
+        parse_dict: A parsing dictionary containing the elements
+            needed to parse the prompt, in dictionary format.
+        input_only: Whether the returned string should only contain
+            the input part. Defaults to False.
+    """
     input_part = f'''Prompt: """\n{user_prompt}\n"""\n\nParsed Outputs:\n'''
     if input_only:
         return input_part
