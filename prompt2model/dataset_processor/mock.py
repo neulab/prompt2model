@@ -2,10 +2,10 @@
 
 import datasets
 
-from prompt2model.dataset_processor.base import BasePrcesser
+from prompt2model.dataset_processor.base import BaseProcesser
 
 
-class MockProcessor(BasePrcesser):
+class MockProcessor(BaseProcesser):
     """A class for retrieving datasets."""
 
     def process_dataset_dict(
