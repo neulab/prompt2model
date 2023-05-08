@@ -40,7 +40,7 @@ class OpenAIInstructionParser(PromptSpec):
         self.max_api_calls = max_api_calls
         self.api_call_counter = 0
 
-    def extract_response(self, response: openai.Completion) -> tuple[str, str | None]:
+    def extract_response(self, response: openai.Completion) -> tuple[str, str]:
         """Parse stuctured fields from the OpenAI API response.
 
         Args:
@@ -60,9 +60,6 @@ class OpenAIInstructionParser(PromptSpec):
             raise e
         instruction_string = response_json["Instruction"].strip()
         demonstration_string = response_json["Demonstrations"].strip()
-        if demonstration_string == "N/A":
-            # This special output sequence means "demonstration is None".
-            demonstration_string = None
         return instruction_string, demonstration_string
 
     def parse_from_prompt(self, prompt: str) -> None:
