@@ -4,6 +4,7 @@ from __future__ import annotations  # noqa FI58
 
 import json
 import logging
+import time
 
 import openai
 
@@ -84,10 +85,24 @@ class OpenAIInstructionParser(PromptSpec):
                 )
                 self.instruction, self.demonstration = self.extract_response(response)
                 break
-            except json.decoder.JSONDecodeError as e:
+            except (
+                openai.error.APIError,
+                openai.error.Timeout,
+                openai.error.RateLimitError,
+                openai.error.ServiceUnavailableError,
+                json.decoder.JSONDecodeError,
+            ) as e:
                 self.api_call_counter += 1
                 if self.max_api_calls:
                     if self.api_call_counter < self.max_api_calls:
+                        if (
+                            isinstance(e, openai.error.APIError)
+                            or isinstance(e, openai.error.Timeout)
+                            or isinstance(e, openai.error.RateLimitError)
+                        ):
+                            # For these errors, OpenAI recommends waiting before
+                            # retrying.
+                            time.sleep(1)
                         continue
                     else:
                         logging.error("Maximum number of API calls reached.")
