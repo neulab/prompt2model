@@ -18,7 +18,9 @@ from prompt2model.utils import ChatGPTAgent
 class OpenAIInstructionParser(PromptSpec):
     """Parse the prompt to separate instructions from task demonstrations."""
 
-    def __init__(self, task_type: TaskType, api_key: str | None = None):
+    def __init__(
+        self, task_type: TaskType, api_key: str | None = None, max_api_calls: int = None
+    ):
         """Initialize the prompt spec with empty parsed fields.
 
         We initialize the "instruction" and "demonstration" fields with None.
@@ -28,11 +30,15 @@ class OpenAIInstructionParser(PromptSpec):
             task_type: Set a constant task type to use for all prompts.
             api_key: A valid OpenAI API key. Alternatively, set as None and
                      set the environment variable `OPENAI_API_KEY=<your key>`.
+            max_api_calls: The maximum number of API calls allowed,
+                or None for unlimited.
         """
         self.task_type = task_type
         self.instruction: str | None = None
         self.demonstration: str | None = None
         self.api_key: str | None = api_key
+        self.max_api_calls = max_api_calls
+        self.api_call_counter = 0
 
     def extract_response(self, response: openai.Completion) -> tuple[str, str | None]:
         """Parse stuctured fields from the OpenAI API response.
@@ -49,9 +55,9 @@ class OpenAIInstructionParser(PromptSpec):
         response_text = response.choices[0]["message"]["content"]
         try:
             response_json = json.loads(response_text, strict=False)
-        except json.decoder.JSONDecodeError:
-            logging.error("API response was not a valid JSON")
-            raise ValueError(f"API response was not a valid JSON: {response_text}")
+        except json.decoder.JSONDecodeError as e:
+            logging.warning("API response was not a valid JSON")
+            raise e
         instruction_string = response_json["Instruction"].strip()
         demonstration_string = response_json["Demonstrations"].strip()
         if demonstration_string == "N/A":
@@ -74,6 +80,19 @@ class OpenAIInstructionParser(PromptSpec):
         parsing_prompt_for_chatgpt = construct_prompt_for_instruction_parsing(prompt)
 
         chat_api = ChatGPTAgent(self.api_key)
-        response = chat_api.generate_openai_chat_completion(parsing_prompt_for_chatgpt)
-        self.instruction, self.demonstration = self.extract_response(response)
+        while True:
+            try:
+                response = chat_api.generate_openai_chat_completion(
+                    parsing_prompt_for_chatgpt
+                )
+                self.instruction, self.demonstration = self.extract_response(response)
+                break
+            except json.decoder.JSONDecodeError as e:
+                self.api_call_counter += 1
+                if self.max_api_calls:
+                    if self.api_call_counter < self.max_api_calls:
+                        continue
+                    else:
+                        logging.error("Maximum number of API calls reached.")
+                        raise e
         return None
