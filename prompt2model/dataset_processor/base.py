@@ -6,7 +6,7 @@ import datasets
 
 
 # pylint: disable=too-few-public-methods
-class BaseProcesser(ABC):
+class BaseProcessor(ABC):
     """A class for post-processing datasets."""
 
     @abstractmethod
