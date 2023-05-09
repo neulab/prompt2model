@@ -2,6 +2,10 @@
 
 from __future__ import annotations  # noqa FI58
 
+import json
+import logging
+import time
+
 import openai
 
 
@@ -33,3 +37,42 @@ class ChatGPTAgent:
             ],
         )
         return response
+
+
+OPENAI_ERRORS = (
+    openai.error.APIError,
+    openai.error.Timeout,
+    openai.error.RateLimitError,
+    openai.error.ServiceUnavailableError,
+    json.decoder.JSONDecodeError,
+    AssertionError,
+)
+
+
+def handle_openai_error(e, api_call_counter, max_api_calls):
+    """Handle OpenAI errors or related errors that the OpenAI API may raise.
+
+    Args:
+        e: The error to handle. This could be an OpenAI error or a related
+           non-fatal error, such as JSONDecodeError or AssertionError.
+        api_call_counter: The number of API calls made so far.
+        max_api_calls: The maximum number of API calls allowed, or None for
+
+    Returns:
+        The updated api_call_counter (if no error was raised).
+    """
+    api_call_counter += 1
+    if max_api_calls and api_call_counter >= max_api_calls:
+        logging.error("Maximum number of API calls reached.")
+        raise e
+
+    if isinstance(e, OPENAI_ERRORS):
+        if isinstance(
+            e,
+            (openai.error.APIError, openai.error.Timeout, openai.error.RateLimitError),
+        ):
+            # For these errors, OpenAI recommends waiting before retrying.
+            time.sleep(1)
+        return api_call_counter
+
+    raise e

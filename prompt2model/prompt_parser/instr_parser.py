@@ -4,7 +4,6 @@ from __future__ import annotations  # noqa FI58
 
 import json
 import logging
-import time
 
 import openai
 
@@ -13,7 +12,7 @@ from prompt2model.prompt_parser.base import PromptSpec, TaskType
 from prompt2model.prompt_parser.instr_parser_prompt import (  # isort: split
     construct_prompt_for_instruction_parsing,
 )
-from prompt2model.utils import ChatGPTAgent
+from prompt2model.utils import OPENAI_ERRORS, ChatGPTAgent, handle_openai_error
 
 
 class OpenAIInstructionParser(PromptSpec):
@@ -67,29 +66,30 @@ class OpenAIInstructionParser(PromptSpec):
         demonstration_string = response_json["Demonstrations"].strip()
         return instruction_string, demonstration_string
 
-OPENAI_ERRORS = (
-    openai.error.APIError,
-    openai.error.Timeout,
-    openai.error.RateLimitError,
-    openai.error.ServiceUnavailableError,
-    json.decoder.JSONDecodeError,
-    AssertionError,
-)
+    def parse_from_prompt(self, prompt: str) -> None:
+        """Parse prompt into specific fields, stored as class member variables.
 
-def handle_openai_error(e, api_call_counter, max_api_calls):
-    api_call_counter += 1
-    if max_api_calls and api_call_counter >= max_api_calls:
-        logging.error("Maximum number of API calls reached.")
-        raise e
+        Args:
+            prompt: User prompt to parse into two specific fields:
+                    "instruction" and "demonstrations".
 
-    if isinstance(e, OPENAI_ERRORS):
-        if isinstance(e, (
-            openai.error.APIError,
-            openai.error.Timeout,
-            openai.error.RateLimitError
-        )):
-            # For these errors, OpenAI recommends waiting before retrying.
-            time.sleep(1)
-        return api_call_counter
+        Returns:
+            None: this void function directly stores the parsed fields into
+            the class's member variables `instruction` and `demonstration.
 
-    raise e
+        """
+        parsing_prompt_for_chatgpt = construct_prompt_for_instruction_parsing(prompt)
+
+        chat_api = ChatGPTAgent(self.api_key)
+        while True:
+            try:
+                response = chat_api.generate_openai_chat_completion(
+                    parsing_prompt_for_chatgpt
+                )
+                self.instruction, self.demonstration = self.extract_response(response)
+                break
+            except OPENAI_ERRORS as e:
+                self.api_call_counter = handle_openai_error(
+                    e, self.api_call_counter, self.max_api_calls
+                )
+        return None
