@@ -84,6 +84,7 @@ class OpenAIInstructionParser(PromptSpec):
                     parsing_prompt_for_chatgpt
                 )
                 self.instruction, self.demonstration = self.extract_response(response)
+                assert self.instruction != "", "instruction is obligatory"
                 break
             except (
                 openai.error.APIError,
