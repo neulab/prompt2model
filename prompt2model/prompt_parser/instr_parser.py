@@ -48,7 +48,7 @@ class OpenAIInstructionParser(PromptSpec):
             response: OpenAI API response.
 
         Returns:
-            tuple[str, str | None]: Tuple consisting of:
+            tuple[str, str]: Tuple consisting of:
                 1) Instruction: The instruction parsed from the API response.
                 2) Demonstrations: (Optional) demonstrations parsed from the
                    API response.
