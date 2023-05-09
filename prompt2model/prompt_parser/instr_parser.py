@@ -67,48 +67,29 @@ class OpenAIInstructionParser(PromptSpec):
         demonstration_string = response_json["Demonstrations"].strip()
         return instruction_string, demonstration_string
 
-    def parse_from_prompt(self, prompt: str) -> None:
-        """Parse prompt into specific fields, stored as class member variables.
+OPENAI_ERRORS = (
+    openai.error.APIError,
+    openai.error.Timeout,
+    openai.error.RateLimitError,
+    openai.error.ServiceUnavailableError,
+    json.decoder.JSONDecodeError,
+    AssertionError,
+)
 
-        Args:
-            prompt: User prompt to parse into two specific fields:
-                    "instruction" and "demonstrations".
+def handle_openai_error(e, api_call_counter, max_api_calls):
+    api_call_counter += 1
+    if max_api_calls and api_call_counter >= max_api_calls:
+        logging.error("Maximum number of API calls reached.")
+        raise e
 
-        Returns:
-            None: this void function directly stores the parsed fields into
-            the class's member variables `instruction` and `demonstration.
+    if isinstance(e, OPENAI_ERRORS):
+        if isinstance(e, (
+            openai.error.APIError,
+            openai.error.Timeout,
+            openai.error.RateLimitError
+        )):
+            # For these errors, OpenAI recommends waiting before retrying.
+            time.sleep(1)
+        return api_call_counter
 
-        """
-        parsing_prompt_for_chatgpt = construct_prompt_for_instruction_parsing(prompt)
-
-        chat_api = ChatGPTAgent(self.api_key)
-        while True:
-            try:
-                response = chat_api.generate_openai_chat_completion(
-                    parsing_prompt_for_chatgpt
-                )
-                self.instruction, self.demonstration = self.extract_response(response)
-                break
-            except (
-                openai.error.APIError,
-                openai.error.Timeout,
-                openai.error.RateLimitError,
-                openai.error.ServiceUnavailableError,
-                json.decoder.JSONDecodeError,
-            ) as e:
-                self.api_call_counter += 1
-                if self.max_api_calls:
-                    if self.api_call_counter < self.max_api_calls:
-                        if (
-                            isinstance(e, openai.error.APIError)
-                            or isinstance(e, openai.error.Timeout)
-                            or isinstance(e, openai.error.RateLimitError)
-                        ):
-                            # For these errors, OpenAI recommends waiting before
-                            # retrying.
-                            time.sleep(1)
-                        continue
-                    else:
-                        logging.error("Maximum number of API calls reached.")
-                        raise e
-        return None
+    raise e
