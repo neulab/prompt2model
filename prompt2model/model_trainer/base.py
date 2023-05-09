@@ -9,7 +9,7 @@ from transformers import AutoModel, AutoTokenizer
 
 
 # pylint: disable=too-few-public-methods
-class Trainer(ABC):
+class ModelTrainer(ABC):
     """Train a model with a fixed set of hyperparameters."""
 
     def __init__(self, pretrained_model_name: str):

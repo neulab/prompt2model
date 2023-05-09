@@ -9,9 +9,9 @@ from prompt2model.demo_creator.gradio_creator import create_gradio
 from prompt2model.evaluator import MockEvaluator
 from prompt2model.model_executor import MockModelExecutor
 from prompt2model.model_retriever import MockModelRetriever
+from prompt2model.model_trainer import MockTrainer
 from prompt2model.param_selector import MockParamSelector
 from prompt2model.prompt_parser import DefaultSpec, PromptSpec, TaskType
-from prompt2model.trainer import MockTrainer
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -90,9 +90,9 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
     all_training = retrieved_training + [generated_training]
 
     model_retriever = MockModelRetriever("cardiffnlp/twitter-roberta-base-sentiment")
-    retrieved_model_id = model_retriever.retrieve(prompt_spec)
+    retrieved_model_name = model_retriever.retrieve(prompt_spec)
 
-    trainer = MockTrainer(retrieved_model_id)
+    trainer = MockTrainer(retrieved_model_name)
     selector = MockParamSelector(trainer)
     model, tokenizer = selector.select_from_hyperparameters(
         all_training, validation, {}

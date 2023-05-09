@@ -14,7 +14,7 @@ class MockProcessor(BaseProcessor):
         """Post-process a list of DatasetDicts.
 
         Args:
-            instruction: The instruction to convert example into a text2text fashion.
+            instruction: The instruction added to `input_col` to explain the task.
             dataset_dicts: A list of DatasetDicts (generated or retrieved).
 
         Returns:

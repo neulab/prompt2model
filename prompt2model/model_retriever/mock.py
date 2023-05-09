@@ -7,9 +7,9 @@ from prompt2model.prompt_parser import PromptSpec
 class MockModelRetriever(ModelRetriever):
     """Select a fixed model from among a set of hyperparameter choices."""
 
-    def __init__(self, fixed_model_id: str):
-        """Initialize a dummy retriever that returns a fixed model ID."""
-        self.fixed_model_id = fixed_model_id
+    def __init__(self, fixed_model_name: str):
+        """Initialize a dummy retriever that returns a fixed model name."""
+        self.fixed_model_name = fixed_model_name
 
     def retrieve(
         self,
@@ -21,6 +21,6 @@ class MockModelRetriever(ModelRetriever):
             prompt: A prompt to use to select relevant models.
 
         Return:
-            A relevant model's HuggingFace ID string.
+            A relevant model's HuggingFace name.
         """
-        return self.fixed_model_id
+        return self.fixed_model_name
