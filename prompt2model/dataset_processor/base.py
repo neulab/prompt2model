@@ -16,7 +16,7 @@ class BaseProcessor(ABC):
         """Post-process a list of DatasetDicts.
 
         Args:
-            instruction: The instruction added to `input_col` to explain the task.
+            instruction: The instruction used as a prefix to explain the task.
             dataset_dicts: A list of DatasetDicts (generated or retrieved).
 
         Returns:
