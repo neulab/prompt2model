@@ -16,7 +16,7 @@ class BaseProcessor(ABC):
         """Post-process a list of DatasetDicts.
 
         Args:
-            instruction: The instruction added to `input_col` to explain the task.
+            instruction: The instruction used as a prefix to explain the task.
             dataset_dicts: A list of DatasetDicts (generated or retrieved).
 
         Returns:
@@ -43,7 +43,7 @@ def post_process_example(example: dict, instruction: str, task_id: int) -> dict:
 
 
 class DatasetProcessor(BaseProcessor):
-    """A class for post-processing datasets."""
+    """A post-processing class for datasets, converting task into text2text fashion."""
 
     def process_dataset_dict(
         self, instruction: str, dataset_dicts: list[datasets.DatasetDict]
