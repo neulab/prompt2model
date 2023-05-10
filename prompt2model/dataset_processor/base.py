@@ -1,4 +1,4 @@
-"""An interface for dataset processer."""
+"""An interface for dataset processor."""
 
 from abc import ABC, abstractmethod
 from functools import partial
@@ -7,7 +7,7 @@ import datasets
 
 
 class BaseProcessor(ABC):
-    """A base class for post-processing datasets."""
+    """A class for post-processing datasets."""
 
     @abstractmethod
     def process_dataset_dict(
@@ -34,7 +34,7 @@ class DatasetProcessor(BaseProcessor):
         Args:
             example: A dictionary representing an example.
             instruction: The instruction to convert task into a text2text generation.
-            task_id: The dataset index in dataset_dicts, typical for multi-task training.
+            task_id: The dataset index in dataset_dicts, used for multi-task training.
 
         Returns:
             A dictionary representing the modified example.
