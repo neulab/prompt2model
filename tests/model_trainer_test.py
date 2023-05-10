@@ -1,7 +1,5 @@
 """Testing T5Trainer."""
 
-import os
-import shutil
 import tempfile
 
 import datasets
@@ -39,8 +37,3 @@ def test_t5_trainer():
 
         # Verify that the trained tokenizer is a T5Tokenizer model
         assert isinstance(trained_tokenizer, T5Tokenizer)
-
-    # Delete the wandb cache directory
-    wandb_cache_dir = "./wandb"
-    if os.path.exists(wandb_cache_dir):
-        shutil.rmtree(wandb_cache_dir)
