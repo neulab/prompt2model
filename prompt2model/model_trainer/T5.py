@@ -39,8 +39,8 @@ def preprocess_dataset(
     )
 
 
-class TextToTextTrainer(ModelTrainer):
-    """This is a simple trainer for a T5 based text2text model."""
+class T5Trainer(ModelTrainer):
+    """This is a simple trainer for a T5 based text2text generation model."""
 
     def __init__(self, pretrained_model_name: str):
         """Initializes a new instance of t5 model.
