@@ -10,35 +10,6 @@ from transformers import Trainer, TrainingArguments
 from prompt2model.model_trainer import ModelTrainer
 
 
-def preprocess_dataset(
-    dataset: datasets.Dataset, tokenizer: transformers.AutoTokenizer
-):
-    """Preprocesses the given dataset using the given tokenizer.
-
-    Args:
-        dataset: A dictionary-like object containing the input and output columns.
-        tokenizer: A tokenizer object that can encode the input and output texts.
-
-    Returns:
-        A `datasets.Dataset` object containing the preprocessed data with:
-            "input_ids": A list of token IDs for the encoded input texts.
-            "attention_mask": A list of 0s and 1s indicating which tokens are padding.
-            "labels": A list of token IDs for the encoded output texts.
-    """
-    inputs = dataset["input_col"]
-    outputs = dataset["output_col"]
-    input_encodings = tokenizer(inputs, truncation=True, padding=True, max_length=128)
-    output_encodings = tokenizer(outputs, truncation=True, padding=True, max_length=128)
-
-    return datasets.Dataset.from_dict(
-        {
-            "input_ids": input_encodings["input_ids"],
-            "attention_mask": input_encodings["attention_mask"],
-            "labels": output_encodings["input_ids"],
-        }
-    )
-
-
 class T5Trainer(ModelTrainer):
     """This is a simple trainer for a T5 based text2text generation model."""
 
@@ -52,6 +23,35 @@ class T5Trainer(ModelTrainer):
             pretrained_model_name
         )
         self.tokenizer = transformers.T5Tokenizer.from_pretrained(pretrained_model_name)
+
+    def preprocess_dataset(self, dataset: datasets.Dataset):
+        """Preprocesses the given dataset using self.tokenizer.
+
+        Args:
+            dataset: A dictionary-like object containing the input and output columns.
+
+        Returns:
+            A `datasets.Dataset` object containing the preprocessed data with:
+                "input_ids": A list of token IDs for the encoded input texts.
+                "attention_mask": A list of 0/1 indicating which tokens are padding.
+                "labels": A list of token IDs for the encoded output texts.
+        """
+        inputs = dataset["input_col"]
+        outputs = dataset["output_col"]
+        input_encodings = self.tokenizer(
+            inputs, truncation=True, padding=True, max_length=128
+        )
+        output_encodings = self.tokenizer(
+            outputs, truncation=True, padding=True, max_length=128
+        )
+
+        return datasets.Dataset.from_dict(
+            {
+                "input_ids": input_encodings["input_ids"],
+                "attention_mask": input_encodings["attention_mask"],
+                "labels": output_encodings["input_ids"],
+            }
+        )
 
     def train_model(
         self,
@@ -84,8 +84,7 @@ class T5Trainer(ModelTrainer):
         # Concatenate and preprocess the training datasets
         training_dataset = concatenate_datasets(training_datasets)
         shuffled_dataset = training_dataset.shuffle(seed=42)
-        preprocessed_dataset = preprocess_dataset(shuffled_dataset, self.tokenizer)
-
+        preprocessed_dataset = self.preprocess_dataset(shuffled_dataset)
         # Create the trainer
         trainer = Trainer(
             model=self.model,
