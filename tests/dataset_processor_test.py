@@ -1,16 +1,16 @@
-"""Testing DatasetProcessor."""
+"""Testing T5Processor."""
 
 import datasets
 
-from prompt2model.dataset_processor.base import DatasetProcessor
+from prompt2model.dataset_processor.base import T5Processor
 
 
 def test_process_dataset_dict():
-    """Test the `process_dataset_dict()` function of `DatasetProcessor`.
+    """Test the `process_dataset_dict()` function of `T5Processor`.
 
     It sets up dataset dicts containing input and output columns and an
     instruction to convert to text2text fashion. It then initializes the
-    `DatasetProcessor` and calls `process_dataset_dict` on the instruction
+    `T5Processor` and calls `process_dataset_dict` on the instruction
     and dataset dicts. Finally, it checks that the modified dataset dicts
     have the expected content.
     """
@@ -33,8 +33,8 @@ def test_process_dataset_dict():
     ]
     instruction = "convert to text2text"
 
-    # Initialize the `DatasetProcessor` and call `process_dataset_dict`
-    processor = DatasetProcessor()
+    # Initialize the `T5Processor` and call `process_dataset_dict`
+    processor = T5Processor()
     modified_dataset_dicts = processor.process_dataset_dict(instruction, dataset_dicts)
 
     # Check that the modified dataset dicts have the expected content

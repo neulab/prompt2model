@@ -24,7 +24,7 @@ class BaseProcessor(ABC):
         """
 
 
-class DatasetProcessor(BaseProcessor):
+class T5Processor(BaseProcessor):
     """A post-processing class for datasets, converting task into text2text fashion."""
 
     @staticmethod
