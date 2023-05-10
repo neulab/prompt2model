@@ -52,6 +52,8 @@ class GPTTrainer(ModelTrainer):
         self.tokenizer = transformers.AutoTokenizer.from_pretrained(
             pretrained_model_name
         )
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 
     def preprocess_dataset(self, dataset: datasets.Dataset):
         """Preprocesses the given dataset using self.tokenizer.
