@@ -33,7 +33,7 @@ class DatasetProcessor(BaseProcessor):
 
         Args:
             example: A dictionary representing an example.
-            instruction: The instruction to convert task into a text2text generation.
+            instruction: The instruction used as a prefix to explain the task.
             task_id: The dataset index in dataset_dicts, used for multi-task training.
 
         Returns:
@@ -51,7 +51,7 @@ class DatasetProcessor(BaseProcessor):
         """Post-process a list of DatasetDicts.
 
         Args:
-            instruction: The instruction to convert example into a text2text fashion.
+            instruction: The instruction used as a prefix to explain the task.
             dataset_dicts: A list of DatasetDicts (generated or retrieved).
 
         Returns:
