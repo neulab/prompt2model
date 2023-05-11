@@ -1,0 +1,134 @@
+"""Utilities to construct an LLM "metaprompt" for our instruction parser."""
+
+from __future__ import annotations  # noqa FI58
+
+import json
+
+METAPROMPT_INSTRUCTION = (
+    '"Prompts" are a description of a task provided to an AI language model to guide'
+    " its performance. Prompts typically consist of two components: a task"
+    ' "instruction" and, optionally, a few "demonstrations" (examples to illustrate'
+    " the task). I want to segment prompts into these two components. For each prompt,"
+    " respond with a JSON dictionary containing two fields: the instruction (with JSON"
+    ' key "Instruction") and the demonstrations (with JSON key "Demonstrations"). If no'
+    ' demonstrations are provided, return "N/A" for the demonstrations field. When'
+    " demonstrations are provided, only include examples where the full input-output"
+    " pair is given; ignore partial examples written with the intent of being"
+    " completed by the AI language model. Otherwise, match the formatting, word"
+    " selection, and punctuation used in the original prompt."
+)
+
+METAPROMPT_EXAMPLES = [
+    (
+        """I am trying to cluster entity strings on Wikipedia according to the Wikipedia article title they refer to. To help me with this, for a given entity name, please provide me with a comprehensive set of alternative names that could refer to the same entity. Entities may be weirdly truncated or ambiguous - e.g. "Wind" may refer to the band "Earth, Wind, and Fire" or to "rescue service". For each entity, I will provide you with a sentence where this entity is used to help you understand what this entity refers to. Generate a comprehensive set of alternate entity names as a JSON-formatted list.
+
+Entity: "fictional character"
+Context Sentence: "Jenna Marshall is a fictional character created by Sara Shepard for the `` Pretty Little Liars '' book series , and later developed for the Freeform television series adaptation by I. Marlene King and portrayed by Tammin Sursok ."
+Alternate Entity Names: ["fictional characters", "characters", "character"]
+
+Entity: "Catholicism"
+Context Sentence: "At home , significantly more electorate residents spoke Italian , Cantonese , Mandarin and Greek at home , and whilst the top three religions (Catholicism , no religion and Anglicanism) differed little from other parts of Perth , Buddhism and Eastern Orthodox adherents outnumbered those of the Uniting Church ."
+Alternate Entity Names: ["Catholic Church", "Roman Catholic", "Catholic"]
+
+Entity: "Wind"
+Context Sentence: "Illinois musicians with a # 1 Billboard Hot 100 hit include artists from the 1950s : Sam Cooke (d. 1964) ; from the 1960s : The Buckinghams ; from the 1970s : Earth , Wind & Fire , The Chi-Lites , The Staple Singers , Minnie Riperton , Styx ; from the 1980s : Chicago , Cheap Trick , REO Speedwagon , Survivor , Richard Marx ; from the 1990s : R. Kelly ; from the 2000s : Kanye West , Twista , Plain White T 's ."
+Alternate Entity Names: ["Earth & Fire", "Earth", "Wind & Fire"]""",  # noqa: E501
+        {
+            "Instruction": """I am trying to cluster entity strings on Wikipedia according to the Wikipedia article title they refer to. To help me with this, for a given entity name, please provide me with a comprehensive set of alternative names that could refer to the same entity. Entities may be weirdly truncated or ambiguous - e.g. "Wind" may refer to the band "Earth, Wind, and Fire" or to "rescue service". For each entity, I will provide you with a sentence where this entity is used to help you understand what this entity refers to. Generate a comprehensive set of alternate entity names as a JSON-formatted list.""",  # noqa: E501
+            "Demonstrations": """Entity: "fictional character"
+Context Sentence: "Jenna Marshall is a fictional character created by Sara Shepard for the `` Pretty Little Liars '' book series , and later developed for the Freeform television series adaptation by I. Marlene King and portrayed by Tammin Sursok ."
+Alternate Entity Names: ["fictional characters", "characters", "character"]
+
+Entity: "Catholicism"
+Context Sentence: "At home , significantly more electorate residents spoke Italian , Cantonese , Mandarin and Greek at home , and whilst the top three religions (Catholicism , no religion and Anglicanism) differed little from other parts of Perth , Buddhism and Eastern Orthodox adherents outnumbered those of the Uniting Church ."
+Alternate Entity Names: ["Catholic Church", "Roman Catholic", "Catholic"]
+
+Entity: "Wind"
+Context Sentence: "Illinois musicians with a # 1 Billboard Hot 100 hit include artists from the 1950s : Sam Cooke (d. 1964) ; from the 1960s : The Buckinghams ; from the 1970s : Earth , Wind & Fire , The Chi-Lites , The Staple Singers , Minnie Riperton , Styx ; from the 1980s : Chicago , Cheap Trick , REO Speedwagon , Survivor , Richard Marx ; from the 1990s : R. Kelly ; from the 2000s : Kanye West , Twista , Plain White T 's ."
+Alternate Entity Names: ["Earth & Fire", "Earth", "Wind & Fire"]""",  # noqa: E501
+        },
+    ),
+    (
+        """You are an expert baker answering users' questions. Reply as agent.
+
+Example conversation:
+
+User: Hey can you help me with something
+
+Agent: Sure! What do you need help with?
+
+User: I want to bake a cake but don't know what temperature to set the oven to.
+
+Agent: For most cakes, the oven should be preheated to 350°F (177°C).
+
+Current conversation:
+
+User: [Insert user's question]
+
+Agent:""",
+        {
+            "Instruction": (
+                "You are an expert baker answering users' "
+                + "questions. Reply as agent."
+            ),
+            "Demonstrations": """User: Hey can you help me with something
+
+Agent: Sure! What do you need help with?
+
+User: I want to bake a cake but don't know what temperature to set the oven to.
+
+Agent: For most cakes, the oven should be preheated to 350°F (177°C).""",
+        },
+    ),
+    (
+        "You are given a list of integers. A list is shown by comma-separated numbers between two brackets. For example, [7,3,6] is a list. The number in location one is 7, the number in location two is 3, and the number in location three is 6. You should answer with a list such that every element at each location is equal to the product of elements at every other location in the input array. For example, if a list has four numbers, the answer you give should be created like this: First element of your list = product of second, third, and fourth elements in the given list. Second element of your list = product of First, third and fourth elements in the given list, etc.",  # noqa: E501
+        {
+            "Instruction": "You are given a list of integers. A list is shown by comma-separated numbers between two brackets. For example, [7,3,6] is a list. The number in location one is 7, the number in location two is 3, and the number in location three is 6. You should answer with a list such that every element at each location is equal to the product of elements at every other location in the input array. For example, if a list has four numbers, the answer you give should be created like this: First element of your list = product of second, third, and fourth elements in the given list. Second element of your list = product of First, third and fourth elements in the given list, etc.",  # noqa: E501
+            "Demonstrations": "N/A",
+        },
+    ),
+]
+
+
+def construct_single_demonstration(
+    user_prompt: str,
+    parse_dict: dict[str, str] | None,
+    input_only: bool = False,
+) -> str:
+    """Format a demonstration or prediction example to give to an LLM.
+
+    Args:
+        user_prompt: A textual prompt describing the task.
+        parse_dict: A parsing dictionary containing the correct prompt parse
+                    corresponding to the given `user_prompt`.
+        input_only: Whether the returned string should only contain
+                    the input part. Defaults to False. This should be set to
+                    true when constructing the final prediction template to be
+                    completed by the LLM.
+    """
+    input_part = f'''Prompt: """\n{user_prompt}\n"""\n\nParsed Outputs:\n'''
+    if input_only:
+        return input_part
+    output_part = json.dumps(parse_dict)
+    return input_part + output_part
+
+
+def construct_prompt_for_instruction_parsing(user_prompt: str) -> str:
+    """A (GPT-3) prompt for separating instructions from demonstrations.
+
+    Args:
+        user_prompt: A user-generated prompt asking for a response.
+
+    Returns:
+        A prompt to instruct GPT-3 to parse the user's provided prompt.
+    """
+    prompt_sections = [METAPROMPT_INSTRUCTION]
+    for prompt, correct_parse in METAPROMPT_EXAMPLES:
+        prompt_sections.append(
+            construct_single_demonstration(prompt, correct_parse, input_only=False)
+        )
+    prediction_template = construct_single_demonstration(
+        user_prompt, None, input_only=True
+    )
+    prompt_sections.append(prediction_template)
+    return "\n\n------\n\n".join(prompt_sections)
