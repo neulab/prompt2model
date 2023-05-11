@@ -1,0 +1,1 @@
+{"pretrained_model_name": "lixiangchun/transcriptome-gpt-1024-8-16-64", "description": "# iSEEEK\nGenerative pretraining from the rankings of top expressing genes. \nIt was trained on more than 20 million single-cell transcriptomes with a sequence length of 64.\n\n\n\n", "size_bytes": "502345283", "downloads": 0}
