@@ -59,9 +59,11 @@ class OpenAIInstructionParser(PromptSpec):
             logging.warning("API response was not a valid JSON")
             raise e
 
+        required_keys = ["Instruction", "Demonstrations"]
+        missing_keys = [key for key in required_keys if key not in response_json]
         assert (
-            "Instruction" in response_json and "Demonstrations" in response_json
-        ), 'API response must contain "Instruction" and "Demonstrations" keys'
+            len(missing_keys) == 0
+        ), f'API response must contain {", ".join(required_keys)} keys'
         instruction_string = response_json["Instruction"].strip()
         demonstration_string = response_json["Demonstrations"].strip()
         return instruction_string, demonstration_string
