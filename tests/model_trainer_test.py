@@ -1,4 +1,4 @@
-"""Testing T5Trainer."""
+"""Testing ModelTrainer with different configurations."""
 
 import tempfile
 
@@ -9,14 +9,19 @@ from prompt2model.model_trainer.base import ModelTrainer
 
 
 def test_trainer():
-    """Test the `train_model` function of a T5Trainer.
+    """Test the ModelTrainer class.
 
-    This function tests the T5Trainer class by training it on a small T5 model
-    and verifying that the trained model is a T5ForConditionalGeneration model and
-    the trained tokenizer is a T5Tokenizer model.
+    This function tests the ModelTrainer class by training two different models using
+    different configurations. The first model is an encoder-decoder model implemented
+    with the T5 architecture, and the second is a decoder-only model implemented with
+    the GPT-2 architecture. The function creates temporary directories to store the
+    trained models and their respective tokenizers. It then creates two training
+    datasets with synthetic data, one for each model. Finally, it trains each model
+    using the ModelTrainer class and tests whether the output models and tokenizers
+    are of the expected type.
     """
+    # Test encoder-decoder ModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
-        # Create a T5Trainer instance with the cache directory
         trainer = ModelTrainer("t5-small", has_encoder=True)
         training_datasets = [
             datasets.Dataset.from_dict(
@@ -27,19 +32,16 @@ def test_trainer():
             ),
         ]
 
-        # Train the T5Trainer instance on the training dataset
         trained_model, trained_tokenizer = trainer.train_model(
-            training_datasets, {"output_dir": cache_dir}
+            training_datasets,
+            {"output_dir": cache_dir, "num_train_epochs": 1, "batch_size": 1},
         )
 
-        # Verify that the trained model is a T5ForConditionalGeneration model
         assert isinstance(trained_model, transformers.T5ForConditionalGeneration)
-
-        # Verify that the trained tokenizer is a T5Tokenizer model
         assert isinstance(trained_tokenizer, transformers.T5Tokenizer)
 
+    # Test decoder-only ModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
-        # Create a T5Trainer instance with the cache directory
         trainer = ModelTrainer("gpt2", has_encoder=False)
         training_datasets = [
             datasets.Dataset.from_dict(
@@ -62,13 +64,11 @@ def test_trainer():
             ),
         ]
 
-        # Train the T5Trainer instance on the training dataset
         trained_model, trained_tokenizer = trainer.train_model(
-            training_datasets, {"output_dir": cache_dir}
+            training_datasets,
+            {"output_dir": cache_dir, "num_train_epochs": 1, "batch_size": 1},
         )
 
-        # Verify that the trained model is a GPT2LMHeadModel model
         assert isinstance(trained_model, transformers.GPT2LMHeadModel)
 
-        # Verify that the trained tokenizer is a PreTrainedTokenizerFast model
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)

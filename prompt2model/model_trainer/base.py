@@ -8,6 +8,8 @@ import transformers
 from datasets import concatenate_datasets
 from transformers import AutoModel, AutoTokenizer, Trainer, TrainingArguments
 
+from prompt2model.utils import seed_generator
+
 
 # pylint: disable=too-few-public-methods
 class BaseTrainer(ABC):
@@ -40,11 +42,20 @@ class ModelTrainer(BaseTrainer):
 
         Args:
             pretrained_model_name: HuggingFace pre-trained model name.
+                Only surported encoder-decoder model or atuoregressive model.
             has_encoder: Whether the model has an encoder.
-                If True, it's a T5 type model.
-                If fasle, it's a GPT type model.
+                If True, it's a T5 type model (encoder-decoder transformer).
+                If fasle, it's a GPT type model (atuoregressive transformer).
         """
         self.has_encoder = has_encoder
+        self.training_args = TrainingArguments(
+            output_dir="./result",
+            logging_steps=1000,
+            evaluation_strategy="steps",
+            eval_steps=1000,
+            save_strategy="steps",
+            save_steps=1000,
+        )
         if self.has_encoder:
             self.model = transformers.T5ForConditionalGeneration.from_pretrained(
                 pretrained_model_name
@@ -76,8 +87,8 @@ class ModelTrainer(BaseTrainer):
         """
         inputs = dataset["model_input"]
         outputs = dataset["output_col"]
-        input_encodings = self.tokenizer(inputs, padding=True)
-        output_encodings = self.tokenizer(outputs, padding=True)
+        input_encodings = self.tokenizer(inputs, truncation=False, padding=True)
+        output_encodings = self.tokenizer(outputs, truncation=False, padding=True)
 
         return datasets.Dataset.from_dict(
             {
@@ -97,34 +108,37 @@ class ModelTrainer(BaseTrainer):
         """Train a text2text T5 based model.
 
         Args:
-            training_datasets: Training `Dataset`s, with `input_col` and `output_col`.
+            training_datasets: Training datasets with `input_col` and `output_col`.
             hyperparameter_choices: A dictionary of hyperparameter choices.
 
         Returns:
             A trained HuggingFace model.
         """
-        training_args = TrainingArguments(
-            output_dir=hyperparameter_choices.get("output_dir", "./result"),
-            num_train_epochs=hyperparameter_choices.get("num_train_epochs", 1),
-            per_device_train_batch_size=hyperparameter_choices.get("batch_size", 1),
-            warmup_steps=hyperparameter_choices.get("warmup_steps", 0),
-            weight_decay=hyperparameter_choices.get("weight_decay", 0.01),
-            logging_dir=hyperparameter_choices.get("logging_dir", "./logs"),
-            logging_steps=1000,
-            evaluation_strategy="steps",
-            eval_steps=1000,
-            save_strategy="steps",
-            save_steps=1000,
+        self.training_args.output_dir = hyperparameter_choices.get(
+            "output_dir", "./result"
+        )
+        self.training_args.num_train_epochs = hyperparameter_choices.get(
+            "num_train_epochs", 10
+        )
+        self.training_args.per_device_train_batch_size = hyperparameter_choices.get(
+            "batch_size", 100
+        )
+        self.training_args.warmup_steps = hyperparameter_choices.get("warmup_steps", 0)
+        self.training_args.weight_decay = hyperparameter_choices.get(
+            "weight_decay", 0.01
+        )
+        self.training_args.logging_dir = hyperparameter_choices.get(
+            "logging_dir", "./logs"
         )
 
         # Concatenate and preprocess the training datasets
         training_dataset = concatenate_datasets(training_datasets)
-        shuffled_dataset = training_dataset.shuffle(seed=42)
+        shuffled_dataset = training_dataset.shuffle(seed=seed_generator.get_seed())
         preprocessed_dataset = self.preprocess_dataset(shuffled_dataset)
         # Create the trainer
         trainer = Trainer(
             model=self.model,
-            args=training_args,
+            args=self.training_args,
             train_dataset=preprocessed_dataset,
             data_collator=transformers.DataCollatorForSeq2Seq(tokenizer=self.tokenizer)
             if self.has_encoder
