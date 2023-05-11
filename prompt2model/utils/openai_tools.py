@@ -8,6 +8,15 @@ import time
 
 import openai
 
+OPENAI_ERRORS = (
+    openai.error.APIError,
+    openai.error.Timeout,
+    openai.error.RateLimitError,
+    openai.error.ServiceUnavailableError,
+    json.decoder.JSONDecodeError,
+    AssertionError,
+)
+
 
 class ChatGPTAgent:
     """A class for accessing OpenAI's ChatCompletion API."""
@@ -37,16 +46,6 @@ class ChatGPTAgent:
             ],
         )
         return response
-
-
-OPENAI_ERRORS = (
-    openai.error.APIError,
-    openai.error.Timeout,
-    openai.error.RateLimitError,
-    openai.error.ServiceUnavailableError,
-    json.decoder.JSONDecodeError,
-    AssertionError,
-)
 
 
 def handle_openai_error(e, api_call_counter, max_api_calls):
