@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Sin/DialoGPT-small-zai", "description": "conver = pipeline(\"conversational\")\n---\ntags:\n- conversational\n---\n\n# Harry potter DialoGPT model", "size_bytes": "510403817", "downloads": 2}

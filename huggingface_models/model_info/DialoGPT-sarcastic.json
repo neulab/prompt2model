@@ -1,0 +1,1 @@
+{"pretrained_model_name": "abhiramtirumala/DialoGPT-sarcastic", "description": "\n---\npipeline_tag: conversational\n---\nThis model is a fine-tuned version of Microsoft/DialoGPT-medium trained to created sarcastic responses from the dataset \"Sarcasm on Reddit\" located [here](https://www.kaggle.com/danofer/sarcasm).", "size_bytes": "1444576537", "downloads": 103}

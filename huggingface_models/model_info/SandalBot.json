@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Scoops/SandalBot", "description": "---\ntags:\n- conversational\n---\n\n# Sandal Bot\n\nQuick and dumb model for a discord chat bot. Based on DialoGPT-Medium", "size_bytes": "1444584739", "downloads": 0}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "breadlicker45/MusePy", "description": "---\nlicense: other\ndatasets:\n- breadlicker45/big-midi-codes\n---\nMusePy is getting trained off of pythia-19m.\n---\nthis is the 6k step model.\n\nMuseWeb will be trained insted of this. \n", "size_bytes": "306901195", "downloads": 4}
