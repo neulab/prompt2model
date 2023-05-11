@@ -16,8 +16,8 @@ class ChatGPTAgent:
         """Initialize ChatGPTAgent with an API key.
 
         Args:
-            api_key: A valid OpenAI API key. Alternatively, set as None and
-            set the environment variable `OPENAI_API_KEY=<your key>`.
+            api_key: A valid OpenAI API key. Alternatively, set as None and set
+                the environment variable with `export OPENAI_API_KEY=<your key>`.
         """
         openai.api_key = api_key
 
