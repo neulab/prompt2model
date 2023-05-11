@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Hichnick/ex_bot", "description": "---\nlanguage: \n  - ru\nlicense: apache-2.0\ntags:\n  - bot\n---\nTelegram chat bot model. Trained on a two-year chat history of one of the villages.<br>\nTokens taken from here: tinkoff-ai/ruDialoGPT-medium\n\n", "size_bytes": "551313317", "downloads": 2}

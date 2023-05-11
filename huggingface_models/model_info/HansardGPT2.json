@@ -1,0 +1,1 @@
+{"pretrained_model_name": "CallumRai/HansardGPT2", "description": "A PyTorch GPT-2 model trained on hansard from 2019-01-01 to 2020-06-01\n\nFor more information see: https://github.com/CallumRai/Hansard/", "size_bytes": "510414095", "downloads": 4}

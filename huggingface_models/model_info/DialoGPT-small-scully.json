@@ -1,0 +1,1 @@
+{"pretrained_model_name": "hireddivas/DialoGPT-small-scully", "description": "---\ntags:\n- conversational\n---\n\n#GPT-2 model trained on Dana Scully's dialog.", "size_bytes": "510401385", "downloads": 2}

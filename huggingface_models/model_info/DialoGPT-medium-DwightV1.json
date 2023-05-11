@@ -1,0 +1,1 @@
+{"pretrained_model_name": "delvan/DialoGPT-medium-DwightV1", "description": "---\ntags:\n- conversational\n---\n\n#DialoGPT medium based model of Dwight Schrute, trained with 10 context lines of history for 20 epochs.", "size_bytes": "510403817", "downloads": 0}

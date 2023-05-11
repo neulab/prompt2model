@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Mary222/GPT2_RU_GAME", "description": "---\nlanguage: ru\ntags:\n- text-generation\n\n---\n\n# GPT2 - RUS", "size_bytes": "551300711", "downloads": 5}
