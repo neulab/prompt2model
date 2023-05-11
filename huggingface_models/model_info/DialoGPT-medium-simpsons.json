@@ -1,0 +1,1 @@
+{"pretrained_model_name": "arampacha/DialoGPT-medium-simpsons", "description": "---\ntags:\n- conversational\n---\n\n# DialoGPT-medium-simpsons\n\nThis is a version of [DialoGPT-medium](https://huggingface.co/microsoft/DialoGPT-medium) fine-tuned on The Simpsons scripts.", "size_bytes": "1444576537", "downloads": 3}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "BigSalmon/SimplifyText", "description": "- All credit goes to https://huggingface.co/philippelaban/keep_it_simple.\n- This is a copy of their repository for future training purposes. \n- It is supposed to simplify text.\n- Their model card gives instructions on how to use it.", "size_bytes": "1444589475", "downloads": 22}
