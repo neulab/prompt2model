@@ -28,8 +28,8 @@ class OpenAIInstructionParser(PromptSpec):
 
         Args:
             task_type: Set a constant task type to use for all prompts.
-            api_key: A valid OpenAI API key. Alternatively, set as None and
-                     set the environment variable `OPENAI_API_KEY=<your key>`.
+            api_key: A valid OpenAI API key. Alternatively, set as None and set
+                the environment variable with `export OPENAI_API_KEY=<your key>`.
             max_api_calls: The maximum number of API calls allowed,
                 or None for unlimited.
         """
