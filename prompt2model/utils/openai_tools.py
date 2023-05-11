@@ -66,7 +66,7 @@ def handle_openai_error(e, api_call_counter, max_api_calls):
         logging.error("Maximum number of API calls reached.")
         raise e
 
-     if isinstance(
+    if isinstance(
         e,
         (openai.error.APIError, openai.error.Timeout, openai.error.RateLimitError),
     ):
@@ -74,8 +74,8 @@ def handle_openai_error(e, api_call_counter, max_api_calls):
         time.sleep(1)
 
     if isinstance(e, OPENAI_ERRORS):
+        # For these errors, we can increment a counter and retry the API call.
         return api_call_counter
     else:
+        # For all other errors, immediately throw an exception.
         raise e
-
-    raise e
