@@ -1,0 +1,1 @@
+{"pretrained_model_name": "crylake/kw2poem-generation", "description": "---\nlanguage: vi\ntags:\n- gpt\nwidget:\n- text: \"<s> n\u00fai nh\u00e0 xe [SEP] \"\n---\n### Kw2Poem\n", "size_bytes": "537476733", "downloads": 5}

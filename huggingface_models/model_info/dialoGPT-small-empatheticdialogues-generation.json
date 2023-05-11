@@ -1,0 +1,1 @@
+{"pretrained_model_name": "benjaminbeilharz/dialoGPT-small-empatheticdialogues-generation", "description": "---\nlanguage:\n- en\ndatasets:\n- empathetic dialogues\ntags:\n- conversational\n- pytorch\n- transformers\n- gpt2\nlicense: mit\n\n---\n\nStill figuring out to properly write model cards.\nWIP.", "size_bytes": "510404457", "downloads": 2}

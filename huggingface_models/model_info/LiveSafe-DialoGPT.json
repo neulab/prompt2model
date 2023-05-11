@@ -1,0 +1,1 @@
+{"pretrained_model_name": "SPGT/LiveSafe-DialoGPT", "description": "---\ntags:\n- conversational\nlicense: mit\n---\n## LiveSafe chatbot response generation model based on DialogGPT\n", "size_bytes": "510403817", "downloads": 0}
