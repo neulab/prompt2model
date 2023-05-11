@@ -1,0 +1,1 @@
+{"pretrained_model_name": "disdamoe/DialoGPT-small-moe", "description": "---\ntags:\n- conversational\n---\n\n# Moe DialoGPT Model", "size_bytes": "510401385", "downloads": 10}

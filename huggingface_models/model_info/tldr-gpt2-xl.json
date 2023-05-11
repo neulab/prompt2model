@@ -1,0 +1,1 @@
+{"pretrained_model_name": "lxuechen/tldr-gpt2-xl", "description": "---\nlicense: gpl-3.0\n---\n\nGPT2-xl fine-tuned on filtered TL;DR.\n", "size_bytes": "6281006513", "downloads": 2}

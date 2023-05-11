@@ -1,0 +1,1 @@
+{"pretrained_model_name": "shailja/CodeGen-RE", "description": "---\nlicense: mit\n---\n\nCodeGen trained on decompiled ghidra C source code with the capability for answering questions such as:\n\n1. What is the purpose of the code?\n2. What language is the code written in (c/c++)?\n", "size_bytes": "28780940193", "downloads": 2}
