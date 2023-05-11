@@ -132,12 +132,12 @@ def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_met
     """Verify that we wait and retry (a set number of times) if the API times out.
 
     Args:
-        mocked_parsing_method: Mocked function for parsing a prompt
-            using GPT.We raise `openai.error.Timeout("timeout")` when
-            `generate_openai_chat_completion` is called.
-        mocked_sleep_method: When `time.sleep` is called, we mock it to
-            return None to avoid actually waiting, in order to verify that
-            we wait before each retry.
+        mocked_parsing_method: Mocked function for parsing a prompt using the OpenAI
+                               API. The mocked API call raises a `openai.error.Timeout`
+                               error when we request a chat completion.
+        mocked_sleep_method: When `time.sleep` is called, we mock it to do nothing.
+                             We simply use this mock to verify that the function waits
+                             some time after each API timeout.
     """
     prompt = """This prompt will be ignored by the parser in this test."""
     with pytest.raises(openai.error.Timeout):
