@@ -5,11 +5,10 @@ import tempfile
 import datasets
 import transformers
 
-from prompt2model.model_trainer.GPT import GPTTrainer
-from prompt2model.model_trainer.T5 import T5Trainer
+from prompt2model.model_trainer.base import ModelTrainer
 
 
-def test_t5_trainer():
+def test_trainer():
     """Test the `train_model` function of a T5Trainer.
 
     This function tests the T5Trainer class by training it on a small T5 model
@@ -18,11 +17,11 @@ def test_t5_trainer():
     """
     with tempfile.TemporaryDirectory() as cache_dir:
         # Create a T5Trainer instance with the cache directory
-        trainer = T5Trainer("t5-small")
+        trainer = ModelTrainer("t5-small", has_encoder=True)
         training_datasets = [
             datasets.Dataset.from_dict(
                 {
-                    "input_col": ["translate apple to french"] * 2,
+                    "model_input": ["translate apple to french"] * 2,
                     "output_col": ["pomme"] * 2,
                 }
             ),
@@ -39,32 +38,26 @@ def test_t5_trainer():
         # Verify that the trained tokenizer is a T5Tokenizer model
         assert isinstance(trained_tokenizer, transformers.T5Tokenizer)
 
-
-def test_gpt_trainer():
-    """Test the `train_model` function of a GPTTrainer.
-
-    This function tests the GPTTrainer class by training it on a small GPT model
-    and verifying that the trained model is a T5ForConditionalGeneration model and
-    the trained tokenizer is a T5Tokenizer model.
-    """
     with tempfile.TemporaryDirectory() as cache_dir:
         # Create a T5Trainer instance with the cache directory
-        trainer = GPTTrainer("gpt2")
+        trainer = ModelTrainer("gpt2", has_encoder=False)
         training_datasets = [
             datasets.Dataset.from_dict(
                 {
-                    "input_col": [
+                    "model_input": [
                         "translate English to French. Example: apple. Label: pomme"
                     ]
                     * 2,
+                    "output_col": ["pomme"] * 2,
                 }
             ),
             datasets.Dataset.from_dict(
                 {
-                    "input_col": [
+                    "model_input": [
                         "translate English to French. Example: apple. Label: pomme"
                     ]
                     * 2,
+                    "output_col": ["pomme"] * 2,
                 }
             ),
         ]
