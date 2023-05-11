@@ -1,20 +1,17 @@
-"""Testing T5Processor."""
+"""Testing DatasetProcessor."""
 
 import datasets
 
-from prompt2model.dataset_processor.base import GPTProcessor, T5Processor
+from prompt2model.dataset_processor.base import DatasetProcessor
 
 
-def test_T5_dataset_processor():
-    """Test the `process_dataset_dict()` function of `T5Processor`.
+def test_dataset_processor():
+    """Test the `process_dataset_dict` function of `DatasetProcessor`.
 
-    It sets up dataset dicts containing input and output columns and an
-    instruction to convert to text2text fashion. It then initializes the
-    `T5Processor` and calls `process_dataset_dict` on the instruction
-    and dataset dicts. Finally, it checks that the modified dataset dicts
-    have the expected content.
+    Tests two kinds of DatasetProcessor by processing a list of dataset
+    dictionaries with the 'convert to text2text' instruction. Asserts that
+    the resulting modified dataset dictionaries have the expected content.x
     """
-    # Setup
     dataset_dicts = [
         datasets.DatasetDict(
             {
@@ -33,95 +30,22 @@ def test_T5_dataset_processor():
     ]
     instruction = "convert to text2text"
 
-    # Initialize the `T5Processor` and call `process_dataset_dict`
-    processor = T5Processor()
-    modified_dataset_dicts = processor.process_dataset_dict(instruction, dataset_dicts)
+    gpt_processor = DatasetProcessor(has_encoder=False)
+    gpt_modified_dataset_dicts = gpt_processor.process_dataset_dict(
+        instruction, dataset_dicts
+    )
 
     # Check that the modified dataset dicts have the expected content
-    expected_dataset_dicts = [
+    gpt_expected_dataset_dicts = [
         datasets.DatasetDict(
             {
                 "train": datasets.Dataset.from_dict(
                     {
-                        "input_col": [
-                            "<task 0> convert to text2text foo",
-                            "<task 0> convert to text2text bar",
-                        ],
-                        "output_col": ["baz", "qux"],
-                    }
-                )
-            }
-        ),
-        datasets.DatasetDict(
-            {
-                "train": datasets.Dataset.from_dict(
-                    {
-                        "input_col": [
-                            "<task 1> convert to text2text spam",
-                            "<task 1> convert to text2text eggs",
-                        ],
-                        "output_col": ["ham", "sau"],
-                    }
-                )
-            }
-        ),
-    ]
-    assert (
-        modified_dataset_dicts[0]["train"][0] == expected_dataset_dicts[0]["train"][0]
-    )
-    assert (
-        modified_dataset_dicts[0]["train"][1] == expected_dataset_dicts[0]["train"][1]
-    )
-    assert (
-        modified_dataset_dicts[1]["train"][0] == expected_dataset_dicts[1]["train"][0]
-    )
-    assert (
-        modified_dataset_dicts[1]["train"][1] == expected_dataset_dicts[1]["train"][1]
-    )
-
-
-def test_GPT_dataset_processor():
-    """Test the `process_dataset_dict()` function of `GPTProcessor`.
-
-    It sets up dataset dicts containing input and output columns and an
-    instruction to convert to text2text fashion. It then initializes the
-    `GPTProcessor` and calls `process_dataset_dict` on the instruction
-    and dataset dicts. Finally, it checks that the modified dataset dicts
-    have the expected content.
-    """
-    # Setup
-    dataset_dicts = [
-        datasets.DatasetDict(
-            {
-                "train": datasets.Dataset.from_dict(
-                    {"input_col": ["foo", "bar"], "output_col": ["baz", "qux"]}
-                )
-            }
-        ),
-        datasets.DatasetDict(
-            {
-                "train": datasets.Dataset.from_dict(
-                    {"input_col": ["spam", "eggs"], "output_col": ["ham", "sau"]}
-                )
-            }
-        ),
-    ]
-    instruction = "convert to text2text"
-
-    # Initialize the `GPTProcessor` and call `process_dataset_dict`
-    processor = GPTProcessor()
-    modified_dataset_dicts = processor.process_dataset_dict(instruction, dataset_dicts)
-
-    # Check that the modified dataset dicts have the expected content
-    expected_dataset_dicts = [
-        datasets.DatasetDict(
-            {
-                "train": datasets.Dataset.from_dict(
-                    {
-                        "input_col": [
+                        "model_input": [
                             "<task 0> convert to text2text Example: foo Label: baz",
                             "<task 0> convert to text2text Example: bar Label: qux",
                         ],
+                        "input_col": ["spam", "eggs"],
                         "output_col": ["baz", "qux"],
                     }
                 )
@@ -131,25 +55,59 @@ def test_GPT_dataset_processor():
             {
                 "train": datasets.Dataset.from_dict(
                     {
-                        "input_col": [
+                        "model_input": [
                             "<task 1> convert to text2text Example: spam Label: ham",
                             "<task 1> convert to text2text Example: eggs Label: sau",
                         ],
+                        "input_col": ["spam", "eggs"],
                         "output_col": ["ham", "sau"],
                     }
                 )
             }
         ),
     ]
-    assert (
-        modified_dataset_dicts[0]["train"][0] == expected_dataset_dicts[0]["train"][0]
+    for index in range(len(gpt_expected_dataset_dicts)):
+        assert (
+            gpt_modified_dataset_dicts[index]["train"]["model_input"]
+            == gpt_expected_dataset_dicts[index]["train"]["model_input"]
+        )
+
+    t5_processor = DatasetProcessor(has_encoder=True)
+    t5_modified_dataset_dicts = t5_processor.process_dataset_dict(
+        instruction, dataset_dicts
     )
-    assert (
-        modified_dataset_dicts[0]["train"][1] == expected_dataset_dicts[0]["train"][1]
-    )
-    assert (
-        modified_dataset_dicts[1]["train"][0] == expected_dataset_dicts[1]["train"][0]
-    )
-    assert (
-        modified_dataset_dicts[1]["train"][1] == expected_dataset_dicts[1]["train"][1]
-    )
+    t5_expected_dataset_dicts = [
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 0> convert to text2text Example: foo",
+                            "<task 0> convert to text2text Example: bar",
+                        ],
+                        "input_col": ["spam", "eggs"],
+                        "output_col": ["baz", "qux"],
+                    }
+                )
+            }
+        ),
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 1> convert to text2text Example: spam",
+                            "<task 1> convert to text2text Example: eggs",
+                        ],
+                        "input_col": ["spam", "eggs"],
+                        "output_col": ["ham", "sau"],
+                    }
+                )
+            }
+        ),
+    ]
+    for index in range(len(t5_modified_dataset_dicts)):
+        assert (
+            t5_modified_dataset_dicts[index]["train"]["model_input"]
+            == t5_expected_dataset_dicts[index]["train"]["model_input"]
+        )
