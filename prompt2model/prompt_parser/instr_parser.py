@@ -71,14 +71,12 @@ class OpenAIInstructionParser(PromptSpec):
     def parse_from_prompt(self, prompt: str) -> None:
         """Parse prompt into specific fields, stored as class member variables.
 
+        This function directly stores the parsed fields into the class's member
+        variables `instruction` and `demonstration. So it has no return value.
+
         Args:
             prompt: User prompt to parse into two specific fields:
                     "instruction" and "demonstrations".
-
-        Returns:
-            None: this void function directly stores the parsed fields into
-            the class's member variables `instruction` and `demonstration.
-
         """
         parsing_prompt_for_chatgpt = construct_prompt_for_instruction_parsing(prompt)
 
