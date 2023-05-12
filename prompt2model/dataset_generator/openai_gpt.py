@@ -133,7 +133,6 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     output_cols.append(output_col)
                     break
                 except OPENAI_ERRORS as e:
-                    print(1)
                     self.api_call_counter = handle_openai_error(
                         e, self.api_call_counter
                     )
