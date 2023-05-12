@@ -2,7 +2,7 @@
 
 from functools import partial
 from unittest.mock import patch
-
+import json
 import openai
 import pytest
 
