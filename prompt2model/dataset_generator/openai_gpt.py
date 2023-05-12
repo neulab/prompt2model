@@ -16,7 +16,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
     """A abstract class for NLP dataset generation using OpenAI's GPT-3.5 API."""
 
     def __init__(self, api_key: str, max_api_calls: int = None):
-        """Initialize an OpenAI DatasetGenertor with an API key and max API call.
+        """Initialize an OpenAI DatasetGenerator with an API key and max API call.
 
         Args:
             api_key: A valid OpenAI API key.

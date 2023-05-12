@@ -4,7 +4,7 @@ from __future__ import annotations  # noqa FI58
 
 import json
 import time
-
+import logging
 import openai
 
 OPENAI_ERRORS = (
@@ -58,12 +58,12 @@ def handle_openai_error(e, api_call_counter):
     Returns:
         The api_call_counter (if no error was raised), else raise the error.
     """
+    logging.error(e)
     if isinstance(
         e,
         (openai.error.APIError, openai.error.Timeout, openai.error.RateLimitError),
     ):
         # For these errors, OpenAI recommends waiting before retrying.
-        print(2)
         time.sleep(1)
 
     if isinstance(e, OPENAI_ERRORS):
