@@ -19,9 +19,9 @@ class GenerationModelTrainer(BaseTrainer):
 
         Args:
             pretrained_model_name: HuggingFace pre-trained model name.
-                Only surported encoder-decoder model or atuoregressive model.
+                Only supported encoder-decoder model or atuoregressive model.
             has_encoder: Whether the model has an encoder.
-                If True, it's a T5 type model (encoder-decoder transformer).
+                If True, it's a T5-type model (encoder-decoder transformer).
                 If fasle, it's a GPT type model (atuoregressive transformer).
         """
         self.has_encoder = has_encoder
@@ -82,7 +82,7 @@ class GenerationModelTrainer(BaseTrainer):
         training_datasets: list[datasets.Dataset],
         hyperparameter_choices: dict[str, Any],
     ) -> tuple[transformers.PreTrainedModel, transformers.PreTrainedTokenizer]:
-        """Train a text2text T5 based model.
+        """Train a text generation model.
 
         Args:
             training_datasets: Training datasets with `input_col` and `output_col`.

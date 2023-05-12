@@ -8,19 +8,8 @@ import transformers
 from prompt2model.model_trainer.generate import GenerationModelTrainer
 
 
-def test_trainer():
-    """Test the GenerationModelTrainer class.
-
-    This function tests the GenerationModelTrainer class by training two
-    different models using different configurations. The first model is an
-    encoder-decoder model implemented with the T5 architecture, and the
-    second is a decoder-only model implemented with the GPT-2 architecture.
-    The function creates temporary directories to store the trained models
-    and their respective tokenizers. It then creates two training datasets
-    with synthetic data, one for each model. Finally, it trains each model
-    using the GenerationModelTrainer class and tests whether the output
-    models and tokenizers are of the expected type.
-    """
+def test_t5_trainer():
+    """Test the `GenerationModelTrainer` class to train a encoder-decoder model."""
     # Test encoder-decoder GenerationModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
         trainer = GenerationModelTrainer("t5-small", has_encoder=True)
@@ -41,6 +30,9 @@ def test_trainer():
         assert isinstance(trained_model, transformers.T5ForConditionalGeneration)
         assert isinstance(trained_tokenizer, transformers.T5Tokenizer)
 
+
+def test_gpt_trainer():
+    """Test the `GenerationModelTrainer` to train an autoregressive model."""
     # Test decoder-only GenerationModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
         trainer = GenerationModelTrainer("gpt2", has_encoder=False)
