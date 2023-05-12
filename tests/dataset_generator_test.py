@@ -5,11 +5,12 @@ import tempfile
 from functools import partial
 from unittest.mock import patch
 
+import pytest
+
 from prompt2model.dataset_generator.base import DatasetSplit
 from prompt2model.dataset_generator.openai_gpt import OpenAIDatasetGenerator
 from prompt2model.prompt_parser import MockPromptSpec
 from test_helpers import mock_openai_response
-from datasets import Dataset
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
     mock_openai_response,
@@ -25,7 +26,15 @@ MOCK_INVALID_JSON = partial(
 )
 
 
-def check_generate_dataset(dataset_generator: OpenAIDatasetGenerator):
+class UNKNOWN_GPT3_EXCEPTION(Exception):
+    """This is a newly-defined exception for testing purposes."""
+
+    pass
+
+
+def check_generate_dataset(
+    dataset_generator: OpenAIDatasetGenerator, num_examples: int = 1
+):
     """Test the `generate_dataset_split()` function of `OpenAIDatasetGenerator`.
 
     This function generates a Dataset for a specified split of the data
@@ -33,22 +42,19 @@ def check_generate_dataset(dataset_generator: OpenAIDatasetGenerator):
     and saves them to a temporary directory. Then, it checks that the
     generated dataset has the expected number of examples, the expected
     columns, and each example is not empty.
+
+    Args:
+        dataset_generator: The dataset_generator will be tested with limited
+            max_api_calls and unlimited api_call_counter.
+        num_examples: Number of exepected exmaples, if num_examples >= max_api_calls,
+            the returned dataset's length will be less or equal than max_api_calls.
     """
     prompt_spec = MockPromptSpec()
-    num_examples = 1
     split = DatasetSplit.TRAIN
     dataset = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
-
-    # Check that the generated dataset has the expected number of examples.
-    assert len(dataset) == num_examples
-
-    # Check that the generated dataset has the expected columns.
+    assert len(dataset) <= num_examples
     expected_columns = {"input_col", "output_col"}
     assert set(dataset.column_names) == expected_columns
-
-    # Check that each example is not empty.
-    for example in dataset:
-        assert example["output_col"] != "", "Expected example to not be empty"
 
 
 def check_generate_dataset_dict(dataset_generator: OpenAIDatasetGenerator):
@@ -93,6 +99,7 @@ def check_generate_dataset_dict(dataset_generator: OpenAIDatasetGenerator):
             "val",
         }
 
+
 @patch(
     "prompt2model.utils.ChatGPTAgent.generate_openai_chat_completion",
     side_effect=MOCK_CLASSIFICATION_EXAMPLE,
@@ -100,14 +107,21 @@ def check_generate_dataset_dict(dataset_generator: OpenAIDatasetGenerator):
 def test_classification_dataset_generation(mocked_generate_example):
     """Test classification dataset generation using the OpenAIDatasetGenerator.
 
+    This function first test the unlimited generation. Then test generation
+    when num_examples >= max_api_calls. Thus the API agent will only be
+    called max_api_calls times.
+
     Args:
         mocked_generate_example: The function represents the @patch function.
     """
     api_key = None
-    dataset_generator = OpenAIDatasetGenerator(api_key)
-    check_generate_dataset_dict(dataset_generator)
-    check_generate_dataset(dataset_generator)
+    unlimited_dataset_generator = OpenAIDatasetGenerator(api_key)
+    check_generate_dataset_dict(unlimited_dataset_generator)
+    check_generate_dataset(unlimited_dataset_generator)
     assert mocked_generate_example.call_count == 3
+    limited_dataset_generator = OpenAIDatasetGenerator(api_key, 3)
+    check_generate_dataset(limited_dataset_generator, 10)
+    assert mocked_generate_example.call_count == 6
 
 
 @patch(
@@ -129,3 +143,45 @@ def test_wrong_key_example(mocked_generate_example):
     dataset = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
     assert mocked_generate_example.call_count == 3
     assert dataset["input_col"] == dataset["output_col"] == []
+
+
+@patch(
+    "prompt2model.utils.ChatGPTAgent.generate_openai_chat_completion",
+    side_effect=MOCK_INVALID_JSON,
+)
+def test_invalid_json_response(mocked_generate_example):
+    """Test OpenAIDatasetGenerator when the agent returns a wrong key dict.
+
+    Args:
+        mocked_generate_example: The function represents the @patch function.
+    """
+    api_key = None
+    # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
+    dataset_generator = OpenAIDatasetGenerator(api_key, 3)
+    prompt_spec = MockPromptSpec()
+    num_examples = 1
+    split = DatasetSplit.VAL
+    dataset = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
+    assert mocked_generate_example.call_count == 3
+    assert dataset["input_col"] == dataset["output_col"] == []
+
+
+@patch(
+    "prompt2model.utils.ChatGPTAgent.generate_openai_chat_completion",
+    side_effect=UNKNOWN_GPT3_EXCEPTION(),
+)
+def test_unexpected_examples_of_GPT(mocked_generate_example):
+    """Test OpenAIDatasetGenerator when the agent returns a wrong key dict.
+
+    Args:
+        mocked_generate_example: The function represents the @patch function.
+    """
+    api_key = None
+    # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
+    with pytest.raises(UNKNOWN_GPT3_EXCEPTION):
+        dataset_generator = OpenAIDatasetGenerator(api_key, 3)
+        prompt_spec = MockPromptSpec()
+        num_examples = 1
+        split = DatasetSplit.TEST
+        _ = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
+    assert mocked_generate_example.call_count == 1

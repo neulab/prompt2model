@@ -135,7 +135,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 except OPENAI_ERRORS as e:
                     print(1)
                     self.api_call_counter = handle_openai_error(
-                        e, self.api_call_counter, self.max_api_calls
+                        e, self.api_call_counter
                     )
 
         return Dataset.from_dict({"input_col": input_cols, "output_col": output_cols})
