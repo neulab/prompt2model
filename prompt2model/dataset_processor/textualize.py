@@ -15,7 +15,8 @@ class TextualizeProcessor(BaseProcessor):
         Args:
             example: A dictionary representing an example.
             instruction: The instruction used as a prefix to explain the task.
-            task_id: The dataset index in dataset_dicts, used for multi-task training.
+            task_id: A tag marking which dataset (from dataset_dicts) this example
+                comes from. Used for multi-task training.
             has_encoder: Whether the retrieved model has an encoder.
 
         Returns:
