@@ -22,7 +22,7 @@ class GenerationModelTrainer(BaseTrainer):
                 Only supported encoder-decoder model or atuoregressive model.
             has_encoder: Whether the model has an encoder.
                 If True, it's a T5-type model (encoder-decoder transformer).
-                If fasle, it's a GPT type model (atuoregressive transformer).
+                If fasle, it's a GPT-type model (atuoregressive transformer).
         """
         self.has_encoder = has_encoder
         self.training_args = TrainingArguments(
