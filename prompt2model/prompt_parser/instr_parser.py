@@ -37,6 +37,8 @@ class OpenAIInstructionParser(PromptSpec):
         self.instruction: str | None = None
         self.demonstration: str | None = None
         self.api_key: str | None = api_key
+        if max_api_calls:
+            assert max_api_calls > 0, "max_api_calls must be > 0"
         self.max_api_calls = max_api_calls
         self.api_call_counter = 0
 
@@ -83,6 +85,11 @@ class OpenAIInstructionParser(PromptSpec):
         chat_api = ChatGPTAgent(self.api_key)
         while True:
             try:
+                print(self.max_api_calls)
+                if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
+                    logging.error("Maximum number of API calls reached.")
+                    raise ValueError("Maximum number of API calls reached.")
+                self.api_call_counter += 1
                 response = chat_api.generate_openai_chat_completion(
                     parsing_prompt_for_chatgpt
                 )

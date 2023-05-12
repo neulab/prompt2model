@@ -60,16 +60,12 @@ def handle_openai_error(e, api_call_counter, max_api_calls):
     Returns:
         The updated api_call_counter (if no error was raised).
     """
-    api_call_counter += 1
-    if max_api_calls and api_call_counter >= max_api_calls:
-        logging.error("Maximum number of API calls reached.")
-        raise e
-
     if isinstance(
         e,
         (openai.error.APIError, openai.error.Timeout, openai.error.RateLimitError),
     ):
         # For these errors, OpenAI recommends waiting before retrying.
+        print(2)
         time.sleep(1)
 
     if isinstance(e, OPENAI_ERRORS):
