@@ -1,6 +1,5 @@
 """Testing integration of components locally."""
 
-import json
 from functools import partial
 from unittest.mock import patch
 
