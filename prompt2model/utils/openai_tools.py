@@ -3,8 +3,9 @@
 from __future__ import annotations  # noqa FI58
 
 import json
-import time
 import logging
+import time
+
 import openai
 
 OPENAI_ERRORS = (
