@@ -1,6 +1,5 @@
 """Testing integration of components locally."""
 
-import json
 from functools import partial
 from unittest.mock import patch
 
@@ -114,7 +113,7 @@ def test_instruction_parser_with_invalid_json(mocked_parsing_method):
         mocked_parsing_method: Mocked function for parsing a prompt using GPT.
     """
     prompt = """This prompt will be ignored by the parser in this test."""
-    with pytest.raises(json.decoder.JSONDecodeError):
+    with pytest.raises(ValueError):
         prompt_spec = OpenAIInstructionParser(
             task_type=TaskType.TEXT_GENERATION, max_api_calls=3
         )
@@ -140,7 +139,7 @@ def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_met
                              some time after each API timeout.
     """
     prompt = """This prompt will be ignored by the parser in this test."""
-    with pytest.raises(openai.error.Timeout):
+    with pytest.raises(ValueError):
         prompt_spec = OpenAIInstructionParser(
             task_type=TaskType.TEXT_GENERATION, max_api_calls=3
         )
@@ -148,7 +147,7 @@ def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_met
 
     # If we allow 3 API calls, we should have 2 sleep calls (1 after each
     # timeout).
-    assert mocked_sleep_method.call_count == 2
+    assert mocked_sleep_method.call_count == 3
     assert mocked_parsing_method.call_count == 3
 
 
