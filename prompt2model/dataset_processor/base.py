@@ -1,16 +1,16 @@
-"""An interface for dataset processor."""
+"""A base class for dataset processor."""
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from functools import partial
 
 import datasets
 
 
-class DatasetProcessor(ABC):
-    """A class for post-processing datasets."""
+class BaseProcessor(ABC):
+    """A base class for post-processing datasets."""
 
     def __init__(self, has_encoder: bool) -> None:
-        """Initialize the `DatasetProcessor`.
+        """Initialize the `BaseProcessor`.
 
         Args:
             has_encoder: Whether the retrieved model has an encoder.
@@ -21,6 +21,7 @@ class DatasetProcessor(ABC):
         self.has_encoder = has_encoder
 
     @staticmethod
+    @abstractmethod
     def post_process_example(
         example: dict, instruction: str, task_id: int, has_encoder: bool
     ) -> dict:
@@ -30,24 +31,8 @@ class DatasetProcessor(ABC):
             example: A dictionary representing an example.
             instruction: The instruction used as a prefix to explain the task.
             task_id: The dataset index in dataset_dicts, used for multi-task training.
-
-        Returns:
-            A dictionary with `model_input` as the input to models.
+            has_encoder: Whether the retrieved model has an encoder.
         """
-        assert (
-            "input_col" in example and "output_col" in example
-        ), "Example dictionary must have 'input_col' and 'output_col' keys"
-        if has_encoder:
-            model_input = (
-                f"<task {task_id}> {instruction} Example: {example['input_col']}"
-            )
-        else:
-            model_input = (
-                f"<task {task_id}> {instruction} Example: {example['input_col']}"
-                + f" Label: {example['output_col']}"
-            )
-        example["model_input"] = model_input
-        return example
 
     def process_dataset_dict(
         self, instruction: str, dataset_dicts: list[datasets.DatasetDict]

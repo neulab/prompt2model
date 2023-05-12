@@ -1,14 +1,14 @@
-"""Testing DatasetProcessor."""
+"""Testing TextualizeProcessor."""
 
 import datasets
 
-from prompt2model.dataset_processor.base import DatasetProcessor
+from prompt2model.dataset_processor.textualize import TextualizeProcessor
 
 
 def test_dataset_processor():
-    """Test the `process_dataset_dict` function of `DatasetProcessor`.
+    """Test the `process_dataset_dict` function of `TextualizeProcessor`.
 
-    Tests two kinds of DatasetProcessor by processing a list of dataset
+    Tests two kinds of TextualizeProcessor by processing a list of dataset
     dictionaries with the 'convert to text2text' instruction. Asserts that
     the resulting modified dataset dictionaries have the expected content.x
     """
@@ -30,7 +30,7 @@ def test_dataset_processor():
     ]
     instruction = "convert to text2text"
 
-    gpt_processor = DatasetProcessor(has_encoder=False)
+    gpt_processor = TextualizeProcessor(has_encoder=False)
     gpt_modified_dataset_dicts = gpt_processor.process_dataset_dict(
         instruction, dataset_dicts
     )
@@ -72,7 +72,7 @@ def test_dataset_processor():
             == gpt_expected_dataset_dicts[index]["train"]["model_input"]
         )
 
-    t5_processor = DatasetProcessor(has_encoder=True)
+    t5_processor = TextualizeProcessor(has_encoder=True)
     t5_modified_dataset_dicts = t5_processor.process_dataset_dict(
         instruction, dataset_dicts
     )
