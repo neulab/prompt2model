@@ -12,7 +12,7 @@ from test_helpers import mock_openai_response
 
 mock_classification_example = partial(
     mock_openai_response,
-    content='{"sample": "This is a great movie!", "annotation": 1}',
+    content='{"sample": "This is a great movie!", "annotation": "1"}',
 )
 mock_translation_example = partial(
     mock_openai_response, content='{"sample": "我爱你", "annotation": "I love you."}'
