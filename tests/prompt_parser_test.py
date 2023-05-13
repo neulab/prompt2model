@@ -1,5 +1,6 @@
 """Testing integration of components locally."""
 
+import json
 from functools import partial
 from unittest.mock import patch
 
@@ -113,13 +114,19 @@ def test_instruction_parser_with_invalid_json(mocked_parsing_method):
         mocked_parsing_method: Mocked function for parsing a prompt using GPT.
     """
     prompt = """This prompt will be ignored by the parser in this test."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as exc_info:
         prompt_spec = OpenAIInstructionParser(
             task_type=TaskType.TEXT_GENERATION, max_api_calls=3
         )
         prompt_spec.parse_from_prompt(prompt)
 
     assert mocked_parsing_method.call_count == 3
+
+    # Check if the ValueError was raised
+    assert isinstance(exc_info.value, ValueError)
+    # Check if the original exception (e) is present as the cause
+    original_exception = exc_info.value.__cause__
+    assert isinstance(original_exception, json.decoder.JSONDecodeError)
 
 
 @patch("time.sleep")
@@ -139,7 +146,7 @@ def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_met
                              some time after each API timeout.
     """
     prompt = """This prompt will be ignored by the parser in this test."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as exc_info:
         prompt_spec = OpenAIInstructionParser(
             task_type=TaskType.TEXT_GENERATION, max_api_calls=3
         )
@@ -149,6 +156,12 @@ def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_met
     # timeout).
     assert mocked_sleep_method.call_count == 3
     assert mocked_parsing_method.call_count == 3
+
+    # Check if the ValueError was raised
+    assert isinstance(exc_info.value, ValueError)
+    # Check if the original exception (e) is present as the cause
+    original_exception = exc_info.value.__cause__
+    assert isinstance(original_exception, openai.error.Timeout)
 
 
 @patch(

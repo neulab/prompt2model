@@ -85,9 +85,6 @@ class OpenAIInstructionParser(PromptSpec):
         chat_api = ChatGPTAgent(self.api_key)
         while True:
             try:
-                if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
-                    logging.error("Maximum number of API calls reached.")
-                    raise ValueError("Maximum number of API calls reached.")
                 self.api_call_counter += 1
                 response = chat_api.generate_openai_chat_completion(
                     parsing_prompt_for_chatgpt
@@ -96,4 +93,7 @@ class OpenAIInstructionParser(PromptSpec):
                 break
             except OPENAI_ERRORS as e:
                 self.api_call_counter = handle_openai_error(e, self.api_call_counter)
+                if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
+                    logging.error("Maximum number of API calls reached.")
+                    raise ValueError("Maximum number of API calls reached.") from e
         return None

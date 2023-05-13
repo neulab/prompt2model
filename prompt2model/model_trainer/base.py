@@ -1,4 +1,4 @@
-"""An interface for trainers."""
+"""An base class for trainers."""
 
 from abc import ABC, abstractmethod
 from typing import Any
@@ -9,7 +9,7 @@ from transformers import AutoModel, AutoTokenizer
 
 
 # pylint: disable=too-few-public-methods
-class ModelTrainer(ABC):
+class BaseTrainer(ABC):
     """Train a model with a fixed set of hyperparameters."""
 
     def __init__(self, pretrained_model_name: str):
