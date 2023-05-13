@@ -6,10 +6,10 @@ import datasets
 from transformers import PreTrainedModel  # noqa
 from transformers import PreTrainedTokenizer
 
-from prompt2model.model_trainer import ModelTrainer
+from prompt2model.model_trainer import BaseTrainer
 
 
-class MockTrainer(ModelTrainer):
+class MockTrainer(BaseTrainer):
     """This dummy trainer does not actually train anything."""
 
     def train_model(
