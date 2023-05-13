@@ -3,6 +3,7 @@
 from __future__ import annotations  # noqa FI58
 
 import json
+import logging
 import time
 
 import openai
@@ -58,6 +59,7 @@ def handle_openai_error(e, api_call_counter):
     Returns:
         The api_call_counter (if no error was raised), else raise the error.
     """
+    logging.error(e)
     if isinstance(
         e,
         (openai.error.APIError, openai.error.Timeout, openai.error.RateLimitError),

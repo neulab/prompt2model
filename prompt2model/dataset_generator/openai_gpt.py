@@ -9,21 +9,23 @@ from tqdm import tqdm
 
 from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
 from prompt2model.prompt_parser import PromptSpec
-from prompt2model.utils.openai_tools import ChatGPTAgent
+from prompt2model.utils import OPENAI_ERRORS, ChatGPTAgent, handle_openai_error
 
 
 class OpenAIDatasetGenerator(DatasetGenerator):
     """A abstract class for NLP dataset generation using OpenAI's GPT-3.5 API."""
 
     def __init__(self, api_key: str, max_api_calls: int = None):
-        """Initialize an OpenAI client with an API key and max API call allowed.
+        """Initialize an OpenAI DatasetGenerator with an API key and max API call.
 
         Args:
             api_key: A valid OpenAI API key.
             max_api_calls: The maximum number of API calls allowed,
                 or None for unlimited.
         """
-        self.chat_gpt_agent = ChatGPTAgent(api_key)
+        self.api_key = api_key
+        if max_api_calls:
+            assert max_api_calls > 0, "max_api_calls must be > 0"
         self.max_api_calls = max_api_calls
         self.api_call_counter = 0
 
@@ -69,33 +71,22 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
         Returns:
             A tuple of (sample, annotation), where:
-            - sample is the generated example string extracted from the
-            response, or "" if not found.
-            - annotation is the generated label/annotation string int extracted from
-            the response, or "" if not found.
+            - sample is the generated example string extracted from the response.
+            - annotation is the generated label string extracted from the response.
         """
         try:
-            response_dict = json.loads(response.choices[0]["message"]["content"])
-            keys = response_dict.keys()
-            sample = annotation = None
-            for key in keys:
-                if "sample" in key.lower():
-                    sample = response_dict[key]
-                elif "annotation" in key.lower():
-                    annotation = response_dict[key]
-            if sample and annotation:
-                return sample, annotation
-            else:
-                logging.error("No sample or annotation found")
-                raise ValueError("No sample or annotation found")
-        except (
-            json.JSONDecodeError,
-            IndexError,
-            TypeError,
-            ValueError,
-            AttributeError,
-        ):
-            return "", ""
+            response_json = json.loads(response.choices[0]["message"]["content"])
+        except json.decoder.JSONDecodeError as e:
+            logging.warning("API response was not a valid JSON")
+            raise e
+        required_keys = ["sample", "annotation"]
+        missing_keys = [key for key in required_keys if key not in response_json]
+        assert (
+            len(missing_keys) == 0
+        ), f'API response must contain {", ".join(required_keys)} keys'
+        sample = response_json["sample"].strip()
+        annotation = response_json["annotation"].strip()
+        return sample, annotation
 
     def generate_dataset_split(
         self,
@@ -119,28 +110,31 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             examples=prompt_spec.examples,
             prompt_template=prompt_spec.prompt_template,
         )
-
+        chat_api = ChatGPTAgent(self.api_key)
         input_cols = []  # type: list[str]
         output_cols = []  # type: list[str]
-        for example_index in tqdm(range(num_examples), desc="Generating examples"):
+
+        for _ in tqdm(range(num_examples), desc="Generating examples"):
             while True:
-                if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
-                    logging.warning("Maximum number of API calls reached.")
-                    return Dataset.from_dict(
-                        {"input_col": input_cols, "output_col": output_cols}
-                    )
-                else:
-                    self.api_call_counter += 1
-                response = self.chat_gpt_agent.generate_openai_chat_completion(prompt)
-                input_col, output_col = self.extract_response(response)
-                if input_col != "" and output_col != "":
+                try:
+                    if (
+                        self.max_api_calls
+                        and self.api_call_counter >= self.max_api_calls
+                    ):
+                        logging.warning("Maximum number of API calls reached.")
+                        return Dataset.from_dict(
+                            {"input_col": input_cols, "output_col": output_cols}
+                        )
+                    else:
+                        self.api_call_counter += 1
+                    response = chat_api.generate_openai_chat_completion(prompt)
+                    input_col, output_col = self.extract_response(response)
                     input_cols.append(input_col)
                     output_cols.append(output_col)
                     break
-                else:
-                    logging.warning(
-                        "No input_col or output_col found",
-                        f"for {example_index + 1} th example",
+                except OPENAI_ERRORS as e:
+                    self.api_call_counter = handle_openai_error(
+                        e, self.api_call_counter
                     )
 
         return Dataset.from_dict({"input_col": input_cols, "output_col": output_cols})
