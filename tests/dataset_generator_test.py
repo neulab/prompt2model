@@ -1,4 +1,4 @@
-"""Testing DatasetGenerator through SimpleDatasetGenerator."""
+"""Testing DatasetGenerator through OpenAIDatasetGenerator."""
 
 import os
 import tempfile

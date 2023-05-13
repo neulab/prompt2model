@@ -5,3 +5,4 @@ prompt2model.egg-info
 .mypy_cache
 *.pyc
 flagged
+wandb
