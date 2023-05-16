@@ -1,0 +1,6 @@
+[submodule "prompt2model/dataset_retriever/model-evaluator"]
+	path = prompt2model/dataset_retriever/model-evaluator
+	url = https://github.com/huggingface/model-evaluator.git
+[submodule "prompt2model/dataset_retriever/datafinder"]
+	path = prompt2model/dataset_retriever/datafinder
+	url = https://github.com/viswavi/datafinder.git
