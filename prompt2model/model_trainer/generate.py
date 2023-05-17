@@ -49,6 +49,10 @@ class GenerationModelTrainer(BaseTrainer):
             )
             if self.tokenizer.pad_token is None:
                 self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+                self.model.config.pad_token_id = self.model.config.eos_token_id
+                self.model.config.attention_mask_fn = lambda input_ids: (
+                    input_ids != self.model.config.pad_token_id
+                ).float()
 
     def preprocess_dataset(self, dataset: datasets.Dataset):
         """Preprocesses the given dataset using self.tokenizer.
