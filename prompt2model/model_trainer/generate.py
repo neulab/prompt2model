@@ -50,8 +50,7 @@ class GenerationModelTrainer(BaseTrainer):
             if self.tokenizer.pad_token is None:
                 self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
             if self.model.config.pad_token_id is None:
-                new_vocab_size = self.tokenizer.vocab_size + 1
-                self.model.config.pad_token_id = new_vocab_size - 1
+                self.model.config.pad_token_id = len(self.tokenizer)
                 self.model.resize_token_embeddings(len(self.tokenizer))
                 self.model.config.attention_mask_fn = lambda input_ids: (
                     input_ids != self.model.config.pad_token_id
