@@ -1,7 +1,5 @@
 """Model executor for generative models, including T5-type and GPT-type."""
 
-import logging
-
 import datasets
 import transformers
 from transformers import PreTrainedModel, PreTrainedTokenizer
@@ -31,19 +29,17 @@ class GenerationModelExecutor(ModelExecutor):
             A list of model outputs, one for each element in the test set.
         """
         assert input_column == "model_input"
+
         model_outputs = []
         for example in test_set:
             input_text = example[input_column]
             encoded_input = tokenizer(
                 input_text, truncation=True, padding=True, return_tensors="pt"
             )
-            if isinstance(model, transformers.T5ForConditionalGeneration):
+            if issubclass(model.__class__, transformers.T5ForConditionalGeneration):
                 output = model.generate(**encoded_input)
-            elif isinstance(model, transformers.AutoModelForCausalLM):
-                output = model.generate(input_ids=encoded_input["input_ids"])
             else:
-                logging.error("Unsupported model type.")
-                raise ValueError("Unsupported model type.")
+                output = model.generate(input_ids=encoded_input["input_ids"])
 
             decoded_output = tokenizer.decode(output[0], skip_special_tokens=True)
             model_output = ModelOutput(
