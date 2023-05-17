@@ -48,7 +48,12 @@ class GenerationModelExecutor(ModelExecutor):
             model_output = ModelOutput(
                 prediction=decoded_output,
                 confidence=confidence,
-                auxiliary_info={},
+                auxiliary_info={
+                    "example": example,
+                    "input_text": input_text,
+                    "logits": logits,
+                    "probs": probs,
+                },
             )
             model_outputs.append(model_output)
 

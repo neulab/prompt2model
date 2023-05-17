@@ -49,6 +49,12 @@ def test_t5_model():
         assert isinstance(output, ModelOutput)
         assert output.prediction is not None
         assert output.confidence is not None
+        assert list(output.auxiliary_info.keys()) == [
+            "example",
+            "input_text",
+            "logits",
+            "probs",
+        ]
         assert isinstance(output.auxiliary_info, dict)
 
 
@@ -77,8 +83,6 @@ def test_gpt2_model():
         {
             "model_input": [
                 "This is the first test input.",
-                "Another example for testing.",
-                "One more test input.",
             ]
         }
     )
@@ -97,4 +101,10 @@ def test_gpt2_model():
         assert isinstance(output, ModelOutput)
         assert output.prediction is not None
         assert output.confidence is not None
+        assert list(output.auxiliary_info.keys()) == [
+            "example",
+            "input_text",
+            "logits",
+            "probs",
+        ]
         assert isinstance(output.auxiliary_info, dict)
