@@ -50,7 +50,7 @@ class GenerationModelTrainer(BaseTrainer):
             if self.tokenizer.pad_token is None:
                 self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
             if self.model.config.pad_token_id is None:
-                self.model.config.pad_token_id = self.model.config.eos_token_id
+                self.model.config.pad_token_id = 0
                 self.model.config.attention_mask_fn = lambda input_ids: (
                     input_ids != self.model.config.pad_token_id
                 ).float()

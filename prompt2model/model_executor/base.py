@@ -34,6 +34,7 @@ class ModelExecutor(ABC):
         tokenizer: transformers.PreTrainedTokenizer,
         test_set: datasets.Dataset,
         input_column: str,
+        batch_size: int = 10,
     ) -> None:
         """Initializes a new instance of ModelExecutor.
 
@@ -42,11 +43,13 @@ class ModelExecutor(ABC):
             tokenizer: The model's associated tokenizer.
             test_set: The dataset to make predictions on.
             input_column: The dataset column to use as input to the model.
+            batch_size: The batch size to use when making predictions.
         """
         self.model = model
         self.tokenizer = tokenizer
         self.test_set = test_set
         self.input_column = input_column
+        self.batch_size = batch_size
 
     @abstractmethod
     def make_predictions(self) -> list[ModelOutput]:
