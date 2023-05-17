@@ -36,12 +36,12 @@ def test_t5_model():
     )
 
     # Create GenerationModelExecutor
-    model_executor = GenerationModelExecutor()
-
-    # Test T5 model
-    t5_outputs = model_executor.make_predictions(
+    model_executor = GenerationModelExecutor(
         t5_model, t5_tokenizer, test_dataset, "model_input"
     )
+
+    # Test T5 model
+    t5_outputs = model_executor.make_predictions()
     assert isinstance(t5_outputs, list)
     assert len(t5_outputs) == len(test_dataset)
 
@@ -88,12 +88,12 @@ def test_gpt2_model():
     )
 
     # Create GenerationModelExecutor
-    model_executor = GenerationModelExecutor()
-
-    # Test GPT-2 model
-    gpt2_outputs = model_executor.make_predictions(
+    model_executor = GenerationModelExecutor(
         gpt2_model, gpt2_tokenizer, test_dataset, "model_input"
     )
+
+    # Test GPT-2 model
+    gpt2_outputs = model_executor.make_predictions()
     assert isinstance(gpt2_outputs, list)
     assert len(gpt2_outputs) == len(test_dataset)
 

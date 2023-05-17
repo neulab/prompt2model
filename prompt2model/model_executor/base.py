@@ -28,21 +28,29 @@ class ModelOutput:
 class ModelExecutor(ABC):
     """An interface for automatic model evaluation."""
 
-    @abstractmethod
-    def make_predictions(
+    def __init__(
         self,
         model: transformers.PreTrainedModel,
         tokenizer: transformers.PreTrainedTokenizer,
         test_set: datasets.Dataset,
         input_column: str,
-    ) -> list[ModelOutput]:
-        """Evaluate a model on a test set.
+    ) -> None:
+        """Initializes a new instance of ModelExecutor.
 
         Args:
             model: The model to evaluate.
             tokenizer: The model's associated tokenizer.
             test_set: The dataset to make predictions on.
             input_column: The dataset column to use as input to the model.
+        """
+        self.model = model
+        self.tokenizer = tokenizer
+        self.test_set = test_set
+        self.input_column = input_column
+
+    @abstractmethod
+    def make_predictions(self) -> list[ModelOutput]:
+        """Evaluate a model on a test set.
 
         Returns:
             A list of model outputs, one for each element in the test set.
