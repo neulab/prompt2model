@@ -1,6 +1,7 @@
 """Model executor for generative models, including T5-type and GPT-type."""
 
 import datasets
+import torch
 import transformers
 from transformers import PreTrainedModel, PreTrainedTokenizer
 
@@ -40,12 +41,14 @@ class GenerationModelExecutor(ModelExecutor):
                 output = model.generate(**encoded_input)
             else:
                 output = model.generate(input_ids=encoded_input["input_ids"])
-
             decoded_output = tokenizer.decode(output[0], skip_special_tokens=True)
+            logits = output[0].float()
+            probs = torch.softmax(logits, dim=-1)
+            confidence = probs.mean().item()
             model_output = ModelOutput(
                 prediction=decoded_output,
-                confidence=None,  # Adjust as per your needs
-                auxiliary_info={},  # Adjust as per your needs
+                confidence=confidence,
+                auxiliary_info={},
             )
             model_outputs.append(model_output)
 

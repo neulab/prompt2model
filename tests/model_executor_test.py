@@ -48,7 +48,7 @@ def test_t5_model():
     for output in t5_outputs:
         assert isinstance(output, ModelOutput)
         assert output.prediction is not None
-        assert output.confidence is None
+        assert output.confidence is not None
         assert isinstance(output.auxiliary_info, dict)
 
 
@@ -68,6 +68,10 @@ def test_gpt2_model():
     gpt2_tokenizer = AutoTokenizer.from_pretrained(gpt2_model_name)
     if gpt2_tokenizer.pad_token is None:
         gpt2_tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+        gpt2_model.config.pad_token_id = gpt2_model.config.eos_token_id
+        gpt2_model.config.attention_mask_fn = lambda input_ids: (
+            input_ids != gpt2_model.config.pad_token_id
+        ).float()
     # Create test dataset
     test_dataset = Dataset.from_dict(
         {
@@ -92,5 +96,5 @@ def test_gpt2_model():
     for output in gpt2_outputs:
         assert isinstance(output, ModelOutput)
         assert output.prediction is not None
-        assert output.confidence is None
+        assert output.confidence is not None
         assert isinstance(output.auxiliary_info, dict)
