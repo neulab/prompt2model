@@ -1,8 +1,5 @@
 """A dummy class to generate model outputs (for testing purposes)."""
 
-import datasets
-import transformers
-
 from prompt2model.model_executor import ModelExecutor, ModelOutput
 
 
@@ -11,10 +8,6 @@ class MockModelExecutor(ModelExecutor):
 
     def make_predictions(
         self,
-        model: transformers.PreTrainedModel,
-        tokenizer: transformers.PreTrainedTokenizer,
-        test_set: datasets.Dataset,
-        input_column: str,
     ) -> list[ModelOutput]:
         """Mock the execution of a model on a test set.
 
@@ -28,7 +21,7 @@ class MockModelExecutor(ModelExecutor):
             An object containing model outputs.
         """
         predictions = []
-        for _ in range(len(test_set[input_column])):
+        for _ in range(len(self.test_set[self.input_column])):
             model_output = ModelOutput(
                 prediction="", confidence=None, auxiliary_info={}
             )
