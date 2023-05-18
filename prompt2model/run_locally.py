@@ -5,7 +5,7 @@ import argparse
 from prompt2model.dataset_generator import DatasetSplit, MockDatasetGenerator
 from prompt2model.dataset_processor import MockProcessor
 from prompt2model.dataset_retriever import MockRetriever
-from prompt2model.demo_creator.gradio_creator import mock_gradio_create
+from prompt2model.demo_creator import mock_gradio_create
 from prompt2model.evaluator import MockEvaluator
 from prompt2model.model_executor import MockModelExecutor
 from prompt2model.model_retriever import MockModelRetriever
