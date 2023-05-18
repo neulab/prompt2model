@@ -48,8 +48,11 @@ def test_gpt_trainer():
             ),
             datasets.Dataset.from_dict(
                 {
-                    "model_input": ["translate English to French."] * 2,
-                    "output_col": ["pomme"] * 2,
+                    "model_input": [
+                        "translate English to French.",
+                        "translate English to Kinyarwanda.",
+                    ],
+                    "output_col": ["pomme", "pome"],
                 }
             ),
         ]
