@@ -18,7 +18,6 @@ def mock_gradio_create(
     Returns:
         A Gradio interface for interacting with the model.
     """
-
     _ = model_executor, prompt_spec  # suppress unused variable warnings
     dummy_interface = gr.Interface(lambda input: None, "textbox", "label")
     return dummy_interface

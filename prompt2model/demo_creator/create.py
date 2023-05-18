@@ -12,7 +12,7 @@ def gradio_create(
     """Create a Gradio interface automatically.
 
     Args:
-        model_executor: A trained GenerationModelExecutor to expose via a Gradio interface.
+        model_executor: A GenerationModelExecutor to expose via a Gradio interface.
         prompt_parser: An instance of OpenAIInstructionParser to parse the prompt.
 
     Returns:
@@ -38,7 +38,8 @@ def gradio_create(
     # Define the Gradio interface output
     interface_output = gr.outputs.Textbox(label="Model Predictions")
 
-    # Create the Gradio interface with the predict function and the defined inputs/outputs
+    # Create the Gradio interface with the predict function
+    # and the defined inputs/outputs
     gr_interface = gr.Interface(
         fn=predict, inputs=interface_input, outputs=interface_output
     )
