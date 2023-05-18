@@ -95,7 +95,7 @@ def construct_single_demonstration(
     parse_dict: dict[str, str] | None,
     input_only: bool = False,
 ) -> str:
-    """Format a demonstration or prediction example to give to an LLM.
+    """Format a examples or prediction example to give to an LLM.
 
     Args:
         user_prompt: A textual prompt describing the task.
