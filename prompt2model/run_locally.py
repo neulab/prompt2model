@@ -11,7 +11,7 @@ from prompt2model.model_executor import MockModelExecutor
 from prompt2model.model_retriever import MockModelRetriever
 from prompt2model.model_trainer import MockTrainer
 from prompt2model.param_selector import MockParamSelector
-from prompt2model.prompt_parser import DefaultSpec, PromptSpec, TaskType
+from prompt2model.prompt_parser import MockPromptSpec, PromptSpec, TaskType
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -54,7 +54,7 @@ def process_input_prompt(prompt_tokens: list[str]) -> PromptSpec:
     if start_quotations_present and end_quotations_present:
         prompt_str = prompt_str[1:-1]
 
-    prompt_spec = DefaultSpec(TaskType.TEXT_GENERATION)
+    prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
     prompt_spec.parse_from_prompt(prompt_str)
     return prompt_spec
 

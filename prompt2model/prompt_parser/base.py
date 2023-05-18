@@ -26,21 +26,3 @@ class PromptSpec(ABC):
     @abstractmethod
     def get_instruction(self) -> str:
         """Return the natural language instruction givenb y the prompt."""
-
-
-class DefaultSpec(PromptSpec):
-    """Use explicitly-set default settings."""
-
-    def __init__(self, task_type: TaskType):
-        """By default, assume that every task is a text generation task."""
-        self.task_type: TaskType = task_type
-        self.prompt: str | None = None
-
-    def parse_from_prompt(self, prompt: str) -> None:
-        """Don't parse anything."""
-        self.prompt = prompt
-
-    def get_instruction(self) -> str:
-        """Return the prompt itself, since we do not parse it."""
-        assert self.prompt is not None
-        return self.prompt
