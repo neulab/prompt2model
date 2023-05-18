@@ -78,7 +78,7 @@ class GenerationModelExecutor(ModelExecutor):
             model_input: The input string to the model.
 
         Returns:
-            A single model outputs, usually used in demo.
+            A single model output, useful for exposing a model to a user interface.
         """
         model_output = self.make_prediction(single_model_input=model_input)[0]
         return model_output

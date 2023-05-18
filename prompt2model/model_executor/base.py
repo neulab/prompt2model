@@ -61,11 +61,11 @@ class ModelExecutor(ABC):
 
     @abstractmethod
     def make_single_prediction(self, model_input: str) -> ModelOutput:
-        """Evaluate a model on one example.
+        """Make prediction on one example.
 
         Args:
             model_input: The input string to the model.
 
         Returns:
-            A single model outputs, usually used in demo.
+            A single model output, useful for exposing a model to a user interface.
         """
