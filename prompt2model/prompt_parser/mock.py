@@ -30,7 +30,6 @@ class MockPromptSpec(PromptSpec):
         _ = prompt
         return None
 
-    def get_instruction(self, prompt: str) -> str:
+    def get_instruction(self) -> str:
         """Return the prompt itself, since we do not parse it."""
-        _ = prompt
         return self.instruction
