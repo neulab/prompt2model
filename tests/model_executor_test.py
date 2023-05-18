@@ -57,7 +57,7 @@ def test_make_prediction_gpt2_model():
     gpt2_model = AutoModelForCausalLM.from_pretrained(gpt2_model_name)
     gpt2_tokenizer = AutoTokenizer.from_pretrained(gpt2_model_name)
     if gpt2_tokenizer.pad_token is None:
-        gpt2_tokenizer.pad_token = "[PAD]"
+        gpt2_tokenizer.add_special_tokens({"pad_token": "[PAD]"})
         gpt2_model.config.pad_token_id = len(gpt2_tokenizer)
         gpt2_model.resize_token_embeddings(len(gpt2_tokenizer))
         gpt2_model.config.attention_mask_fn = lambda input_ids: (

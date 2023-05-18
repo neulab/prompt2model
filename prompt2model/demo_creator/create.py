@@ -6,7 +6,7 @@ from prompt2model.model_executor import GenerationModelExecutor
 from prompt2model.prompt_parser import OpenAIInstructionParser
 
 
-def gradio_create(
+def create_gradio(
     model_executor: GenerationModelExecutor, prompt_parser: OpenAIInstructionParser
 ) -> gr.Interface:
     """Create a Gradio interface automatically.

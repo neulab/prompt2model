@@ -67,5 +67,5 @@ class ModelExecutor(ABC):
             model_input: The input string to the model.
 
         Returns:
-            A single model outputs, usually used in demo.
+            A single model output, useful for exposing a model to a user interface.
         """
