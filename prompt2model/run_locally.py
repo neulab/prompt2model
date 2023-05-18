@@ -99,7 +99,7 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
     )
 
     model_executor = MockModelExecutor(model, tokenizer, testing, "input_col")
-    predictions = model_executor.make_predictions()
+    predictions = model_executor.make_prediction()
 
     evaluator = MockEvaluator()
     metrics_dict = evaluator.evaluate_model(
