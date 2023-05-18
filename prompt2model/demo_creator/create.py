@@ -22,7 +22,7 @@ def create_gradio(
     description = prompt_parser.get_instruction()
     article = prompt_parser.examples
 
-    def chat(message):
+    def response(message):
         prompt_parser.parse_from_prompt(message)
         response = model_executor.make_single_prediction(message)
         prediction = response.prediction
@@ -30,13 +30,20 @@ def create_gradio(
         model_output = f"{prediction} \n (with {confidence} confidence)"
         return model_output
 
-    textbox = gr.Textbox(label="Input", placeholder="John Doe", lines=2)
-    gr_interface = gr.Interface(
-        fn=chat,
-        inputs=textbox,
+    def chat(message, history):
+        history = history or []
+        model_output = response(message)
+        history.append((message, model_output))
+        return history, history
+
+    iface = gr.Interface(
+        chat,
+        ["text", "state"],
+        ["chatbot", "state"],
         description=description,
         article=article,
-        outputs="text",
+        allow_screenshot=False,
+        allow_flagging="never",
     )
 
-    return gr_interface
+    return iface
