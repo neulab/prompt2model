@@ -52,9 +52,20 @@ class ModelExecutor(ABC):
         self.batch_size = batch_size
 
     @abstractmethod
-    def make_predictions(self) -> list[ModelOutput]:
+    def make_prediction(self) -> list[ModelOutput]:
         """Evaluate a model on a test set.
 
         Returns:
             A list of model outputs, one for each element in the test set.
+        """
+
+    @abstractmethod
+    def make_single_prediction(self, model_input: str) -> ModelOutput:
+        """Make prediction on one example.
+
+        Args:
+            model_input: The input string to the model.
+
+        Returns:
+            A single model output, useful for exposing a model to a user interface.
         """

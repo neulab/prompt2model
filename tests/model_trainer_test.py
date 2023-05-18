@@ -1,11 +1,14 @@
 """Testing GenerationModelTrainer with different configurations."""
 
+import os
 import tempfile
 
 import datasets
 import transformers
 
 from prompt2model.model_trainer.generate import GenerationModelTrainer
+
+os.environ["WANDB_MODE"] = "dryrun"
 
 
 def test_t5_trainer():
@@ -49,10 +52,10 @@ def test_gpt_trainer():
             datasets.Dataset.from_dict(
                 {
                     "model_input": [
-                        "translate English to French. Example: apple. Label: pomme"
-                    ]
-                    * 2,
-                    "output_col": ["pomme"] * 2,
+                        "translate English to French.",
+                        "translate English to Kinyarwanda.",
+                    ],
+                    "output_col": ["pomme", "pome"],
                 }
             ),
         ]
