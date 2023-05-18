@@ -1,4 +1,7 @@
+"""Create a Gradio interface automatically."""
+
 import gradio as gr
+
 from prompt2model.model_executor import GenerationModelExecutor
 from prompt2model.prompt_parser import OpenAIInstructionParser
 
@@ -16,6 +19,7 @@ def create_gradio(
         A Gradio interface for interacting with the model.
 
     """
+
     def chat(message, history):
         history = history or []
         prompt_parser.parse_from_prompt(message)
