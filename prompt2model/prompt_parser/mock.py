@@ -27,3 +27,7 @@ class MockPromptSpec(PromptSpec):
     def parse_from_prompt(self, prompt: str) -> None:
         """Don't parse anything."""
         return None
+
+    def get_instruction(self, prompt: str) -> str:
+        """Return the prompt itself, since we do not parse it."""
+        return self.instruction

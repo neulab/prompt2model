@@ -97,3 +97,8 @@ class OpenAIInstructionParser(PromptSpec):
                     logging.error("Maximum number of API calls reached.")
                     raise ValueError("Maximum number of API calls reached.") from e
         return None
+
+    def get_instruction(self) -> str:
+        """Return the natural language instruction parsed from the prompt."""
+        assert self.instruction is not None
+        return self.instruction
