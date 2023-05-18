@@ -1,11 +1,14 @@
 """Testing GenerationModelTrainer with different configurations."""
 
+import os
 import tempfile
 
 import datasets
 import transformers
 
 from prompt2model.model_trainer.generate import GenerationModelTrainer
+
+os.environ["WANDB_MODE"] = "dryrun"
 
 
 def test_t5_trainer():
