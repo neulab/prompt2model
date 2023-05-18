@@ -23,8 +23,6 @@ def create_gradio(
     def chat(message, history):
         history = history or []
         prompt_parser.parse_from_prompt(message)
-        instruction = prompt_parser.get_instruction()
-        model_executor.set_instruction(instruction)
         response = model_executor.make_single_prediction(message).prediction
         history.append((message, response))
         return history, history

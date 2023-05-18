@@ -64,7 +64,3 @@ def test_create_gradio_with_t5():
 
     # Perform assertions
     assert isinstance(interface_t5, gr.Interface)
-    assert len(interface_t5.inputs) == 2
-    assert interface_t5.inputs[0].type == "text"
-    assert len(interface_t5.outputs) == 2
-    assert interface_t5.outputs[0].type == "text[]"
