@@ -1,16 +1,20 @@
-"""Testing demo creator with different configurations."""
+"""Test the create_gradio function with two configurations."""
 
-from transformers import GPT2LMHeadModel, GPT2Tokenizer, T5ForConditionalGeneration, T5Tokenizer
 import gradio as gr
-from prompt2model.model_executor import GenerationModelExecutor
-from prompt2model.prompt_parser import MockPromptSpec
+from transformers import T5ForConditionalGeneration
+
 from prompt2model.demo_creator import create_gradio
-from prompt2model.prompt_parser import TaskType
+from prompt2model.model_executor import GenerationModelExecutor
+from prompt2model.prompt_parser import MockPromptSpec, TaskType
+
+from transformers import AutoModelForCausalLM, T5Tokenizer  # isort:skip
+from transformers import AutoTokenizer  # isort:skip
+
 
 def test_create_gradio_with_gpt2():
     # Create GPT-2 model and tokenizer
-    gpt2_model = GPT2LMHeadModel.from_pretrained("gpt2")
-    gpt2_tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+    gpt2_model = AutoModelForCausalLM.from_pretrained("gpt2")
+    gpt2_tokenizer = AutoTokenizer.from_pretrained("gpt2")
     if gpt2_tokenizer.pad_token is None:
         gpt2_tokenizer.pad_token = "[PAD]"
         gpt2_model.config.pad_token_id = len(gpt2_tokenizer)
@@ -57,7 +61,7 @@ def test_create_gradio_with_t5():
     )
 
     # Create OpenAIInstructionParser
-    t5_prompt_parser = OpenAIInstructionParser(task_type="generation", api_key=None)
+    t5_prompt_parser = MockPromptSpec(task_type="generation", api_key=None)
 
     # Create Gradio interface
     interface_t5 = create_gradio(t5_executor, t5_prompt_parser)
