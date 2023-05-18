@@ -56,6 +56,7 @@ class GenerationModelTrainer(BaseTrainer):
                 input_ids != self.model.config.pad_token_id
             ).float()
 
+
     def preprocess_dataset(self, dataset: datasets.Dataset):
         """Preprocesses the given dataset using self.tokenizer.
 
