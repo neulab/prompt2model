@@ -1,9 +1,10 @@
 """An interface for creating Gradio demos automatically."""
 
 import gradio as gr
-from prompt2model.prompt_parser import TaskType
+
 from prompt2model.model_executor import GenerationModelExecutor
 from prompt2model.prompt_parser import OpenAIInstructionParser
+
 
 def gradio_create(
     model_executor: GenerationModelExecutor, prompt_parser: OpenAIInstructionParser
@@ -18,6 +19,7 @@ def gradio_create(
         A Gradio interface for interacting with the model.
 
     """
+
     def predict(input_text):
         prompt_parser.parse_from_prompt(input_text)
         instruction = prompt_parser.get_instruction()
@@ -37,6 +39,8 @@ def gradio_create(
     interface_output = gr.outputs.Textbox(label="Model Predictions")
 
     # Create the Gradio interface with the predict function and the defined inputs/outputs
-    gr_interface = gr.Interface(fn=predict, inputs=interface_input, outputs=interface_output)
+    gr_interface = gr.Interface(
+        fn=predict, inputs=interface_input, outputs=interface_output
+    )
 
     return gr_interface
