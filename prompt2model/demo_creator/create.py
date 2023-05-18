@@ -1,13 +1,13 @@
 """An interface for creating Gradio demos automatically."""
 
 import gradio as gr
-import transformers
 
-from prompt2model.prompt_parser.base import PromptSpec
+from prompt2model.model_executor import MockModelExecutor
+from prompt2model.prompt_parser import PromptSpec
 
 
-def create_gradio(
-    model: transformers.PreTrainedModel, prompt_spec: PromptSpec
+def gradio_create(
+    model_executor: MockModelExecutor, prompt_spec: PromptSpec
 ) -> gr.Interface:
     """Create a Gradio interface automatically.
 
@@ -19,6 +19,6 @@ def create_gradio(
         A Gradio interface for interacting with the model.
 
     """
-    _ = model, prompt_spec  # suppress unused variable warnings
+    _ = model_executor, prompt_spec  # suppress unused variable warnings
     dummy_interface = gr.Interface(lambda input: None, "textbox", "label")
     return dummy_interface

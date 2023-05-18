@@ -106,7 +106,7 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
         testing, "output_col", predictions, [], prompt_spec
     )
     evaluator.write_metrics(metrics_dict, metrics_output_path)
-    mock_gradio_create(model, prompt_spec)
+    mock_gradio_create(model_executor, prompt_spec)
 
 
 if __name__ == "__main__":
