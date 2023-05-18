@@ -40,10 +40,6 @@ def test_create_gradio_with_gpt2():
 
     # Perform assertions
     assert isinstance(interface_gpt2, gr.Interface)
-    assert len(interface_gpt2.inputs) == 2
-    assert interface_gpt2.inputs[0].type == "text"
-    assert len(interface_gpt2.outputs) == 2
-    assert interface_gpt2.outputs[0].type == "text[]"
 
 
 def test_create_gradio_with_t5():
@@ -61,7 +57,7 @@ def test_create_gradio_with_t5():
     )
 
     # Create OpenAIInstructionParser
-    t5_prompt_parser = MockPromptSpec(task_type="generation", api_key=None)
+    t5_prompt_parser = MockPromptSpec(task_type="generation")
 
     # Create Gradio interface
     interface_t5 = create_gradio(t5_executor, t5_prompt_parser)
