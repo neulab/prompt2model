@@ -1,6 +1,6 @@
 """An interface for prompt parsing."""
 
-from __future__ import annotations
+from __future__ import annotations  # noqa FI58
 
 from abc import ABC, abstractmethod
 from enum import Enum
@@ -37,8 +37,8 @@ class DefaultSpec(PromptSpec):
         self.prompt: str | None = None
 
     def parse_from_prompt(self, prompt: str) -> None:
-        self.prompt = prompt
         """Don't parse anything."""
+        self.prompt = prompt
 
     def get_instruction(self) -> str:
         """Return the prompt itself, since we do not parse it."""
