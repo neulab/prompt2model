@@ -26,9 +26,9 @@ def create_gradio(
         return history, history
 
     gr_interface = gr.Interface(
-        fn=chat,
-        inputs=["text", "text[]"],
-        outputs=["text[]", "text[]"],
+        chat,
+        ["text", "state"],
+        ["chatbot", "state"],
         allow_screenshot=False,
         allow_flagging="never",
     )
