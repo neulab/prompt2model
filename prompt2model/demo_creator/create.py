@@ -19,20 +19,23 @@ def create_gradio(
         A Gradio interface for interacting with the model.
 
     """
+    description = prompt_parser.get_instruction()
+    article = prompt_parser.demonstration
 
-    def chat(message, history):
-        history = history or []
+    def chat(message):
         prompt_parser.parse_from_prompt(message)
-        response = model_executor.make_single_prediction(message).prediction
-        history.append((message, response))
-        return history, history
+        response = model_executor.make_single_prediction(message)
+        prediction = response.prediction
+        confidence = response.confidence
+        model_output = f"{prediction} \n (with {confidence} confidence)"
+        return model_output
 
+    textbox = gr.Textbox(label="Input", placeholder="John Doe", lines=2)
     gr_interface = gr.Interface(
-        chat,
-        ["text", "state"],
-        ["chatbot", "state"],
-        allow_screenshot=False,
-        allow_flagging="never",
+        fn=chat,
+        inputs=textbox,
+        description=description,
+        article=article,
     )
 
     return gr_interface

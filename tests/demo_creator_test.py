@@ -37,6 +37,7 @@ def test_create_gradio_with_gpt2():
 
     # Create Gradio interface
     interface_gpt2 = create_gradio(gpt2_executor, gpt2_prompt_parser)
+    interface_gpt2.launch()
 
     # Perform assertions
     assert isinstance(interface_gpt2, gr.Interface)
