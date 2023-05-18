@@ -67,10 +67,11 @@ Christmas 2016 -> 12/25/2016"""
     prompt_spec.parse_from_prompt(prompt)
 
     assert prompt_spec.task_type == TaskType.TEXT_GENERATION
-    assert (
-        prompt_spec.instruction
-        == "Convert each date from an informal description into a MM/DD/YYYY format."
+    correct_instruction = (
+        "Convert each date from an informal description into a MM/DD/YYYY format."
     )
+    assert prompt_spec.instruction == correct_instruction
+    assert prompt_spec.get_instruction() == correct_instruction
     assert (
         prompt_spec.demonstration
         == """Fifth of November 2024 -> 11/05/2024
@@ -95,10 +96,9 @@ def test_instruction_parser_without_demonstration(mocked_parsing_method):
     prompt_spec.parse_from_prompt(prompt)
 
     assert prompt_spec.task_type == TaskType.TEXT_GENERATION
-    assert (
-        prompt_spec.instruction
-        == "Turn the given fact into a question by a simple rearrangement of words. This typically involves replacing some part of the given fact with a WH word. For example, replacing the subject of the provided fact with the word \"what\" can form a valid question. Don't be creative! You just need to rearrange the words to turn the fact into a question - easy! Don't just randomly remove a word from the given fact to form a question. Remember that your question must evaluate scientific understanding. Pick a word or a phrase in the given fact to be the correct answer, then make the rest of the question. You can also form a question without any WH words. For example, 'A radio converts electricity into?'"  # noqa: E501
-    )
+    correct_instruction = "Turn the given fact into a question by a simple rearrangement of words. This typically involves replacing some part of the given fact with a WH word. For example, replacing the subject of the provided fact with the word \"what\" can form a valid question. Don't be creative! You just need to rearrange the words to turn the fact into a question - easy! Don't just randomly remove a word from the given fact to form a question. Remember that your question must evaluate scientific understanding. Pick a word or a phrase in the given fact to be the correct answer, then make the rest of the question. You can also form a question without any WH words. For example, 'A radio converts electricity into?'"  # noqa: E501
+    assert prompt_spec.instruction == correct_instruction
+    assert prompt_spec.get_instruction() == correct_instruction
     assert prompt_spec.demonstration == "N/A"
     assert mocked_parsing_method.call_count == 1
 
