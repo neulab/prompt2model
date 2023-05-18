@@ -20,7 +20,7 @@ def create_gradio(
 
     """
     description = prompt_parser.get_instruction()
-    article = prompt_parser.demonstration
+    article = prompt_parser.examples
 
     def chat(message):
         prompt_parser.parse_from_prompt(message)
