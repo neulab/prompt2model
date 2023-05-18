@@ -26,3 +26,7 @@ class PromptSpec(ABC):
     @abstractmethod
     def get_instruction(self) -> str:
         """Return the natural language instruction givenb y the prompt."""
+
+    @abstractmethod
+    def get_examples(self) -> str | None:
+        """Return the natural language examples parsed from the prompt."""
