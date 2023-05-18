@@ -12,6 +12,7 @@ from transformers import AutoTokenizer  # isort:skip
 
 
 def test_create_gradio_with_gpt2():
+    """Test the `create_gradio` method with a GPT2 model."""
     # Create GPT-2 model and tokenizer
     gpt2_model = AutoModelForCausalLM.from_pretrained("gpt2")
     gpt2_tokenizer = AutoTokenizer.from_pretrained("gpt2")
@@ -44,6 +45,7 @@ def test_create_gradio_with_gpt2():
 
 
 def test_create_gradio_with_t5():
+    """Test the `create_gradio` method with a T5 model."""
     # Create T5 model and tokenizer
     t5_model = T5ForConditionalGeneration.from_pretrained("t5-small")
     t5_tokenizer = T5Tokenizer.from_pretrained("t5-small")
