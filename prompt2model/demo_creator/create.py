@@ -36,6 +36,7 @@ def create_gradio(
         inputs=textbox,
         description=description,
         article=article,
+        outputs="text",
     )
 
     return gr_interface
