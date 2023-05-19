@@ -23,7 +23,6 @@ def create_gradio(
     article = prompt_parser.get_examples
 
     def response(message):
-        prompt_parser.parse_from_prompt(message)
         response = model_executor.make_single_prediction(message)
         prediction = response.prediction
         confidence = response.confidence
