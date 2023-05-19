@@ -6,7 +6,7 @@ import transformers
 from prompt2model.prompt_parser.base import PromptSpec
 
 
-def create_gradio(
+def mock_gradio_create(
     model: transformers.PreTrainedModel, prompt_spec: PromptSpec
 ) -> gr.Interface:
     """Create a Gradio interface automatically.
