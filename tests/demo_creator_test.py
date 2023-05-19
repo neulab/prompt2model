@@ -61,7 +61,7 @@ def test_create_gradio_with_t5():
     # Create OpenAIInstructionParser
     t5_prompt_parser = MockPromptSpec(task_type="generation")
 
-    # Create Gradio interface
+    # Create Gradio interface.
     interface_t5 = create_gradio(t5_executor, t5_prompt_parser)
 
     # Perform assertions
