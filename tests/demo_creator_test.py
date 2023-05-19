@@ -49,7 +49,7 @@ def test_create_gradio_with_t5():
     t5_model = T5ForConditionalGeneration.from_pretrained("t5-small")
     t5_tokenizer = T5Tokenizer.from_pretrained("t5-small")
 
-    # Create GenerationModelExecutor
+    # Create GenerationModelExecutor.
     t5_executor = GenerationModelExecutor(
         model=t5_model,
         tokenizer=t5_tokenizer,
