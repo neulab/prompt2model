@@ -75,7 +75,7 @@ class OpenAIInstructionParser(PromptSpec):
         """Parse prompt into specific fields, stored as class member variables.
 
         This function directly stores the parsed fields into the class's member
-        variables `instruction` and `examples. So it has no return value.
+        variables `instruction` and `examples`. So it has no return value.
 
         Args:
             prompt: User prompt to parse into two specific fields:
