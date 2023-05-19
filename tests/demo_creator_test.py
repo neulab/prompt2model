@@ -24,7 +24,7 @@ def test_create_gradio_with_gpt2():
             input_ids != gpt2_model.config.pad_token_id
         ).float()
 
-    # Create GenerationModelExecutor
+    # Create GenerationModelExecutor.
     gpt2_executor = GenerationModelExecutor(
         model=gpt2_model,
         tokenizer=gpt2_tokenizer,
