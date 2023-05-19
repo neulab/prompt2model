@@ -33,6 +33,6 @@ class PromptSpec(ABC):
         return self.instruction
 
     @property
-    def get_examples(self) -> str | None:
+    def get_examples(self) -> str:
         """Return the natural language examples parsed from the prompt."""
         return self.examples or ""
