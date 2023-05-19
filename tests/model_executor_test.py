@@ -50,7 +50,6 @@ def test_make_prediction_t5_model():
 
 def test_make_prediction_gpt2_model():
     """Test the `make_prediction` method with a GPT-2 model."""
-
     # Create GPT2 model and tokenizer.
     gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
     gpt2_model = gpt2_model_and_tokenizer.model
