@@ -9,7 +9,7 @@ import pytest
 
 from prompt2model.dataset_generator.base import DatasetSplit
 from prompt2model.dataset_generator.openai_gpt import OpenAIDatasetGenerator
-from prompt2model.prompt_parser import MockPromptSpec
+from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from test_helpers import mock_openai_response
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
@@ -45,7 +45,7 @@ def check_generate_dataset(dataset_generator: OpenAIDatasetGenerator):
         dataset_generator: The dataset_generator will be tested with limited
             max_api_calls or unlimited max_api_calls.
     """
-    prompt_spec = MockPromptSpec()
+    prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
     split = DatasetSplit.TRAIN
     num_examples = 5
     # if num_examples >= max_api_calls, the returned dataset's
@@ -71,7 +71,7 @@ def check_generate_dataset_dict(dataset_generator: OpenAIDatasetGenerator):
         dataset_generator: The dataset_generator will be tested with limited
             max_api_calls or unlimited max_api_calls.
     """
-    prompt_spec = MockPromptSpec()
+    prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
     num_examples = {DatasetSplit.TRAIN: 3, DatasetSplit.VAL: 2, DatasetSplit.TEST: 1}
     with tempfile.TemporaryDirectory() as tmpdirname:
         output_dir = os.path.join(tmpdirname, "output")
@@ -140,7 +140,7 @@ def test_wrong_key_example(mocked_generate_example):
     api_key = None
     # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
     dataset_generator = OpenAIDatasetGenerator(api_key, 3)
-    prompt_spec = MockPromptSpec()
+    prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
     num_examples = 1
     split = DatasetSplit.TRAIN
     dataset = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
@@ -161,7 +161,7 @@ def test_invalid_json_response(mocked_generate_example):
     api_key = None
     # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
     dataset_generator = OpenAIDatasetGenerator(api_key, 3)
-    prompt_spec = MockPromptSpec()
+    prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
     num_examples = 1
     split = DatasetSplit.VAL
     dataset = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
@@ -183,7 +183,7 @@ def test_unexpected_examples_of_GPT(mocked_generate_example):
     # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
     with pytest.raises(UNKNOWN_GPT3_EXCEPTION):
         dataset_generator = OpenAIDatasetGenerator(api_key, 3)
-        prompt_spec = MockPromptSpec()
+        prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
         num_examples = 1
         split = DatasetSplit.TEST
         _ = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)

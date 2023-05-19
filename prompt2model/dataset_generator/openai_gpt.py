@@ -11,6 +11,16 @@ from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import OPENAI_ERRORS, ChatGPTAgent, handle_openai_error
 
+PROMPT_TEMPLATE = (
+    "Requirement: {instruction} \n"
+    "Few-Shot Examples: {examples} \n"
+    "sample: \n"
+    "annotation: \n"
+    "Please answer me in JSON format, with `sample` and `annotation` keys."
+)
+# A string template for the prompt. Can be modified by the users.
+# Prompt_template must contains `instruction` and `examples` fields.
+
 
 class OpenAIDatasetGenerator(DatasetGenerator):
     """A abstract class for NLP dataset generation using OpenAI's GPT-3.5 API."""
@@ -33,32 +43,19 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self,
         instruction: str,
         examples: list[str] = None,
-        prompt_template: str = None,
     ) -> str:
         """Generates a prompt string.
 
         Args:
             instruction: The natural language instruction for the prompt.
             examples: A list of few-shot examples. Defaults to None.
-            prompt_template: A string template for the prompt. Defaults to None.
-                Prompt_template must contains `instruction` and `examples` fields.
 
         Returns:
             The generated prompt string.
         """
-        # Set default prompt template if not provided
-        if not prompt_template:
-            prompt_template = (
-                "Requirement: {instruction} \n"
-                "Few-Shot Examples: {examples} \n"
-                "sample: \n"
-                "annotation: \n"
-                "Please answer me in JSON format, with `sample` and `annotation` keys."
-            )
-
         # Replace placeholders in prompt template with actual values
         example_string = " ".join(examples) if examples else "NA"
-        prompt = prompt_template.format(
+        prompt = PROMPT_TEMPLATE.format(
             instruction=instruction, examples=example_string
         )
         return prompt
@@ -106,9 +103,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         """
         _ = split  # suppress unused variable warnings
         prompt = self.generate_prompt(
-            instruction=prompt_spec.instruction,
-            examples=prompt_spec.examples,
-            prompt_template=prompt_spec.prompt_template,
+            instruction=prompt_spec.get_instruction,
+            examples=prompt_spec.get_examples,
         )
         chat_api = ChatGPTAgent(self.api_key)
         input_cols = []  # type: list[str]
