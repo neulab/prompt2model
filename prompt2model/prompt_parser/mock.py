@@ -17,13 +17,6 @@ class MockPromptSpec(PromptSpec):
             "input: '人生苦短，我用 Python', output: 'Life is short, I use Python. '"
             "input: '明天是周末', output: 'Tomorrow is weekend.'"
         )
-        self.prompt_template = (
-            "Requirement: {instruction} \n"
-            "Few-Shot Examples: {examples} \n"
-            "sample: \n"
-            "annotation: \n"
-            "Please answer me in JSON format, with `sample` and `annotation` keys."
-        )
 
     def parse_from_prompt(self, prompt: str) -> None:
         """Don't parse anything."""
