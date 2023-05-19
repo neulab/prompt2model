@@ -41,7 +41,6 @@ class OpenAIInstructionParser(PromptSpec):
             assert max_api_calls > 0, "max_api_calls must be > 0"
         self.max_api_calls = max_api_calls
         self.api_call_counter = 0
-        self.prompt_template = None
 
     def extract_response(self, response: openai.Completion) -> tuple[str, str]:
         """Parse stuctured fields from the OpenAI API response.

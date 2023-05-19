@@ -21,7 +21,6 @@ class PromptSpec(ABC):
     task_type: TaskType
     instruction: str | None
     examples: str | None
-    prompt_template: str | None
 
     @abstractmethod
     def parse_from_prompt(self, prompt: str) -> None:
