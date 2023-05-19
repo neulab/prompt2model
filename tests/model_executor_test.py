@@ -1,22 +1,20 @@
 """Testing GenerationModelExecutor with different configurations."""
 
 from datasets import Dataset
-from transformers import T5ForConditionalGeneration
+from transformers import T5ForConditionalGeneration, T5Tokenizer
 
 from prompt2model.model_executor import GenerationModelExecutor, ModelOutput
-
-from transformers import AutoModelForCausalLM, T5Tokenizer  # isort:skip
-from transformers import AutoTokenizer  # isort:skip
+from test_helpers import create_gpt2_model_and_tokenizer
 
 
 def test_make_prediction_t5_model():
     """Test the `make_prediction` method with a T5 model."""
-    # Create T5 model and tokenizer
+    # Create T5 model and tokenizer.
     t5_model_name = "t5-small"
     t5_model = T5ForConditionalGeneration.from_pretrained(t5_model_name)
     t5_tokenizer = T5Tokenizer.from_pretrained(t5_model_name)
 
-    # Create test dataset
+    # Create test dataset.
     test_dataset = Dataset.from_dict(
         {
             "model_input": [
@@ -27,12 +25,12 @@ def test_make_prediction_t5_model():
         }
     )
 
-    # Create GenerationModelExecutor
+    # Create GenerationModelExecutor.
     model_executor = GenerationModelExecutor(
         t5_model, t5_tokenizer, test_dataset, "model_input"
     )
 
-    # Test T5 model
+    # Test T5 model.
     t5_outputs = model_executor.make_prediction()
     assert isinstance(t5_outputs, list)
     assert len(t5_outputs) == len(test_dataset)
@@ -52,18 +50,13 @@ def test_make_prediction_t5_model():
 
 def test_make_prediction_gpt2_model():
     """Test the `make_prediction` method with a GPT-2 model."""
-    # Create GPT-2 model and tokenizer
-    gpt2_model_name = "gpt2"
-    gpt2_model = AutoModelForCausalLM.from_pretrained(gpt2_model_name)
-    gpt2_tokenizer = AutoTokenizer.from_pretrained(gpt2_model_name)
-    if gpt2_tokenizer.pad_token is None:
-        gpt2_tokenizer.add_special_tokens({"pad_token": "[PAD]"})
-        gpt2_model.config.pad_token_id = len(gpt2_tokenizer)
-        gpt2_model.resize_token_embeddings(len(gpt2_tokenizer))
-        gpt2_model.config.attention_mask_fn = lambda input_ids: (
-            input_ids != gpt2_model.config.pad_token_id
-        ).float()
-    # Create test dataset
+
+    # Create GPT2 model and tokenizer.
+    gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
+    gpt2_model = gpt2_model_and_tokenizer.model
+    gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
+
+    # Create test dataset.
     test_dataset = Dataset.from_dict(
         {
             "model_input": [
@@ -74,12 +67,12 @@ def test_make_prediction_gpt2_model():
         }
     )
 
-    # Create GenerationModelExecutor
+    # Create GenerationModelExecutor.
     model_executor = GenerationModelExecutor(
         gpt2_model, gpt2_tokenizer, test_dataset, "model_input"
     )
 
-    # Test GPT-2 model
+    # Test GPT-2 model.
     gpt2_outputs = model_executor.make_prediction()
     assert isinstance(gpt2_outputs, list)
     assert len(gpt2_outputs) == len(test_dataset)
@@ -99,17 +92,17 @@ def test_make_prediction_gpt2_model():
 
 def test_make_single_prediction_t5_model():
     """Test the `make_single_prediction` method with a T5 model."""
-    # Create T5 model and tokenizer
+    # Create T5 model and tokenizer.
     t5_model_name = "t5-small"
     t5_model = T5ForConditionalGeneration.from_pretrained(t5_model_name)
     t5_tokenizer = T5Tokenizer.from_pretrained(t5_model_name)
 
-    # Create GenerationModelExecutor
+    # Create GenerationModelExecutor.
     model_executor = GenerationModelExecutor(
         t5_model, t5_tokenizer, None, "model_input"
     )
 
-    # Test T5 model single prediction
+    # Test T5 model single prediction.
     test_input = "This is a test input."
     t5_output = model_executor.make_single_prediction(test_input)
     assert isinstance(t5_output, ModelOutput)
@@ -126,24 +119,17 @@ def test_make_single_prediction_t5_model():
 
 def test_make_single_prediction_gpt2_model():
     """Test the `make_single_prediction` with a GPT-2 model."""
-    # Create GPT-2 model and tokenizer
-    gpt2_model_name = "gpt2"
-    gpt2_tokenizer = AutoTokenizer.from_pretrained(gpt2_model_name)
-    gpt2_model = AutoModelForCausalLM.from_pretrained(gpt2_model_name)
-    if gpt2_tokenizer.pad_token is None:
-        gpt2_tokenizer.pad_token = "[PAD]"
-        gpt2_model.config.pad_token_id = len(gpt2_tokenizer)
-        gpt2_model.resize_token_embeddings(len(gpt2_tokenizer))
-        gpt2_model.config.attention_mask_fn = lambda input_ids: (
-            input_ids != gpt2_model.config.pad_token_id
-        ).float()
+    # Create GPT-2 model and tokenizer.
+    gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
+    gpt2_model = gpt2_model_and_tokenizer.model
+    gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
 
-    # Create GenerationModelExecutor
+    # Create GenerationModelExecutor.
     model_executor = GenerationModelExecutor(
         gpt2_model, gpt2_tokenizer, None, "model_input"
     )
 
-    # Test GPT-2 model single prediction
+    # Test GPT-2 model single prediction.
     test_input = "This is a test input."
     gpt2_output = model_executor.make_single_prediction(test_input)
     assert isinstance(gpt2_output, ModelOutput)
