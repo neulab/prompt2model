@@ -36,7 +36,7 @@ def test_create_gradio_with_gpt2():
     # Create OpenAIInstructionParser.
     gpt2_prompt_parser = MockPromptSpec(TaskType.TEXT_GENERATION)
 
-    # Create Gradio interface
+    # Create Gradio interface.
     interface_gpt2 = create_gradio(gpt2_executor, gpt2_prompt_parser)
 
     # Perform assertions.
