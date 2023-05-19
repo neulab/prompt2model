@@ -15,32 +15,24 @@ class TaskType(Enum):
     SPAN_EXTRACTION = 4
 
 
-# pylint: disable=too-few-public-methods
 class PromptSpec(ABC):
     """Parse and store structured information about the prompt."""
+
+    task_type: TaskType
+    instruction: str | None
+    examples: str | None
 
     @abstractmethod
     def parse_from_prompt(self, prompt: str) -> None:
         """Populate this class by parsing a prompt."""
 
-    @abstractmethod
+    @property
     def get_instruction(self) -> str:
-        """Return the natural language instruction givenb y the prompt."""
+        """Return the natural language instruction parsed from the prompt."""
+        assert self.instruction is not None
+        return self.instruction
 
-
-class DefaultSpec(PromptSpec):
-    """Use explicitly-set default settings."""
-
-    def __init__(self, task_type: TaskType):
-        """By default, assume that every task is a text generation task."""
-        self.task_type: TaskType = task_type
-        self.prompt: str | None = None
-
-    def parse_from_prompt(self, prompt: str) -> None:
-        """Don't parse anything."""
-        self.prompt = prompt
-
-    def get_instruction(self) -> str:
-        """Return the prompt itself, since we do not parse it."""
-        assert self.prompt is not None
-        return self.prompt
+    @property
+    def get_examples(self) -> str:
+        """Return the natural language examples parsed from the prompt."""
+        return self.examples or ""
