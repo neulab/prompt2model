@@ -5,7 +5,7 @@ import argparse
 from prompt2model.dataset_generator import DatasetSplit, MockDatasetGenerator
 from prompt2model.dataset_processor import MockProcessor
 from prompt2model.dataset_retriever import MockRetriever
-from prompt2model.demo_creator.gradio_creator import create_gradio
+from prompt2model.demo_creator import mock_gradio_create
 from prompt2model.evaluator import MockEvaluator
 from prompt2model.model_executor import MockModelExecutor
 from prompt2model.model_retriever import MockModelRetriever
@@ -106,7 +106,7 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
         testing, "output_col", predictions, [], prompt_spec
     )
     evaluator.write_metrics(metrics_dict, metrics_output_path)
-    create_gradio(model, prompt_spec)
+    mock_gradio_create(model_executor, prompt_spec)
 
 
 if __name__ == "__main__":
