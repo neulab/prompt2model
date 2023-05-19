@@ -64,5 +64,5 @@ def test_create_gradio_with_t5():
     # Create Gradio interface.
     interface_t5 = create_gradio(t5_executor, t5_prompt_parser)
 
-    # Perform assertions
+    # Perform assertions.
     assert isinstance(interface_t5, gr.Interface)
