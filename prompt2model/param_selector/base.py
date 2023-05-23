@@ -31,6 +31,7 @@ class ParamSelector(ABC):
 
         Return:
             A model and tokenizer (with hyperparameters from given range).
+
         """
 
     @abstractmethod
@@ -49,4 +50,5 @@ class ParamSelector(ABC):
 
         Return:
             A model and tokenizer (with hyperparameters from inferred range).
+
         """
