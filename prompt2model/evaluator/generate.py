@@ -1,5 +1,7 @@
 """An interface for automatically evaluate Seq2Seq generation model."""
 
+from __future__ import annotations  # noqa FI58
+
 import logging
 from typing import Any
 
@@ -65,6 +67,8 @@ class Seq2SeqEvaluator(Evaluator):
                 metric_values[metric_name] = metric.compute()["exact_match"]
             elif metric_name == "bert_score":
                 metric.add_batch(predictions=predicted_strings, references=ground_truth)
-                metric_values[metric_name] = metric.compute(lang="en")["f1"]
+                metric_values[metric_name] = metric.compute(
+                    model_type="xlm-roberta-base"
+                )["f1"]
 
         return metric_values
