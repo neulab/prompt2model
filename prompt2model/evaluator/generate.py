@@ -1,12 +1,15 @@
 """An interface for automatically evaluate Seq2Seq generation model."""
 
-from prompt2model.evaluator.base import Evaluator
+import logging
 from typing import Any
 
 import datasets
-from datasets import load_metric
+import evaluate
+
+from prompt2model.evaluator.base import Evaluator
 from prompt2model.model_executor import ModelOutput
 from prompt2model.prompt_parser import PromptSpec
+
 
 class Seq2SeqEvaluator(Evaluator):
     """An evaluator computing `ChrF++`, `Exact Match` and `Embedding Distance`."""
@@ -16,7 +19,7 @@ class Seq2SeqEvaluator(Evaluator):
         dataset: datasets.Dataset,
         gt_column: str,
         predictions: list[ModelOutput],
-        metrics: list[datasets.Metric] | None = None,
+        metrics: list[evaluate.Metric] | None = None,
         prompt_spec: PromptSpec | None = None,
     ) -> dict[str, Any]:
         """Evaluate a model on a test set..
@@ -31,14 +34,17 @@ class Seq2SeqEvaluator(Evaluator):
         Returns:
             A dictionary of metric values to return.
         """
-        _ = prompt_spec
-        if metrics is None:
-            # Load the required metrics
-            metrics = [
-                load_metric("chrf"),
-                load_metric("exact_match"),
-                load_metric("embedding_distance"),
-            ]
+        if prompt_spec is not None:
+            logging.error("prompt_spec is not supported for Seq2SeqEvaluator")
+            raise NotImplementedError
+        if metrics is not None:
+            logging.error("manual metrics is not supported for Seq2SeqEvaluator")
+            raise NotImplementedError
+        metrics = [
+            evaluate.load("chrf"),
+            evaluate.load("exact_match"),
+            evaluate.load("bertscore"),
+        ]
         # Get the ground truth from the dataset
         ground_truth = dataset[gt_column]
 
@@ -51,17 +57,14 @@ class Seq2SeqEvaluator(Evaluator):
         # Compute and store metric values
         for metric in metrics:
             metric_name = metric.name
-            if metric_name == "chrf":
-                references = ground_truth.tolist()
-                metric.add_batch(predictions=predicted_strings, references=references)
-                metric_values[metric_name] = metric.compute()
+            if metric_name == "chr_f":
+                metric.add_batch(predictions=predicted_strings, references=ground_truth)
+                metric_values[metric_name] = metric.compute()["score"]
             elif metric_name == "exact_match":
-                references = ground_truth.tolist()
-                metric.add_batch(predictions=predicted_strings, references=references)
+                metric.add_batch(predictions=predicted_strings, references=ground_truth)
                 metric_values[metric_name] = metric.compute()["exact_match"]
-            elif metric_name == "embedding_distance":
-                references = ground_truth.tolist()
-                metric.add_batch(predictions=predicted_strings, references=references)
-                metric_values[metric_name] = metric.compute()["distance"]
+            elif metric_name == "bert_score":
+                metric.add_batch(predictions=predicted_strings, references=ground_truth)
+                metric_values[metric_name] = metric.compute(lang="en")["f1"]
 
         return metric_values
