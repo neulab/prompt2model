@@ -59,9 +59,10 @@ class Seq2SeqEvaluator(Evaluator):
         # Compute and store metric values
         for metric in metrics:
             metric_name = metric.name
+            assert metric_name in ["chr_f", "exact_match", "bert_score"]
             if metric_name == "chr_f":
                 metric.add_batch(predictions=predicted_strings, references=ground_truth)
-                metric_values[metric_name] = metric.compute()["score"]
+                metric_values["chr_f++"] = metric.compute(word_order=2)["score"]
             elif metric_name == "exact_match":
                 metric.add_batch(predictions=predicted_strings, references=ground_truth)
                 metric_values[metric_name] = metric.compute()["exact_match"]

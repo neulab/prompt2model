@@ -26,7 +26,8 @@ def test_seq2seq_evaluator():
     metric_values = evaluator.evaluate_model(dataset, "output_col", predictions)
 
     # Assert the expected metric values
-    assert round(metric_values["chr_f"], 2) == 76.90
+    # metric_values = {'chr_f++': 78.30, 'exact_match': 0.5, 'bert_score': [1.0, 0.95]}
+    assert round(metric_values["chr_f++"], 2) == 78.30
     assert round(metric_values["exact_match"], 2) == 0.50
     assert all(score > 0.9 for score in metric_values["bert_score"])
     assert len(metric_values["bert_score"]) == 2
