@@ -23,6 +23,7 @@ class Seq2SeqEvaluator(Evaluator):
         predictions: list[ModelOutput],
         metrics: list[evaluate.Metric] | None = None,
         prompt_spec: PromptSpec | None = None,
+        encoder_model_name: str = "xlm-roberta-base",
     ) -> dict[str, Any]:
         """Evaluate a model on a test set..
 
@@ -32,6 +33,7 @@ class Seq2SeqEvaluator(Evaluator):
             predictions: Model outputs to evaluate.
             metrics: (Optional) The metrics to use.
             prompt_spec: (Optional) A PromptSpec to infer the metrics from.
+            encoder_model_name: Encoder model to use in metric like BertScore.
 
         Returns:
             A dictionary of metric values to return.
@@ -69,7 +71,7 @@ class Seq2SeqEvaluator(Evaluator):
             elif metric_name == "bert_score":
                 metric.add_batch(predictions=predicted_strings, references=ground_truth)
                 metric_values[metric_name] = metric.compute(
-                    model_type="xlm-roberta-base"
+                    model_type=encoder_model_name
                 )["f1"]
 
         return metric_values
