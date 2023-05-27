@@ -28,6 +28,9 @@ dependencies = [
     "pytest==7.3.1",
     "openai==0.27.2",
     "sentencepiece==0.1.99",
+    "bert_score==0.3.13",
+    "sacrebleu==2.3.1",
+    "evaluate==0.4.0",
 ]
 
 dynamic = ["version"]

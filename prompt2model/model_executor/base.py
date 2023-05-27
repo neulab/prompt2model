@@ -2,6 +2,7 @@
 
 from __future__ import annotations  # noqa FI58
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
@@ -50,11 +51,32 @@ class ModelExecutor(ABC):
         self.test_set = test_set
         self.input_column = input_column
         self.batch_size = batch_size
+        if self.tokenizer.pad_token is None:
+            logging.warning(
+                "Trying to init an ModelExecutor's tokenizer without pad_token"
+            )
+            self.tokenizer.pad_token = "[PAD]"
+            self.model.config.pad_token_id = len(self.tokenizer)
+            self.model.resize_token_embeddings(len(self.tokenizer))
+            self.model.config.attention_mask_fn = lambda input_ids: (
+                input_ids != self.model.config.pad_token_id
+            ).float()
 
     @abstractmethod
-    def make_predictions(self) -> list[ModelOutput]:
+    def make_prediction(self) -> list[ModelOutput]:
         """Evaluate a model on a test set.
 
         Returns:
             A list of model outputs, one for each element in the test set.
+        """
+
+    @abstractmethod
+    def make_single_prediction(self, model_input: str) -> ModelOutput:
+        """Make prediction on one example.
+
+        Args:
+            model_input: The input string to the model.
+
+        Returns:
+            A single model output, useful for exposing a model to a user interface.
         """

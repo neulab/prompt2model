@@ -23,7 +23,7 @@ class OpenAIInstructionParser(PromptSpec):
     ):
         """Initialize the prompt spec with empty parsed fields.
 
-        We initialize the "instruction" and "demonstration" fields with None.
+        We initialize the "instruction" and "examples" fields with None.
         These fields can be populated with the parse_from_prompt method.
 
         Args:
@@ -35,7 +35,7 @@ class OpenAIInstructionParser(PromptSpec):
         """
         self.task_type = task_type
         self.instruction: str | None = None
-        self.demonstration: str | None = None
+        self.examples: str | None = None
         self.api_key: str | None = api_key
         if max_api_calls:
             assert max_api_calls > 0, "max_api_calls must be > 0"
@@ -74,7 +74,7 @@ class OpenAIInstructionParser(PromptSpec):
         """Parse prompt into specific fields, stored as class member variables.
 
         This function directly stores the parsed fields into the class's member
-        variables `instruction` and `demonstration. So it has no return value.
+        variables `instruction` and `examples`. So it has no return value.
 
         Args:
             prompt: User prompt to parse into two specific fields:
@@ -89,7 +89,7 @@ class OpenAIInstructionParser(PromptSpec):
                 response = chat_api.generate_openai_chat_completion(
                     parsing_prompt_for_chatgpt
                 )
-                self.instruction, self.demonstration = self.extract_response(response)
+                self.instruction, self.examples = self.extract_response(response)
                 break
             except OPENAI_ERRORS as e:
                 self.api_call_counter = handle_openai_error(e, self.api_call_counter)
@@ -97,8 +97,3 @@ class OpenAIInstructionParser(PromptSpec):
                     logging.error("Maximum number of API calls reached.")
                     raise ValueError("Maximum number of API calls reached.") from e
         return None
-
-    def get_instruction(self) -> str:
-        """Return the natural language instruction parsed from the prompt."""
-        assert self.instruction is not None
-        return self.instruction
