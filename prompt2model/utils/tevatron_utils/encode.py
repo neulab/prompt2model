@@ -176,13 +176,3 @@ def encode_text(
     finally:
         if using_temp_file and file_to_encode and os.path.exists(file_to_encode):
             os.unlink(file_to_encode)
-
-
-def encode_search_corpus(
-    corpus: list[str], encoding_file_path: str, model_name_or_path: str
-):
-    """Load a set of documents from file and encode them as vectors."""
-    encoding_vectors = encode_text(
-        model_name_or_path, text_to_encode=corpus, encoding_file=encoding_file_path
-    )
-    return encoding_vectors
