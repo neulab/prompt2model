@@ -17,6 +17,5 @@ __all__ = (  # noqa: F401
     "encode_text",
     "handle_openai_error",
     "OPENAI_ERRORS",
-    "retrieve_objects",
     "seed_generator",
 )
