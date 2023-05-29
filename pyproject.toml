@@ -31,7 +31,7 @@ dependencies = [
     "bert_score==0.3.13",
     "sacrebleu==2.3.1",
     "evaluate==0.4.0",
-    "tevatron==0.1.0,
+    "tevatron==0.1.0",
     "faiss-cpu==1.7.4"
 ]
 
