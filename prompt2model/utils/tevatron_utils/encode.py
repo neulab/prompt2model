@@ -1,9 +1,8 @@
-"""Tools ffor encoding and serializing a search index with a contextual encoder."""
+"""Tools for encoding and serializing a search index with a contextual encoder."""
 
 from __future__ import annotations  # noqa FI58
 
 import argparse
-import glob
 import json
 import os
 import pickle
@@ -15,12 +14,9 @@ import torch
 from tevatron.arguments import DataArguments
 from tevatron.data import EncodeCollator, EncodeDataset
 from tevatron.datasets import HFCorpusDataset, HFQueryDataset
-from tevatron.faiss_retriever import BaseFaissIPRetriever
-from tevatron.modeling import DenseModelForInference, DenseOutput
+from tevatron.modeling import DenseModelForInference
 from torch.utils.data import DataLoader
 from transformers import AutoConfig, AutoTokenizer, PreTrainedTokenizerBase
-
-from prompt2model.prompt_parser import PromptSpec
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model-name-or-path", type=str, default="bert-base-uncased")
@@ -28,7 +24,9 @@ parser.add_argument("--config-name", type=str, default=None)
 parser.add_argument("--num-shards", type=int, default=1)
 
 
-def load_tevatron_model(model_name_or_path: str, model_cache_dir: str | None = None) -> tuple[DenseModelForInference, PreTrainedTokenizerBase]:
+def load_tevatron_model(
+    model_name_or_path: str, model_cache_dir: str | None = None
+) -> tuple[DenseModelForInference, PreTrainedTokenizerBase]:
     """Load a Tevatron model from a model name/path.
 
     Args:
@@ -38,7 +36,6 @@ def load_tevatron_model(model_name_or_path: str, model_cache_dir: str | None = N
     Returns:
         A Tevatron model for dense retrieval.
     """
-
     config = AutoConfig.from_pretrained(
         model_name_or_path,
         cache_dir=model_cache_dir,
@@ -55,6 +52,7 @@ def load_tevatron_model(model_name_or_path: str, model_cache_dir: str | None = N
     )
     return model, tokenizer
 
+
 def encode_text(
     model_name_or_path: str,
     file_to_encode: str | None = None,
@@ -70,7 +68,8 @@ def encode_text(
     fp16: bool = False,
 ) -> np.ndarray:
     """Encode a query or documents.
-    This code is largely duplicated from tevatron/driver/encode.py in the Tevatron
+
+    This code is mostly duplicated from tevatron/driver/encode.py in the Tevatron
     repository.
 
     Args:
@@ -154,7 +153,7 @@ def encode_text(
         model = model.to(device)
         model.eval()
 
-        for (batch_ids, batch) in encode_loader:
+        for batch_ids, batch in encode_loader:
             lookup_indices.extend(batch_ids)
             with torch.cuda.amp.autocast() if fp16 else nullcontext():
                 with torch.no_grad():
@@ -179,36 +178,11 @@ def encode_text(
             os.unlink(file_to_encode)
 
 
-def encode_search_corpus(corpus: list[str], encoding_file_path: str, model_name_or_path: str):
-    encoding_vectors = encode_text(model_name_or_path,
-                                   text_to_encode=corpus,
-                                   encoding_file=encoding_file_path)
+def encode_search_corpus(
+    corpus: list[str], encoding_file_path: str, model_name_or_path: str
+):
+    """Load a set of documents from file and encode them as vectors."""
+    encoding_vectors = encode_text(
+        model_name_or_path, text_to_encode=corpus, encoding_file=encoding_file_path
+    )
     return encoding_vectors
-
-
-def retrieve_objects(prompt: PromptSpec, model_name_or_path: str, encoded_datasets_path: str, depth: int) -> list[tuple[str, int]]:
-    """Return a ranked list of model names and their scores.
-
-    Args:
-        prompt: Prompt provided by user as query to retrieve datasets.
-        model_name_or_path: Model to encode query (should match dataset index encoder).
-        encoded_datasets_path: Path to file containing encoded dataset index.
-        depth: Number of documents to return
-    
-    Returns:
-        Ranked list of model names and similarity scores (with respect to query).
-    """
-    text_query = prompt.get_instruction()
-    query_vector = encode_text(model_name_or_path, text_to_encode=text_query)
-
-    with open(encoded_datasets_path, 'rb') as f:
-        passage_reps, passage_lookup = pickle.load(f)
-    retriever = BaseFaissIPRetriever(passage_reps)
-    
-    all_scores, all_indices = retriever.search(query_vector, depth)
-    psg_indices = [[str(passage_lookup[x]) for x in q_dd] for q_dd in all_indices]
-    psg_indices = np.array(psg_indices)
-
-    # Zip these two variables into a single list of tuples
-    # all_scores, psg_indices
-    return zip(all_scores, psg_indices)
