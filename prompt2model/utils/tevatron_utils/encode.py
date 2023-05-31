@@ -2,7 +2,6 @@
 
 from __future__ import annotations  # noqa FI58
 
-import argparse
 import json
 import os
 import pickle
@@ -17,11 +16,6 @@ from tevatron.datasets import HFCorpusDataset, HFQueryDataset
 from tevatron.modeling import DenseModelForInference
 from torch.utils.data import DataLoader
 from transformers import AutoConfig, AutoTokenizer, PreTrainedTokenizerBase
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--model-name-or-path", type=str, default="bert-base-uncased")
-parser.add_argument("--config-name", type=str, default=None)
-parser.add_argument("--num-shards", type=int, default=1)
 
 
 def load_tevatron_model(
