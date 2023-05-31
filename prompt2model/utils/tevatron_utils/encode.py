@@ -86,10 +86,10 @@ def encode_text(
     """
     model, tokenizer = load_tevatron_model(model_name_or_path, model_cache_dir)
 
-if file_to_encode is None and text_to_encode is None:
-    raise ValueError("Must provide either a dataset file or text to encode.")
-elif file_to_encode is not None and text_to_encode is not None:
-    raise ValueError("Provide either a dataset file or text to encode, not both.")
+    if file_to_encode is None and text_to_encode is None:
+        raise ValueError("Must provide either a dataset file or text to encode.")
+    elif file_to_encode is not None and text_to_encode is not None:
+        raise ValueError("Provide either a dataset file or text to encode, not both.")
 
     using_temp_file = False
     try:
