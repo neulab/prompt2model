@@ -34,7 +34,7 @@ def load_tevatron_model(
         model_cache_dir: The directory to cache the model.
 
     Returns:
-        A Tevatron model for dense retrieval.
+        A Tevatron dense retrieval model and its associated tokenizer.
     """
     config = AutoConfig.from_pretrained(
         model_name_or_path,
