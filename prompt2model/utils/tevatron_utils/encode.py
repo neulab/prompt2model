@@ -95,7 +95,9 @@ def encode_text(
         if text_to_encode is not None:
             if isinstance(text_to_encode, str):
                 text_to_encode = [text_to_encode]
-            with open(os.path.join(temp_dir, "text_to_encode.json"), 'w') as temporary_file:
+            with open(
+                os.path.join(temp_dir, "text_to_encode.json"), "w"
+            ) as temporary_file:
                 text_rows = [
                     {"text_id": i, "text": text}
                     for i, text in enumerate(text_to_encode)
