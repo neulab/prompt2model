@@ -2,7 +2,6 @@
 
 from __future__ import annotations  # noqa FI58
 
-import argparse
 import json
 import os
 import pickle
@@ -18,11 +17,6 @@ from tevatron.modeling import DenseModelForInference
 from torch.utils.data import DataLoader
 from transformers import AutoConfig, AutoTokenizer, PreTrainedTokenizerBase
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--model-name-or-path", type=str, default="bert-base-uncased")
-parser.add_argument("--config-name", type=str, default=None)
-parser.add_argument("--num-shards", type=int, default=1)
-
 
 def load_tevatron_model(
     model_name_or_path: str, model_cache_dir: str | None = None
@@ -34,7 +28,7 @@ def load_tevatron_model(
         model_cache_dir: The directory to cache the model.
 
     Returns:
-        A Tevatron model for dense retrieval.
+        A Tevatron dense retrieval model and its associated tokenizer.
     """
     config = AutoConfig.from_pretrained(
         model_name_or_path,
@@ -94,24 +88,23 @@ def encode_text(
 
     if file_to_encode is None and text_to_encode is None:
         raise ValueError("Must provide either a dataset file or text to encode.")
-    if file_to_encode is not None and text_to_encode is not None:
-        raise ValueError("Provide either dataset file or text to encode, not both.")
+    elif file_to_encode is not None and text_to_encode is not None:
+        raise ValueError("Provide either a dataset file or text to encode, not both.")
 
-    using_temp_file = False
-    try:
+    with tempfile.TemporaryDirectory() as temp_dir:
         if text_to_encode is not None:
-            using_temp_file = True
             if isinstance(text_to_encode, str):
                 text_to_encode = [text_to_encode]
-            temporary_file = tempfile.NamedTemporaryFile(
-                mode="w", delete=False, suffix=".json"
-            )
-            text_rows = []
-            for i, text in enumerate(text_to_encode):
-                text_rows.append({"text_id": i, "text": text})
-            json.dump(text_rows, temporary_file)
-            file_to_encode = temporary_file.name
-            temporary_file.close()
+            with open(
+                os.path.join(temp_dir, "text_to_encode.json"), "w"
+            ) as temporary_file:
+                text_rows = [
+                    {"text_id": i, "text": text}
+                    for i, text in enumerate(text_to_encode)
+                ]
+                json.dump(text_rows, temporary_file)
+                file_to_encode = temporary_file.name
+                temporary_file.close()
 
         data_args = DataArguments(
             encoded_save_path=encoding_file,
@@ -173,6 +166,3 @@ def encode_text(
                 pickle.dump((encoded, lookup_indices), f)
 
         return encoded
-    finally:
-        if using_temp_file and file_to_encode and os.path.exists(file_to_encode):
-            os.unlink(file_to_encode)
