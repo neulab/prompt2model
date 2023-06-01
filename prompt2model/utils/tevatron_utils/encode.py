@@ -91,21 +91,18 @@ def encode_text(
     elif file_to_encode is not None and text_to_encode is not None:
         raise ValueError("Provide either a dataset file or text to encode, not both.")
 
-    using_temp_file = False
-    try:
+    with tempfile.TemporaryDirectory() as temp_dir:
         if text_to_encode is not None:
-            using_temp_file = True
             if isinstance(text_to_encode, str):
                 text_to_encode = [text_to_encode]
-            temporary_file = tempfile.NamedTemporaryFile(
-                mode="w", delete=False, suffix=".json"
-            )
-            text_rows = []
-            for i, text in enumerate(text_to_encode):
-                text_rows.append({"text_id": i, "text": text})
-            json.dump(text_rows, temporary_file)
-            file_to_encode = temporary_file.name
-            temporary_file.close()
+            with open(os.path.join(temp_dir, "text_to_encode.json"), 'w') as temporary_file:
+                text_rows = [
+                    {"text_id": i, "text": text}
+                    for i, text in enumerate(text_to_encode)
+                ]
+                json.dump(text_rows, temporary_file)
+                file_to_encode = temporary_file.name
+                temporary_file.close()
 
         data_args = DataArguments(
             encoded_save_path=encoding_file,
@@ -167,6 +164,3 @@ def encode_text(
                 pickle.dump((encoded, lookup_indices), f)
 
         return encoded
-    finally:
-        if using_temp_file and file_to_encode and os.path.exists(file_to_encode):
-            os.unlink(file_to_encode)
