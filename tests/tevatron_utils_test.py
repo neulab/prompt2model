@@ -73,6 +73,6 @@ def test_encode_text_error_from_no_string_or_file():
 def test_encode_text_error_from_both_string_and_file():
     """Test that either a string or a file, but not both, must be passed to encode."""
     text = "This is an example sentence"
-    file = "/tmp/test.tx`   t"
+    file = "/tmp/test.txt"
     with pytest.raises(ValueError):
         _ = encode_text(TINY_MODEL_NAME, file_to_encode=file, text_to_encode=text)
