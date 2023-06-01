@@ -9,7 +9,7 @@ To create a dataset using the `DatasetGenerator`, you need to implement the foll
 
 The `DatasetGenerator` class can be subclassed to implement custom dataset generation logic based on different API services or approaches.
 
-Please refer to the unit tests and examples provided by the concrete implementations of `DatasetGenerator` for usage and specific details.
+To see an example of how to use `DatasetGenerator` and its subclasses, you can refer to the unit tests in the [dataset_generator_test.py](../../tests/dataset_generator_test.py) file.
 
 # DatasetSplit
 

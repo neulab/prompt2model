@@ -50,6 +50,4 @@ To see an example of how to use `PromptSpec` and its subclasses, you can refer t
 
    The `get_instruction` property returns the parsed instruction, and the `get_examples` property returns the parsed demonstrations.
 
-To see examples of how to use the `OpenAIInstructionParser`, you can refer to the unit tests in the [prompt_parser_test.py](../tests/prompt_parser_test.py) file. These tests demonstrate various scenarios and provide usage examples for the `OpenAIInstructionParser`.
-
 Please ensure you have valid OpenAI API credentials and adjust the unit tests accordingly to match your setup.
