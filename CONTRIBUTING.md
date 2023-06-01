@@ -1,19 +1,16 @@
 # Contributing to prompt2model
 
-If you're reading this, you're probably interested in contributing to prompt2model.
-Thank you for your interest!
+Thanks for your interest in contributing to prompt2model! We appreciate your support and welcome your contributions. Here's a guide to help you get started:
 
 ## Developer Installation
 
-If you're a developer, you should also install pre-commit hooks before developing.
+If you're a developer, it's recommended to install pre-commit hooks before starting your development work. These hooks ensure code formatting, linting, and type checking. To install the pre-commit hooks, run the following command:
 
 ```bash
 pre-commit install
 ```
 
-These will do things like ensuring code formatting, linting, and type checking.
-
-You'll also want to run tests to make sure your code is working by running the following:
+Additionally, it's essential to run tests to verify the functionality of your code. Execute the following command to run the tests:
 
 ```bash
 pytest
@@ -21,22 +18,21 @@ pytest
 
 ## Contribution Guide
 
-If you want to make a contribution you can:
+There are multiple ways you can contribute to prompt2model:
 
-1. Browse existing issues and take one to handle
-2. Create a new issue to discuss a feature that you might want to contribute
-3. Send a PR directly
+1. Browse the existing issues and select one to work on.
+2. Create a new issue to discuss a feature or improvement you would like to contribute.
+3. Submit a pull request (PR) directly.
 
-We'd recommend the first two to increase the chances of your PR being accepted,
-but if you're confident in your contribution, you can go ahead and send a PR
-directly.
+We recommend the first two options to increase the chances of your PR being accepted. However, if you're confident in your contribution, you can proceed with submitting a PR directly.
 
 ## Making a Release
 
-If you are an admin of the repository, you can make a new release of the library.
+If you have admin privileges for the repository, you can create a new release of the prompt2model library. We utilize the [hatchling](https://github.com/pypa/hatch) build system, which simplifies the process of making new releases.
 
-We are using the [hatchling](https://github.com/pypa/hatch) build system, which makes
-it easy to make new library releases.
-In order to do so, just create a new version tag on github (it has to be a valid
-[semantic version](https://semver.org/)) and the CI will automatically build and
-publish the new version to PyPI.
+To create a new release, follow these steps:
+
+1. Create a new version tag on GitHub, adhering to the [semantic versioning](https://semver.org/) guidelines.
+2. Once the tag is created, the continuous integration (CI) system will automatically build and publish the new version to PyPI.
+
+By following these steps, you can effectively make new releases of the library and contribute to its ongoing development.
