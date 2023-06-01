@@ -1,5 +1,7 @@
 """A simple dataset generator that uses OpenAI's GPT-3.5 API."""
 
+from __future__ import annotations  # noqa FI58
+
 import json
 import logging
 
