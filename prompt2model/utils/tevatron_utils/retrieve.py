@@ -28,8 +28,7 @@ def retrieve_objects(
     retriever.add(passage_reps)
 
     all_scores, all_indices = retriever.search(query_vector, depth)
-    assert len(all_scores) == 1, "Only one query's ranking should be returned."
-    assert len(all_indices) == 1, "Only one query's ranking should be returned."
+    assert len(all_scores) == len(all_indices) == 1, "Only one query's ranking should be returned."
 
     psg_scores = all_scores[0]
     psg_indices = [str(passage_lookup[x]) for x in all_indices[0]]
