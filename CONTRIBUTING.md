@@ -4,7 +4,7 @@ Thanks for your interest in contributing to prompt2model! We appreciate your sup
 
 ## Developer Installation
 
-If you're a developer, it's recommended to install pre-commit hooks before starting your development work. These hooks ensure code formatting, linting, and type checking. To install the pre-commit hooks, run the following command:
+If you're a developer, it's recommended to install pre-commit hooks before starting your development work. These hooks ensure code formatting, linting, and type-checking. To install the pre-commit hooks, run the following command:
 
 ```bash
 pre-commit install
