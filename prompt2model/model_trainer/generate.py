@@ -1,5 +1,7 @@
 """A trainer class to train generation models."""
 
+from __future__ import annotations  # noqa FI58
+
 import logging
 from typing import Any
 
