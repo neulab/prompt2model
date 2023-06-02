@@ -22,7 +22,7 @@ response = chat_gpt_agent.generate_openai_chat_completion(prompt)
 
 The `response` object contains the generated response from the model.
 
-# OPENAI_ERRORS
+## OPENAI_ERRORS
 
 The `OPENAI_ERRORS` variable is a tuple that contains the types of errors that OpenAI's API or related operations may raise. It includes the following error types:
 
@@ -35,7 +35,7 @@ The `OPENAI_ERRORS` variable is a tuple that contains the types of errors that O
 
 These error types can be caught and handled using appropriate exception-handling techniques.
 
-# handle_openai_error
+## handle_openai_error
 
 The `handle_openai_error` function is a utility function used to handle OpenAI errors or related errors that may be raised during API calls. It takes the error object and an API call counter as input.
 
