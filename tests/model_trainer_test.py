@@ -15,7 +15,9 @@ def test_t5_trainer():
     """Test the `GenerationModelTrainer` class to train a encoder-decoder model."""
     # Test encoder-decoder GenerationModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
-        trainer = GenerationModelTrainer("t5-small", has_encoder=True)
+        trainer = GenerationModelTrainer(
+            "t5-small", has_encoder=True, model_max_length=512
+        )
         training_datasets = [
             datasets.Dataset.from_dict(
                 {
