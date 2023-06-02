@@ -14,7 +14,12 @@ from prompt2model.utils import seed_generator
 class GenerationModelTrainer(BaseTrainer):
     """Trainer for T5 type (encoder-decoder) model and GPT type (deocder-only) model."""
 
-    def __init__(self, pretrained_model_name: str, has_encoder: bool):
+    def __init__(
+        self,
+        pretrained_model_name: str,
+        has_encoder: bool,
+        model_max_length: int | None = None,
+    ):
         """Initializes a new instance of HuggingFace pre-trained model.
 
         Args:
@@ -23,6 +28,9 @@ class GenerationModelTrainer(BaseTrainer):
             has_encoder: Whether the model has an encoder.
                 If True, it's a T5-type model (encoder-decoder transformer).
                 If fasle, it's a GPT-type model (atuoregressive transformer).
+            model_max_length: model_max_length allows model to handle
+                longer sequences, and customize sequence lengths as required
+                for your specific use case.
         """
         self.has_encoder = has_encoder
         self.training_args = TrainingArguments(
@@ -38,7 +46,7 @@ class GenerationModelTrainer(BaseTrainer):
                 pretrained_model_name
             )
             self.tokenizer = transformers.T5Tokenizer.from_pretrained(
-                pretrained_model_name
+                pretrained_model_name, model_max_length=model_max_length
             )
         else:
             self.model = transformers.AutoModelForCausalLM.from_pretrained(
