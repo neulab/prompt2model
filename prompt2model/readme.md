@@ -7,7 +7,7 @@ The `run_skeleton.py` script demonstrates the execution of the `prompt2model` pi
 The script can be executed with the following command:
 
 ```bash
-python run_skeleton.py --prompt <prompt_tokens> [--metrics-output-path <metrics_output_path>]
+python run_skeleton.py --prompt <prompt> [--metrics-output-path <metrics_output_path>]
 ```
 
 The script accepts the following arguments:
@@ -61,11 +61,11 @@ The evaluated metrics are written to a JSON file specified by the `metrics_outpu
 
 ### Interface Creation
 
-Finally, the `mock_gradio_create` function is called to create a Gradio interface for interacting with the model. This interface allows users to input text and receive model responses in real-time.
+Finally, the `mock_gradio_create` function is called to create a Gradio interface for interacting with the model. This interface allows users to input text and receive model responses in real time.
 
 ## Mock Components
 
-Note that the pipeline in `run_skeleton.py` utilizes mock versions
+Note that the pipeline in `run_skeleton.py` utilizes mock versions.
 
  of each component for demonstration purposes. In a real-world scenario, you would replace these mock components with the actual implementations specific to your use case. The mock components serve as stubs that mimic the behavior of the real components but do not perform actual data retrieval, processing, training, or evaluation.
 
