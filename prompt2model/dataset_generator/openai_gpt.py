@@ -1,5 +1,7 @@
 """A simple dataset generator that uses OpenAI's GPT-3.5 API."""
 
+from __future__ import annotations  # noqa FI58
+
 import json
 import logging
 
@@ -25,15 +27,16 @@ PROMPT_TEMPLATE = (
 class OpenAIDatasetGenerator(DatasetGenerator):
     """A abstract class for NLP dataset generation using OpenAI's GPT-3.5 API."""
 
-    def __init__(self, api_key: str, max_api_calls: int = None):
+    def __init__(self, api_key: str | None = None, max_api_calls: int = None):
         """Initialize an OpenAI DatasetGenerator with an API key and max API call.
 
         Args:
-            api_key: A valid OpenAI API key.
+            api_key: A valid OpenAI API key. Alternatively, set as None and set
+                the environment variable with `export OPENAI_API_KEY=<your key>`.
             max_api_calls: The maximum number of API calls allowed,
                 or None for unlimited.
         """
-        self.api_key = api_key
+        self.api_key: str | None = api_key
         if max_api_calls:
             assert max_api_calls > 0, "max_api_calls must be > 0"
         self.max_api_calls = max_api_calls
