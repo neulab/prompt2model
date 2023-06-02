@@ -1,5 +1,6 @@
 """A trainer class to train generation models."""
 
+import logging
 from typing import Any
 
 import datasets
@@ -49,6 +50,8 @@ class GenerationModelTrainer(BaseTrainer):
                 pretrained_model_name, model_max_length=model_max_length
             )
         else:
+            if model_max_length is not None:
+                logging.warning("model_max_length is only supported for T5 models")
             self.model = transformers.AutoModelForCausalLM.from_pretrained(
                 pretrained_model_name
             )
