@@ -103,7 +103,7 @@ def check_generate_dataset_dict(dataset_generator: OpenAIDatasetGenerator):
     "prompt2model.utils.ChatGPTAgent.generate_openai_chat_completion",
     side_effect=MOCK_CLASSIFICATION_EXAMPLE,
 )
-def test_limited_and_unlimited_generation(mocked_generate_example):
+def test_encode_text(mocked_generate_example):
     """Test classification dataset generation using the OpenAIDatasetGenerator.
 
     This function first test the unlimited generation. Then test generation
