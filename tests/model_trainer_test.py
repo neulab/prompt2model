@@ -40,9 +40,7 @@ def test_t5_trainer_without_model_max_length():
     """Train a encoder-decoder model without a specified model_max_length ."""
     # Test encoder-decoder GenerationModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
-        trainer = GenerationModelTrainer(
-            "t5-small", has_encoder=True
-        )
+        trainer = GenerationModelTrainer("t5-small", has_encoder=True)
         training_datasets = [
             datasets.Dataset.from_dict(
                 {
