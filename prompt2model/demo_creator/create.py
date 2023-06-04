@@ -1,6 +1,7 @@
 """Create a Gradio interface automatically."""
 
 import gradio as gr
+import mdtex2html
 
 from prompt2model.model_executor import GenerationModelExecutor
 from prompt2model.prompt_parser import OpenAIInstructionParser
@@ -20,29 +21,61 @@ def create_gradio(
 
     """
     description = prompt_parser.get_instruction
-    article = prompt_parser.get_examples
+    examples = prompt_parser.get_examples
+
+    def postprocess(self, y):
+        if y is None:
+            return []
+        for i, (message, response) in enumerate(y):
+            y[i] = (
+                None if message is None else mdtex2html.convert((message)),
+                None if response is None else mdtex2html.convert(response),
+            )
+        return y
+
+    gr.Chatbot.postprocess = postprocess
 
     def response(message):
         response = model_executor.make_single_prediction(message)
         prediction = response.prediction
-        confidence = response.confidence
-        model_output = f"{prediction} \n (with {confidence} confidence)"
-        return model_output
+        return prediction
 
     def chat(message, history):
         history = history or []
-        model_output = response(message)
+        model_output = (
+            response(message) if message != "" else "Please give valid input."
+        )
         history.append((message, model_output))
         return history, history
 
-    iface = gr.Interface(
-        chat,
-        ["text", "state"],
-        ["chatbot", "state"],
-        description=description,
-        article=article,
-        allow_screenshot=False,
-        allow_flagging="never",
-    )
+    def reset_user_input():
+        return gr.update(value="")
 
-    return iface
+    def reset_state():
+        return [], []
+
+    with gr.Blocks() as demo:
+        gr.HTML("""<h1 align="center">Prompt2Model</h1>""")
+        gr.HTML(f"""<h2 align="center">Task Description: {description}</h2>""")
+        gr.HTML(f"""<h2 align="center">Few-shot Examples: {examples}</h2>""")
+
+        chatbot = gr.Chatbot()
+        with gr.Row():
+            with gr.Column(scale=4):
+                with gr.Column(scale=12):
+                    user_input = gr.Textbox(
+                        show_label=False, placeholder="Input...", lines=10
+                    ).style(container=False)
+                with gr.Column(min_width=32, scale=2):
+                    submitBtn = gr.Button("Submit", variant="primary")
+                    emptyBtn = gr.Button("Clear History")
+
+        history = gr.State([])
+
+        submitBtn.click(
+            chat, [user_input, history], [chatbot, history], show_progress=True
+        )
+        submitBtn.click(reset_user_input, [], [user_input])
+        emptyBtn.click(reset_state, outputs=[chatbot, history], show_progress=True)
+
+    return demo
