@@ -3,6 +3,7 @@
 from typing import Any
 
 import datasets
+import evaluate
 import transformers
 from datasets import concatenate_datasets
 from transformers import Trainer, TrainingArguments
@@ -118,11 +119,21 @@ class GenerationModelTrainer(BaseTrainer):
         training_dataset = concatenate_datasets(training_datasets)
         shuffled_dataset = training_dataset.shuffle(seed=seed_generator.get_seed())
         preprocessed_dataset = self.preprocess_dataset(shuffled_dataset)
+        ds_train, ds_valid = preprocessed_dataset.train_test_split(
+            test_size=0.2, seed=42
+        )
+        metrics = [
+            evaluate.load("chrf"),
+            evaluate.load("exact_match"),
+            evaluate.load("bertscore"),
+        ]
         # Create the trainer
         trainer = Trainer(
             model=self.model,
             args=self.training_args,
-            train_dataset=preprocessed_dataset,
+            train_dataset=ds_train,
+            eval_dataset=ds_valid,
+            compute_metrics=metrics,
             data_collator=transformers.DataCollatorForSeq2Seq(tokenizer=self.tokenizer)
             if self.has_encoder
             else transformers.DataCollatorForLanguageModeling(
