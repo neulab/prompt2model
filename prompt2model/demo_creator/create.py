@@ -9,7 +9,7 @@ from prompt2model.prompt_parser import OpenAIInstructionParser
 
 def create_gradio(
     model_executor: GenerationModelExecutor, prompt_parser: OpenAIInstructionParser
-) -> gr.Interface:
+) -> gr.Blocks:
     """Create a Gradio interface automatically.
 
     Args:
