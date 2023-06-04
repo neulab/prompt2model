@@ -48,9 +48,14 @@ class GenerationModelTrainer(BaseTrainer):
             self.model = transformers.T5ForConditionalGeneration.from_pretrained(
                 pretrained_model_name
             )
-            self.tokenizer = transformers.T5Tokenizer.from_pretrained(
-                pretrained_model_name, model_max_length=model_max_length
-            )
+            if model_max_length:
+                self.tokenizer = transformers.T5Tokenizer.from_pretrained(
+                    pretrained_model_name, model_max_length=model_max_length
+                )
+            else:
+                self.tokenizer = transformers.T5Tokenizer.from_pretrained(
+                    pretrained_model_name
+                )
         else:
             if model_max_length is not None:
                 logging.warning("model_max_length is only supported for T5 models")
