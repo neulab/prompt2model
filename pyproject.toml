@@ -32,7 +32,8 @@ dependencies = [
     "sacrebleu==2.3.1",
     "evaluate==0.4.0",
     "tevatron==0.1.0",
-    "faiss-cpu==1.7.4"
+    "faiss-cpu==1.7.4",
+    "skikit-learn==1.2.2"
 ]
 
 dynamic = ["version"]
