@@ -1,5 +1,7 @@
 """An base class for trainers."""
 
+from __future__ import annotations  # noqa FI58
+
 from abc import ABC, abstractmethod
 from typing import Any
 
