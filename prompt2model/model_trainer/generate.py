@@ -6,10 +6,11 @@ import logging
 from typing import Any
 
 import datasets
+import evaluate
 import torch
 import transformers
 from datasets import concatenate_datasets
-from transformers import Trainer, TrainingArguments
+from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 
 from prompt2model.model_trainer.base import BaseTrainer
 from prompt2model.utils import seed_generator
@@ -37,7 +38,7 @@ class GenerationModelTrainer(BaseTrainer):
                 for your specific use case.
         """
         self.has_encoder = has_encoder
-        self.training_args = TrainingArguments(
+        self.training_args = Seq2SeqTrainingArguments(
             output_dir="./result",
             logging_steps=1000,
             evaluation_strategy="steps",
@@ -121,6 +122,38 @@ class GenerationModelTrainer(BaseTrainer):
         Returns:
             A trained HuggingFace model and tokenizer.
         """
+
+        def compute_metrics(eval_preds):
+            metrics = [
+                evaluate.load("chrf"),
+                evaluate.load("exact_match"),
+                evaluate.load("bertscore"),
+            ]
+            logits, ground_truth = eval_preds
+            predicted_strings = self.tokenizer.decode(logits, skip_special_tokens=True)
+            metric_values = {}
+            for metric in metrics:
+                metric_name = metric.name
+                assert metric_name in ["chr_f", "exact_match", "bert_score"]
+                if metric_name == "chr_f":
+                    metric.add_batch(
+                        predictions=predicted_strings, references=ground_truth
+                    )
+                    metric_values["chr_f++"] = metric.compute(word_order=2)["score"]
+                elif metric_name == "exact_match":
+                    metric.add_batch(
+                        predictions=predicted_strings, references=ground_truth
+                    )
+                    metric_values[metric_name] = metric.compute()["exact_match"]
+                elif metric_name == "bert_score":
+                    metric.add_batch(
+                        predictions=predicted_strings, references=ground_truth
+                    )
+                    metric_values[metric_name] = metric.compute(
+                        model_type="xlm-roberta-base"
+                    )["f1"]
+            return metric_values
+
         self.training_args.output_dir = hyperparameter_choices.get(
             "output_dir", "./result"
         )
@@ -140,6 +173,7 @@ class GenerationModelTrainer(BaseTrainer):
         self.training_args.learning_rate = hyperparameter_choices.get(
             "learning_rate", 1e-4
         )
+        self.training_args.predict_with_generate = True
 
         preprocessed_training_dataset = self.preprocess_dataset(training_datasets)
         if not validation_datasets:
@@ -153,8 +187,7 @@ class GenerationModelTrainer(BaseTrainer):
         else:
             val_dataset = self.preprocess_dataset(validation_datasets)
             train_dataset = preprocessed_training_dataset
-        # Create the trainer
-        trainer = Trainer(
+        trainer = Seq2SeqTrainer(
             model=self.model,
             args=self.training_args,
             train_dataset=train_dataset,
@@ -170,6 +203,7 @@ class GenerationModelTrainer(BaseTrainer):
                 ),
                 None,
             ],
+            compute_metrics=compute_metrics,
         )
 
         # Train the model
