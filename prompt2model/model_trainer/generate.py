@@ -46,7 +46,7 @@ class GenerationModelTrainer(BaseTrainer):
             output_dir="./result",
             logging_steps=8,
             evaluation_strategy="epoch",
-            save_strategy="no",
+            save_strategy="epoch",
         )
         if self.has_encoder:
             self.model = transformers.T5ForConditionalGeneration.from_pretrained(
@@ -69,14 +69,15 @@ class GenerationModelTrainer(BaseTrainer):
             self.tokenizer = transformers.AutoTokenizer.from_pretrained(
                 pretrained_model_name
             )
+
         if self.tokenizer.pad_token is None:
             self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+
         if self.model.config.pad_token_id is None:
-            self.model.config.pad_token_id = len(self.tokenizer)
-            self.model.resize_token_embeddings(len(self.tokenizer))
-            self.model.config.attention_mask_fn = lambda input_ids: (
-                input_ids != self.model.config.pad_token_id
-            ).float()
+            pad_id = len(self.tokenizer)
+            self.model.config.pad_token_id = pad_id
+            self.model.resize_token_embeddings(pad_id)
+            # Save the pad_id to the model's config instead of the function
 
     def preprocess_dataset(
         self, dataset_list: list[datasets.Dataset]
@@ -98,9 +99,14 @@ class GenerationModelTrainer(BaseTrainer):
         outputs = shuffled_dataset["output_col"]
         input_encodings = self.tokenizer(inputs, truncation=False, padding=True)
         output_encodings = self.tokenizer(outputs, truncation=False, padding=True)
+        # Create attention masks
+        attention_masks = (
+            torch.tensor(input_encodings["input_ids"]) != self.model.config.pad_token_id
+        ).tolist()
+
         preprocessed_dict = {
             "input_ids": input_encodings["input_ids"],
-            "attention_mask": input_encodings["attention_mask"],
+            "attention_mask": attention_masks,
             "labels": output_encodings["input_ids"]
             if self.has_encoder
             else input_encodings["input_ids"],
