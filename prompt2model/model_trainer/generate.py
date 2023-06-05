@@ -162,10 +162,10 @@ class GenerationModelTrainer(BaseTrainer):
             data_collator=transformers.DataCollatorForSeq2Seq(tokenizer=self.tokenizer)
             if self.has_encoder
             else transformers.DataCollatorForLanguageModeling(
-                tokcnizer=self.tokenizer, mlm=False
+                tokenizer=self.tokenizer, mlm=False
             ),
             optimizers=[
-                torch.optim.Adam(
+                torch.optim.AdamW(
                     params=self.model.parameters(), lr=self.training_args.learning_rate
                 ),
                 None,
