@@ -129,6 +129,7 @@ class GenerationModelTrainer(BaseTrainer):
                 evaluate.load("exact_match"),
                 evaluate.load("bertscore"),
             ]
+            print(eval_preds)
             logits, ground_truth = eval_preds
             predicted_strings = self.tokenizer.decode(logits, skip_special_tokens=True)
             metric_values = {}
