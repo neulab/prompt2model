@@ -6,7 +6,6 @@ import logging
 from typing import Any
 
 import datasets
-import torch
 import transformers
 from datasets import concatenate_datasets
 from transformers import Trainer, TrainingArguments
@@ -137,9 +136,6 @@ class GenerationModelTrainer(BaseTrainer):
         self.training_args.logging_dir = hyperparameter_choices.get(
             "logging_dir", "./logs"
         )
-        self.training_args.learning_rate = hyperparameter_choices.get(
-            "learning_rate", 1e-4
-        )
 
         preprocessed_training_dataset = self.preprocess_dataset(training_datasets)
         if not validation_datasets:
@@ -164,12 +160,6 @@ class GenerationModelTrainer(BaseTrainer):
             else transformers.DataCollatorForLanguageModeling(
                 tokenizer=self.tokenizer, mlm=False
             ),
-            optimizers=[
-                torch.optim.AdamW(
-                    params=self.model.parameters(), lr=self.training_args.learning_rate
-                ),
-                None,
-            ],
         )
 
         # Train the model
