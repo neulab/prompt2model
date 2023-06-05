@@ -1,5 +1,8 @@
 """A trainer class to train generation models."""
 
+from __future__ import annotations  # noqa FI58
+
+import logging
 from typing import Any
 
 import datasets
@@ -14,7 +17,12 @@ from prompt2model.utils import seed_generator
 class GenerationModelTrainer(BaseTrainer):
     """Trainer for T5 type (encoder-decoder) model and GPT type (deocder-only) model."""
 
-    def __init__(self, pretrained_model_name: str, has_encoder: bool):
+    def __init__(
+        self,
+        pretrained_model_name: str,
+        has_encoder: bool,
+        model_max_length: int | None = None,
+    ):
         """Initializes a new instance of HuggingFace pre-trained model.
 
         Args:
@@ -23,6 +31,9 @@ class GenerationModelTrainer(BaseTrainer):
             has_encoder: Whether the model has an encoder.
                 If True, it's a T5-type model (encoder-decoder transformer).
                 If fasle, it's a GPT-type model (atuoregressive transformer).
+            model_max_length: model_max_length allows model to handle
+                longer sequences, and customize sequence lengths as required
+                for your specific use case.
         """
         self.has_encoder = has_encoder
         self.training_args = TrainingArguments(
@@ -37,10 +48,17 @@ class GenerationModelTrainer(BaseTrainer):
             self.model = transformers.T5ForConditionalGeneration.from_pretrained(
                 pretrained_model_name
             )
-            self.tokenizer = transformers.T5Tokenizer.from_pretrained(
-                pretrained_model_name
-            )
+            if model_max_length:
+                self.tokenizer = transformers.T5Tokenizer.from_pretrained(
+                    pretrained_model_name, model_max_length=model_max_length
+                )
+            else:
+                self.tokenizer = transformers.T5Tokenizer.from_pretrained(
+                    pretrained_model_name
+                )
         else:
+            if model_max_length is not None:
+                logging.warning("model_max_length is only supported for T5 models")
             self.model = transformers.AutoModelForCausalLM.from_pretrained(
                 pretrained_model_name
             )
@@ -56,11 +74,13 @@ class GenerationModelTrainer(BaseTrainer):
                 input_ids != self.model.config.pad_token_id
             ).float()
 
-    def preprocess_dataset(self, datasets: list[datasets.Dataset])-> datasets.Dataset:
+    def preprocess_dataset(
+        self, dataset_list: list[datasets.Dataset]
+    ) -> datasets.Dataset:
         """Concatenate and preprocess the training/validation datasets.
 
         Args:
-            datasets: Several dictionary-like object containing the input and output columns.
+            dataset_list: List of datasets wit model_input and output_col columns.
 
         Returns:
             A `datasets.Dataset` object containing the preprocessed data with:
@@ -68,22 +88,20 @@ class GenerationModelTrainer(BaseTrainer):
                 "attention_mask": A list of 0/1 indicating which tokens are padding.
                 "labels": A list of token IDs for the encoded output texts.
         """
-        training_dataset = concatenate_datasets(datasets)
+        training_dataset = concatenate_datasets(dataset_list)
         shuffled_dataset = training_dataset.shuffle(seed=seed_generator.get_seed())
         inputs = shuffled_dataset["model_input"]
         outputs = shuffled_dataset["output_col"]
         input_encodings = self.tokenizer(inputs, truncation=False, padding=True)
         output_encodings = self.tokenizer(outputs, truncation=False, padding=True)
-
-        return datasets.Dataset.from_dict(
-            {
-                "input_ids": input_encodings["input_ids"],
-                "attention_mask": input_encodings["attention_mask"],
-                "labels": output_encodings["input_ids"]
-                if self.has_encoder
-                else input_encodings["input_ids"],
-            }
-        )
+        preprocessed_dict = {
+            "input_ids": input_encodings["input_ids"],
+            "attention_mask": input_encodings["attention_mask"],
+            "labels": output_encodings["input_ids"]
+            if self.has_encoder
+            else input_encodings["input_ids"],
+        }
+        return datasets.Dataset.from_dict(preprocessed_dict)
 
     def train_model(
         self,
