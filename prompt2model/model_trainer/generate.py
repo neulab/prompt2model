@@ -56,11 +56,11 @@ class GenerationModelTrainer(BaseTrainer):
                 input_ids != self.model.config.pad_token_id
             ).float()
 
-    def preprocess_dataset(self, dataset: datasets.Dataset):
-        """Preprocesses the given dataset using self.tokenizer.
+    def preprocess_dataset(self, datasets: list[datasets.Dataset])-> datasets.Dataset:
+        """Concatenate and preprocess the training/validation datasets.
 
         Args:
-            dataset: A dictionary-like object containing the input and output columns.
+            datasets: Several dictionary-like object containing the input and output columns.
 
         Returns:
             A `datasets.Dataset` object containing the preprocessed data with:
@@ -68,8 +68,10 @@ class GenerationModelTrainer(BaseTrainer):
                 "attention_mask": A list of 0/1 indicating which tokens are padding.
                 "labels": A list of token IDs for the encoded output texts.
         """
-        inputs = dataset["model_input"]
-        outputs = dataset["output_col"]
+        training_dataset = concatenate_datasets(datasets)
+        shuffled_dataset = training_dataset.shuffle(seed=seed_generator.get_seed())
+        inputs = shuffled_dataset["model_input"]
+        outputs = shuffled_dataset["output_col"]
         input_encodings = self.tokenizer(inputs, truncation=False, padding=True)
         output_encodings = self.tokenizer(outputs, truncation=False, padding=True)
 
@@ -117,18 +119,18 @@ class GenerationModelTrainer(BaseTrainer):
             "logging_dir", "./logs"
         )
 
-        # Concatenate and preprocess the training datasets
-        training_dataset = concatenate_datasets(training_datasets)
-        shuffled_dataset = training_dataset.shuffle(seed=seed_generator.get_seed())
-        preprocessed_training_dataset = self.preprocess_dataset(shuffled_dataset)
+        preprocessed_training_dataset = self.preprocess_dataset(training_datasets)
         if not validation_datasets:
-            preprocessed_training_dataset = preprocessed_training_dataset.train_test_split(
-                test_size=0.15, seed=seed_generator.get_seed()
+            preprocessed_training_dataset = (
+                preprocessed_training_dataset.train_test_split(
+                    test_size=0.15, seed=seed_generator.get_seed()
+                )
             )
             train_dataset = preprocessed_training_dataset["train"]
             val_dataset = preprocessed_training_dataset["test"]
         else:
-            pass
+            val_dataset = self.preprocess_dataset(validation_datasets)
+            train_dataset = preprocessed_training_dataset
         # Create the trainer
         trainer = Trainer(
             model=self.model,
