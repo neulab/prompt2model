@@ -8,7 +8,7 @@ from typing import Any
 import datasets
 import evaluate
 
-from prompt2model.evaluator.base import Evaluator
+from prompt2model.model_evaluator.base import Evaluator
 from prompt2model.model_executor import ModelOutput
 from prompt2model.prompt_parser import PromptSpec
 
