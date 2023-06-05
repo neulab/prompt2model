@@ -48,6 +48,7 @@ class GenerationModelTrainer(BaseTrainer):
             evaluation_strategy="epoch",
             save_strategy="epoch",
         )
+        self.model_max_length = model_max_length
         if self.has_encoder:
             self.model = transformers.T5ForConditionalGeneration.from_pretrained(
                 pretrained_model_name
@@ -93,12 +94,16 @@ class GenerationModelTrainer(BaseTrainer):
                 "attention_mask": A list of 0/1 indicating which tokens are padding.
                 "labels": A list of token IDs for the encoded output texts.
         """
-        training_dataset = concatenate_datasets(dataset_list)
-        shuffled_dataset = training_dataset.shuffle(seed=seed_generator.get_seed())
+        concatenated_dataset = concatenate_datasets(dataset_list)
+        shuffled_dataset = concatenated_dataset.shuffle(seed=seed_generator.get_seed())
         inputs = shuffled_dataset["model_input"]
         outputs = shuffled_dataset["output_col"]
-        input_encodings = self.tokenizer(inputs, truncation=False, padding=True)
-        output_encodings = self.tokenizer(outputs, truncation=False, padding=True)
+        input_encodings = self.tokenizer(
+            inputs, truncation=True, max_length=self.model_max_length, padding=True
+        )
+        output_encodings = self.tokenizer(
+            outputs, truncation=True, max_length=self.model_max_length, padding=True
+        )
         # Create attention masks
         attention_masks = (
             torch.tensor(input_encodings["input_ids"]) != self.model.config.pad_token_id
