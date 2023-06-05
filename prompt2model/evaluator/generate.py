@@ -1,9 +1,9 @@
 """A trainer class to train generation models."""
 
+import logging
 from typing import Any
 
 import datasets
-import torch
 import transformers
 from datasets import concatenate_datasets
 from transformers import Trainer, TrainingArguments
@@ -15,7 +15,12 @@ from prompt2model.utils import seed_generator
 class GenerationModelTrainer(BaseTrainer):
     """Trainer for T5 type (encoder-decoder) model and GPT type (deocder-only) model."""
 
-    def __init__(self, pretrained_model_name: str, has_encoder: bool):
+    def __init__(
+        self,
+        pretrained_model_name: str,
+        has_encoder: bool,
+        model_max_length: int | None = None,
+    ):
         """Initializes a new instance of HuggingFace pre-trained model.
 
         Args:
@@ -24,6 +29,9 @@ class GenerationModelTrainer(BaseTrainer):
             has_encoder: Whether the model has an encoder.
                 If True, it's a T5-type model (encoder-decoder transformer).
                 If fasle, it's a GPT-type model (atuoregressive transformer).
+            model_max_length: model_max_length allows model to handle
+                longer sequences, and customize sequence lengths as required
+                for your specific use case.
         """
         self.has_encoder = has_encoder
         self.training_args = TrainingArguments(
@@ -39,9 +47,11 @@ class GenerationModelTrainer(BaseTrainer):
                 pretrained_model_name
             )
             self.tokenizer = transformers.T5Tokenizer.from_pretrained(
-                pretrained_model_name
+                pretrained_model_name, model_max_length=model_max_length
             )
         else:
+            if model_max_length is not None:
+                logging.warning("model_max_length is only supported for T5 models")
             self.model = transformers.AutoModelForCausalLM.from_pretrained(
                 pretrained_model_name
             )
@@ -57,11 +67,11 @@ class GenerationModelTrainer(BaseTrainer):
                 input_ids != self.model.config.pad_token_id
             ).float()
 
-    def preprocess_dataset(self, datasets: list[datasets.Dataset])-> datasets.Dataset:
-        """Concatenate and preprocess the training/validation datasets.
+    def preprocess_dataset(self, dataset: datasets.Dataset):
+        """Preprocesses the given dataset using self.tokenizer.
 
         Args:
-            datasets: Several dictionary-like object containing the input and output columns.
+            dataset: A dictionary-like object containing the input and output columns.
 
         Returns:
             A `datasets.Dataset` object containing the preprocessed data with:
@@ -69,10 +79,8 @@ class GenerationModelTrainer(BaseTrainer):
                 "attention_mask": A list of 0/1 indicating which tokens are padding.
                 "labels": A list of token IDs for the encoded output texts.
         """
-        training_dataset = concatenate_datasets(datasets)
-        shuffled_dataset = training_dataset.shuffle(seed=seed_generator.get_seed())
-        inputs = shuffled_dataset["model_input"]
-        outputs = shuffled_dataset["output_col"]
+        inputs = dataset["model_input"]
+        outputs = dataset["output_col"]
         input_encodings = self.tokenizer(inputs, truncation=False, padding=True)
         output_encodings = self.tokenizer(outputs, truncation=False, padding=True)
 
@@ -88,20 +96,17 @@ class GenerationModelTrainer(BaseTrainer):
 
     def train_model(
         self,
-        hyperparameter_choices: dict[str, Any],
         training_datasets: list[datasets.Dataset],
-        validation_datasets: list[datasets.Dataset] | None = None,
+        hyperparameter_choices: dict[str, Any],
     ) -> tuple[transformers.PreTrainedModel, transformers.PreTrainedTokenizer]:
         """Train a text generation model.
 
         Args:
-            hyperparameter_choices: A dictionary of hyperparameter choices.
             training_datasets: Training datasets with `input_col` and `output_col`.
-            validation_datasets: Validation datasets during training. If not provided,
-                15% of training data will be splited from training_datasets to validate.
+            hyperparameter_choices: A dictionary of hyperparameter choices.
 
         Returns:
-            A trained HuggingFace model and tokenizer.
+            A trained HuggingFace model.
         """
         self.training_args.output_dir = hyperparameter_choices.get(
             "output_dir", "./result"
@@ -119,39 +124,24 @@ class GenerationModelTrainer(BaseTrainer):
         self.training_args.logging_dir = hyperparameter_choices.get(
             "logging_dir", "./logs"
         )
-        self.training_args.learning_rate = hyperparameter_choices.get(
-            "learning_rate", 1e-4
-        )
 
-        preprocessed_training_dataset = self.preprocess_dataset(training_datasets)
-        if not validation_datasets:
-            preprocessed_training_dataset = (
-                preprocessed_training_dataset.train_test_split(
-                    test_size=0.15, seed=seed_generator.get_seed()
-                )
-            )
-            train_dataset = preprocessed_training_dataset["train"]
-            val_dataset = preprocessed_training_dataset["test"]
-        else:
-            val_dataset = self.preprocess_dataset(validation_datasets)
-            train_dataset = preprocessed_training_dataset
+        # Concatenate and preprocess the training datasets
+        training_dataset = concatenate_datasets(training_datasets)
+        shuffled_dataset = training_dataset.shuffle(seed=seed_generator.get_seed())
+        preprocessed_dataset = self.preprocess_dataset(
+            shuffled_dataset
+        ).train_test_split(test_size=0.2, seed=seed_generator.get_seed())
         # Create the trainer
         trainer = Trainer(
             model=self.model,
             args=self.training_args,
-            train_dataset=train_dataset,
-            eval_dataset=val_dataset,
+            train_dataset=preprocessed_dataset["train"],
+            eval_dataset=preprocessed_dataset["test"],
             data_collator=transformers.DataCollatorForSeq2Seq(tokenizer=self.tokenizer)
             if self.has_encoder
             else transformers.DataCollatorForLanguageModeling(
                 tokenizer=self.tokenizer, mlm=False
             ),
-            optimizers=[
-                torch.optim.AdamW(
-                    params=self.model.parameters(), lr=self.training_args.learning_rate
-                ),
-                None,
-            ],
         )
 
         # Train the model
