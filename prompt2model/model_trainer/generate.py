@@ -3,6 +3,7 @@
 from __future__ import annotations  # noqa FI58
 
 import logging
+import os
 from typing import Any
 
 import datasets
@@ -14,6 +15,8 @@ from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 
 from prompt2model.model_trainer.base import BaseTrainer
 from prompt2model.utils import seed_generator
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 class GenerationModelTrainer(BaseTrainer):
