@@ -61,7 +61,7 @@ def test_seq2seq_evaluator_with_unsupported_metrics():
     evaluator = Seq2SeqEvaluator()
     # Evaluate the model
     metrics = [
-        evaluate.load("f1"),
+        evaluate.load("accuracy"),
         evaluate.load("exact_match"),
     ]
     with pytest.raises(NotImplementedError):
