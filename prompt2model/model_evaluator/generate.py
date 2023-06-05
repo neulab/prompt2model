@@ -25,7 +25,7 @@ class Seq2SeqEvaluator(Evaluator):
         prompt_spec: PromptSpec | None = None,
         encoder_model_name: str = "xlm-roberta-base",
     ) -> dict[str, Any]:
-        """Evaluate a model on a test set.
+        """Evaluate a model on a test set..
 
         Args:
             dataset: The dataset to evaluate metrics on.
@@ -42,22 +42,13 @@ class Seq2SeqEvaluator(Evaluator):
             logging.error("prompt_spec is not supported for Seq2SeqEvaluator")
             raise NotImplementedError
         if metrics is not None:
-            metric_names = {metric.name for metric in metrics}
-            is_subset = metric_names < {"chr_f", "exact_match", "bert_score"}
-            if not is_subset:
-                logging.error("metrics must be within chr_f exact_match and bert_score")
-                raise NotImplementedError
-            else:
-                logging.basicConfig(level=logging.INFO)
-                logging.info("using metrics: " + str(metric_names))
-        else:
-            logging.basicConfig(level=logging.INFO)
-            logging.info("using default metrics of chrf, exact_match and bertscore")
-            metrics = [
-                evaluate.load("chrf"),
-                evaluate.load("exact_match"),
-                evaluate.load("bertscore"),
-            ]
+            logging.error("manual metrics is not supported for Seq2SeqEvaluator")
+            raise NotImplementedError
+        metrics = [
+            evaluate.load("chrf"),
+            evaluate.load("exact_match"),
+            evaluate.load("bertscore"),
+        ]
         # Get the ground truth from the dataset
         ground_truth = dataset[gt_column]
 
