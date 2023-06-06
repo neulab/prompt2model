@@ -3,15 +3,15 @@
 ## BaseProcessor
 
 The `BaseProcessor` is a foundational class for dataset processors, providing a
-common interface and defining essential methods for post-processing datasets.
+standard interface and defining essential methods for post-processing datasets.
 
 To create a dataset processor using the `BaseProcessor`, you need to subclass it
 and implement the following method:
 
 - `post_process_example()`: This method modifies the input column of a given
-example dictionary based on the task-specific requirements.
+example dictionary based on task-specific requirements.
 
-The `BaseProcessor` class can be subclassed to implement custom dataset
+The `BaseProcessor` class can be subclassed to implement a custom dataset
 processing logic based on different task requirements or data formats.
 
 Refer to the unit tests in the `dataset_processor_test.py` file for examples of
