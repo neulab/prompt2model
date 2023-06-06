@@ -10,8 +10,8 @@ To create a model executor, you need to subclass the `ModelExecutor` and
 implement the following methods:
 
 - `make_prediction()`: Evaluates the model on a test set and returns a list of
-model outputs, one for each element in the test set. -
-`make_single_prediction(model_input)`: Makes a prediction on a single example
+model outputs, one for each element in the test set.
+- `make_single_prediction(model_input)`: Makes a prediction on a single example
 and returns a single model output.
 
 The `ModelExecutor` class can be subclassed to implement specific model
@@ -27,9 +27,10 @@ refer to the unit tests in the
 The `ModelOutput` data class represents the output of a model for a single
 example. It contains the following attributes:
 
-- `prediction`: The prediction made by the model. - `confidence`: A confidence
-value in the prediction, or `None` if confidence is unavailable. -
-`auxiliary_info`: Any other auxiliary information provided by the model.
+- `prediction`: The prediction made by the model.
+- `confidence`: A confidence
+value in the prediction, or `None` if confidence is unavailable.
+- `auxiliary_info`: Any other auxiliary information provided by the model.
 
 The `ModelOutput` class is used to encapsulate the prediction, confidence, and
 auxiliary information returned by the model.
@@ -47,7 +48,8 @@ The `GenerationModelExecutor` class includes the following methods:
 model on a test set or a single model input. If `single_model_input` is `None`,
 the model executor will make predictions on the test set. If
 `single_model_input` is provided, it will make a prediction on that single
-input. - `make_single_prediction(model_input)`: Makes a prediction on a single
+input.
+- `make_single_prediction(model_input)`: Makes a prediction on a single
 example.
 
 The `GenerationModelExecutor` class utilizes the model and tokenizer provided
