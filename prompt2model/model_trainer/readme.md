@@ -16,8 +16,10 @@ tokenizer.
 The `BaseTrainer` class can be subclassed to implement custom trainers based on
 different model architectures or training strategies.
 
-Refer to the unit tests in the `test_generate.py` file for examples of how to
-use `BaseTrainer` and its subclasses.
+To see an example of how to use `BaseTrainer` and its subclasses, you can
+refer to the unit tests in the
+[model_trainer_test.py](../../tests/model_trainer_test.py) file.
+
 
 ## GenerationModelTrainer
 
