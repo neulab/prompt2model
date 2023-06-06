@@ -50,13 +50,15 @@ predictions = [
 
 - Evaluate the model using the `evaluate_model()` method:
 
-```python dataset = ... # Prepare the dataset for evaluation gt_column =
+```python
+dataset = ... # Prepare the dataset for evaluation gt_column =
 "output_col" # Specify the column name for the ground truth metrics = [...] #
 (Optional) Specify the metrics to use encoder_model_name = "xlm-roberta-base" #
 (Optional) Specify the encoder model for metrics like BertScore
 
 metric_values = evaluator.evaluate_model( dataset, gt_column, predictions,
-metrics=metrics, encoder_model_name=encoder_model_name ) ```
+metrics=metrics, encoder_model_name=encoder_model_name )
+```
 
 The `evaluate_model()` method computes the specified metrics for the model's
 predictions on the ground truth dataset. The `gt_column` parameter sets the
