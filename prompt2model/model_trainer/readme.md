@@ -44,9 +44,11 @@ trainer = GenerationModelTrainer(pretrained_model_name, has_encoder, model_max_l
 Where:
 
 - `pretrained_model_name`: The name of the pre-trained model from the Hugging
-Face model hub. - `has_encoder`: A boolean value indicating whether the model
+Face model hub.
+- `has_encoder`: A boolean value indicating whether the model
 has an encoder. Set it to `True` for encoder-decoder models (T5-type) and
-`False` for decoder-only models (GPT-type). - `model_max_length` (optional):
+`False` for decoder-only models (GPT-type).
+- `model_max_length` (optional):
 This parameter allows the model to handle longer sequences and customize
 sequence lengths as required for your specific use case.
 
@@ -63,7 +65,8 @@ trained_model, trained_tokenizer = trainer.train_model(training_datasets, hyperp
 
 Where:
 
-- `training_datasets`: A list of training datasets. - `hyperparameter_choices`:
+- `training_datasets`: A list of training datasets.
+- `hyperparameter_choices`:
 A dictionary specifying the hyperparameters for training, such as output
 directory, number of training epochs, batch size, etc.
 
