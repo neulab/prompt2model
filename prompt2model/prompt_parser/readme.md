@@ -8,7 +8,7 @@ abstract methods, `parse_from_prompt()` and `get_instruction()`, which its
 subclasses must implement.
 
 To see an example of how to use `PromptSpec` and its subclasses, you can refer
-to the unit tests in the [prompt_parser_test.py](../tests/prompt_parser_test.py)
+to the unit tests in the [prompt_parser_test.py](../../tests/prompt_parser_test.py)
 file.
 
 ## TaskType
