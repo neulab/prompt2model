@@ -4,14 +4,15 @@
 
 `Prompt2model` is a powerful package designed
 to streamline the process of creating models
-based on prompts for OpenAI models such as
-GPT-3 or GPT-4. This package takes a prompt
+based on prompts indicating a task for OpenAI
+models such as ChatGPT
+or GPT-4. This package takes a prompt
 as input and leverages it to generate a model
 that can effectively solve the task described
 in the prompt. With `prompt2model`, you can
 easily convert your prompts into functional
 models, making it easier to utilize the
-power of OpenAI models in your projects.
+power of general OpenAI LLMs in your projects.
 
 ## Installation
 
@@ -28,12 +29,10 @@ pip install .
 Before using `prompt2model`, there are a
 few configuration steps you need to complete:
 
-1. Obtain an OpenAI API key for the
-`gpt-3.5-turbo` model. You can sign
-up on the OpenAI website to get your key.
+1. Sign up on the OpenAI website and obtain an
+OpenAI API key.
 
-2. Once you have obtained your API
-key, you need to provide it in the
+2. Provide OpenAI API key in the
  initialization function of the
 `DatasetGenerator` and `OpenAIInstructionParser`
  classes. Alternatively, you can set
@@ -65,18 +64,13 @@ component within the package.
 
 The `prompt2model` pipeline is a versatile
 pipeline for task solving using a language
-model. It covers stages like dataset retrieval,
+model. It covers stages including dataset retrieval,
 generation, processing, model retrieval,
 training, execution, evaluation, and
 interface creation. The
 `./prompt2model/run_skeleton.py`
-script executes the pipeline by
-preprocessing the input prompt,
-retrieving and processing datasets,
-retrieving and training models,
-selecting the best model, executing it,
-evaluating the results, and generating
-a Gradio interface. The pipeline utilizes
+script executes the full pipeline.
+The pipeline utilizes
 mock components for demonstration, but
 in real-world scenarios, actual implementations
 should replace them. By following
