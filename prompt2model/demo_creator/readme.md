@@ -3,6 +3,9 @@
 This module provides a function to automatically create a Gradio interface for
 interacting with a model.
 
+To see an example of how to use `create_gradio`, you can refer
+to the unit tests in the [demo_creator_test.py](../tests/demo_creator_test.py) file.
+
 ## Usage
 
 The `create_gradio` function takes a `GenerationModelExecutor` and an
