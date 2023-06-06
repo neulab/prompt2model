@@ -23,7 +23,8 @@ interface = create_gradio(model_executor, prompt_parser)
 ### Parameters
 
 - `model_executor`: An instance of `GenerationModelExecutor` to expose via a
-Gradio interface. - `prompt_parser`: An instance of `OpenAIInstructionParser` to
+Gradio interface.
+- `prompt_parser`: An instance of `OpenAIInstructionParser` to
 parse the prompt.
 
 ### Return
