@@ -33,7 +33,8 @@ dependencies = [
     "evaluate==0.4.0",
     "tevatron==0.1.0",
     "faiss-cpu==1.7.4",
-    "mdtex2html==1.2.0"
+    "mdtex2html==1.2.0",
+    "scikit-learn==1.2.2",
 ]
 
 dynamic = ["version"]

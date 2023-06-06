@@ -1,4 +1,5 @@
 """This module provides a dummy trainer for testing purposes."""
+from __future__ import annotations  # noqa FI58
 
 from typing import Any
 
@@ -14,8 +15,9 @@ class MockTrainer(BaseTrainer):
 
     def train_model(
         self,
-        training_datasets: list[datasets.Dataset],
         hyperparameter_choices: dict[str, Any],
+        training_datasets: list[datasets.Dataset],
+        validation_datasets: list[datasets.Dataset] | None = None,
     ) -> tuple[PreTrainedModel, PreTrainedTokenizer]:
         """This dummy trainer returns the given model without any training.
 
@@ -26,5 +28,5 @@ class MockTrainer(BaseTrainer):
         Returns:
             A HuggingFace model and tokenizer.
         """
-        _ = training_datasets, hyperparameter_choices
+        _ = training_datasets, hyperparameter_choices, validation_datasets
         return self.model, self.tokenizer

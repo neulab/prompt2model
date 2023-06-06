@@ -23,7 +23,11 @@ class BaseProcessor(ABC):
     @staticmethod
     @abstractmethod
     def post_process_example(
-        example: dict, instruction: str, task_id: int, has_encoder: bool
+        example: dict,
+        instruction: str,
+        task_id: int,
+        has_encoder: bool,
+        dataset_split: str,
     ) -> dict:
         """Modifies the input column of a given example dictionary.
 
@@ -33,6 +37,7 @@ class BaseProcessor(ABC):
             task_id: A tag marking which dataset (from dataset_dicts) this example
                 comes from. Used for multi-task training.
             has_encoder: Whether the retrieved model has an encoder.
+            dataset_split: The split of the example, i.e. train/val/test.
         """
 
     def process_dataset_dict(
@@ -49,12 +54,16 @@ class BaseProcessor(ABC):
         """
         modified_dataset_dicts = []
         for task_id, dataset_dict in enumerate(dataset_dicts):
-            mapping_function = partial(
-                self.post_process_example,
-                instruction=instruction,
-                task_id=task_id,
-                has_encoder=self.has_encoder,
-            )
-            modified_dataset_dict = dataset_dict.map(mapping_function)
-            modified_dataset_dicts.append(modified_dataset_dict)
+            for dataset_split in list(dataset_dict.keys()):
+                mapping_function = partial(
+                    self.post_process_example,
+                    instruction=instruction,
+                    task_id=task_id,
+                    has_encoder=self.has_encoder,
+                    dataset_split=dataset_split,
+                )
+                dataset_dict[dataset_split] = dataset_dict[dataset_split].map(
+                    mapping_function
+                )
+            modified_dataset_dicts.append(dataset_dict)
         return modified_dataset_dicts
