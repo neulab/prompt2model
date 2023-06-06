@@ -3,7 +3,7 @@
 ## BaseTrainer
 
 The `BaseTrainer` is an abstract base class in the `prompt2model` library. It
-provides a common interface and defines the necessary methods for training
+provides a standard interface and defines the necessary methods for training
 models with a fixed set of hyperparameters.
 
 To create a custom trainer using the `BaseTrainer`, you need to subclass it and
@@ -24,8 +24,7 @@ refer to the unit tests in the
 ## GenerationModelTrainer
 
 The `GenerationModelTrainer` is a concrete implementation of the `BaseTrainer`
-class specifically designed for training generation models. It supports both
-encoder-decoder models (T5-type) and decoder-only models (GPT-type).
+class specifically designed for training generation models. It supports encoder-decoder (T5-type) and decoder-only (GPT-type) models.
 
 ## Usage
 
