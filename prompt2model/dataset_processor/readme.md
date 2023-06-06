@@ -14,7 +14,7 @@ example dictionary based on task-specific requirements.
 The `BaseProcessor` class can be subclassed to implement a custom dataset
 processing logic based on different task requirements or data formats.
 
-Refer to the unit tests in the [dataset_processor_test.py](../tests/dataset_processor_test.py) file for examples of
+Refer to the unit tests in the [dataset_processor_test.py](../../tests/dataset_processor_test.py) file for examples of
 how to use `BaseProcessor` and its subclasses.
 
 ## TextualizeProcessor
