@@ -1,25 +1,25 @@
-# Evaluator Usage
+# ModelEvaluator Usage
 
-## Evaluator
+## ModelEvaluator
 
-The `Evaluator`  provides a standard interface and defines the necessary
+The `ModelEvaluator`  provides a standard interface and defines the necessary
 methods for evaluating a model's performance on a given dataset.
 
-To use the `Evaluator`, you need to implement the following method:
+To use the `ModelEvaluator`, you need to implement the following method:
 
 - `evaluate_model()`: Evaluates a model on a test set and computes the specified
 metrics.
 
-The `Evaluator` class can be subclassed to implement custom evaluation logic
+The `ModelEvaluator` class can be subclassed to implement custom evaluation logic
 based on different metrics or evaluation criteria.
 
-To see an example of how to use `Evaluator` and its subclasses, you can refer
+To see an example of how to use `ModelEvaluator` and its subclasses, you can refer
 to the unit tests in the [model_evaluator_test.py](../tests/model_evaluator_test.py) file.
 
 ## Seq2SeqEvaluator
 
-The `Seq2SeqEvaluator` is a concrete implementation of the `Evaluator` interface
-that computes the `ChrF++`, `Exact Match`, and `Embedding Distance` metrics for
+The `Seq2SeqEvaluator` is a concrete implementation of the `ModelEvaluator` interface
+that computes the `ChrF++`, `Exact Match`, and `BERTScore` metrics for
 sequence-to-sequence generation models.
 
 ## Usage
@@ -50,13 +50,15 @@ predictions = [
 
 - Evaluate the model using the `evaluate_model()` method:
 
-```python dataset = ... # Prepare the dataset for evaluation gt_column =
+```python
+dataset = ... # Prepare the dataset for evaluation gt_column =
 "output_col" # Specify the column name for the ground truth metrics = [...] #
 (Optional) Specify the metrics to use encoder_model_name = "xlm-roberta-base" #
 (Optional) Specify the encoder model for metrics like BertScore
 
 metric_values = evaluator.evaluate_model( dataset, gt_column, predictions,
-metrics=metrics, encoder_model_name=encoder_model_name ) ```
+metrics=metrics, encoder_model_name=encoder_model_name )
+```
 
 The `evaluate_model()` method computes the specified metrics for the model's
 predictions on the ground truth dataset. The `gt_column` parameter sets the
