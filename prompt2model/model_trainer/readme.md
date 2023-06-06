@@ -20,11 +20,13 @@ To see an example of how to use `BaseTrainer` and its subclasses, you can
 refer to the unit tests in the
 [model_trainer_test.py](../../tests/model_trainer_test.py) file.
 
-
 ## GenerationModelTrainer
 
-The `GenerationModelTrainer` is a concrete implementation of the `BaseTrainer`
-class specifically designed for training generation models. It supports encoder-decoder (T5-type) and decoder-only (GPT-type) models.
+The `GenerationModelTrainer` is a concrete
+implementation of the `BaseTrainer`
+class specifically designed for training generation models.
+It supports encoder-decoder (T5-type) and
+decoder-only (GPT-type) models.
 
 ## Usage
 

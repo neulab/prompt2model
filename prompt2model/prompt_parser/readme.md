@@ -28,13 +28,13 @@ and demonstrations from the API response.
 
 - Import the necessary modules:
 
-"`python
+```python
 from prompt2model.prompt_parser import OpenAIInstructionParser, TaskType
 ```
 
 - Initialize an instance of the `OpenAIInstructionParser`:
 
-"`python
+```python
 prompt_spec = OpenAIInstructionParser(task_type=TaskType.<task_type>)
 ```
 
