@@ -1,5 +1,6 @@
 """A base class for dataset processor."""
 
+import logging
 from abc import ABC, abstractmethod
 from functools import partial
 
@@ -62,6 +63,10 @@ class BaseProcessor(ABC):
                     has_encoder=self.has_encoder,
                     dataset_split=dataset_split,
                 )
+                if self.has_encoder is False and dataset_split == "val":
+                    logging.warning(
+                        "Decoder-only model doesn't support evaluation during training"
+                    )
                 dataset_dict[dataset_split] = dataset_dict[dataset_split].map(
                     mapping_function
                 )
