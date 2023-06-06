@@ -2,27 +2,26 @@
 
 ## BaseProcessor
 
-The `BaseProcessor` is a base class for dataset processors. It provides a common
-interface and defines the necessary methods for post-processing datasets.
+The `BaseProcessor` is a foundational class for dataset processors, providing a
+common interface and defining essential methods for post-processing datasets.
 
-To create a dataset processor using the `BaseProcessor`, you need to implement
-the following method:
+To create a dataset processor using the `BaseProcessor`, you need to subclass it
+and implement the following method:
 
-- `post_process_example()`: Modifies the input column of a given example
-dictionary based on the task-specific requirements.
+- `post_process_example()`: This method modifies the input column of a given
+example dictionary based on the task-specific requirements.
 
 The `BaseProcessor` class can be subclassed to implement custom dataset
 processing logic based on different task requirements or data formats.
 
-To see an example of how to use `BaseProcessor` and its subclasses, you can
-refer to the unit tests in the
-[dataset_processor_test.py](../../tests/dataset_processor_test.py) file.
+Refer to the unit tests in the `dataset_processor_test.py` file for examples of
+how to use `BaseProcessor` and its subclasses.
 
 ## TextualizeProcessor
 
-The `TextualizeProcessor` is a dataset processor that converts datasets into a
-Text2Text fashion. It modifies the input column of each example in the dataset
-to include task-specific instructions and prefixes.
+The `TextualizeProcessor` is a dataset processor that transforms datasets into a
+Text2Text format. It modifies the input column of each example in the dataset to
+include task-specific instructions and prefixes.
 
 ## Usage
 
@@ -53,7 +52,7 @@ modified_dataset_dicts = processor.process_dataset_dict(instruction, dataset_dic
 The `process_dataset_dict()` method modifies the input column of each example in
 the dataset by adding task-specific instructions and prefixes. It returns a list
 of modified `DatasetDicts`, where all examples are converted into a text-to-text
-fashion.
+format.
 
 Feel free to adjust the code and configuration based on your specific
 requirements and the structure of your datasets.
