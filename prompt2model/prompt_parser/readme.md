@@ -8,7 +8,7 @@ abstract methods, `parse_from_prompt()` and `get_instruction()`, which its
 subclasses must implement.
 
 To see an example of how to use `PromptSpec` and its subclasses, you can refer
-to the unit tests in the [prompt_parser_test.py](../tests/prompt_parser_test.py)
+to the unit tests in the [prompt_parser_test.py](../../tests/prompt_parser_test.py)
 file.
 
 ## TaskType
@@ -28,18 +28,18 @@ and demonstrations from the API response.
 
 - Import the necessary modules:
 
-```python
+"`python
 from prompt2model.prompt_parser import OpenAIInstructionParser, TaskType
 ```
 
 - Initialize an instance of the `OpenAIInstructionParser`:
 
-```python
+"`python
 prompt_spec = OpenAIInstructionParser(task_type=TaskType.<task_type>)
 ```
 
 You can optionally pass the OpenAI API key and the maximum number of API calls
-as parameters. If you don’t pass in the OpenAI API key, please set the
+as parameters. If you don't pass in the OpenAI API key, please set the
 environment variable `OPENAI_API_KEY`:
 
 ```bash
@@ -63,7 +63,7 @@ instruction = prompt_spec.get_instruction
 demonstrations = prompt_spec.get_examples
 ```
 
-The `get_instruction` property returns the parsed instruction, and the
+The `get_instruction` property returns the parsed instruction and the
 `get_examples` property returns the parsed demonstrations.
 
 Please ensure you have valid OpenAI API credentials and adjust the unit tests
