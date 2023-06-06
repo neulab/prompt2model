@@ -35,17 +35,24 @@ parse the prompt.
 
 The Gradio interface consists of the following components:
 
-- A header displaying the title "Prompt2Model". - Task description and few-shot
-examples parsed from the prompt. - A chatbot interface for interacting with the
-model. - A textbox for user input. - Two buttons: "Submit" to submit the
+- A header displaying the title "Prompt2Model".
+- Task description and few-shot
+examples parsed from the prompt.
+- A chatbot interface for interacting with the
+model.
+- A textbox for user input.
+- Two buttons: "Submit" to submit the
 user input to the model and "Clear History" to reset the chat history.
 
 ## Functionality
 
 - The "Submit" button triggers the model prediction on the current user input
-and updates the chatbot interface and chat history. - The "Clear History" button
-resets the chatbot interface and chat history. - The chatbot interface displays
-the users and model conversation history. - The model's responses
+and updates the chatbot interface and chat history.
+- The "Clear History" button
+resets the chatbot interface and chat history.
+- The chatbot interface displays
+the users and model conversation history.
+- The model's responses
 are post-processed to convert Markdown to HTML for better readability.
 
 Please ensure you have installed the necessary dependencies (`gradio` and
