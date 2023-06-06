@@ -1,96 +1,49 @@
-# DatasetGnerator Usage
+# Gradio Interface Creation
 
-## DatasetGenerator
-
-The `DatasetGenerator` is an abstract class that serves as the base for
-generating datasets. It provides a common interface and defines the necessary
-methods for generating datasets from prompts.
-
-To create a dataset using the `DatasetGenerator`, you need to implement the
-following methods:
-
-- `generate_dataset_split()`: Generates a dataset for a specific split (train,
-validation, or test) based on a given prompt specification and the desired
-number of examples. - `generate_dataset_dict()`: Generates multiple datasets
-splits (train, validation, and test) at once based on a prompt specification and
-a dictionary specifying the number of examples for each split.
-
-The `DatasetGenerator` class can be subclassed to implement custom dataset
-generation logic based on different API services or approaches.
-
-To see an example of how to use `DatasetGenerator` and its subclasses, you can
-refer to the unit tests in the
-[dataset_generator_test.py](../../tests/dataset_generator_test.py) file.
-
-## DatasetSplit
-
-The `DatasetSplit` is an enumeration class that defines the different types of
-dataset splits, including `TRAIN`, `VALIDATION`, and `TEST`. It provides a
-convenient way to refer to different parts of the dataset during generation and
-analysis.
-
-You can use `DatasetSplit.TRAIN`, `DatasetSplit.VALIDATION`, and
-`DatasetSplit.TEST` to specify the desired dataset split when generating
-datasets using the `DatasetGenerator` or its concrete implementations.
-
-## OpenAIDatasetGenerator
-
-The `OpenAIDatasetGenerator` is a concrete implementation of the
-`DatasetGenerator` that leverages OpenAI's GPT-3.5 API to generate datasets. It
-enables the generation of datasets by providing a prompt specification and the
-desired number of examples per split.
+This module provides a function to automatically create a Gradio interface for
+interacting with a model.
 
 ## Usage
 
-- Import the necessary modules:
+The `create_gradio` function takes a `GenerationModelExecutor` and an
+`OpenAIInstructionParser` as an argument and returns a Gradio interface.
 
 ```python
-from prompt2model.dataset_generator import OpenAIDatasetGenerator, DatasetSplit
-from prompt2model.prompt_parser import OpenAIInstructionParser, TaskType
+from prompt2model.model_executor import GenerationModelExecutor
+from prompt2model.prompt_parser import OpenAIInstructionParser
+from prompt2model.gradio_interface import create_gradio
+model_executor = GenerationModelExecutor(...)
+prompt_parser = OpenAIInstructionParser(...)
+interface = create_gradio(model_executor, prompt_parser)
 ```
 
-- Initialize an instance of the `OpenAIDatasetGenerator` with your OpenAI API
-key:
+### Parameters
 
-```python
-api_key = "<your-api-key>"
-dataset_generator = OpenAIDatasetGenerator(api_key)
-```
+- `model_executor`: An instance of `GenerationModelExecutor` to expose via a
+Gradio interface. - `prompt_parser`: An instance of `OpenAIInstructionParser` to
+parse the prompt.
 
-- Use the `OpenAIInstructionParser` to parse the prompt and obtain the
-instruction and examples:
+### Return
 
-```python
-prompt_spec = OpenAIInstructionParser(task_type=TaskType.<task_type>)
-prompt = "<your-prompt>"
-prompt_spec.parse_from_prompt(prompt)
-```
+- A Gradio interface for interacting with the model.
 
-- Use the dataset generator to generate datasets:
+## Interface Components
 
-```python
-num_examples = 100
-split = DatasetSplit.TRAIN
-dataset = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
-```
+The Gradio interface consists of the following components:
 
-The `generate_dataset_split()` method generates a dataset for the specified
-split using the prompt specification and the desired number of examples.
+- A header displaying the title "Prompt2Model". - Task description and few-shot
+examples parsed from the prompt. - A chatbot interface for interacting with the
+model. - A textbox for user input. - Two buttons: "Submit" to submit the
+user input to the model and "Clear History" to reset the chat history.
 
-You can also use the `generate_dataset_dict()` method to generate multiple
-dataset splits (e.g., train, validation, and test) at once:
+## Functionality
 
-```python
-num_examples = {
-    DatasetSplit.TRAIN: 1000,
-    DatasetSplit.VALIDATION: 100,
-    DatasetSplit.TEST: 200
-}
-dataset_dict = dataset_generator.generate_dataset_dict(prompt_spec, num_examples)
-```
+- The "Submit" button triggers the model prediction on the current user input
+and updates the chatbot interface and chat history. - The "Clear History" button
+resets the chatbot interface and chat history. - The chatbot interface displays
+the users and model conversation history. - The model's responses
+are post-processed to convert Markdown to HTML for better readability.
 
-The `generate_dataset_dict()` method returns a `DatasetDict` object that
-contains the generated dataset splits.
-
-Please refer to the unit tests and examples provided by the
-`OpenAIDatasetGenerator` for detailed usage information.
+Please ensure you have installed the necessary dependencies (`gradio` and
+`mdtex2html`) and have a properly configured `GenerationModelExecutor` and
+`OpenAIInstructionParser`.

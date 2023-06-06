@@ -88,7 +88,7 @@ and BERTScore.
 ### Metrics Output
 
 The `MockEvaluator` class evaluates and writes the metrics dictionary to a JSON
-file specified by the `metrics_output_path`. 
+file specified by the `metrics_output_path`.
 
 ### Interface Creation
 
