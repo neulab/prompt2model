@@ -2,8 +2,7 @@
 
 ## Evaluator
 
-The `Evaluator` is an abstract class that serves as an interface for automatic
-model evaluation. It provides a common interface and defines the necessary
+The `Evaluator`  provides a standard interface and defines the necessary
 methods for evaluating a model's performance on a given dataset.
 
 To use the `Evaluator`, you need to implement the following method:
@@ -14,8 +13,8 @@ metrics.
 The `Evaluator` class can be subclassed to implement custom evaluation logic
 based on different metrics or evaluation criteria.
 
-To see an example of how to use `PromptSpec` and its subclasses, you can refer
-to the unit tests in the [evaluator_test.py](../tests/evaluator_test.py) file.
+To see an example of how to use `Evaluator` and its subclasses, you can refer
+to the unit tests in the [model_evaluator_test.py](../tests/model_evaluator_test.py) file.
 
 ## Seq2SeqEvaluator
 
@@ -60,9 +59,9 @@ metric_values = evaluator.evaluate_model( dataset, gt_column, predictions,
 metrics=metrics, encoder_model_name=encoder_model_name ) ```
 
 The `evaluate_model()` method computes the specified metrics for the model's
-predictions on the ground truth dataset. The `gt_column` parameter specifies the
+predictions on the ground truth dataset. The `gt_column` parameter sets the
 column name in the dataset to use as the ground truth. The `metrics` parameter
-(optional) allows you to specify a list of metrics to use for evaluation. The
+(optional) allows you to specify a list of metrics for evaluation. The
 `encoder_model_name` parameter (optional) is used for metrics like BertScore
 that require an encoder model.
 
