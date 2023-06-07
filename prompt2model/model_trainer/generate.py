@@ -95,18 +95,12 @@ class GenerationModelTrainer(BaseTrainer):
         output_encodings = self.tokenizer.batch_encode_plus(
             outputs, truncation=True, max_length=self.model_max_length, padding=True
         )
-        # If the model has an encoder, calculate the length of the labels and
-        # set the ids of the original input's condition to -100
-        if self.has_encoder:
-            labels = output_encodings["input_ids"]
-            for i, label in enumerate(labels):
-                labels[i] = [-100 for _ in label]
-        else:
-            labels = input_encodings["input_ids"]
         preprocessed_dict = {
             "input_ids": input_encodings["input_ids"],
             "attention_mask": input_encodings["attention_mask"],
-            "labels": labels,
+            "labels": output_encodings["input_ids"]
+            if self.has_encoder
+            else input_encodings["input_ids"],
         }
         return datasets.Dataset.from_dict(preprocessed_dict)
 
