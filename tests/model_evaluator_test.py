@@ -23,7 +23,6 @@ DATASET = Dataset.from_dict({"output_col": GROUND_TRUTH})
 def test_seq2seq_evaluator_with_default_metrics():
     """Test the Seq2SeqEvaluator with chrf, exact_match and bertscore metrics."""
     evaluator = Seq2SeqEvaluator()
-    # Evaluate the model
     metric_values = evaluator.evaluate_model(
         DATASET, "output_col", PREDICTIONS, encoder_model_name="xlm-roberta-base"
     )
@@ -35,10 +34,9 @@ def test_seq2seq_evaluator_with_default_metrics():
     assert len(metric_values["bert_score"]) == 2
 
 
-def test_seq2seq_evaluator_with_slected_metrics():
+def test_seq2seq_evaluator_with_selected_metrics():
     """Test the Seq2SeqEvaluator with chrf, exact_match metrics."""
     evaluator = Seq2SeqEvaluator()
-    # Evaluate the model
     metrics = [
         evaluate.load("chrf"),
         evaluate.load("exact_match"),
@@ -54,6 +52,7 @@ def test_seq2seq_evaluator_with_slected_metrics():
     # metric_values = {'chr_f++': 78.30, 'exact_match': 0.5}
     assert round(metric_values["chr_f++"], 2) == 78.30
     assert round(metric_values["exact_match"], 2) == 0.50
+    assert "bert_score" not in metric_values
 
 
 def test_seq2seq_evaluator_with_unsupported_metrics():
