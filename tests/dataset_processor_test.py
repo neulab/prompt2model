@@ -1,5 +1,7 @@
 """Testing TextualizeProcessor."""
 
+import logging
+
 import datasets
 import pytest
 
@@ -131,8 +133,9 @@ def test_dataset_processor_t5_style():
             )
 
 
-def test_dataset_processor_decoder_only_style():
+def test_dataset_processor_decoder_only_style(caplog):
     """Test the `process_dataset_dict` function of a GPT-type `TextualizeProcessor`."""
+    caplog.set_level(logging.WARNING)
     gpt_processor = TextualizeProcessor(has_encoder=False)
     gpt_modified_dataset_dicts = gpt_processor.process_dataset_dict(
         INSTRUCTION, DATASET_DICTS
@@ -197,6 +200,9 @@ def test_dataset_processor_decoder_only_style():
                 dataset_dict[dataset_split]["model_input"]
                 == gpt_expected_dataset_dicts[index][dataset_split]["model_input"]
             )
+    # Assert that two warning messages were logged
+    assert len(caplog.records) == 1
+    assert all(record.levelname == "WARNING" for record in caplog.records)
 
 
 def test_unexpected_dataset_split():

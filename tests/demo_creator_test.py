@@ -34,7 +34,7 @@ def test_create_gradio_with_gpt2():
     interface_gpt2 = create_gradio(gpt2_executor, gpt2_prompt_parser)
 
     # Perform assertions.
-    assert isinstance(interface_gpt2, gr.Interface)
+    assert isinstance(interface_gpt2, gr.Blocks)
 
 
 def test_create_gradio_with_t5():
@@ -59,4 +59,4 @@ def test_create_gradio_with_t5():
     interface_t5 = create_gradio(t5_executor, t5_prompt_parser)
 
     # Perform assertions.
-    assert isinstance(interface_t5, gr.Interface)
+    assert isinstance(interface_t5, gr.Blocks)
