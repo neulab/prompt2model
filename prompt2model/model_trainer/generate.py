@@ -1,5 +1,8 @@
 """A trainer class to train generation models."""
 
+from __future__ import annotations  # noqa FI58
+
+import logging
 from typing import Any
 
 import datasets
@@ -14,7 +17,12 @@ from prompt2model.utils import seed_generator
 class GenerationModelTrainer(BaseTrainer):
     """Trainer for T5 type (encoder-decoder) model and GPT type (deocder-only) model."""
 
-    def __init__(self, pretrained_model_name: str, has_encoder: bool):
+    def __init__(
+        self,
+        pretrained_model_name: str,
+        has_encoder: bool,
+        model_max_length: int | None = None,
+    ):
         """Initializes a new instance of HuggingFace pre-trained model.
 
         Args:
@@ -23,6 +31,9 @@ class GenerationModelTrainer(BaseTrainer):
             has_encoder: Whether the model has an encoder.
                 If True, it's a T5-type model (encoder-decoder transformer).
                 If fasle, it's a GPT-type model (atuoregressive transformer).
+            model_max_length: model_max_length allows model to handle
+                longer sequences, and customize sequence lengths as required
+                for your specific use case.
         """
         self.has_encoder = has_encoder
         self.training_args = TrainingArguments(
@@ -37,10 +48,17 @@ class GenerationModelTrainer(BaseTrainer):
             self.model = transformers.T5ForConditionalGeneration.from_pretrained(
                 pretrained_model_name
             )
-            self.tokenizer = transformers.T5Tokenizer.from_pretrained(
-                pretrained_model_name
-            )
+            if model_max_length:
+                self.tokenizer = transformers.T5Tokenizer.from_pretrained(
+                    pretrained_model_name, model_max_length=model_max_length
+                )
+            else:
+                self.tokenizer = transformers.T5Tokenizer.from_pretrained(
+                    pretrained_model_name
+                )
         else:
+            if model_max_length is not None:
+                logging.warning("model_max_length is only supported for T5 models")
             self.model = transformers.AutoModelForCausalLM.from_pretrained(
                 pretrained_model_name
             )
@@ -117,15 +135,12 @@ class GenerationModelTrainer(BaseTrainer):
         # Concatenate and preprocess the training datasets
         training_dataset = concatenate_datasets(training_datasets)
         shuffled_dataset = training_dataset.shuffle(seed=seed_generator.get_seed())
-        preprocessed_dataset = self.preprocess_dataset(
-            shuffled_dataset
-        ).train_test_split(test_size=0.2, seed=seed_generator.get_seed())
+        preprocessed_dataset = self.preprocess_dataset(shuffled_dataset)
         # Create the trainer
         trainer = Trainer(
             model=self.model,
             args=self.training_args,
-            train_dataset=preprocessed_dataset["train"],
-            eval_dataset=preprocessed_dataset["test"],
+            train_dataset=preprocessed_dataset,
             data_collator=transformers.DataCollatorForSeq2Seq(tokenizer=self.tokenizer)
             if self.has_encoder
             else transformers.DataCollatorForLanguageModeling(
