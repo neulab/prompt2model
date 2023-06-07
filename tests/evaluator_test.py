@@ -2,7 +2,7 @@
 
 from datasets import Dataset
 
-from prompt2model.evaluator import Seq2SeqEvaluator
+from prompt2model.model_evaluator import Seq2SeqEvaluator
 from prompt2model.model_executor import ModelOutput
 
 # Define the ground truth dataset
