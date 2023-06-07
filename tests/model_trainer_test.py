@@ -11,33 +11,8 @@ from prompt2model.model_trainer.generate import GenerationModelTrainer
 os.environ["WANDB_MODE"] = "dryrun"
 
 
-def test_t5_trainer_with_model_max_length():
-    """Train a encoder-decoder model with a specified model_max_length of 512 ."""
-    # Test encoder-decoder GenerationModelTrainer implementation
-    with tempfile.TemporaryDirectory() as cache_dir:
-        trainer = GenerationModelTrainer(
-            "t5-small", has_encoder=True, model_max_length=512
-        )
-        training_datasets = [
-            datasets.Dataset.from_dict(
-                {
-                    "model_input": ["translate apple to french"] * 2,
-                    "output_col": ["pomme"] * 2,
-                }
-            ),
-        ]
-
-        trained_model, trained_tokenizer = trainer.train_model(
-            training_datasets,
-            {"output_dir": cache_dir, "num_train_epochs": 1, "batch_size": 1},
-        )
-
-        assert isinstance(trained_model, transformers.T5ForConditionalGeneration)
-        assert isinstance(trained_tokenizer, transformers.T5Tokenizer)
-
-
-def test_t5_trainer_without_model_max_length():
-    """Train a encoder-decoder model without a specified model_max_length ."""
+def test_t5_trainer():
+    """Test the `GenerationModelTrainer` class to train a encoder-decoder model."""
     # Test encoder-decoder GenerationModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
         trainer = GenerationModelTrainer("t5-small", has_encoder=True)

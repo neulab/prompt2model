@@ -1,7 +1,5 @@
 """An base class for trainers."""
 
-from __future__ import annotations  # noqa FI58
-
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -27,8 +25,7 @@ class BaseTrainer(ABC):
     @abstractmethod
     def train_model(
         self,
-        hyperparameter_choices: dict[str, Any],
         training_datasets: list[datasets.Dataset],
-        validation_datasets: list[datasets.Dataset] | None = None,
+        hyperparameter_choices: dict[str, Any],
     ) -> tuple[transformers.PreTrainedModel, transformers.PreTrainedTokenizer]:
         """Train a model with the given hyperparameters and return it."""
