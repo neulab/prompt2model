@@ -31,9 +31,8 @@ class GenerationModelTrainer(BaseTrainer):
             has_encoder: Whether the model has an encoder.
                 If True, it's a T5-type model (encoder-decoder transformer).
                 If fasle, it's a GPT-type model (atuoregressive transformer).
-            model_max_length: model_max_length allows model to handle
-                longer sequences, and customize sequence lengths as required
-                for your specific use case.
+            model_max_length: this sets the maximum sentence length allowed by an
+            encoder-decoder model. This can be customized for your specific use case.
         """
         self.has_encoder = has_encoder
         self.training_args = TrainingArguments(
@@ -58,7 +57,9 @@ class GenerationModelTrainer(BaseTrainer):
                 )
         else:
             if model_max_length is not None:
-                logging.warning("model_max_length is only supported for T5 models")
+                logging.warning(
+                    "model_max_length is only supported for encoder-decoder models"
+                )
             self.model = transformers.AutoModelForCausalLM.from_pretrained(
                 pretrained_model_name
             )
