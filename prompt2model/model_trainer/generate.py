@@ -101,13 +101,13 @@ class GenerationModelTrainer(BaseTrainer):
         input_encodings = self.tokenizer(inputs, truncation=False, padding=True)
         output_encodings = self.tokenizer(outputs, truncation=False, padding=True)
         # Create attention masks
-        attention_masks = (
+        attention_mask = (
             torch.tensor(input_encodings["input_ids"]) != self.model.config.pad_token_id
         ).tolist()
 
         preprocessed_dict = {
             "input_ids": input_encodings["input_ids"],
-            "attention_mask": attention_masks,
+            "attention_mask": attention_mask,
             "labels": output_encodings["input_ids"]
             if self.has_encoder
             else input_encodings["input_ids"],
