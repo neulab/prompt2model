@@ -73,12 +73,9 @@ class GenerationModelTrainer(BaseTrainer):
             )
 
         if self.tokenizer.pad_token is None:
-            self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
-
+            self.tokenizer.pad_token = self.tokenizer.eos_token
         if self.model.config.pad_token_id is None:
-            pad_id = len(self.tokenizer)
-            self.model.config.pad_token_id = pad_id
-            self.model.resize_token_embeddings(pad_id)
+            self.model.config.pad_token_id = self.tokenizer.eos_token_id
             # Save the pad_id to the model's config instead of the function
 
     def preprocess_dataset(
