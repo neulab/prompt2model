@@ -117,7 +117,7 @@ class GenerationModelTrainer(BaseTrainer):
             hyperparameter_choices: A dictionary of hyperparameter choices.
             training_datasets: Training datasets with `input_col` and `output_col`.
             validation_datasets: Validation datasets during training. If not provided,
-                15% of training data will be splited from training_datasets to validate.
+                15% of training data will be spilt from training_datasets to validate.
 
         Returns:
             A trained HuggingFace model and tokenizer.
