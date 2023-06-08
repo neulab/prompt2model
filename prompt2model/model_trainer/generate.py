@@ -37,9 +37,8 @@ class GenerationModelTrainer(BaseTrainer):
             has_encoder: Whether the model has an encoder.
                 If True, it's a T5-type model (encoder-decoder transformer).
                 If fasle, it's a GPT-type model (atuoregressive transformer).
-            model_max_length: model_max_length allows model to handle
-                longer sequences, and customize sequence lengths as required
-                for your specific use case.
+            model_max_length: this sets the maximum sentence length allowed by an
+            encoder-decoder model. This can be customized for your specific use case.
         """
         self.has_encoder = has_encoder
         self.model_max_length = model_max_length
@@ -57,7 +56,9 @@ class GenerationModelTrainer(BaseTrainer):
                 )
         else:
             if model_max_length is not None:
-                logging.warning("model_max_length is only supported for T5 models")
+                logging.warning(
+                    "model_max_length is only supported for encoder-decoder models"
+                )
             self.model = transformers.AutoModelForCausalLM.from_pretrained(
                 pretrained_model_name
             )
@@ -116,7 +117,7 @@ class GenerationModelTrainer(BaseTrainer):
             hyperparameter_choices: A dictionary of hyperparameter choices.
             training_datasets: Training datasets with `input_col` and `output_col`.
             validation_datasets: Validation datasets during training. If not provided,
-                15% of training data will be splited from training_datasets to validate.
+                15% of training data will be spilt from training_datasets to validate.
 
         Returns:
             A trained HuggingFace model and tokenizer.
@@ -135,6 +136,8 @@ class GenerationModelTrainer(BaseTrainer):
             ground_truth = np.where(
                 ground_truth != -100, ground_truth, self.tokenizer.pad_token_id
             )
+            # -100 is a special value used in PyTorch and Hugging Face Transformers
+            # to indicate tokens that should be ignored in the loss computation.
             ground_strings = self.tokenizer.batch_decode(
                 ground_truth, skip_special_tokens=True
             )
