@@ -47,7 +47,7 @@ def test_t5_trainer_without_model_max_length():
                     "model_input": ["translate apple to french"] * 2,
                     "output_col": ["pomme"] * 2,
                 }
-            ),
+            )
         ]
 
         trained_model, trained_tokenizer = trainer.train_model(
