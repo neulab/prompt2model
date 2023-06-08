@@ -144,6 +144,8 @@ class GenerationModelTrainer(BaseTrainer):
             ground_truth = np.where(
                 ground_truth != -100, ground_truth, self.tokenizer.pad_token_id
             )
+            # -100 is a special value used in PyTorch and Hugging Face Transformers
+            # to indicate tokens that should be ignored in the loss computation.
             ground_strings = self.tokenizer.batch_decode(
                 ground_truth, skip_special_tokens=True
             )
