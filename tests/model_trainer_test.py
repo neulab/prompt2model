@@ -47,14 +47,15 @@ def test_t5_trainer_without_model_max_length():
                     "model_input": ["translate apple to french"] * 2,
                     "output_col": ["pomme"] * 2,
                 }
-            ),
+            )
         ]
 
         trained_model, trained_tokenizer = trainer.train_model(
             {"output_dir": cache_dir, "num_train_epochs": 1, "batch_size": 1},
             training_datasets,
         )
-
+        trained_model.save_pretrained(cache_dir)
+        trained_tokenizer.save_pretrained(cache_dir)
         assert isinstance(trained_model, transformers.T5ForConditionalGeneration)
         assert isinstance(trained_tokenizer, transformers.T5Tokenizer)
 
@@ -89,9 +90,9 @@ def test_gpt_trainer_without_validation_datasets():
             {"output_dir": cache_dir, "num_train_epochs": 1, "batch_size": 1},
             training_datasets,
         )
-
+        trained_model.save_pretrained(cache_dir)
+        trained_tokenizer.save_pretrained(cache_dir)
         assert isinstance(trained_model, transformers.GPT2LMHeadModel)
-
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
 
 
@@ -139,5 +140,4 @@ def test_gpt_trainer_with_validation_datasets():
         )
 
         assert isinstance(trained_model, transformers.GPT2LMHeadModel)
-
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
