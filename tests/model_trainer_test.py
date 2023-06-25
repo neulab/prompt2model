@@ -5,8 +5,9 @@ import tempfile
 from unittest.mock import patch
 
 import datasets
-import transformers
 import pytest
+import transformers
+
 from prompt2model.model_trainer.generate import GenerationModelTrainer
 
 os.environ["WANDB_MODE"] = "dryrun"

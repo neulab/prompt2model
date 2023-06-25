@@ -144,7 +144,6 @@ class GenerationModelTrainer(BaseTrainer):
             "labels": output_encodings["input_ids"]
             if self.has_encoder
             else input_encodings["input_ids"],
-            "gold_label": outputs,
         }
         return datasets.Dataset.from_dict(preprocessed_dict)
 
