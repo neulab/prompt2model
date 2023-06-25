@@ -225,7 +225,14 @@ class GenerationModelTrainer(BaseTrainer):
                 )
                 train_dataset = self.tokenize_dataset(concatenated_training_dataset)
                 val_dataset = None
+                evaluate_after_epoch = False
             else:
+                logging.warn(
+                    (
+                        "The validation split for encoder-decoder model is missed."
+                        + " The training dataset will be split to evaluate the model."
+                    )
+                )
                 splited_dataset = concatenated_training_dataset.train_test_split(
                     test_size=0.15, seed=seed_generator.get_seed()
                 )

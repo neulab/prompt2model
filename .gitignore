@@ -8,3 +8,5 @@ flagged
 wandb
 logs
 temp
+tests/logs
+tests/wandb
