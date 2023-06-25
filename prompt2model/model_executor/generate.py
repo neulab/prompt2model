@@ -45,9 +45,10 @@ class GenerationModelExecutor(ModelExecutor):
 
             input_ids = encoded_inputs["input_ids"]
             attention_mask = encoded_inputs["attention_mask"]
-
+            device = self.model.device
             output = self.model.generate(
-                input_ids=input_ids, attention_mask=attention_mask
+                input_ids=input_ids.to(device),
+                attention_mask=attention_mask.to(device),
             )
 
             for i, example in enumerate(batch):
