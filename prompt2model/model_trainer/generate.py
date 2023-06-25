@@ -4,6 +4,8 @@ from __future__ import annotations  # noqa FI58
 
 import logging
 import os
+import tempfile
+from pathlib import Path
 from typing import Any
 
 import datasets
@@ -47,8 +49,17 @@ class RealEvaluation(TrainerCallback):
             kwargs: Unused.
         """
         logging.info("Coduct real evaluation on each epoch's ending.")
+        with tempfile.TemporaryDirectory() as cache_dir:
+            # Save the original model's weights to a file
+            temp_model_location = Path(cache_dir) / "temp_model"
+            self.trainer.model.save_pretrained(temp_model_location)
+            # Load the weights into a new model
+            cpu_model = type(self.trainer.model).from_pretrained(temp_model_location)
+            # Move the model to CPU
+            cpu_model = cpu_model.to("cpu")
+
         model_executor = GenerationModelExecutor(
-            self.trainer.model,
+            cpu_model,
             self.tokenizer,
             self.val_dataset,
             "model_input",
