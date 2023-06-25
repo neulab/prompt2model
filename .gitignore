@@ -6,3 +6,5 @@ prompt2model.egg-info
 *.pyc
 flagged
 wandb
+logs
+temp
