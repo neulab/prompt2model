@@ -69,8 +69,8 @@ def test_t5_trainer_without_model_max_length():
                 training_datasets,
             )
             # Check if logging.info was called six times
-            # Eech epoch will log 2 times, in `on_epoch_end` and `evaluate_model`
-            assert mock_info.call_count == 2 * 3
+            # Eech epoch will log 3 times, in `on_epoch_end` and `evaluate_model`
+            assert mock_info.call_count == 3 * 3
             # Check if logging.warning was called once
             assert mock_warning.call_count == 1
 
@@ -119,8 +119,8 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
             )
 
             # Check if logging.info was called three times
-            # Eech epoch will log 2 times, in `on_epoch_end` and `evaluate_model`
-            assert mock_info.call_count == 6
+            # Eech epoch will log 3 times, in `on_epoch_end` and `evaluate_model`
+            assert mock_info.call_count == 3 * 3
 
             # Check if logging.warning was called once
             assert mock_warning.call_count == 1
@@ -226,8 +226,8 @@ def test_gpt_trainer_with_validation_datasets():
                 validation_datasets,
             )
             # Check if logging.info was called four times
-            # Eech epoch will log 2 times, in `on_epoch_end` and `evaluate_model`
-            assert mock_info.call_count == 4
+            # Eech epoch will log 3 times, in `on_epoch_end` and `evaluate_model`
+            assert mock_info.call_count == 3 * 2
             # logging.warning wasn't called.
             assert mock_warning.call_count == 0
 
