@@ -54,7 +54,7 @@ class RealEvaluation(TrainerCallback):
             cpu_model = cpu_model.to("cpu")
 
         model_executor = GenerationModelExecutor(
-            cpu_model,
+            self.trainer.model,
             self.tokenizer,
             self.val_dataset,
             "model_input",
@@ -68,7 +68,7 @@ class RealEvaluation(TrainerCallback):
             model_outputs,
             encoder_model_name="xlm-roberta-base",
         )
-        print(metric_values)
+        logging.info(metric_values)
 
 
 class GenerationModelTrainer(BaseTrainer):
