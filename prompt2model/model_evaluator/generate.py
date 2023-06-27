@@ -8,12 +8,12 @@ from typing import Any
 import datasets
 import evaluate
 
-from prompt2model.model_evaluator.base import Evaluator
+from prompt2model.model_evaluator.base import ModelEvaluator
 from prompt2model.model_executor import ModelOutput
 from prompt2model.prompt_parser import PromptSpec
 
 
-class Seq2SeqEvaluator(Evaluator):
+class Seq2SeqEvaluator(ModelEvaluator):
     """An evaluator computing `ChrF++`, `Exact Match` and `Embedding Distance`."""
 
     def evaluate_model(
