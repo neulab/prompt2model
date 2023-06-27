@@ -90,10 +90,17 @@ Agent: For most cakes, the oven should be preheated to 350°F (177°C).""",
         },
     ),
     (
-        "You are given some Japanese sentences. Translate it into English. For example, Japanese: その日、人類は思い出した。ヤツらに支配されていた恐怖を鳥籠の中に囚われていた屈辱を English: On that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage.",  # noqa: E501
+        "I am learning Japanese. Please translate some Japanese sentences to English. For example, Japanese: その日、人類は思い出した。ヤツらに支配されていた恐怖を鳥籠の中に囚われていた屈辱を English: On that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage.",  # noqa: E501
         {
-            "Instruction": "You are given some Japanese sentences. Translate it into English.",  # noqa: E501
+            "Instruction": "I am learning Japanese. Please translate some Japanese sentences to English.",  # noqa: E501
             "Demonstrations": "Japanese: その日、人類は思い出した。ヤツらに支配されていた恐怖を鳥籠の中に囚われていた屈辱を English: On that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage.",  # noqa: E501
+        },
+    ),
+    (
+        "我正在学习计算机网络空间安全这门课程，我希望你能帮我解释一些概念。比如 IP 分片污染攻击的基本原理：IP 分片是一种位于网络层的机制，其主要目的是解决 IP 分组在不同最大传输单元（MTU）网络中的传输问题。然而，在某些情况下，网络层的 IP 分片机制可能会被攻击者利用来破坏和污染原始的网络数据流。如果攻击者能够被动地监视，或者主动触发源主机和目标主机之间的IP分片，那么攻击者就有可能伪装成源主机，制造恶意的 IP 分片，并将其注入源主机和目标主机之间的数据流中，从而污染原始流量，对目标主机进行攻击。DNS请求洪水攻击：DNS请求洪水攻击是一种攻击手段，其中黑客通过控制僵尸网络向DNS服务器发送大量不存在的域名解析请求，最终导致服务器因处理大量DNS请求而超载，无法继续响应正常用户的DNS请求，从而实现攻击目标。在这种攻击中，攻击源可能是虚假的，也可能是真实的；攻击目标可能是DNS授权服务器，也可能是DNS缓存服务器。因此，针对不同类型的攻击源，需要采取不同的防御策略。",  # noqa: E501
+        {
+            "Instruction": "我正在学习计算机网络空间安全这门课程，我希望你能帮我解释一些概念。",  # noqa: E501
+            "Demonstrations": "IP 分片污染攻击的基本原理：IP 分片是一种位于网络层的机制，其主要目的是解决 IP 分组在不同最大传输单元（MTU）网络中的传输问题。然而，在某些情况下，网络层的 IP 分片机制可能会被攻击者利用来破坏和污染原始的网络数据流。如果攻击者能够被动地监视，或者主动触发源主机和目标主机之间的IP分片，那么攻击者就有可能伪装成源主机，制造恶意的 IP 分片，并将其注入源主机和目标主机之间的数据流中，从而污染原始流量，对目标主机进行攻击。DNS请求洪水攻击：DNS请求洪水攻击是一种攻击手段，其中黑客通过控制僵尸网络向DNS服务器发送大量不存在的域名解析请求，最终导致服务器因处理大量DNS请求而超载，无法继续响应正常用户的DNS请求，从而实现攻击目标。在这种攻击中，攻击源可能是虚假的，也可能是真实的；攻击目标可能是DNS授权服务器，也可能是DNS缓存服务器。因此，针对不同类型的攻击源，需要采取不同的防御策略。",  # noqa: E501
         },
     ),
 ]
