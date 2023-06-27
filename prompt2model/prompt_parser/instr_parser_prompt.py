@@ -5,17 +5,19 @@ from __future__ import annotations  # noqa FI58
 import json
 
 METAPROMPT_INSTRUCTION = (
-    '"Prompts" are a description of a task provided to an AI language model to guide'
-    " its performance. Prompts typically consist of two components: a task"
-    ' "instruction" and, optionally, a few "demonstrations" (examples to illustrate'
-    " the task). I want to segment prompts into these two components. For each prompt,"
-    " respond with a JSON dictionary containing two fields: the instruction (with JSON"
-    ' key "Instruction") and the demonstrations (with JSON key "Demonstrations"). If no'
-    ' demonstrations are provided, return "N/A" for the demonstrations field. When'
-    " demonstrations are provided, only include examples where the full input-output"
-    " pair is given; ignore partial examples written with the intent of being"
-    " completed by the AI language model. Otherwise, match the formatting, word"
-    " selection, and punctuation used in the original prompt."
+    "Prompts are task descriptions given to an AI language"
+    + " model to guide its responses. They usually consist of"
+    + " an 'instruction' detailing the task and, optionally, a few"
+    + " 'demonstrations' that serve as examples of the task. I"
+    + " want to break down prompts into these two components."
+    + "For each prompt, the response should be a JSON dictionary"
+    + " with two fields: the 'Instruction' and the 'Demonstrations'."
+    + " If there are no demonstrations, return 'N/A' for the demonstrations"
+    + " field. When demonstrations are available, include only those"
+    + " examples that provide a complete input-output pair, and ignore"
+    + " those that are incomplete and intended to be finished by the AI."
+    + " The formatting, word choice, and punctuation should match that"
+    + " of the original prompt."
 )
 
 METAPROMPT_EXAMPLES = [
@@ -87,6 +89,13 @@ Agent: For most cakes, the oven should be preheated to 350°F (177°C).""",
             "Demonstrations": "N/A",
         },
     ),
+    (
+        "You are given some Japanese sentences. Translate it into English. For example, Japanese: その日、人類は思い出した。ヤツらに支配されていた恐怖を鳥籠の中に囚われていた屈辱を English: On that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage.",  # noqa: E501
+        {
+            "Instruction": "You are given some Japanese sentences. Translate it into English.",  # noqa: E501
+            "Demonstrations": "Japanese: その日、人類は思い出した。ヤツらに支配されていた恐怖を鳥籠の中に囚われていた屈辱を English: On that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage.",  # noqa: E501
+        },
+    ),
 ]
 
 
@@ -109,7 +118,7 @@ def construct_single_demonstration(
     input_part = f'''Prompt: """\n{user_prompt}\n"""\n\nParsed Outputs:\n'''
     if input_only:
         return input_part
-    output_part = json.dumps(parse_dict)
+    output_part = json.dumps(parse_dict, ensure_ascii=False)
     return input_part + output_part
 
 
