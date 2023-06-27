@@ -29,19 +29,32 @@ pip install .
 Before using `prompt2model`, there are a
 few configuration steps you need to complete:
 
-1. Sign up on the OpenAI website and obtain an
+- Sign up on the OpenAI website and obtain an
 OpenAI API key.
 
-2. Provide OpenAI API key in the
+- Provide OpenAI API key in the
  initialization function of the
-`DatasetGenerator` and `OpenAIInstructionParser`
- classes. Alternatively, you can set
- the environment variable
-`OPENAI_API_KEY` to your API key by running
- the following command in your terminal:
+   `DatasetGenerator` and `OpenAIInstructionParser`
+  classes.
+  
+- Alternatively, you can set
+  the environment variable
+   `OPENAI_API_KEY` to your API key by running
+  the following command in your terminal:
 
 ```bash
 export OPENAI_API_KEY=<your key>
+```
+
+- After setting the environment
+ Variable `OPENAI_API_KEY`, just
+  reference  load it in your Python:
+
+```python
+import os
+import openai
+
+openai.api_key = os.environ["OPENAI_API_KEY"]
 ```
 
 ## Components
