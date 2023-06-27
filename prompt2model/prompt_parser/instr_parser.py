@@ -38,7 +38,7 @@ class OpenAIInstructionParser(PromptSpec):
         self.instruction: str | None = None
         self.examples: str | None = None
         self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
-        assert self.api_key is not None, (
+        assert self.api_key is not None and self.api_key != "", (
             "API key must be provided"
             + " or set the environment variable with `export OPENAI_API_KEY=<your key>`"
         )

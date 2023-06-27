@@ -113,7 +113,7 @@ def test_encode_text(mocked_generate_example):
     Args:
         mocked_generate_example: The function represents the @patch function.
     """
-    api_key = None
+    api_key = "12345678901234567890123456789012"
     unlimited_dataset_generator = OpenAIDatasetGenerator(api_key)
     check_generate_dataset_dict(unlimited_dataset_generator)
     check_generate_dataset(unlimited_dataset_generator)
@@ -137,7 +137,7 @@ def test_wrong_key_example(mocked_generate_example):
     Args:
         mocked_generate_example: The function represents the @patch function.
     """
-    api_key = None
+    api_key = "12345678901234567890123456789012"
     # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
     dataset_generator = OpenAIDatasetGenerator(api_key, 3)
     prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
@@ -158,7 +158,7 @@ def test_invalid_json_response(mocked_generate_example):
     Args:
         mocked_generate_example: The function represents the @patch function.
     """
-    api_key = None
+    api_key = "12345678901234567890123456789012"
     # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
     dataset_generator = OpenAIDatasetGenerator(api_key, 3)
     prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
@@ -179,7 +179,7 @@ def test_unexpected_examples_of_GPT(mocked_generate_example):
     Args:
         mocked_generate_example: The function represents the @patch function.
     """
-    api_key = None
+    api_key = "12345678901234567890123456789012"
     # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
     with pytest.raises(UNKNOWN_GPT3_EXCEPTION):
         dataset_generator = OpenAIDatasetGenerator(api_key, 3)
@@ -188,3 +188,22 @@ def test_unexpected_examples_of_GPT(mocked_generate_example):
         split = DatasetSplit.TEST
         _ = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
     assert mocked_generate_example.call_count == 1
+
+
+def test_key_init_text():
+    """Test openai key initialization."""
+    api_key = None
+    os.environ["OPENAI_API_KEY"] = ""
+    with pytest.raises(AssertionError) as exc_info:
+        _ = OpenAIDatasetGenerator()
+        assert str(exc_info.value) == (
+            "API key must be provided or set the environment variable"
+            + " with `export OPENAI_API_KEY=<your key>`"
+        )
+    os.environ["OPENAI_API_KEY"] = "12345678901234567890123456789012"
+    environment_key_generator = OpenAIDatasetGenerator()
+    assert environment_key_generator.api_key == os.environ["OPENAI_API_KEY"] is not None
+    os.environ["OPENAI_API_KEY"] = ""
+    api_key = "qwertwetyriutytwreytuyrgtwetrueytttr"
+    explicit_api_key_genertor = OpenAIDatasetGenerator(api_key)
+    assert explicit_api_key_genertor.api_key == api_key and api_key is not None

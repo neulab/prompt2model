@@ -30,7 +30,7 @@ class ChatGPTAgent:
                      the environment variable with `export OPENAI_API_KEY=<your key>`.
         """
         openai.api_key = api_key if api_key else os.environ["OPENAI_API_KEY"]
-        assert openai.api_key is not None, (
+        assert openai.api_key is not None and openai.api_key != "", (
             "API key must be provided"
             + " or set the environment variable with `export OPENAI_API_KEY=<your key>`"
         )
