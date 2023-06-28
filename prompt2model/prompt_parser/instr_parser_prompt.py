@@ -4,21 +4,7 @@ from __future__ import annotations  # noqa FI58
 
 import json
 
-METAPROMPT_INSTRUCTION = (
-    "Prompts are task descriptions given to an AI language"
-    + " model to guide its responses. They usually consist of"
-    + " an 'instruction' detailing the task and, optionally, a few"
-    + " 'demonstrations' that serve as examples of the task. I"
-    + " want to break down prompts into these two components."
-    + "For each prompt, the response should be a JSON dictionary"
-    + " with two fields: the 'Instruction' and the 'Demonstrations'."
-    + " If there are no demonstrations, return 'N/A' for the demonstrations"
-    + " field. When demonstrations are available, include only those"
-    + " examples that provide a complete input-output pair, and ignore"
-    + " those that are incomplete and intended to be finished by the AI."
-    + " The formatting, word choice, and punctuation should match that"
-    + " of the original prompt."
-)
+METAPROMPT_INSTRUCTION = "As a PromptParser, your objective is to carefully analyze prompts and divide them into two distinct components: an 'Instruction' that provides the primary description of the task, and 'Demonstrations' which are optional examples showcasing the task. Your aim is to generate a JSON dictionary response containing the `Instruction` and `Demonstrations` fields, corresponding to these two components. In case there are no demonstrations provided, the 'Demonstrations' field should be marked as 'N/A'. When including demonstrations, only consider complete examples that consist of both input and output pairs, disregarding any incomplete ones. It is crucial to maintain the precise formatting, word choice, and punctuation exactly as presented in the original prompt. Here are some parsed output you can refer to."  # noqa: E501
 
 METAPROMPT_EXAMPLES = [
     (
@@ -34,7 +20,7 @@ Alternate Entity Names: ["Catholic Church", "Roman Catholic", "Catholic"]
 
 Entity: "Wind"
 Context Sentence: "Illinois musicians with a # 1 Billboard Hot 100 hit include artists from the 1950s : Sam Cooke (d. 1964) ; from the 1960s : The Buckinghams ; from the 1970s : Earth , Wind & Fire , The Chi-Lites , The Staple Singers , Minnie Riperton , Styx ; from the 1980s : Chicago , Cheap Trick , REO Speedwagon , Survivor , Richard Marx ; from the 1990s : R. Kelly ; from the 2000s : Kanye West , Twista , Plain White T 's ."
-Alternate Entity Names: ["Earth & Fire", "Earth", "Wind & Fire"]""",  # noqa: E501
+""",  # noqa: E501
         {
             "Instruction": """I am trying to cluster entity strings on Wikipedia according to the Wikipedia article title they refer to. To help me with this, for a given entity name, please provide me with a comprehensive set of alternative names that could refer to the same entity. Entities may be weirdly truncated or ambiguous - e.g. "Wind" may refer to the band "Earth, Wind, and Fire" or to "rescue service". For each entity, I will provide you with a sentence where this entity is used to help you understand what this entity refers to. Generate a comprehensive set of alternate entity names as a JSON-formatted list.""",  # noqa: E501
             "Demonstrations": """Entity: "fictional character"
@@ -43,11 +29,7 @@ Alternate Entity Names: ["fictional characters", "characters", "character"]
 
 Entity: "Catholicism"
 Context Sentence: "At home , significantly more electorate residents spoke Italian , Cantonese , Mandarin and Greek at home , and whilst the top three religions (Catholicism , no religion and Anglicanism) differed little from other parts of Perth , Buddhism and Eastern Orthodox adherents outnumbered those of the Uniting Church ."
-Alternate Entity Names: ["Catholic Church", "Roman Catholic", "Catholic"]
-
-Entity: "Wind"
-Context Sentence: "Illinois musicians with a # 1 Billboard Hot 100 hit include artists from the 1950s : Sam Cooke (d. 1964) ; from the 1960s : The Buckinghams ; from the 1970s : Earth , Wind & Fire , The Chi-Lites , The Staple Singers , Minnie Riperton , Styx ; from the 1980s : Chicago , Cheap Trick , REO Speedwagon , Survivor , Richard Marx ; from the 1990s : R. Kelly ; from the 2000s : Kanye West , Twista , Plain White T 's ."
-Alternate Entity Names: ["Earth & Fire", "Earth", "Wind & Fire"]""",  # noqa: E501
+Alternate Entity Names: ["Catholic Church", "Roman Catholic", "Catholic"]""",  # noqa: E501
         },
     ),
     (
@@ -97,10 +79,17 @@ Agent: For most cakes, the oven should be preheated to 350°F (177°C).""",
         },
     ),
     (
-        "我正在学习计算机网络空间安全这门课程，我希望你能帮我解释一些概念。比如 IP 分片污染攻击的基本原理：IP 分片是一种位于网络层的机制，其主要目的是解决 IP 分组在不同最大传输单元（MTU）网络中的传输问题。然而，在某些情况下，网络层的 IP 分片机制可能会被攻击者利用来破坏和污染原始的网络数据流。如果攻击者能够被动地监视，或者主动触发源主机和目标主机之间的IP分片，那么攻击者就有可能伪装成源主机，制造恶意的 IP 分片，并将其注入源主机和目标主机之间的数据流中，从而污染原始流量，对目标主机进行攻击。DNS请求洪水攻击：DNS请求洪水攻击是一种攻击手段，其中黑客通过控制僵尸网络向DNS服务器发送大量不存在的域名解析请求，最终导致服务器因处理大量DNS请求而超载，无法继续响应正常用户的DNS请求，从而实现攻击目标。在这种攻击中，攻击源可能是虚假的，也可能是真实的；攻击目标可能是DNS授权服务器，也可能是DNS缓存服务器。因此，针对不同类型的攻击源，需要采取不同的防御策略。",  # noqa: E501
+        "来到美国后，我需要学习如何自己做饭。你能告诉我一些菜需要准备的原料么？这里有一些例子：1. 菜名：西红柿炒蛋。原料：2. 菜名：青椒肉丝炒肉。原料：瘦肉、青椒、调味料（如大蒜、姜、料酒、生抽、盐、糖、鸡精或味精、胡椒粉）、植物油。",  # noqa: E501
         {
-            "Instruction": "我正在学习计算机网络空间安全这门课程，我希望你能帮我解释一些概念。",  # noqa: E501
-            "Demonstrations": "IP 分片污染攻击的基本原理：IP 分片是一种位于网络层的机制，其主要目的是解决 IP 分组在不同最大传输单元（MTU）网络中的传输问题。然而，在某些情况下，网络层的 IP 分片机制可能会被攻击者利用来破坏和污染原始的网络数据流。如果攻击者能够被动地监视，或者主动触发源主机和目标主机之间的IP分片，那么攻击者就有可能伪装成源主机，制造恶意的 IP 分片，并将其注入源主机和目标主机之间的数据流中，从而污染原始流量，对目标主机进行攻击。DNS请求洪水攻击：DNS请求洪水攻击是一种攻击手段，其中黑客通过控制僵尸网络向DNS服务器发送大量不存在的域名解析请求，最终导致服务器因处理大量DNS请求而超载，无法继续响应正常用户的DNS请求，从而实现攻击目标。在这种攻击中，攻击源可能是虚假的，也可能是真实的；攻击目标可能是DNS授权服务器，也可能是DNS缓存服务器。因此，针对不同类型的攻击源，需要采取不同的防御策略。",  # noqa: E501
+            "Instruction": "来到美国后，我需要学习如何自己做饭。你能告诉我一些菜需要准备的原料么？",  # noqa: E501
+            "Demonstrations": "2. 菜名：青椒肉丝炒肉。原料：瘦肉、青椒、调味料（如大蒜、姜、料酒、生抽、盐、糖、鸡精或味精、胡椒粉）、植物油。",  # noqa: E501
+        },
+    ),
+    (
+        "As a programer, I am learning software development. Here are some of my problems. Input: What is CI/CD? Output: CI/CD is a way to automate and speed up software development by continuously integrating code changes and deploying them quickly and reliably. Input: What is Git? Output:",  # noqa: E501
+        {
+            "Instruction": "As a programer, I am learning software development. Here are some of my problems.",  # noqa: E501
+            "Demonstrations": " Input: What is CI/CD? Output: CI/CD is a way to automate and speed up software development by continuously integrating code changes and deploying them quickly and reliably.",  # noqa: E501
         },
     ),
 ]
@@ -143,8 +132,9 @@ def construct_prompt_for_instruction_parsing(user_prompt: str) -> str:
         prompt_sections.append(
             construct_single_demonstration(prompt, correct_parse, input_only=False)
         )
-    prediction_template = construct_single_demonstration(
-        user_prompt, None, input_only=True
+    inherent_all_prompts = "\n\n------\n\n".join(prompt_sections)
+    user_input = construct_single_demonstration(user_prompt, None, input_only=True)
+    inherent_all_prompts += (
+        "After seeing these parsed output, please parse this prompt:\n\n" + user_input
     )
-    prompt_sections.append(prediction_template)
-    return "\n\n------\n\n".join(prompt_sections)
+    return inherent_all_prompts
