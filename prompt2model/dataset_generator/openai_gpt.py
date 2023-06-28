@@ -15,11 +15,11 @@ from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import OPENAI_ERRORS, ChatGPTAgent, handle_openai_error
 
 PROMPT_TEMPLATE = (
-    "Requirement: {instruction} \n"
+    "Instruction: {instruction} \n"
     "Few-Shot Examples: {examples} \n"
-    "sample: \n"
-    "annotation: \n"
-    "Please answer me in JSON format, with `sample` and `annotation` keys."
+    "Following the Instruction and refer to the Few-Shot Examples,"
+    " generate more `sample` and corresponding `annotation`."
+    " Please answer me in JSON format, with `sample` and `annotation` fileds."
 )
 # A string template for the prompt. Can be modified by the users.
 # Prompt_template must contains `instruction` and `examples` fields.
@@ -133,6 +133,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         self.api_call_counter += 1
                     response = chat_api.generate_openai_chat_completion(prompt)
                     input_col, output_col = self.extract_response(response)
+                    logging.info(f"Input: {input_col}")
+                    logging.info(f"Output: {output_col}")
                     input_cols.append(input_col)
                     output_cols.append(output_col)
                     break
