@@ -17,9 +17,10 @@ from prompt2model.utils import OPENAI_ERRORS, ChatGPTAgent, handle_openai_error
 PROMPT_TEMPLATE = (
     "Instruction: {instruction} \n"
     "Few-Shot Examples: {examples} \n"
-    "Following the Instruction and refer to the Few-Shot Examples,"
-    " generate more `sample` and corresponding `annotation`."
-    " Please answer me in JSON format, with `sample` and `annotation` fileds."
+    "Following the Instruction and, guided by the Few-Shot Examples,"
+    " generate one more `sample` and its `annotation`."
+    "The `sample` should be the input to a system and the `annotation` is the desired output. "  # noqa: E501
+    " Please return a JSON dictionary containing `sample` and `annotation` fields with the appropriate values."  # noqa: E501
 )
 # A string template for the prompt. Can be modified by the users.
 # Prompt_template must contains `instruction` and `examples` fields.
@@ -62,7 +63,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             The generated prompt string.
         """
         # Replace placeholders in prompt template with actual values
-        example_string = " ".join(examples) if examples else "NA"
+        example_string = examples if examples else "NA"
         prompt = PROMPT_TEMPLATE.format(
             instruction=instruction, examples=example_string
         )
@@ -89,8 +90,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         assert (
             len(missing_keys) == 0
         ), f'API response must contain {", ".join(required_keys)} keys'
-        sample = response_json["sample"].strip()
-        annotation = response_json["annotation"].strip()
+        sample = str(response_json["sample"]).strip()
+        annotation = str(response_json["annotation"]).strip()
         return sample, annotation
 
     def generate_dataset_split(
@@ -114,6 +115,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             instruction=prompt_spec.get_instruction,
             examples=prompt_spec.get_examples,
         )
+        logging.info(f"OpenAI Prompt: {prompt}")
         chat_api = ChatGPTAgent(self.api_key)
         input_cols = []  # type: list[str]
         output_cols = []  # type: list[str]
