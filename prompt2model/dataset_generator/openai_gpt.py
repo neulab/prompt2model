@@ -15,12 +15,11 @@ from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import OPENAI_ERRORS, ChatGPTAgent, handle_openai_error
 
 PROMPT_TEMPLATE = (
-    "You are DatasetGenerator. Here is the generation requirement for you. \n\n------\n\n"  # noqa: E501
+    "As DatasetGenerator, your task is to generate an additional input and output based on the provided instruction and few-shot examples. \n\n------\n\n"  # noqa: E501
     "Instruction: \n\n------\n\n{instruction} \n\n------\n\n"
     "Few-Shot Examples: \n\n------\n\n {examples} \n\n------\n\n"
-    "Following the Instruction and, guided by the Few-Shot Examples,"
-    " generate one more `input` and its `output`."
-    " Please return a JSON dictionary containing `input` and `output` fields with the appropriate values."  # noqa: E501
+    "Please provide a JSON dictionary response that includes the new input and its corresponding output. Use the `input` and `output` keys in the dictionary."  # noqa: E501
+    "Instruction: \n\n------\n\n{instruction} \n\n------\n\n"
 )
 # A string template for the prompt. Can be modified by the users.
 # Prompt_template must contains `instruction` and `examples` fields.
@@ -116,7 +115,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             examples=prompt_spec.get_examples,
         )
         logging.info(
-            f"OpenAI Prompt: \n\n--------------------\n\n {prompt}\n\n--------------------\n\n"  # noqa: E501
+            f"LLM Prompt: \n\n {prompt}\n\n============================\n\n"  # noqa: E501
         )
         chat_api = ChatGPTAgent(self.api_key)
         input_cols = []  # type: list[str]
@@ -138,10 +137,10 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     response = chat_api.generate_openai_chat_completion(prompt)
                     input_col, output_col = self.extract_response(response)
                     logging.info(
-                        f"\n\n--------------------\n\n Input: \n\n--------------------\n\n {input_col}\n\n--------------------\n\n"  # noqa: E501
+                        f" Input: \n\n {input_col}\n\n======================\n\n"  # noqa: E501
                     )
                     logging.info(
-                        f"\n\n--------------------\n\n Output: \n\n--------------------\n\n {output_col}\n\n--------------------\n\n"  # noqa: E501
+                        f" Output: \n\n {output_col}\n\nn======================\n\n"  # noqa: E501
                     )
                     input_cols.append(input_col)
                     output_cols.append(output_col)
