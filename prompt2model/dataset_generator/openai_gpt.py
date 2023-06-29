@@ -115,7 +115,9 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             instruction=prompt_spec.get_instruction,
             examples=prompt_spec.get_examples,
         )
-        logging.info(f"OpenAI Prompt: {prompt}")
+        logging.info(
+            f"OpenAI Prompt: \n\n--------------------\n\n {prompt}\n\n--------------------\n\n"  # noqa: E501
+        )
         chat_api = ChatGPTAgent(self.api_key)
         input_cols = []  # type: list[str]
         output_cols = []  # type: list[str]
@@ -135,8 +137,12 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         self.api_call_counter += 1
                     response = chat_api.generate_openai_chat_completion(prompt)
                     input_col, output_col = self.extract_response(response)
-                    logging.info(f"Input: {input_col}")
-                    logging.info(f"Output: {output_col}")
+                    logging.info(
+                        f"\n\n--------------------\n\n Input: \n\n--------------------\n\n {input_col}\n\n--------------------\n\n"  # noqa: E501
+                    )
+                    logging.info(
+                        f"\n\n--------------------\n\n Output: \n\n--------------------\n\n {output_col}\n\n--------------------\n\n"  # noqa: E501
+                    )
                     input_cols.append(input_col)
                     output_cols.append(output_col)
                     break
