@@ -132,7 +132,7 @@ def construct_prompt_for_instruction_parsing(user_prompt: str) -> str:
         prompt_sections.append(
             construct_single_demonstration(prompt, correct_parse, input_only=False)
         )
-    inherent_all_prompts = "\n\n------\n\n".join(prompt_sections)
+    inherent_all_prompts = "\n\n------\n\n".join(prompt_sections) + "\n\n------\n\n"
     user_input = construct_single_demonstration(user_prompt, None, input_only=True)
     inherent_all_prompts += (
         "After seeing these parsed output, please parse this prompt:\n\n" + user_input

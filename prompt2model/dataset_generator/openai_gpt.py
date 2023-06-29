@@ -15,12 +15,12 @@ from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import OPENAI_ERRORS, ChatGPTAgent, handle_openai_error
 
 PROMPT_TEMPLATE = (
-    "Instruction: {instruction} \n"
-    "Few-Shot Examples: {examples} \n"
+    "You are DatasetGenerator. Here is the generation requirement for you. \n\n------\n\n"  # noqa: E501
+    "Instruction: \n\n------\n\n{instruction} \n\n------\n\n"
+    "Few-Shot Examples: \n\n------\n\n {examples} \n\n------\n\n"
     "Following the Instruction and, guided by the Few-Shot Examples,"
-    " generate one more `sample` and its `annotation`."
-    "The `sample` should be the input to a system and the `annotation` is the desired output. "  # noqa: E501
-    " Please return a JSON dictionary containing `sample` and `annotation` fields with the appropriate values."  # noqa: E501
+    " generate one more `input` and its `output`."
+    " Please return a JSON dictionary containing `input` and `output` fields with the appropriate values."  # noqa: E501
 )
 # A string template for the prompt. Can be modified by the users.
 # Prompt_template must contains `instruction` and `examples` fields.
@@ -85,14 +85,14 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         except json.decoder.JSONDecodeError as e:
             logging.warning("API response was not a valid JSON")
             raise e
-        required_keys = ["sample", "annotation"]
+        required_keys = ["input", "output"]
         missing_keys = [key for key in required_keys if key not in response_json]
         assert (
             len(missing_keys) == 0
         ), f'API response must contain {", ".join(required_keys)} keys'
-        sample = str(response_json["sample"]).strip()
-        annotation = str(response_json["annotation"]).strip()
-        return sample, annotation
+        input = str(response_json["input"]).strip()
+        output = str(response_json["output"]).strip()
+        return input, output
 
     def generate_dataset_split(
         self,
