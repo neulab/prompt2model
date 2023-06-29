@@ -19,7 +19,6 @@ PROMPT_TEMPLATE = (
     "Instruction: \n\n------\n\n{instruction} \n\n------\n\n"
     "Few-Shot Examples: \n\n------\n\n {examples} \n\n------\n\n"
     "Please provide a JSON dictionary response that includes the new input and its corresponding output. Use the `input` and `output` keys in the dictionary."  # noqa: E501
-    "Instruction: \n\n------\n\n{instruction} \n\n------\n\n"
 )
 # A string template for the prompt. Can be modified by the users.
 # Prompt_template must contains `instruction` and `examples` fields.
