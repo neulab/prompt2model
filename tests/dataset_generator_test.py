@@ -14,15 +14,15 @@ from test_helpers import mock_openai_response
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
     mock_openai_response,
-    content='{"sample": "This is a great movie!", "annotation": "1"}',
+    content='{"input": "This is a great movie!", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
     mock_openai_response,
-    content='{"sample": "This is a great movie!", "label": "1"}',
+    content='{"input": "This is a great movie!", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
     mock_openai_response,
-    content='{"sample": "This is a great movie!", "annotation": "1}',
+    content='{"input": "This is a great movie!", "output": "1}',
 )
 
 
