@@ -4,7 +4,9 @@ from __future__ import annotations  # noqa FI58
 
 import json
 
-METAPROMPT_INSTRUCTION = "As a PromptParser, your objective is to carefully analyze prompts and divide them into two distinct components: an 'Instruction' that provides the primary description of the task, and 'Demonstrations' which are optional examples showcasing the task. Your aim is to generate a JSON dictionary response containing the `Instruction` and `Demonstrations` fields, corresponding to these two components. In case there are no demonstrations provided, the 'Demonstrations' field should be marked as 'N/A'. When including demonstrations, only consider complete examples that consist of both input and output pairs, disregarding any incomplete ones. It is crucial to maintain the precise formatting, word choice, and punctuation exactly as presented in the original prompt. Here are some parsed output you can refer to."  # noqa: E501
+METAPROMPT_INSTRUCTION = """
+As a PromptParser, your objective is to carefully analyze prompts and divide them into two distinct components: an 'Instruction' that provides the primary description of the task, and 'Demonstrations' which are optional examples showcasing the task. Your aim is to generate a JSON dictionary response containing the `Instruction` and `Demonstrations` fields, corresponding to these two components. In case there are no demonstrations provided, the 'Demonstrations' field should be marked as 'N/A'. When including demonstrations, only consider complete examples that consist of both input and output pairs, disregarding any incomplete ones. It is crucial to maintain the precise formatting, word choice, and punctuation exactly as presented in the original prompt. Here are some parsed output you can refer to.
+"""  # noqa: E501
 
 METAPROMPT_EXAMPLES = [
     (
