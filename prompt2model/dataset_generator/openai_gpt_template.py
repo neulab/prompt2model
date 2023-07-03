@@ -34,6 +34,34 @@ Here are some exmaples you can refer to:
 
 [new example (in JSON)]:"""  # noqa: E501
 
+MIDDLE_PROMPT_TEMPLATE = """
+As a DatasetGenerator, your task is to generate a new example (input and output) based on the [new instruction] and [few-shot examples]. Please provide a JSON dictionary response that includes the new input and its corresponding output. Use the `input` and `output` keys in the dictionary. The 'input' field should be marked as 'N/A' if the instruction doesn't require additional input.
+Try you best to ensure that the input and output you generate are distinct from the provided examples while maintaining a diverse, detailed, precise, comprehensive, and high-quality response.
+
+--------------------------------------------------------------------------------------------
+Here are some exmaples you can refer to:
+
+- Example 1
+
+{example_1}
+
+- Example 2
+
+{example_2}
+
+- Example 3
+
+{example_3}
+--------------------------------------------------------------------------------------------
+
+[new instruction]:
+{instruction}
+
+[few-shot examples]:
+{few_shot_example_string}
+
+[new example (in JSON)]:"""  # noqa: E501
+
 SHORT_PROMPT_TEMPLATE = """
 As a DatasetGenerator, your task is to generate a new example (input and output) based on the [new instruction] and [few-shot examples]. Please provide a JSON dictionary response that includes the new input and its corresponding output. Use the `input` and `output` keys in the dictionary. The 'input' field should be marked as 'N/A' if the instruction doesn't require additional input. It is important that the input and output you generate are distinct from the examples provided. Please ensure that your response is diverse, detailed, precise, comprehensive, and of high-quality.
 
@@ -135,23 +163,30 @@ Your Name""",  # noqa: E501
 def construct_meta_prompt(
     instruction: str = None,
     few_shot_example_string: str = None,
-    use_long_template: bool = True,
+    template_type: str = "SHORT",
 ) -> str:
     """Constructs a prompt template for the dataset generator.
 
     Args:
         instruction: The natural language instruction for the prompt.
         examples_string: A string representing the few-shot examples.
-        use_long_template: If True, uses the LONG_PROMPT_TEMPLATE,
-            otherwise uses the SHORT_PROMPT_TEMPLATE.
+        template_type: If template_type is LONG, uses the
+        LONG_PROMPT_TEMPLATE, if template_type is MIDDLE, uses the
+        MIDDLE_PROMPT_TEMPLATE, and if template_type is SHORT,
+        uses the SHORT_PROMPT_TEMPLATE.
 
     Returns:
         str: A prompt template, where the `instruction` and `examples` fields
             are filled in.
     """
-    if use_long_template:
-        meta_examples = random.sample(META_EXAMPLES, 4)
-        example_1, example_2, example_3, example_4 = meta_examples
+    assert template_type in [
+        "SHORT",
+        "MIDDLE",
+        "LONG",
+    ], "template_type must be SHORT, MIDDLE, or LONG"
+    meta_examples = random.sample(META_EXAMPLES, 4)
+    example_1, example_2, example_3, example_4 = meta_examples
+    if template_type == "LONG":
         return LONG_PROMPT_TEMPLATE.format(
             example_1=example_1,
             example_2=example_2,
@@ -160,9 +195,15 @@ def construct_meta_prompt(
             instruction=instruction,
             few_shot_example_string=few_shot_example_string,
         )
+    elif template_type == "MIDDLE":
+        return MIDDLE_PROMPT_TEMPLATE.format(
+            example_1=example_1,
+            example_2=example_2,
+            example_3=example_3,
+            instruction=instruction,
+            few_shot_example_string=few_shot_example_string,
+        )
     else:
-        meta_examples = random.sample(META_EXAMPLES, 2)
-        example_1, example_2 = meta_examples
         return SHORT_PROMPT_TEMPLATE.format(
             example_1=example_1,
             example_2=example_2,

@@ -64,7 +64,6 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         )
         random_example_num = 0
         if len(self.recent_10_examples) > 0:
-            logging.info("Generating additional few-shot examples.")
             random_example_string = ""
             random_example_num = random.randint(1, len(self.recent_10_examples))
             random_examples = random.sample(self.recent_10_examples, random_example_num)
@@ -80,11 +79,18 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     and few_shot_example_string is not None
                 ):
                     random_example_string += few_shot_example_string + "\n"
-
+        if 0 <= random_example_num <= 3:
+            template_type = "LONG"
+        elif 4 <= random_example_num <= 7:
+            template_type = "MIDDLE"
+        else:
+            template_type = "SHORT"
+        logging.info(f"random example number: {random_example_string}")
+        logging.info(f"template_type: {template_type}")
         prompt = construct_meta_prompt(
             instruction=instruction,
             few_shot_example_string=random_example_string,
-            use_long_template=True if random_example_num < 5 else False,
+            template_type=template_type,
         )
         return prompt, random_example_string
 
