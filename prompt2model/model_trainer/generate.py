@@ -115,7 +115,7 @@ class GenerationModelTrainer(BaseTrainer):
                 pretrained_model_name
             )
             self.tokenizer = transformers.AutoTokenizer.from_pretrained(
-                pretrained_model_name
+                pretrained_model_name, padding_side="left"
             )
 
         if self.tokenizer.pad_token is None:
@@ -189,7 +189,7 @@ class GenerationModelTrainer(BaseTrainer):
         ), f"Only support {supported_keys} as training parameters"
         training_args = Seq2SeqTrainingArguments(
             output_dir=hyperparameter_choices.get("output_dir", "./result"),
-            logging_steps=hyperparameter_choices.get("logging_steps", 8),
+            logging_steps=hyperparameter_choices.get("logging_steps", 1),
             save_strategy=hyperparameter_choices.get("save_strategy", "no"),
             num_train_epochs=hyperparameter_choices.get("num_train_epochs", 10),
             per_device_train_batch_size=hyperparameter_choices.get(
@@ -197,7 +197,7 @@ class GenerationModelTrainer(BaseTrainer):
             ),
             warmup_steps=hyperparameter_choices.get("warmup_steps", 0),
             weight_decay=hyperparameter_choices.get("weight_decay", 0.01),
-            logging_dir=hyperparameter_choices.get("logging_dir", "./logs"),
+            logging_dir=hyperparameter_choices.get("logging_dir", "./result"),
             learning_rate=hyperparameter_choices.get("learning_rate", 1e-4),
             predict_with_generate=True,
         )
