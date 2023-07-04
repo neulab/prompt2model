@@ -36,6 +36,7 @@ class ModelExecutor(ABC):
         test_set: datasets.Dataset,
         input_column: str,
         batch_size: int = 10,
+        max_new_tokens: int = 1024,
     ) -> None:
         """Initializes a new instance of ModelExecutor.
 
@@ -45,12 +46,14 @@ class ModelExecutor(ABC):
             test_set: The dataset to make predictions on.
             input_column: The dataset column to use as input to the model.
             batch_size: The batch size to use when making predictions.
+            max_new_tokens: The max_new_tokens to use when making predictions.
         """
         self.model = model
         self.tokenizer = tokenizer
         self.test_set = test_set
         self.input_column = input_column
         self.batch_size = batch_size
+        self.max_new_tokens = max_new_tokens
         if self.tokenizer.pad_token is None:
             logging.warning(
                 "Trying to init an ModelExecutor's tokenizer without pad_token"

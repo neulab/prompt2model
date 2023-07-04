@@ -4,72 +4,19 @@ from __future__ import annotations  # noqa FI58
 
 import logging
 import os
-import tempfile
-from pathlib import Path
 from typing import Any
 
 import datasets
 import torch
 import transformers
 from datasets import concatenate_datasets
-from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments, TrainerCallback
+from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 
-from prompt2model.model_evaluator import Seq2SeqEvaluator
-from prompt2model.model_executor import GenerationModelExecutor
 from prompt2model.model_trainer.base import BaseTrainer
+from prompt2model.model_trainer.callback import RealEvaluation
 from prompt2model.utils import seed_generator
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-
-class RealEvaluation(TrainerCallback):
-    """The real evaluation will be conduted after each mock evaluation of Trainer."""
-
-    def __init__(self, trainer, tokenizer, val_dataset) -> None:
-        """Initializes a new instance of AutoregressiveModelCallback.
-
-        Args:
-            trainer: Trainer instance.
-                After each epoch of Training, this callback will be called.
-            tokenizer: Tokenizer to initialize model executor.
-            val_dataset: Validation dataset to be evaluated on.
-        """
-        super().__init__()
-        self.trainer = trainer
-        self.tokenizer = tokenizer
-        self.val_dataset = val_dataset
-
-    def on_epoch_end(self, args, state, control, **kwargs):
-        """After each  evaluation, this function will be called."""
-        _ = (args, state, control, kwargs)
-        # Pass the unused paramerters warning.
-        logging.info("Coduct real evaluation on each epoch's ending.")
-
-        with tempfile.TemporaryDirectory() as cache_dir:
-            # Save the original model's weights to a file
-            temp_model_location = Path(cache_dir) / "temp_model"
-            self.trainer.model.save_pretrained(temp_model_location)
-            # Load the weights into a new model
-            cpu_model = type(self.trainer.model).from_pretrained(temp_model_location)
-            # Move the model to CPU
-            cpu_model = cpu_model.to("cpu")
-
-        model_executor = GenerationModelExecutor(
-            cpu_model,
-            self.tokenizer,
-            self.val_dataset,
-            "model_input",
-            10,
-        )
-        model_outputs = model_executor.make_prediction()
-        evaluator = Seq2SeqEvaluator()
-        metric_values = evaluator.evaluate_model(
-            self.val_dataset,
-            "output_col",
-            model_outputs,
-            encoder_model_name="xlm-roberta-base",
-        )
-        logging.info(metric_values)
 
 
 class GenerationModelTrainer(BaseTrainer):
@@ -94,29 +41,26 @@ class GenerationModelTrainer(BaseTrainer):
         """
         self.has_encoder = has_encoder
         self.model_max_length = model_max_length
+        if self.model_max_length is None:
+            logging.warning(
+                "Set the model_max_length is preferable for finetuning model."
+            )
         if self.has_encoder:
             self.model = transformers.T5ForConditionalGeneration.from_pretrained(
                 pretrained_model_name
             )
-            if model_max_length:
-                self.tokenizer = transformers.T5Tokenizer.from_pretrained(
-                    pretrained_model_name, model_max_length=model_max_length
-                )
-            else:
-                self.tokenizer = transformers.T5Tokenizer.from_pretrained(
-                    pretrained_model_name
-                )
+            self.tokenizer = transformers.T5Tokenizer.from_pretrained(
+                pretrained_model_name
+            )
         else:
-            if model_max_length is not None:
-                logging.warning(
-                    "model_max_length is only supported for encoder-decoder models"
-                )
             self.model = transformers.AutoModelForCausalLM.from_pretrained(
                 pretrained_model_name
             )
             self.tokenizer = transformers.AutoTokenizer.from_pretrained(
                 pretrained_model_name, padding_side="left"
             )
+            if model_max_length:
+                self.tokenizer.model_max_length = model_max_length
 
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
@@ -139,12 +83,16 @@ class GenerationModelTrainer(BaseTrainer):
         shuffled_dataset = dataset.shuffle(seed=seed_generator.get_seed())
         inputs = shuffled_dataset["model_input"]
         outputs = shuffled_dataset["output_col"]
-        input_encodings = self.tokenizer.batch_encode_plus(
-            inputs, truncation=True, max_length=self.model_max_length, padding=True
-        )
-        output_encodings = self.tokenizer.batch_encode_plus(
-            outputs, truncation=True, max_length=self.model_max_length, padding=True
-        )
+        if self.model_max_length:
+            input_encodings = self.tokenizer.batch_encode_plus(
+                inputs, truncation=True, max_length=self.model_max_length, padding=True
+            )
+            output_encodings = self.tokenizer.batch_encode_plus(
+                outputs, truncation=True, max_length=self.model_max_length, padding=True
+            )
+        else:
+            input_encodings = self.tokenizer.batch_encode_plus(inputs, padding=True)
+            output_encodings = self.tokenizer.batch_encode_plus(outputs, padding=True)
         preprocessed_dict = {
             "input_ids": input_encodings["input_ids"],
             "attention_mask": input_encodings["attention_mask"],
@@ -220,7 +168,7 @@ class GenerationModelTrainer(BaseTrainer):
 
         if not validation_datasets:
             if not self.has_encoder:
-                logging.warn(
+                logging.warning(
                     (
                         (
                             "The validation split for autoregressive model is missed"
@@ -233,7 +181,7 @@ class GenerationModelTrainer(BaseTrainer):
                 val_dataset = None
                 evaluate_after_epoch = False
             else:
-                logging.warn(
+                logging.warning(
                     (
                         "The validation split for encoder-decoder model is missed."
                         + " The training dataset will be split to evaluate the model."

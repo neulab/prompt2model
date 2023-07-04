@@ -49,6 +49,7 @@ class GenerationModelExecutor(ModelExecutor):
             output = self.model.generate(
                 input_ids=input_ids.to(device),
                 attention_mask=attention_mask.to(device),
+                max_new_tokens=self.max_new_tokens,
             )
 
             for i, example in enumerate(batch):
