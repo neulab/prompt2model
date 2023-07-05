@@ -1,5 +1,7 @@
 """Model executor for generative models, including T5-type and GPT-type."""
 
+import logging
+
 import datasets
 import torch
 
@@ -22,20 +24,23 @@ class GenerationModelExecutor(ModelExecutor):
         """
         model_outputs = []
         if not single_model_input:
-            assert self.input_column == "model_input"
+            inference_column = self.input_column
             num_examples = len(self.test_set)
             inference_dataset = self.test_set
         else:
+            logging.info("Making single prediction for DemoCreator.")
             num_examples = 1
             inference_dataset = datasets.Dataset.from_dict(
                 {"model_input": [single_model_input]}
             )
+            inference_column = "model_input"
+            assert len(inference_dataset) == num_examples
 
         for start_idx in range(0, num_examples, self.batch_size):
             end_idx = min(start_idx + self.batch_size, num_examples)
             batch = datasets.Dataset.from_dict(inference_dataset[start_idx:end_idx])
 
-            input_texts = batch[self.input_column]
+            input_texts = batch[inference_column]
             encoded_inputs = self.tokenizer.batch_encode_plus(
                 input_texts,
                 truncation=True,
@@ -45,9 +50,11 @@ class GenerationModelExecutor(ModelExecutor):
 
             input_ids = encoded_inputs["input_ids"]
             attention_mask = encoded_inputs["attention_mask"]
-
+            device = self.model.device
             output = self.model.generate(
-                input_ids=input_ids, attention_mask=attention_mask
+                input_ids=input_ids.to(device),
+                attention_mask=attention_mask.to(device),
+                max_new_tokens=self.max_new_tokens,
             )
 
             for i, example in enumerate(batch):

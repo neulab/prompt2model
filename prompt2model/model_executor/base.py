@@ -33,9 +33,10 @@ class ModelExecutor(ABC):
         self,
         model: transformers.PreTrainedModel,
         tokenizer: transformers.PreTrainedTokenizer,
-        test_set: datasets.Dataset,
-        input_column: str,
+        test_set: datasets.Dataset | None = None,
+        input_column: str | None = None,
         batch_size: int = 10,
+        max_new_tokens: int = 50,
     ) -> None:
         """Initializes a new instance of ModelExecutor.
 
@@ -45,22 +46,61 @@ class ModelExecutor(ABC):
             test_set: The dataset to make predictions on.
             input_column: The dataset column to use as input to the model.
             batch_size: The batch size to use when making predictions.
+            max_new_tokens: The max_new_tokens to use when making predictions.
         """
         self.model = model
         self.tokenizer = tokenizer
-        self.test_set = test_set
-        self.input_column = input_column
+        if test_set:
+            self.test_set = test_set
+        else:
+            logging.info(
+                (
+                    "No test set provided."
+                    "This ModelExecutor will only be used to make"
+                    " single predictions in DemoCreator."
+                )
+            )
+        if input_column:
+            self.input_column = input_column
+        else:
+            logging.info(
+                (
+                    "No input_column provided."
+                    "This ModelExecutor will only be used to make"
+                    " single predictions in DemoCreator."
+                )
+            )
+        assert (test_set is None) == (
+            input_column is None
+        ), "input_column and test_set should be provided simultaneously."
         self.batch_size = batch_size
         if self.tokenizer.pad_token is None:
             logging.warning(
                 "Trying to init an ModelExecutor's tokenizer without pad_token"
             )
-            self.tokenizer.pad_token = "[PAD]"
-            self.model.config.pad_token_id = len(self.tokenizer)
-            self.model.resize_token_embeddings(len(self.tokenizer))
-            self.model.config.attention_mask_fn = lambda input_ids: (
-                input_ids != self.model.config.pad_token_id
-            ).float()
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+            self.model.config.pad_token_id = self.model.eos_token_id
+        if hasattr(self.model.config, "max_position_embeddings"):
+            max_sequence_length = self.model.config.max_position_embeddings
+            self.max_new_tokens = min(max_sequence_length, max_new_tokens)
+            if max_sequence_length < max_new_tokens:
+                logging.warning(
+                    (
+                        f"The maximum sequence length that your model can handle"
+                        f" is {max_sequence_length}, but your max_new_tokens is"
+                        f" {max_new_tokens}, so the max_new_tokens "
+                        f"is set to {max_new_tokens}"
+                    )
+                )
+        else:
+            self.max_new_tokens = max_new_tokens
+            logging.info(
+                (
+                    "the model does not have a predefined maximum"
+                    " sequence length, so the max_new_tokens is set to"
+                    f"{max_new_tokens}"
+                )
+            )
 
     @abstractmethod
     def make_prediction(self) -> list[ModelOutput]:

@@ -22,8 +22,6 @@ def test_create_gradio_with_gpt2():
     gpt2_executor = GenerationModelExecutor(
         model=gpt2_model,
         tokenizer=gpt2_tokenizer,
-        test_set=None,
-        input_column="model_input",
         batch_size=1,
     )
 
@@ -47,8 +45,6 @@ def test_create_gradio_with_t5():
     t5_executor = GenerationModelExecutor(
         model=t5_model,
         tokenizer=t5_tokenizer,
-        test_set=None,
-        input_column="model_input",
         batch_size=1,
     )
 

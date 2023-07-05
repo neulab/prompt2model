@@ -1,5 +1,6 @@
 """Testing GenerationModelExecutor with different configurations."""
 
+import pytest
 from datasets import Dataset
 from transformers import T5ForConditionalGeneration, T5Tokenizer
 
@@ -97,9 +98,7 @@ def test_make_single_prediction_t5_model():
     t5_tokenizer = T5Tokenizer.from_pretrained(t5_model_name)
 
     # Create GenerationModelExecutor.
-    model_executor = GenerationModelExecutor(
-        t5_model, t5_tokenizer, None, "model_input"
-    )
+    model_executor = GenerationModelExecutor(t5_model, t5_tokenizer)
 
     # Test T5 model single prediction.
     test_input = "This is a test input."
@@ -124,9 +123,7 @@ def test_make_single_prediction_gpt2_model():
     gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
 
     # Create GenerationModelExecutor.
-    model_executor = GenerationModelExecutor(
-        gpt2_model, gpt2_tokenizer, None, "model_input"
-    )
+    model_executor = GenerationModelExecutor(gpt2_model, gpt2_tokenizer)
 
     # Test GPT-2 model single prediction.
     test_input = "This is a test input."
@@ -141,3 +138,28 @@ def test_make_single_prediction_gpt2_model():
         "probs",
     ]
     assert isinstance(gpt2_output.auxiliary_info, dict)
+
+
+def test_wrong_init_for_model_excutor():
+    """Test the input_column and test_set should be provided simultaneously."""
+    with pytest.raises(AssertionError) as exc_info:
+        gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
+        gpt2_model = gpt2_model_and_tokenizer.model
+        gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
+
+        # Create test dataset.
+        test_dataset = Dataset.from_dict(
+            {
+                "model_input": [
+                    "This is the first test input.",
+                    "Another example for testing.",
+                    "One more test input.",
+                ]
+            }
+        )
+
+        # Create GenerationModelExecutor.
+        _ = GenerationModelExecutor(gpt2_model, gpt2_tokenizer, test_set=test_dataset)
+        assert str(exc_info.value) == (
+            "input_column and test_set should be provided simultaneously."
+        )
