@@ -14,7 +14,7 @@ def create_gpt2_model_and_tokenizer() -> Gpt2ModelAndTokenizer:
         Gpt2ModelAndTokenizer: A namedtuple with model and tokenizer.
     """
     gpt2_model = AutoModelForCausalLM.from_pretrained("gpt2")
-    gpt2_tokenizer = AutoTokenizer.from_pretrained("gpt2", padding="left")
+    gpt2_tokenizer = AutoTokenizer.from_pretrained("gpt2", padding_side="left")
     if gpt2_tokenizer.pad_token is None:
         gpt2_tokenizer.pad_token = gpt2_tokenizer.eos_token
     if gpt2_model.config.pad_token_id is None:

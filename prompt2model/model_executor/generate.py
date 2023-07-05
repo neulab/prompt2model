@@ -28,7 +28,7 @@ class GenerationModelExecutor(ModelExecutor):
         else:
             num_examples = 1
             inference_dataset = datasets.Dataset.from_dict(
-                {"model_input": single_model_input}
+                {"model_input": [single_model_input]}
             )
 
         for start_idx in range(0, num_examples, self.batch_size):
@@ -45,11 +45,9 @@ class GenerationModelExecutor(ModelExecutor):
 
             input_ids = encoded_inputs["input_ids"]
             attention_mask = encoded_inputs["attention_mask"]
-            device = self.model.device
+
             output = self.model.generate(
-                input_ids=input_ids.to(device),
-                attention_mask=attention_mask.to(device),
-                max_new_tokens=self.max_new_tokens,
+                input_ids=input_ids, attention_mask=attention_mask
             )
 
             for i, example in enumerate(batch):
