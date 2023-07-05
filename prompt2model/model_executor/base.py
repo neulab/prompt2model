@@ -36,7 +36,7 @@ class ModelExecutor(ABC):
         test_set: datasets.Dataset,
         input_column: str,
         batch_size: int = 10,
-        max_new_tokens: int = 1024,
+        max_new_tokens: int = 50,
     ) -> None:
         """Initializes a new instance of ModelExecutor.
 
@@ -54,6 +54,27 @@ class ModelExecutor(ABC):
         self.input_column = input_column
         self.batch_size = batch_size
         self.max_new_tokens = max_new_tokens
+        if hasattr(self.model.config, 'max_position_embeddings'):
+            max_sequence_length = self.model.config.max_position_embeddings
+            self.max_new_tokens = min(max_sequence_length, max_new_tokens)
+            if max_sequence_length < max_new_tokens:
+                logging.warning(
+                    (
+                        f"The maximum sequence length that your model can handle"
+                        f" is {max_sequence_length}, but your max_new_tokens is"
+                        f" {max_new_tokens}, so the max_new_tokens "
+                        f"is set to {max_new_tokens}"
+                    )
+                )
+        else:
+            self.max_new_tokens = max_new_tokens
+            logging.info(
+                (
+                    "the model does not have a predefined maximum"
+                    " sequence length, so the max_new_tokens is set to"
+                    f"{max_new_tokens}"
+                )
+            )
         if self.tokenizer.pad_token is None:
             logging.warning(
                 "Trying to init an ModelExecutor's tokenizer without pad_token"
