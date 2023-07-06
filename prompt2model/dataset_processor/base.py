@@ -1,6 +1,7 @@
 """A base class for dataset processor."""
 
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from functools import partial
 
 import datasets
@@ -9,7 +10,7 @@ import datasets
 class BaseProcessor(ABC):
     """A base class for post-processing datasets."""
 
-    def __init__(self, has_encoder: bool) -> None:
+    def __init__(self, has_encoder: bool, eos_token: str) -> None:
         """Initialize the `BaseProcessor`.
 
         Args:
@@ -17,8 +18,10 @@ class BaseProcessor(ABC):
                 Encoder-decoder model like T5 has two model inputs.
                 Decoder-only model like GPT only has one model input, thus
                 `model_input` should be added with the `output_col`.
+            eos_token: The end-of-sentence token of the tokenizer.
         """
         self.has_encoder = has_encoder
+        self.eos_token = eos_token
 
     @staticmethod
     @abstractmethod
@@ -28,6 +31,7 @@ class BaseProcessor(ABC):
         task_id: int,
         has_encoder: bool,
         dataset_split: str,
+        eos_token: str,
     ) -> dict:
         """Modifies the input column of a given example dictionary.
 
@@ -38,6 +42,10 @@ class BaseProcessor(ABC):
                 comes from. Used for multi-task training.
             has_encoder: Whether the retrieved model has an encoder.
             dataset_split: The split of the example, i.e. train/val/test.
+            eos_token: The end-of-sentence token of the tokenizer.
+
+        Returns:
+            A dictionary with `model_input` as the input to models.
         """
 
     def process_dataset_dict(
@@ -53,7 +61,9 @@ class BaseProcessor(ABC):
             A list of DatasetDicts, all examples are converted into text2text fashion.
         """
         modified_dataset_dicts = []
-        for task_id, dataset_dict in enumerate(dataset_dicts):
+        raw_dataset_dicts = deepcopy(dataset_dicts)
+        # Use deepcopy to avoid modifying the original dataset_dicts
+        for task_id, dataset_dict in enumerate(raw_dataset_dicts):
             for dataset_split in list(dataset_dict.keys()):
                 mapping_function = partial(
                     self.post_process_example,
@@ -61,6 +71,7 @@ class BaseProcessor(ABC):
                     task_id=task_id,
                     has_encoder=self.has_encoder,
                     dataset_split=dataset_split,
+                    eos_token=self.eos_token,
                 )
                 dataset_dict[dataset_split] = dataset_dict[dataset_split].map(
                     mapping_function

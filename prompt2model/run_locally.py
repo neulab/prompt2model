@@ -75,7 +75,7 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
     }
     generated_dataset_dicts = generator.generate_dataset_dict(prompt_spec, num_examples)
 
-    processor = MockProcessor(has_encoder=True)
+    processor = MockProcessor(has_encoder=True, eos_token="")
     retrieved_dataset_dicts, generated_dataset_dicts = processor.process_dataset_dict(
         instruction="", dataset_dicts=[retrieved_dataset_dicts, generated_dataset_dicts]
     )
