@@ -50,27 +50,11 @@ class GenerationModelExecutor(ModelExecutor):
 
             input_ids = encoded_inputs["input_ids"]
             attention_mask = encoded_inputs["attention_mask"]
-            expected_max_length = len(input_ids[0]) + self.expected_max_new_tokens
-            if self.max_sequence_length and (
-                expected_max_length > self.max_sequence_length
-            ):
-                logging.warning(
-                    (
-                        "The input_ids together with the expected_max_new_tokens"
-                        f" ({expected_max_length}) are longer"
-                        f"than the max_sequence_length ({self.max_sequence_length})."
-                        " The max_new_tokens will be set to the"
-                        " (max_sequence_length - input_ids)."
-                    )
-                )
-                max_new_tokens = self.max_sequence_length - len(input_ids[0])
-            else:
-                max_new_tokens = self.expected_max_new_tokens
             device = self.model.device
             output = self.model.generate(
                 input_ids=input_ids.to(device),
                 attention_mask=attention_mask.to(device),
-                max_new_tokens=max_new_tokens,
+                max_length=self.max_sequence_length,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
                 num_beams=5,
