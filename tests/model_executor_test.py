@@ -172,7 +172,7 @@ def test_max_sequence_length_init_for_gpt2():
     gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
     gpt2_model = gpt2_model_and_tokenizer.model
     gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
-    test_input = "Hello. What's your name?"
+    test_input = "Hello World!"
     # The max_seq_length is 1024, and test_input is 3 tokens.
     with patch("logging.warning") as mock_warning:
         gpt2_executor = GenerationModelExecutor(

@@ -57,7 +57,7 @@ class GenerationModelExecutor(ModelExecutor):
                 max_length=self.max_sequence_length,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
-                num_beams=5,
+                num_beams=3,
                 no_repeat_ngram_size=3,
             )
 
