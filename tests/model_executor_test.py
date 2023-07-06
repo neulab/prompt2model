@@ -1,5 +1,7 @@
 """Testing GenerationModelExecutor with different configurations."""
 
+from unittest.mock import patch
+
 import pytest
 from datasets import Dataset
 from transformers import T5ForConditionalGeneration, T5Tokenizer
@@ -163,3 +165,43 @@ def test_wrong_init_for_model_excutor():
         assert str(exc_info.value) == (
             "input_column and test_set should be provided simultaneously."
         )
+
+
+def test_the_max_new_tokens_init_for_gpt2():
+    """Test the max_new_tokens are correctly set for gpt2."""
+    gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
+    gpt2_model = gpt2_model_and_tokenizer.model
+    gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
+    test_input = "Hello world."
+    # The max_seq_length is 1024, and test_input is 3 tokens.
+    with patch("logging.warning") as mock_warning:
+        gpt2_executor = GenerationModelExecutor(
+            gpt2_model,
+            gpt2_tokenizer,
+            expected_max_new_tokens=10000,
+        )
+        gpt2_executor.make_single_prediction(test_input)
+        mock_warning.assert_called_once_with(
+            (
+                "The input_ids together with the expected_max_new_tokens"
+                " (10003) are longerthan the max_sequence_length (1024). "
+                "The max_new_tokens will be set to the "
+                "(max_sequence_length - input_ids)."
+            )
+        )
+
+
+def test_the_max_new_tokens_init_for_t5():
+    """Test the max_new_tokens are correctly set for t5."""
+    t5_model_name = "t5-small"
+    t5_model = T5ForConditionalGeneration.from_pretrained(t5_model_name)
+    t5_tokenizer = T5Tokenizer.from_pretrained(t5_model_name)
+    # Create test dataset.
+    test_input = "translate English to Spanish: What's your name?"
+
+    T5_executor = GenerationModelExecutor(
+        t5_model,
+        t5_tokenizer,
+        expected_max_new_tokens=10000,
+    )
+    T5_executor.make_single_prediction(test_input)

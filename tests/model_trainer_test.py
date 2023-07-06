@@ -153,9 +153,8 @@ def test_t5_trainer_without_model_max_length():
                 training_datasets,
             )
             # Check if logging.info was called six times
-            # Eech epoch will log 4 times, in `on_epoch_end`, `evaluate_model`
-            # and the init of `GenerationModelExecutor` of `max_new_tokens`
-            assert mock_info.call_count == 4 * 3
+            # Eech epoch will log 3 times, in `on_epoch_end`, `evaluate_model`
+            assert mock_info.call_count == 3 * 3
             # Check if logging.warning was called for not having a model_max_length
             # and not having an validation dataset.
             assert mock_warning.call_count == 2
@@ -205,9 +204,8 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
             )
 
             # Check if logging.info was called three times
-            # Eech epoch will log 4 times, in `on_epoch_end`, `evaluate_model`
-            # and the init of `GenerationModelExecutor` of `max_new_tokens`
-            assert mock_info.call_count == 4 * 3
+            # Eech epoch will log 3 times, in `on_epoch_end`, `evaluate_model`
+            assert mock_info.call_count == 3 * 3
 
             # Check if logging.warning was called once
             assert mock_warning.call_count == 1

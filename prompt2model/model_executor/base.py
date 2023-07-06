@@ -36,7 +36,7 @@ class ModelExecutor(ABC):
         test_set: datasets.Dataset | None = None,
         input_column: str | None = None,
         batch_size: int = 10,
-        max_new_tokens: int = 50,
+        expected_max_new_tokens: int = 50,
     ) -> None:
         """Initializes a new instance of ModelExecutor.
 
@@ -46,33 +46,24 @@ class ModelExecutor(ABC):
             test_set: The dataset to make predictions on.
             input_column: The dataset column to use as input to the model.
             batch_size: The batch size to use when making predictions.
-            max_new_tokens: The max_new_tokens to use when making predictions.
+            expected_max_new_tokens: The maximum number of tokens to generate.
         """
         self.model = model
         self.tokenizer = tokenizer
-        if test_set:
+        assert (test_set is None) == (
+            input_column is None
+        ), "input_column and test_set should be provided simultaneously."
+        if test_set and input_column:
             self.test_set = test_set
-        else:
-            logging.info(
-                (
-                    "No test set provided."
-                    "This ModelExecutor will only be used to make"
-                    " single predictions in DemoCreator."
-                )
-            )
-        if input_column:
             self.input_column = input_column
         else:
             logging.info(
                 (
-                    "No input_column provided."
+                    "No test set and no input_column provided."
                     "This ModelExecutor will only be used to make"
                     " single predictions in DemoCreator."
                 )
             )
-        assert (test_set is None) == (
-            input_column is None
-        ), "input_column and test_set should be provided simultaneously."
         self.batch_size = batch_size
         if self.tokenizer.pad_token is None:
             logging.warning(
@@ -81,26 +72,10 @@ class ModelExecutor(ABC):
             self.tokenizer.pad_token = self.tokenizer.eos_token
             self.model.config.pad_token_id = self.model.eos_token_id
         if hasattr(self.model.config, "max_position_embeddings"):
-            max_sequence_length = self.model.config.max_position_embeddings
-            self.max_new_tokens = min(max_sequence_length, max_new_tokens)
-            if max_sequence_length < max_new_tokens:
-                logging.warning(
-                    (
-                        f"The maximum sequence length that your model can handle"
-                        f" is {max_sequence_length}, but your max_new_tokens is"
-                        f" {max_new_tokens}, so the max_new_tokens "
-                        f"is set to {max_new_tokens}"
-                    )
-                )
+            self.max_sequence_length = self.model.config.max_position_embeddings
         else:
-            self.max_new_tokens = max_new_tokens
-            logging.info(
-                (
-                    "the model does not have a predefined maximum"
-                    " sequence length, so the max_new_tokens is set to"
-                    f"{max_new_tokens}"
-                )
-            )
+            self.max_sequence_length = None
+        self.expected_max_new_tokens = expected_max_new_tokens
 
     @abstractmethod
     def make_prediction(self) -> list[ModelOutput]:

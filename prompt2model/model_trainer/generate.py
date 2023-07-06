@@ -150,7 +150,10 @@ class GenerationModelTrainer(BaseTrainer):
         evaluation_strategy = hyperparameter_choices.get("evaluation_strategy", "epoch")
         if evaluation_strategy == "epoch":
             evaluate_after_epoch = True
-        elif evaluation_strategy is not None:
+        elif evaluation_strategy == "no":
+            logging.info("The traning doesn't set the evaluation strategy.")
+            evaluate_after_epoch = False
+        else:
             logging.warning(
                 (
                     "Only `epoch` evaluation strategy is supported"
@@ -158,9 +161,6 @@ class GenerationModelTrainer(BaseTrainer):
                 )
             )
             evaluate_after_epoch = True
-        else:
-            logging.info("The traning doesn't set the evaluation strategy.")
-            evaluate_after_epoch = False
 
         concatenated_training_dataset = concatenate_datasets(training_datasets)
 
