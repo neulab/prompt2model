@@ -85,6 +85,47 @@ def test_gpt_trainer_with_model_max_length():
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
 
 
+def test_gpt_trainer_without_model_max_length():
+    """Train a auto-regressive model without a specified model_max_length."""
+    # Test auto-regressive GenerationModelTrainer implementation
+    with tempfile.TemporaryDirectory() as cache_dir:
+        trainer = GenerationModelTrainer("gpt2", has_encoder=False)
+        training_datasets = [
+            datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        "translate English to French. Example: apple. Label: pomme"
+                    ]
+                    * 2,
+                    "output_col": ["pomme"] * 2,
+                }
+            ),
+            datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        "translate English to French.",
+                        "translate English to Kinyarwanda.",
+                    ],
+                    "output_col": ["pomme", "pome"],
+                }
+            ),
+        ]
+
+        trained_model, trained_tokenizer = trainer.train_model(
+            {
+                "output_dir": cache_dir,
+                "num_train_epochs": 1,
+                "per_device_train_batch_size": 1,
+            },
+            training_datasets,
+        )
+
+        trained_model.save_pretrained(cache_dir)
+        trained_tokenizer.save_pretrained(cache_dir)
+        assert isinstance(trained_model, transformers.GPT2LMHeadModel)
+        assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
+
+
 def test_t5_trainer_without_model_max_length():
     """Train a encoder-decoder model without a specified model_max_length ."""
     # Test encoder-decoder GenerationModelTrainer implementation
