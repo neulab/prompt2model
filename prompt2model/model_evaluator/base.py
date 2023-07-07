@@ -12,7 +12,7 @@ from prompt2model.model_executor import ModelOutput
 from prompt2model.prompt_parser import PromptSpec
 
 
-class Evaluator(ABC):
+class ModelEvaluator(ABC):
     """An interface for automatic model evaluation."""
 
     @abstractmethod
