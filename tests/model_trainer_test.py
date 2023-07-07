@@ -237,7 +237,8 @@ def test_gpt_trainer_with_validation_datasets():
 
 def test_trainer_with_unsupported_parameter():
     """Test the error handler with an unsupported hyperparameter."""
-    # Test encoder-decoder GenerationModelTrainer implementation
+    # The correct parameter is `per_device_train_batch_size`.
+    # Here uses `batch_size` instead.
     with pytest.raises(AssertionError):
         with tempfile.TemporaryDirectory() as cache_dir:
             trainer = GenerationModelTrainer(
