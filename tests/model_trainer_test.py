@@ -18,7 +18,7 @@ def test_t5_trainer_with_tokenizer_max_length():
     # Test encoder-decoder GenerationModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
         trainer = GenerationModelTrainer(
-            "t5-small", has_encoder=True, tokenizer_max_length=512
+           "patrickvonplaten/t5-tiny-random", has_encoder=True, tokenizer_max_length=512
         )
         training_datasets = [
             datasets.Dataset.from_dict(
@@ -47,7 +47,7 @@ def test_gpt_trainer_with_tokenizer_max_length():
     # Test auto-regressive GenerationModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
         trainer = GenerationModelTrainer(
-            "gpt2", has_encoder=False, tokenizer_max_length=512
+            "sshleifer/tiny-gpt2", has_encoder=False, tokenizer_max_length=512
         )
         training_datasets = [
             datasets.Dataset.from_dict(
@@ -89,7 +89,7 @@ def test_gpt_trainer_without_tokenizer_max_length():
     """Train a auto-regressive model without a specified tokenizer_max_length."""
     # Test auto-regressive GenerationModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
-        trainer = GenerationModelTrainer("gpt2", has_encoder=False)
+        trainer = GenerationModelTrainer("sshleifer/tiny-gpt2", has_encoder=False)
         training_datasets = [
             datasets.Dataset.from_dict(
                 {
@@ -143,7 +143,7 @@ def test_t5_trainer_without_tokenizer_max_length():
             "logging.warning"
         ) as mock_warning:
             trainer = GenerationModelTrainer(
-                "t5-small", has_encoder=True, tokenizer_max_length=None
+               "patrickvonplaten/t5-tiny-random", has_encoder=True, tokenizer_max_length=None
             )
             trained_model, trained_tokenizer = trainer.train_model(
                 {
@@ -171,7 +171,7 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
     """Train a T5 model with unsupported evaluation_strategy."""
     with tempfile.TemporaryDirectory() as cache_dir:
         trainer = GenerationModelTrainer(
-            "t5-small", has_encoder=True, tokenizer_max_length=512
+           "patrickvonplaten/t5-tiny-random", has_encoder=True, tokenizer_max_length=512
         )
         training_datasets = [
             datasets.Dataset.from_dict(
@@ -220,7 +220,7 @@ def test_gpt_trainer_without_validation_datasets():
     """Train an autoregressive model without validation datasets."""
     # Test decoder-only GenerationModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
-        trainer = GenerationModelTrainer("gpt2", has_encoder=False)
+        trainer = GenerationModelTrainer("sshleifer/tiny-gpt2", has_encoder=False)
         training_datasets = [
             datasets.Dataset.from_dict(
                 {
@@ -268,7 +268,7 @@ def test_gpt_trainer_without_validation_datasets():
 def test_gpt_trainer_with_validation_datasets():
     """Train an autoregressive model with validation datasets."""
     with tempfile.TemporaryDirectory() as cache_dir:
-        trainer = GenerationModelTrainer("gpt2", has_encoder=False)
+        trainer = GenerationModelTrainer("sshleifer/tiny-gpt2", has_encoder=False)
         training_datasets = [
             datasets.Dataset.from_dict(
                 {
@@ -329,7 +329,7 @@ def test_trainer_with_unsupported_parameter():
     with pytest.raises(AssertionError):
         with tempfile.TemporaryDirectory() as cache_dir:
             trainer = GenerationModelTrainer(
-                "t5-small", has_encoder=True, tokenizer_max_length=512
+               "patrickvonplaten/t5-tiny-random", has_encoder=True, tokenizer_max_length=512
             )
             training_datasets = [
                 datasets.Dataset.from_dict(

@@ -162,7 +162,7 @@ class GenerationModelTrainer(BaseTrainer):
             logging.warning(
                 (
                     "Only `epoch` evaluation strategy is supported"
-                    + ", the evaluation strategy will be set to  evaluate_after_epoch"
+                    + ", the evaluation strategy will be set to  evaluate_after_epoch."
                 )
             )
             evaluate_after_epoch = True
