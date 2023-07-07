@@ -133,7 +133,7 @@ def test_gpt_trainer_without_validation_datasets():
     """Train an autoregressive model without validation datasets."""
     # Test decoder-only GenerationModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
-        trainer = GenerationModelTrainer("gpt2", has_encoder=False)
+        trainer = GenerationModelTrainer("sshleifer/tiny-gpt2", has_encoder=False)
         training_datasets = [
             datasets.Dataset.from_dict(
                 {
@@ -180,7 +180,7 @@ def test_gpt_trainer_without_validation_datasets():
 def test_gpt_trainer_with_validation_datasets():
     """Train an autoregressive model with validation datasets."""
     with tempfile.TemporaryDirectory() as cache_dir:
-        trainer = GenerationModelTrainer("gpt2", has_encoder=False)
+        trainer = GenerationModelTrainer("sshleifer/tiny-gpt2", has_encoder=False)
         training_datasets = [
             datasets.Dataset.from_dict(
                 {
