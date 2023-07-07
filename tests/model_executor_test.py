@@ -10,7 +10,7 @@ from test_helpers import create_gpt2_model_and_tokenizer
 def test_make_prediction_t5_model():
     """Test the `make_prediction` method with a T5 model."""
     # Create T5 model and tokenizer.
-    t5_model_name = "t5-small"
+    t5_model_name = "google/t5-efficient-tiny"
     t5_model = T5ForConditionalGeneration.from_pretrained(t5_model_name)
     t5_tokenizer = T5Tokenizer.from_pretrained(t5_model_name)
 
@@ -92,7 +92,7 @@ def test_make_prediction_gpt2_model():
 def test_make_single_prediction_t5_model():
     """Test the `make_single_prediction` method with a T5 model."""
     # Create T5 model and tokenizer.
-    t5_model_name = "t5-small"
+    t5_model_name = "google/t5-efficient-tiny"
     t5_model = T5ForConditionalGeneration.from_pretrained(t5_model_name)
     t5_tokenizer = T5Tokenizer.from_pretrained(t5_model_name)
 

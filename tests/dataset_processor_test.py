@@ -30,6 +30,7 @@ DATASET_DICTS = [
     ),
 ]
 
+# Our support spilts are `train, val, test`.
 UNEXPECTED_DATASET_DICTS_WITH_WRONG_SPLIT = [
     datasets.DatasetDict(
         {
@@ -47,6 +48,7 @@ UNEXPECTED_DATASET_DICTS_WITH_WRONG_SPLIT = [
     ),
 ]
 
+# Our support columns are `input_col, output_col`.
 UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS = [
     datasets.DatasetDict(
         {
@@ -221,7 +223,3 @@ def test_unexpected_columns():
         _ = gpt_processor.process_dataset_dict(
             INSTRUCTION, UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS
         )
-
-
-def test_gpt_trainer_with_validation_datasets(caplog):
-    """Train an autoregressive model with validation datasets."""

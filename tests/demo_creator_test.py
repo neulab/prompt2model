@@ -40,8 +40,8 @@ def test_create_gradio_with_gpt2():
 def test_create_gradio_with_t5():
     """Test the `create_gradio` method with a T5 model."""
     # Create T5 model and tokenizer
-    t5_model = T5ForConditionalGeneration.from_pretrained("t5-small")
-    t5_tokenizer = T5Tokenizer.from_pretrained("t5-small")
+    t5_model = T5ForConditionalGeneration.from_pretrained("google/t5-efficient-tiny")
+    t5_tokenizer = T5Tokenizer.from_pretrained("google/t5-efficient-tiny")
 
     # Create GenerationModelExecutor.
     t5_executor = GenerationModelExecutor(
