@@ -84,22 +84,18 @@ class GenerationModelTrainer(BaseTrainer):
         shuffled_dataset = dataset.shuffle(seed=seed_generator.get_seed())
         inputs = shuffled_dataset["model_input"]
         outputs = shuffled_dataset["output_col"]
-        if self.tokenizer_max_length:
-            input_encodings = self.tokenizer.batch_encode_plus(
-                inputs,
-                truncation=True,
-                max_length=self.tokenizer_max_length,
-                padding=True,
-            )
-            output_encodings = self.tokenizer.batch_encode_plus(
-                outputs,
-                truncation=True,
-                max_length=self.tokenizer_max_length,
-                padding=True,
-            )
-        else:
-            input_encodings = self.tokenizer.batch_encode_plus(inputs, padding=True)
-            output_encodings = self.tokenizer.batch_encode_plus(outputs, padding=True)
+        input_encodings = self.tokenizer.batch_encode_plus(
+            inputs,
+            truncation=True,
+            max_length=self.tokenizer_max_length,
+            padding=True,
+        )
+        output_encodings = self.tokenizer.batch_encode_plus(
+            outputs,
+            truncation=True,
+            max_length=self.tokenizer_max_length,
+            padding=True,
+        )
         preprocessed_dict = {
             "input_ids": input_encodings["input_ids"],
             "attention_mask": input_encodings["attention_mask"],
