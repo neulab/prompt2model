@@ -5,12 +5,12 @@ from typing import Any
 
 import datasets
 
-from prompt2model.model_evaluator.base import Evaluator
+from prompt2model.model_evaluator.base import ModelEvaluator
 from prompt2model.model_executor import ModelOutput
 from prompt2model.prompt_parser import PromptSpec
 
 
-class MockEvaluator(Evaluator):
+class MockEvaluator(ModelEvaluator):
     """A dummy evaluator that always returns the same metric value."""
 
     def __init__(self) -> None:
