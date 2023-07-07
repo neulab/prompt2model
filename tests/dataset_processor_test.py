@@ -46,6 +46,7 @@ UNEXPECTED_DATASET_DICTS_WITH_WRONG_SPLIT = [
     ),
 ]
 
+# Our support columns are `input_col, output_col`.
 UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS = [
     datasets.DatasetDict(
         {
