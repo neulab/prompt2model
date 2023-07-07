@@ -26,7 +26,7 @@ class GenerationModelTrainer(BaseTrainer):
         self,
         pretrained_model_name: str,
         has_encoder: bool,
-        model_max_length: int | None = None,
+        tokenizer_max_length: int | None = 512,
     ):
         """Initializes a new instance of GenerationModelTrainer.
 
@@ -36,14 +36,17 @@ class GenerationModelTrainer(BaseTrainer):
             has_encoder: Whether the model has an encoder.
                 If True, it's a T5-type model (encoder-decoder transformer).
                 If fasle, it's a GPT-type model (atuoregressive transformer).
-            model_max_length: this sets the maximum sentence length allowed by
-                the model. This can be customized for your specific use case.
+            tokenizer_max_length: this sets the maximum sentence length the tokenizer
+                is allowed to generate. This can be customized for your specific use case. # noqa E501
         """
         self.has_encoder = has_encoder
-        self.model_max_length = model_max_length
-        if self.model_max_length is None:
+        self.tokenizer_max_length = tokenizer_max_length
+        if self.tokenizer_max_length is None:
             logging.warning(
-                "Set the model_max_length is preferable for finetuning model."
+                (
+                    "Set the tokenizer_max_length is preferable for finetuning model,"
+                    " which saves the cost of training."
+                )
             )
         if self.has_encoder:
             self.model = transformers.T5ForConditionalGeneration.from_pretrained(
@@ -81,12 +84,18 @@ class GenerationModelTrainer(BaseTrainer):
         shuffled_dataset = dataset.shuffle(seed=seed_generator.get_seed())
         inputs = shuffled_dataset["model_input"]
         outputs = shuffled_dataset["output_col"]
-        if self.model_max_length:
+        if self.tokenizer_max_length:
             input_encodings = self.tokenizer.batch_encode_plus(
-                inputs, truncation=True, max_length=self.model_max_length, padding=True
+                inputs,
+                truncation=True,
+                max_length=self.tokenizer_max_length,
+                padding=True,
             )
             output_encodings = self.tokenizer.batch_encode_plus(
-                outputs, truncation=True, max_length=self.model_max_length, padding=True
+                outputs,
+                truncation=True,
+                max_length=self.tokenizer_max_length,
+                padding=True,
             )
         else:
             input_encodings = self.tokenizer.batch_encode_plus(inputs, padding=True)

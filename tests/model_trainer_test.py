@@ -13,12 +13,12 @@ from prompt2model.model_trainer.generate import GenerationModelTrainer
 os.environ["WANDB_MODE"] = "dryrun"
 
 
-def test_t5_trainer_with_model_max_length():
-    """Train a encoder-decoder model with a specified model_max_length of 512 ."""
+def test_t5_trainer_with_tokenizer_max_length():
+    """Train a encoder-decoder model with a specified tokenizer_max_length of 512 ."""
     # Test encoder-decoder GenerationModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
         trainer = GenerationModelTrainer(
-            "t5-small", has_encoder=True, model_max_length=512
+            "t5-small", has_encoder=True, tokenizer_max_length=512
         )
         training_datasets = [
             datasets.Dataset.from_dict(
@@ -42,12 +42,12 @@ def test_t5_trainer_with_model_max_length():
         assert isinstance(trained_tokenizer, transformers.T5Tokenizer)
 
 
-def test_gpt_trainer_with_model_max_length():
-    """Train a auto-regressive model with a specified model_max_length of 512 ."""
+def test_gpt_trainer_with_tokenizer_max_length():
+    """Train a auto-regressive model with a specified tokenizer_max_length of 512 ."""
     # Test auto-regressive GenerationModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
         trainer = GenerationModelTrainer(
-            "gpt2", has_encoder=False, model_max_length=512
+            "gpt2", has_encoder=False, tokenizer_max_length=512
         )
         training_datasets = [
             datasets.Dataset.from_dict(
@@ -85,8 +85,8 @@ def test_gpt_trainer_with_model_max_length():
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
 
 
-def test_gpt_trainer_without_model_max_length():
-    """Train a auto-regressive model without a specified model_max_length."""
+def test_gpt_trainer_without_tokenizer_max_length():
+    """Train a auto-regressive model without a specified tokenizer_max_length."""
     # Test auto-regressive GenerationModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
         trainer = GenerationModelTrainer("gpt2", has_encoder=False)
@@ -126,8 +126,8 @@ def test_gpt_trainer_without_model_max_length():
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
 
 
-def test_t5_trainer_without_model_max_length():
-    """Train a encoder-decoder model without a specified model_max_length ."""
+def test_t5_trainer_without_tokenizer_max_length():
+    """Train a encoder-decoder model without a specified tokenizer_max_length ."""
     # Test encoder-decoder GenerationModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
         training_datasets = [
@@ -142,11 +142,13 @@ def test_t5_trainer_without_model_max_length():
         with patch("logging.info") as mock_info, patch(
             "logging.warning"
         ) as mock_warning:
-            trainer = GenerationModelTrainer("t5-small", has_encoder=True)
+            trainer = GenerationModelTrainer(
+                "t5-small", has_encoder=True, tokenizer_max_length=None
+            )
             trained_model, trained_tokenizer = trainer.train_model(
                 {
                     "output_dir": cache_dir,
-                    "num_train_epochs": 3,
+                    "num_train_epochs": 2,
                     "per_device_train_batch_size": 1,
                     "evaluation_strategy": "epoch",
                 },
@@ -154,8 +156,8 @@ def test_t5_trainer_without_model_max_length():
             )
             # Check if logging.info was called six times
             # Eech epoch will log 3 times, in `on_epoch_end`, `evaluate_model`
-            assert mock_info.call_count == 3 * 3
-            # Check if logging.warning was called for not having a model_max_length
+            assert mock_info.call_count == 3 * 2
+            # Check if logging.warning was called for not having a tokenizer_max_length
             # and not having an validation dataset.
             assert mock_warning.call_count == 2
 
@@ -169,7 +171,7 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
     """Train a T5 model with unsupported evaluation_strategy."""
     with tempfile.TemporaryDirectory() as cache_dir:
         trainer = GenerationModelTrainer(
-            "t5-small", has_encoder=True, model_max_length=512
+            "t5-small", has_encoder=True, tokenizer_max_length=512
         )
         training_datasets = [
             datasets.Dataset.from_dict(
@@ -195,7 +197,7 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
             trained_model, trained_tokenizer = trainer.train_model(
                 {
                     "output_dir": cache_dir,
-                    "num_train_epochs": 3,
+                    "num_train_epochs": 2,
                     "per_device_train_batch_size": 1,
                     "evaluation_strategy": "step",
                 },
@@ -205,7 +207,7 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
 
             # Check if logging.info was called three times
             # Eech epoch will log 3 times, in `on_epoch_end`, `evaluate_model`
-            assert mock_info.call_count == 3 * 3
+            assert mock_info.call_count == 3 * 2
 
             # Check if logging.warning was called once
             assert mock_warning.call_count == 1
@@ -254,6 +256,7 @@ def test_gpt_trainer_without_validation_datasets():
             # Check if logging.info wasn't called
             assert mock_info.call_count == 0
             # Check if logging.warning was called once
+            # for not having a validation dataset.
             assert mock_warning.call_count == 1
 
         trained_model.save_pretrained(cache_dir)
@@ -326,7 +329,7 @@ def test_trainer_with_unsupported_parameter():
     with pytest.raises(AssertionError):
         with tempfile.TemporaryDirectory() as cache_dir:
             trainer = GenerationModelTrainer(
-                "t5-small", has_encoder=True, model_max_length=512
+                "t5-small", has_encoder=True, tokenizer_max_length=512
             )
             training_datasets = [
                 datasets.Dataset.from_dict(

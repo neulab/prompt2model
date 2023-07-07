@@ -36,7 +36,8 @@ class ModelExecutor(ABC):
         test_set: datasets.Dataset | None = None,
         input_column: str | None = None,
         batch_size: int = 10,
-        max_sequence_length: int = 500,
+        tokenizer_max_length: int = 128,
+        sequence_max_length: int = 256,
     ) -> None:
         """Initializes a new instance of ModelExecutor.
 
@@ -46,7 +47,9 @@ class ModelExecutor(ABC):
             test_set: The dataset to make predictions on.
             input_column: The dataset column to use as input to the model.
             batch_size: The batch size to use when making predictions.
-            max_sequence_length: The maximum number of tokens to generate.
+            tokenizer_max_length: The maximum number of tokens that
+                tokenizer is allowed to generate.
+            sequence_max_length: The maximum number of tokens to generate.
                 This includes the input and output tokens.
         """
         self.model = model
@@ -72,19 +75,19 @@ class ModelExecutor(ABC):
             )
             self.tokenizer.pad_token = self.tokenizer.eos_token
             self.model.config.pad_token_id = self.model.eos_token_id
-        self.max_sequence_length = max_sequence_length
+        self.tokenizer_max_length = tokenizer_max_length
+        self.sequence_max_length = sequence_max_length
         if hasattr(self.model.config, "max_position_embeddings"):
             max_embeddings = self.model.config.max_position_embeddings
-            if max_embeddings < max_sequence_length:
+            if sequence_max_length is not None and max_embeddings < sequence_max_length:
                 logging.warning(
                     (
-                        f"The max_sequence_length ({max_sequence_length})"
+                        f"The sequence_max_length ({sequence_max_length})"
                         f" is larger than the max_position_embeddings ({max_embeddings})."  # noqa: E501
-                        " So the max_sequence_length will be set to"
-                        f" {max_embeddings}."
+                        f" So the sequence_max_length will be set to {max_embeddings}."  # noqa: E501
                     )
                 )
-                self.max_sequence_length = max_embeddings
+                self.sequence_max_length = max_embeddings
 
     @abstractmethod
     def make_prediction(self) -> list[ModelOutput]:

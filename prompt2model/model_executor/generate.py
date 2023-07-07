@@ -44,6 +44,7 @@ class GenerationModelExecutor(ModelExecutor):
             encoded_inputs = self.tokenizer.batch_encode_plus(
                 input_texts,
                 truncation=True,
+                max_length=self.tokenizer_max_length,
                 padding=True,
                 return_tensors="pt",
             )
@@ -54,7 +55,7 @@ class GenerationModelExecutor(ModelExecutor):
             output = self.model.generate(
                 input_ids=input_ids.to(device),
                 attention_mask=attention_mask.to(device),
-                max_length=self.max_sequence_length,
+                max_length=self.sequence_max_length,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
                 num_beams=3,
