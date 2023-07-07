@@ -106,7 +106,14 @@ class GenerationModelTrainer(BaseTrainer):
         attention_mask = (
             torch.tensor(input_encodings["input_ids"]) != self.model.config.pad_token_id
         ).tolist()
-
+        # If the model has an encoder, calculate the length of the labels and
+        # set the ids of the original input's condition to -100
+        if self.has_encoder:
+            labels = output_encodings["input_ids"]
+            for i, label in enumerate(labels):
+                labels[i] = [-100 for _ in label]
+        else:
+            labels = input_encodings["input_ids"]
         preprocessed_dict = {
             "input_ids": input_encodings["input_ids"],
             "attention_mask": attention_mask,
