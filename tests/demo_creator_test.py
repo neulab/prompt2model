@@ -1,14 +1,13 @@
 """Test the create_gradio function with two configurations."""
 
 import gradio as gr
-from transformers import T5ForConditionalGeneration
 
 from prompt2model.demo_creator import create_gradio
 from prompt2model.model_executor import GenerationModelExecutor
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from test_helpers import create_gpt2_model_and_tokenizer
 
-from transformers import T5Tokenizer  # isort:skip
+from transformers import T5ForConditionalGeneration, T5Tokenizer  # isort:skip
 
 
 def test_create_gradio_with_gpt2():
@@ -22,8 +21,6 @@ def test_create_gradio_with_gpt2():
     gpt2_executor = GenerationModelExecutor(
         model=gpt2_model,
         tokenizer=gpt2_tokenizer,
-        test_set=None,
-        input_column="model_input",
         batch_size=1,
     )
 
@@ -47,8 +44,6 @@ def test_create_gradio_with_t5():
     t5_executor = GenerationModelExecutor(
         model=t5_model,
         tokenizer=t5_tokenizer,
-        test_set=None,
-        input_column="model_input",
         batch_size=1,
     )
 

@@ -1,11 +1,11 @@
 """Testing TextualizeProcessor."""
 
-import logging
-
 import datasets
 import pytest
+from transformers import T5Tokenizer
 
 from prompt2model.dataset_processor.textualize import TextualizeProcessor
+from test_helpers import create_gpt2_model_and_tokenizer
 
 DATASET_DICTS = [
     datasets.DatasetDict(
@@ -69,7 +69,10 @@ INSTRUCTION = "convert to text2text"
 
 def test_dataset_processor_t5_style():
     """Test the `process_dataset_dict` function of T5-type `TextualizeProcessor`."""
-    t5_processor = TextualizeProcessor(has_encoder=True)
+    t5_tokenizer = T5Tokenizer.from_pretrained("t5-small")
+    t5_processor = TextualizeProcessor(
+        has_encoder=True, eos_token=t5_tokenizer.eos_token
+    )
     t5_modified_dataset_dicts = t5_processor.process_dataset_dict(
         INSTRUCTION, DATASET_DICTS
     )
@@ -83,7 +86,7 @@ def test_dataset_processor_t5_style():
                             "<task 0> convert to text2text Example: bar Label: ",
                         ],
                         "input_col": ["spam", "eggs"],
-                        "output_col": ["baz", "qux"],
+                        "output_col": ["baz</s>", "qux</s>"],
                     }
                 ),
                 "test": datasets.Dataset.from_dict(
@@ -93,7 +96,7 @@ def test_dataset_processor_t5_style():
                             "<task 0> convert to text2text Example: bar Label: ",
                         ],
                         "input_col": ["spam", "eggs"],
-                        "output_col": ["baz", "qux"],
+                        "output_col": ["baz</s>", "qux</s>"],
                     }
                 ),
             }
@@ -107,7 +110,7 @@ def test_dataset_processor_t5_style():
                             "<task 1> convert to text2text Example: eggs Label: ",
                         ],
                         "input_col": ["spam", "eggs"],
-                        "output_col": ["ham", "sau"],
+                        "output_col": ["ham</s>", "sau</s>"],
                     }
                 ),
                 "val": datasets.Dataset.from_dict(
@@ -117,7 +120,7 @@ def test_dataset_processor_t5_style():
                             "<task 1> convert to text2text Example: eggs Label: ",
                         ],
                         "input_col": ["spam", "eggs"],
-                        "output_col": ["ham", "sau"],
+                        "output_col": ["ham</s>", "sau</s>"],
                     }
                 ),
             }
@@ -133,10 +136,12 @@ def test_dataset_processor_t5_style():
             )
 
 
-def test_dataset_processor_decoder_only_style(caplog):
+def test_dataset_processor_decoder_only_style():
     """Test the `process_dataset_dict` function of a GPT-type `TextualizeProcessor`."""
-    caplog.set_level(logging.WARNING)
-    gpt_processor = TextualizeProcessor(has_encoder=False)
+    _, gpt2_tokenizer = create_gpt2_model_and_tokenizer()
+    gpt_processor = TextualizeProcessor(
+        has_encoder=False, eos_token=gpt2_tokenizer.eos_token
+    )
     gpt_modified_dataset_dicts = gpt_processor.process_dataset_dict(
         INSTRUCTION, DATASET_DICTS
     )
@@ -148,8 +153,8 @@ def test_dataset_processor_decoder_only_style(caplog):
                 "train": datasets.Dataset.from_dict(
                     {
                         "model_input": [
-                            "<task 0> convert to text2text Example: foo Label: baz",
-                            "<task 0> convert to text2text Example: bar Label: qux",
+                            "<task 0> convert to text2text Example: foo Label: baz<|endoftext|>",  # noqa: E501
+                            "<task 0> convert to text2text Example: bar Label: qux<|endoftext|>",  # noqa: E501
                         ],
                         "input_col": ["spam", "eggs"],
                         "output_col": ["baz", "qux"],
@@ -172,8 +177,8 @@ def test_dataset_processor_decoder_only_style(caplog):
                 "train": datasets.Dataset.from_dict(
                     {
                         "model_input": [
-                            "<task 1> convert to text2text Example: spam Label: ham",
-                            "<task 1> convert to text2text Example: eggs Label: sau",
+                            "<task 1> convert to text2text Example: spam Label: ham<|endoftext|>",  # noqa: E501
+                            "<task 1> convert to text2text Example: eggs Label: sau<|endoftext|>",  # noqa: E501
                         ],
                         "input_col": ["spam", "eggs"],
                         "output_col": ["ham", "sau"],
@@ -200,15 +205,15 @@ def test_dataset_processor_decoder_only_style(caplog):
                 dataset_dict[dataset_split]["model_input"]
                 == gpt_expected_dataset_dicts[index][dataset_split]["model_input"]
             )
-    # Assert that two warning messages were logged
-    assert len(caplog.records) == 1
-    assert all(record.levelname == "WARNING" for record in caplog.records)
 
 
 def test_unexpected_dataset_split():
     """Test the error handler for unexpercted dataset split."""
     with pytest.raises(AssertionError):
-        gpt_processor = TextualizeProcessor(has_encoder=False)
+        _, gpt2_tokenizer = create_gpt2_model_and_tokenizer()
+        gpt_processor = TextualizeProcessor(
+            has_encoder=False, eos_token=gpt2_tokenizer.eos_token
+        )
         _ = gpt_processor.process_dataset_dict(
             INSTRUCTION, UNEXPECTED_DATASET_DICTS_WITH_WRONG_SPLIT
         )
@@ -217,7 +222,10 @@ def test_unexpected_dataset_split():
 def test_unexpected_columns():
     """Test the error handler for unexpercted dataset columns."""
     with pytest.raises(AssertionError):
-        gpt_processor = TextualizeProcessor(has_encoder=False)
+        _, gpt2_tokenizer = create_gpt2_model_and_tokenizer()
+        gpt_processor = TextualizeProcessor(
+            has_encoder=False, eos_token=gpt2_tokenizer.eos_token
+        )
         _ = gpt_processor.process_dataset_dict(
             INSTRUCTION, UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS
         )
