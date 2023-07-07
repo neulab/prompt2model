@@ -55,12 +55,9 @@ class ModelExecutor(ABC):
             logging.warning(
                 "Trying to init an ModelExecutor's tokenizer without pad_token"
             )
-            self.tokenizer.pad_token = "[PAD]"
-            self.model.config.pad_token_id = len(self.tokenizer)
-            self.model.resize_token_embeddings(len(self.tokenizer))
-            self.model.config.attention_mask_fn = lambda input_ids: (
-                input_ids != self.model.config.pad_token_id
-            ).float()
+        self.tokenizer.pad_token = self.tokenizer.eos_token
+        if self.model.config.pad_token_id is None:
+            self.model.config.pad_token_id = self.tokenizer.eos_token_id
 
     @abstractmethod
     def make_prediction(self) -> list[ModelOutput]:
