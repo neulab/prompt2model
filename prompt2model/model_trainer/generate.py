@@ -41,12 +41,6 @@ class GenerationModelTrainer(BaseTrainer):
             encoder-decoder model. This can be customized for your specific use case.
         """
         self.has_encoder = has_encoder
-        self.training_args = Seq2SeqTrainingArguments(
-            output_dir="./result",
-            logging_steps=8,
-            evaluation_strategy="epoch",
-            save_strategy="no",
-        )
         self.model_max_length = model_max_length
         if self.has_encoder:
             self.model = transformers.T5ForConditionalGeneration.from_pretrained(
@@ -182,42 +176,67 @@ class GenerationModelTrainer(BaseTrainer):
                     )["f1"]
             return metric_values
 
-        self.training_args.output_dir = hyperparameter_choices.get(
-            "output_dir", "./result"
+        hyperparameter_choices_keys = set(hyperparameter_choices.keys())
+        supported_keys = {
+            "output_dir",
+            "logging_steps",
+            "evaluation_strategy",
+            "save_strategy",
+            "num_train_epochs",
+            "per_device_train_batch_size",
+            "warmup_steps",
+            "weight_decay",
+            "logging_dir",
+            "learning_rate",
+        }
+        assert hyperparameter_choices_keys.issubset(
+            supported_keys
+        ), f"Only support {supported_keys} as training parameters"
+        training_args = Seq2SeqTrainingArguments(
+            output_dir=hyperparameter_choices.get("output_dir", "./result"),
+            logging_steps=hyperparameter_choices.get("logging_steps", 8),
+            evaluation_strategy=hyperparameter_choices.get(
+                "evaluation_strategy", "epoch" if self.has_encoder else "no"
+            ),
+            save_strategy=hyperparameter_choices.get("save_strategy", "no"),
+            num_train_epochs=hyperparameter_choices.get("num_train_epochs", 10),
+            per_device_train_batch_size=hyperparameter_choices.get(
+                "per_device_train_batch_size", 100
+            ),
+            warmup_steps=hyperparameter_choices.get("warmup_steps", 0),
+            weight_decay=hyperparameter_choices.get("weight_decay", 0.01),
+            logging_dir=hyperparameter_choices.get("logging_dir", "./logs"),
+            learning_rate=hyperparameter_choices.get("learning_rate", 1e-4),
+            predict_with_generate=True,
         )
-        self.training_args.num_train_epochs = hyperparameter_choices.get(
-            "num_train_epochs", 10
-        )
-        self.training_args.per_device_train_batch_size = hyperparameter_choices.get(
-            "batch_size", 100
-        )
-        self.training_args.warmup_steps = hyperparameter_choices.get("warmup_steps", 0)
-        self.training_args.weight_decay = hyperparameter_choices.get(
-            "weight_decay", 0.01
-        )
-        self.training_args.logging_dir = hyperparameter_choices.get(
-            "logging_dir", "./logs"
-        )
-        self.training_args.learning_rate = hyperparameter_choices.get(
-            "learning_rate", 1e-4
-        )
-        self.training_args.predict_with_generate = True
-
-        preprocessed_training_dataset = self.preprocess_dataset(training_datasets)
-        if not validation_datasets:
-            preprocessed_training_dataset = (
-                preprocessed_training_dataset.train_test_split(
-                    test_size=0.15, seed=seed_generator.get_seed()
-                )
+        if training_args.evaluation_strategy != "no" and self.has_encoder is False:
+            logging.warning(
+                "Decoder-only model doesn't support evaluation during training"
             )
-            train_dataset = preprocessed_training_dataset["train"]
-            val_dataset = preprocessed_training_dataset["test"]
+            training_args.evaluation_strategy = "no"
+        preprocessed_training_dataset = self.preprocess_dataset(training_datasets)
+        if self.has_encoder:
+            if not validation_datasets:
+                preprocessed_training_dataset = (
+                    preprocessed_training_dataset.train_test_split(
+                        test_size=0.15, seed=seed_generator.get_seed()
+                    )
+                )
+                train_dataset = preprocessed_training_dataset["train"]
+                val_dataset = preprocessed_training_dataset["test"]
+            else:
+                val_dataset = self.preprocess_dataset(validation_datasets)
+                train_dataset = preprocessed_training_dataset
         else:
-            val_dataset = self.preprocess_dataset(validation_datasets)
+            if validation_datasets:
+                logging.warning(
+                    "Decoder-only model doesn't support evaluation during training"
+                )
             train_dataset = preprocessed_training_dataset
+            val_dataset = None
         trainer = Seq2SeqTrainer(
             model=self.model,
-            args=self.training_args,
+            args=training_args,
             train_dataset=train_dataset,
             eval_dataset=val_dataset,
             data_collator=transformers.DataCollatorForSeq2Seq(tokenizer=self.tokenizer)
@@ -227,11 +246,11 @@ class GenerationModelTrainer(BaseTrainer):
             ),
             optimizers=[
                 torch.optim.AdamW(
-                    params=self.model.parameters(), lr=self.training_args.learning_rate
+                    params=self.model.parameters(), lr=training_args.learning_rate
                 ),
                 None,
             ],
-            compute_metrics=compute_metrics,
+            compute_metrics=compute_metrics if self.has_encoder else None,
         )
 
         # Train the model
