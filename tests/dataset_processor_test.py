@@ -28,6 +28,7 @@ DATASET_DICTS = [
     ),
 ]
 
+# Our support spilts are `train, val, test`.
 UNEXPECTED_DATASET_DICTS_WITH_WRONG_SPLIT = [
     datasets.DatasetDict(
         {
