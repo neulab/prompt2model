@@ -18,7 +18,9 @@ def test_t5_trainer_with_tokenizer_max_length():
     # Test encoder-decoder GenerationModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
         trainer = GenerationModelTrainer(
-           "patrickvonplaten/t5-tiny-random", has_encoder=True, tokenizer_max_length=512
+            "patrickvonplaten/t5-tiny-random",
+            has_encoder=True,
+            tokenizer_max_length=512,
         )
         training_datasets = [
             datasets.Dataset.from_dict(
@@ -143,7 +145,9 @@ def test_t5_trainer_without_tokenizer_max_length():
             "logging.warning"
         ) as mock_warning:
             trainer = GenerationModelTrainer(
-               "patrickvonplaten/t5-tiny-random", has_encoder=True, tokenizer_max_length=None
+                "patrickvonplaten/t5-tiny-random",
+                has_encoder=True,
+                tokenizer_max_length=None,
             )
             trained_model, trained_tokenizer = trainer.train_model(
                 {
@@ -171,7 +175,9 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
     """Train a T5 model with unsupported evaluation_strategy."""
     with tempfile.TemporaryDirectory() as cache_dir:
         trainer = GenerationModelTrainer(
-           "patrickvonplaten/t5-tiny-random", has_encoder=True, tokenizer_max_length=512
+            "patrickvonplaten/t5-tiny-random",
+            has_encoder=True,
+            tokenizer_max_length=512,
         )
         training_datasets = [
             datasets.Dataset.from_dict(
@@ -329,7 +335,9 @@ def test_trainer_with_unsupported_parameter():
     with pytest.raises(AssertionError):
         with tempfile.TemporaryDirectory() as cache_dir:
             trainer = GenerationModelTrainer(
-               "patrickvonplaten/t5-tiny-random", has_encoder=True, tokenizer_max_length=512
+                "patrickvonplaten/t5-tiny-random",
+                has_encoder=True,
+                tokenizer_max_length=512,
             )
             training_datasets = [
                 datasets.Dataset.from_dict(
