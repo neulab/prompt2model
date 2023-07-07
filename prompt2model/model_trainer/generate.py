@@ -90,16 +90,12 @@ class GenerationModelTrainer(BaseTrainer):
         shuffled_dataset = concatenated_dataset.shuffle(seed=seed_generator.get_seed())
         inputs = shuffled_dataset["model_input"]
         outputs = shuffled_dataset["output_col"]
-        input_encodings = self.tokenizer(
+        input_encodings = self.tokenizer.batch_encode_plus(
             inputs, truncation=True, max_length=self.model_max_length, padding=True
         )
-        output_encodings = self.tokenizer(
+        output_encodings = self.tokenizer.batch_encode_plus(
             outputs, truncation=True, max_length=self.model_max_length, padding=True
         )
-        # Create attention masks
-        attention_mask = (
-            torch.tensor(input_encodings["input_ids"]) != self.model.config.pad_token_id
-        ).tolist()
         # If the model has an encoder, calculate the length of the labels and
         # set the ids of the original input's condition to -100
         if self.has_encoder:
@@ -110,10 +106,8 @@ class GenerationModelTrainer(BaseTrainer):
             labels = input_encodings["input_ids"]
         preprocessed_dict = {
             "input_ids": input_encodings["input_ids"],
-            "attention_mask": attention_mask,
-            "labels": output_encodings["input_ids"]
-            if self.has_encoder
-            else input_encodings["input_ids"],
+            "attention_mask": input_encodings["attention_mask"],
+            "labels": labels,
         }
         return datasets.Dataset.from_dict(preprocessed_dict)
 
