@@ -49,6 +49,19 @@ class GenerationModelExecutor(ModelExecutor):
                 return_tensors="pt",
             )
 
+            for i, text in enumerate(input_texts):
+                if (
+                    self.tokenizer_max_length is not None
+                    and len(self.tokenizer.tokenize(text)) > self.tokenizer_max_length
+                ):
+                    logging.warning(
+                        (
+                            f"Truncation happened when tokenizing '{text}'."
+                            " You should consider increasing the tokenizer_max_length."
+                            " Otherwise the truncation may lead to unexpected results."
+                        )
+                    )
+
             input_ids = encoded_inputs["input_ids"]
             attention_mask = encoded_inputs["attention_mask"]
             device = self.model.device
