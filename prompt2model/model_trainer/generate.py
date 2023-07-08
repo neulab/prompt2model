@@ -17,6 +17,7 @@ from prompt2model.model_trainer.callback import RealEvaluation
 from prompt2model.utils import seed_generator
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+logging.basicConfig(level=logging.INFO)
 
 
 class GenerationModelTrainer(BaseTrainer):
@@ -84,6 +85,19 @@ class GenerationModelTrainer(BaseTrainer):
         shuffled_dataset = dataset.shuffle(seed=seed_generator.get_seed())
         inputs = shuffled_dataset["model_input"]
         outputs = shuffled_dataset["output_col"]
+        longest_input = max(inputs, key=len)
+        longest_output = max(outputs, key=len)
+        if self.tokenizer_max_length is not None and (
+            len(self.tokenizer.tokenize(longest_input)) > self.tokenizer_max_length
+            or len(self.tokenizer.tokenize(longest_output)) > self.tokenizer_max_length
+        ):
+            logging.warning(
+                (
+                    "Truncation happened when tokenizing dataset."
+                    " You should consider increasing the tokenizer_max_length."
+                    " Otherwise the truncation may lead to unexpected results."
+                )
+            )
         input_encodings = self.tokenizer.batch_encode_plus(
             inputs,
             truncation=True,
