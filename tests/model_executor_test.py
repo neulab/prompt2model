@@ -4,18 +4,17 @@ from unittest.mock import patch
 
 import pytest
 from datasets import Dataset
-from transformers import T5ForConditionalGeneration, T5Tokenizer
 
 from prompt2model.model_executor import GenerationModelExecutor, ModelOutput
-from test_helpers import create_gpt2_model_and_tokenizer
+from test_helpers import create_gpt2_model_and_tokenizer, create_t5_model_and_tokenizer
 
 
 def test_make_prediction_t5_model():
     """Test the `make_prediction` method with a T5 model."""
     # Create T5 model and tokenizer.
-    t5_model_name = "google/t5-efficient-tiny"
-    t5_model = T5ForConditionalGeneration.from_pretrained(t5_model_name)
-    t5_tokenizer = T5Tokenizer.from_pretrained(t5_model_name)
+    t5_model_and_tokenizer = create_t5_model_and_tokenizer()
+    t5_model = t5_model_and_tokenizer.model
+    t5_tokenizer = t5_model_and_tokenizer.tokenizer
 
     # Create test dataset.
     test_dataset = Dataset.from_dict(
@@ -95,9 +94,9 @@ def test_make_prediction_gpt2_model():
 def test_make_single_prediction_t5_model():
     """Test the `make_single_prediction` method with a T5 model."""
     # Create T5 model and tokenizer.
-    t5_model_name = "google/t5-efficient-tiny"
-    t5_model = T5ForConditionalGeneration.from_pretrained(t5_model_name)
-    t5_tokenizer = T5Tokenizer.from_pretrained(t5_model_name)
+    t5_model_and_tokenizer = create_t5_model_and_tokenizer()
+    t5_model = t5_model_and_tokenizer.model
+    t5_tokenizer = t5_model_and_tokenizer.tokenizer
 
     # Create GenerationModelExecutor.
     model_executor = GenerationModelExecutor(t5_model, t5_tokenizer)
@@ -145,9 +144,9 @@ def test_make_single_prediction_gpt2_model():
 def test_make_single_prediction_t5_model_without_length_constraints():
     """Test GenerationModelExecutor for a T5 model without length constraints."""
     # Create T5 model and tokenizer.
-    t5_model_name = "t5-small"
-    t5_model = T5ForConditionalGeneration.from_pretrained(t5_model_name)
-    t5_tokenizer = T5Tokenizer.from_pretrained(t5_model_name)
+    t5_model_and_tokenizer = create_t5_model_and_tokenizer()
+    t5_model = t5_model_and_tokenizer.model
+    t5_tokenizer = t5_model_and_tokenizer.tokenizer
 
     # Create GenerationModelExecutor.
     model_executor = GenerationModelExecutor(
@@ -246,9 +245,9 @@ def test_sequence_max_length_init_for_gpt2():
 
 def test_sequence_max_length_init_for_t5():
     """Test the sequence_max_length is correctly set for t5."""
-    t5_model_name = "t5-small"
-    t5_model = T5ForConditionalGeneration.from_pretrained(t5_model_name)
-    t5_tokenizer = T5Tokenizer.from_pretrained(t5_model_name)
+    t5_model_and_tokenizer = create_t5_model_and_tokenizer()
+    t5_model = t5_model_and_tokenizer.model
+    t5_tokenizer = t5_model_and_tokenizer.tokenizer
     # Create test dataset.
     test_input = "translate English to Spanish: What's your name?"
 
