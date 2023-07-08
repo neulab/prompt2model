@@ -177,7 +177,10 @@ def test_make_single_prediction_gpt2_model_without_length_constraints():
 
     with patch("logging.warning") as mock_warning:
         model_executor = GenerationModelExecutor(
-            gpt2_model, gpt2_tokenizer, tokenizer_max_length=None, sequence_max_length=None
+            gpt2_model,
+            gpt2_tokenizer,
+            tokenizer_max_length=None,
+            sequence_max_length=None,
         )
         test_input = "Hello World! What is your name?"
         expected_warining = "The `max_length` in `self.model.generate` will default to `self.model.config.max_length` (20) if `sequence_max_length` is `None`."  # noqa: E501
