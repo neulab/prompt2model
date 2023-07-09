@@ -173,6 +173,7 @@ def test_t5_trainer_without_tokenizer_max_length():
 
 def test_t5_trainer_with_unsupported_evaluation_strategy():
     """Train a T5 model with unsupported evaluation_strategy."""
+    # We only support `epoch` as evaluation_strategy, so `step` strategy is unsupported.
     with tempfile.TemporaryDirectory() as cache_dir:
         trainer = GenerationModelTrainer(
             "patrickvonplaten/t5-tiny-random",
