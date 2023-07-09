@@ -202,8 +202,8 @@ def test_openai_key_init():
         )
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     environment_key_generator = OpenAIDatasetGenerator()
-    assert environment_key_generator.api_key == os.environ["OPENAI_API_KEY"] is not None
+    assert environment_key_generator.api_key == os.environ["OPENAI_API_KEY"]
     os.environ["OPENAI_API_KEY"] = ""
     api_key = "qwertwetyriutytwreytuyrgtwetrueytttr"
-    explicit_api_key_genertor = OpenAIDatasetGenerator(api_key)
-    assert explicit_api_key_genertor.api_key == api_key and api_key is not None
+    explicit_api_key_generator = OpenAIDatasetGenerator(api_key)
+    assert explicit_api_key_generator.api_key == api_key
