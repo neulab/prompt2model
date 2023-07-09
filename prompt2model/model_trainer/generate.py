@@ -20,8 +20,8 @@ from prompt2model.utils import seed_generator
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
-class RealEvaluation(TrainerCallback):
-    """The real evaluation will be conduted after each mock evaluation of Trainer."""
+class EvaluationCallback(TrainerCallback):
+    """The evaluation will be conduted on validation set after each  epoch."""
 
     def __init__(self, trainer, tokenizer, val_dataset) -> None:
         """Initializes a new instance of AutoregressiveModelCallback.
@@ -29,7 +29,7 @@ class RealEvaluation(TrainerCallback):
         Args:
             trainer: Trainer instance.
                 After each epoch of Training, this callback will be called.
-            tokenizer: Tokenizer to initialize model executor.
+            tokenizer: Tokenizer used for ModelExecutor.
             val_dataset: Validation dataset to be evaluated on.
         """
         super().__init__()
@@ -114,10 +114,10 @@ class GenerationModelTrainer(BaseTrainer):
             # Save the pad_id to the model's config instead of the function
 
     def tokenize_dataset(self, dataset: datasets.Dataset) -> datasets.Dataset:
-        """Concatenate and preprocess the training/validation datasets.
+        """Tokenize the training/validation dataset.
 
         Args:
-            dataset: Dataset.dataset wit model_input and output_col columns.
+            dataset: Dataset.dataset with model_input and output_col columns.
 
         Returns:
             A `datasets.Dataset` object containing the preprocessed data with:
@@ -172,6 +172,7 @@ class GenerationModelTrainer(BaseTrainer):
             "weight_decay",
             "logging_dir",
             "learning_rate",
+            "test_size",
         }
         assert hyperparameter_choices_keys.issubset(
             supported_keys
@@ -228,8 +229,9 @@ class GenerationModelTrainer(BaseTrainer):
                         + " The training dataset will be split to evaluate the model."
                     )
                 )
+                test_size = hyperparameter_choices.get("test_size", 0.15)
                 splited_dataset = concatenated_training_dataset.train_test_split(
-                    test_size=0.15, seed=seed_generator.get_seed()
+                    test_size=test_size, seed=seed_generator.get_seed()
                 )
                 train_dataset = self.tokenize_dataset(splited_dataset["train"])
                 # the training dataset will be tokenized to train the model.
@@ -259,7 +261,9 @@ class GenerationModelTrainer(BaseTrainer):
 
         if evaluate_after_epoch:
             assert val_dataset is not None, "Validation dataset is None"
-            trainer.add_callback(RealEvaluation(trainer, self.tokenizer, val_dataset))
+            trainer.add_callback(
+                EvaluationCallback(trainer, self.tokenizer, val_dataset)
+            )
 
         # Train the model
         trainer.train()
