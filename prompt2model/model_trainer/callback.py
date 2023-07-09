@@ -8,7 +8,7 @@ from prompt2model.model_evaluator import Seq2SeqEvaluator
 from prompt2model.model_executor import GenerationModelExecutor
 
 
-class RealEvaluation(TrainerCallback):
+class EvaluationCallback(TrainerCallback):
     """The real evaluation will be conduted after each mock evaluation of Trainer."""
 
     def __init__(self, trainer, tokenizer, val_dataset) -> None:
