@@ -13,6 +13,89 @@ from prompt2model.model_trainer.generate import GenerationModelTrainer
 os.environ["WANDB_MODE"] = "dryrun"
 
 
+def test_gpt_model_trainer_tokenize():
+    """Test the Trainer for GPT model give correct tokenization."""
+    trainer = GenerationModelTrainer(
+        "sshleifer/tiny-gpt2", has_encoder=False, tokenizer_max_length=64
+    )
+    training_dataset = datasets.Dataset.from_dict(
+        {
+            "model_input": [
+                "In the shimmering golden.pomme<|endoftext|>",  # noqa: E501
+                "In the shimmering golden. In the shimmering golden. In the shimmering golden.pomme pomme pomme<|endoftext|>",  # noqa: E501
+                "In the shimmering golden. In the shimmering golden.pomme pomme<|endoftext|>",  # noqa: E501
+            ],
+            "output_col": [
+                "pomme<|endoftext|>",
+                "pomme pomme pomme<|endoftext|>",
+                "pomme pomme<|endoftext|>",
+            ],
+        }
+    )
+    tokenized_dataset = trainer.tokenize_dataset(training_dataset, shuffle=False)
+
+    output_encodings = trainer.tokenizer.batch_encode_plus(
+        training_dataset["output_col"],
+        truncation=True,
+        max_length=trainer.tokenizer_max_length,
+        padding=True,
+    )
+
+    def get_prefix_length(input_list, prefix):
+        return input_list.index(
+            next((x for x in input_list if x != prefix), len(input_list))
+        )
+
+    for i in range(len(tokenized_dataset["input_ids"])):
+        assert get_prefix_length(
+            tokenized_dataset["input_ids"][i], trainer.model.config.pad_token_id
+        ) == get_prefix_length(tokenized_dataset["attention_mask"][i], 0)
+
+    for i in range(len(output_encodings["input_ids"])):
+        compute_loss_label_length = len(
+            tokenized_dataset["labels"][i]
+        ) - get_prefix_length(tokenized_dataset["labels"][i], -100)
+        # We are using teaching force in training decoder-only model.
+        # The ignored index -100 is ignored for the loss compute in HuggingFace Trainer.
+        label_length_without_padding = len(
+            output_encodings["input_ids"][i]
+        ) - get_prefix_length(
+            output_encodings["input_ids"][i], trainer.model.config.pad_token_id
+        )
+        assert compute_loss_label_length == label_length_without_padding
+
+
+def test_t5_model_trainer_tokenize():
+    """Test the Trainer for T5 model give correct tokenization."""
+    trainer = GenerationModelTrainer(
+        "patrickvonplaten/t5-tiny-random", has_encoder=True, tokenizer_max_length=64
+    )
+    training_dataset = datasets.Dataset.from_dict(
+        {
+            "model_input": [
+                "In the shimmering golden.",  # noqa: E501
+                "In the shimmering golden. In the shimmering golden. In the shimmering golden.",  # noqa: E501
+                "In the shimmering golden. In the shimmering golden.",  # noqa: E501
+            ],
+            "output_col": [
+                "pomme<|endoftext|>",
+                "pomme pomme pomme<|endoftext|>",
+                "pomme pomme<|endoftext|>",
+            ],
+        }
+    )
+    tokenized_dataset = trainer.tokenize_dataset(training_dataset, shuffle=False)
+
+    output_encodings = trainer.tokenizer.batch_encode_plus(
+        training_dataset["output_col"],
+        truncation=True,
+        max_length=trainer.tokenizer_max_length,
+        padding=True,
+    )
+
+    assert tokenized_dataset["labels"] == output_encodings["input_ids"]
+
+
 def test_t5_trainer_with_tokenizer_max_length():
     """Train a encoder-decoder model with a specified tokenizer_max_length of 512 ."""
     # Test encoder-decoder GenerationModelTrainer implementation

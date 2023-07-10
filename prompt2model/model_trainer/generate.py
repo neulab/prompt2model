@@ -2,6 +2,7 @@
 
 from __future__ import annotations  # noqa FI58
 
+import copy
 import logging
 import os
 from typing import Any
@@ -70,11 +71,14 @@ class GenerationModelTrainer(BaseTrainer):
             self.model.config.pad_token_id = self.tokenizer.eos_token_id
             # Save the pad_id to the model's config instead of the function
 
-    def tokenize_dataset(self, dataset: datasets.Dataset) -> datasets.Dataset:
+    def tokenize_dataset(
+        self, dataset: datasets.Dataset, shuffle: bool = True
+    ) -> datasets.Dataset:
         """Tokenize the training/validation dataset.
 
         Args:
             dataset: Dataset.dataset with model_input and output_col columns.
+            shuffle: Whether to shuffle the dataset.
 
         Returns:
             A `datasets.Dataset` object containing the preprocessed data with:
@@ -82,9 +86,10 @@ class GenerationModelTrainer(BaseTrainer):
                 "attention_mask": A list of 0/1 indicating which tokens are padding.
                 "labels": A list of token IDs for the encoded output texts.
         """
-        shuffled_dataset = dataset.shuffle(seed=seed_generator.get_seed())
-        inputs = shuffled_dataset["model_input"]
-        outputs = shuffled_dataset["output_col"]
+        if shuffle:
+            dataset = dataset.shuffle(seed=seed_generator.get_seed())
+        inputs = dataset["model_input"]
+        outputs = dataset["output_col"]
         longest_input = max(inputs, key=len)
         longest_output = max(outputs, key=len)
         if self.tokenizer_max_length is not None and (
@@ -110,12 +115,29 @@ class GenerationModelTrainer(BaseTrainer):
             max_length=self.tokenizer_max_length,
             padding=True,
         )
+
+        def get_padding_length(input_ids, padding_token_id):
+            return input_ids.index(
+                next((x for x in input_ids if x != padding_token_id), len(input_ids))
+            )
+
+        if not self.has_encoder:
+            labels = copy.deepcopy(input_encodings["input_ids"])
+            input_length_with_padding = len(input_encodings["input_ids"][0])
+            output_length_with_padding = len(output_encodings["input_ids"][0])
+            for i in range(len(labels)):
+                padding_length = get_padding_length(
+                    output_encodings["input_ids"][i], self.model.config.pad_token_id
+                )
+                output_length = output_length_with_padding - padding_length
+                labels[i] = [-100] * (
+                    input_length_with_padding - padding_length
+                ) + labels[i][-output_length:]
+
         preprocessed_dict = {
             "input_ids": input_encodings["input_ids"],
             "attention_mask": input_encodings["attention_mask"],
-            "labels": output_encodings["input_ids"]
-            if self.has_encoder
-            else input_encodings["input_ids"],
+            "labels": output_encodings["input_ids"] if self.has_encoder else labels,
         }
         return datasets.Dataset.from_dict(preprocessed_dict)
 
