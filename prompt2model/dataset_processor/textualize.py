@@ -42,7 +42,6 @@ class TextualizeProcessor(BaseProcessor):
                 f"<task {task_id}> {instruction} Example: {example['input_col']}"
                 + " Label: "
             )
-            example["output_col"] += eos_token
         else:
             if dataset_split == "train":
                 model_input = (
@@ -54,5 +53,6 @@ class TextualizeProcessor(BaseProcessor):
                     f"<task {task_id}> {instruction} Example: {example['input_col']}"
                     + " Label: "
                 )
+        example["output_col"] += eos_token
         example["model_input"] = model_input
         return example

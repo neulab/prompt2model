@@ -159,7 +159,7 @@ def test_dataset_processor_decoder_only_style():
                             "<task 0> convert to text2text Example: bar Label: qux<|endoftext|>",  # noqa: E501
                         ],
                         "input_col": ["spam", "eggs"],
-                        "output_col": ["baz", "qux"],
+                        "output_col": ["baz<|endoftext|>", "qux<|endoftext|>"],
                     }
                 ),
                 "test": datasets.Dataset.from_dict(
@@ -169,7 +169,7 @@ def test_dataset_processor_decoder_only_style():
                             "<task 0> convert to text2text Example: bar Label: ",
                         ],
                         "input_col": ["spam", "eggs"],
-                        "output_col": ["baz", "qux"],
+                        "output_col": ["baz<|endoftext|>", "qux<|endoftext|>"],
                     }
                 ),
             }
@@ -183,7 +183,7 @@ def test_dataset_processor_decoder_only_style():
                             "<task 1> convert to text2text Example: eggs Label: sau<|endoftext|>",  # noqa: E501
                         ],
                         "input_col": ["spam", "eggs"],
-                        "output_col": ["ham", "sau"],
+                        "output_col": ["ham<|endoftext|>", "sau<|endoftext|>"],
                     }
                 ),
                 "val": datasets.Dataset.from_dict(
@@ -193,7 +193,7 @@ def test_dataset_processor_decoder_only_style():
                             "<task 1> convert to text2text Example: eggs Label: ",
                         ],
                         "input_col": ["spam", "eggs"],
-                        "output_col": ["ham", "sau"],
+                        "output_col": ["ham<|endoftext|>", "sau<|endoftext|>"],
                     }
                 ),
             }

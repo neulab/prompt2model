@@ -42,27 +42,36 @@ def test_gpt_model_trainer_tokenize():
     )
 
     def get_prefix_length(input_list, prefix):
+        # This function is used to get the prefix length of the input list.
+        # i.e. The length of [prefix ..., prefix] in [prefix..., prefix, Others]
         return input_list.index(
             next((x for x in input_list if x != prefix), len(input_list))
         )
 
     for i in range(len(tokenized_dataset["input_ids"])):
+        # Test that each pad_token in input_ids corresponds to one 0 in attention_mask.
         assert get_prefix_length(
             tokenized_dataset["input_ids"][i], trainer.model.config.pad_token_id
         ) == get_prefix_length(tokenized_dataset["attention_mask"][i], 0)
-
-    for i in range(len(output_encodings["input_ids"])):
+        # Test that the last token of input_ids is eos_token.
+        assert (
+            tokenized_dataset["input_ids"][i][-1] == trainer.model.config.eos_token_id
+        )
         compute_loss_label_length = len(
             tokenized_dataset["labels"][i]
         ) - get_prefix_length(tokenized_dataset["labels"][i], -100)
         # We are using teaching force in training decoder-only model.
         # The ignored index -100 is ignored for the loss compute in HuggingFace Trainer.
-        label_length_without_padding = len(
+        output_col_length_without_padding = len(
             output_encodings["input_ids"][i]
         ) - get_prefix_length(
             output_encodings["input_ids"][i], trainer.model.config.pad_token_id
         )
-        assert compute_loss_label_length == label_length_without_padding
+        # The end of the model_input is the output_col, only which will compute loss.
+        # output_col_length_without_padding is the length of raw tokenized output_col.
+        # compute_loss_label_length is the length of labels will compute loss.
+        # Test these two values are the same.
+        assert compute_loss_label_length == output_col_length_without_padding
 
 
 def test_t5_model_trainer_tokenize():
