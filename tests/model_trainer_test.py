@@ -13,6 +13,21 @@ from prompt2model.model_trainer.generate import GenerationModelTrainer
 os.environ["WANDB_MODE"] = "dryrun"
 
 
+def get_prefix_length(input_list, prefix):
+    """Get the prefix length of the input list.
+
+    Args:
+        input_list: A list with the format of [prefix..., prefix, Others]
+        prefix: The prefix of the input list.
+
+    Returns:
+        The length of [prefix ..., prefix] in [prefix..., prefix, Others]
+    """
+    return input_list.index(
+        next((x for x in input_list if x != prefix), len(input_list))
+    )
+
+
 def test_gpt_model_trainer_tokenize():
     """Test the Trainer for GPT model give correct tokenization."""
     trainer = GenerationModelTrainer(
@@ -21,14 +36,14 @@ def test_gpt_model_trainer_tokenize():
     training_dataset = datasets.Dataset.from_dict(
         {
             "model_input": [
-                "In the shimmering golden.pomme<|endoftext|>",  # noqa: E501
-                "In the shimmering golden. In the shimmering golden. In the shimmering golden.pomme pomme pomme<|endoftext|>",  # noqa: E501
-                "In the shimmering golden. In the shimmering golden.pomme pomme<|endoftext|>",  # noqa: E501
+                "<task 0>convert to text2text\nExample:\nfoo\nLabel:\nbaz<|endoftext|>",  # noqa: E501
+                "<task 0>convert to text2text\nExample:\nfoo foo foo foo\nLabel:\nbaz baz baz baz<|endoftext|>",  # noqa: E501
+                "<task 0>convert to text2text\nExample:\nfoo foo\nLabel:\nbaz baz<|endoftext|>",  # noqa: E501
             ],
             "output_col": [
-                "pomme<|endoftext|>",
-                "pomme pomme pomme<|endoftext|>",
-                "pomme pomme<|endoftext|>",
+                "baz<|endoftext|>",
+                "baz baz baz baz<|endoftext|>",
+                "baz baz<|endoftext|>",
             ],
         }
     )
@@ -41,42 +56,46 @@ def test_gpt_model_trainer_tokenize():
         padding=True,
     )
 
-    def get_prefix_length(input_list, prefix):
-        # This function is used to get the prefix length of the input list.
-        # i.e. The length of [prefix ..., prefix] in [prefix..., prefix, Others]
-        return input_list.index(
-            next((x for x in input_list if x != prefix), len(input_list))
-        )
-
-    for i in range(len(tokenized_dataset["input_ids"])):
-        # Test that each pad_token in input_ids corresponds to one 0 in attention_mask.
+    for idx, each_input_ids_list in enumerate(tokenized_dataset["input_ids"]):
+        # Test that each pad_token in each input_ids list corresponds to a
+        # 0 in attention_mask.
         assert get_prefix_length(
-            tokenized_dataset["input_ids"][i], trainer.model.config.pad_token_id
-        ) == get_prefix_length(tokenized_dataset["attention_mask"][i], 0)
-        # Test that the last token of input_ids is eos_token.
-        assert (
-            tokenized_dataset["input_ids"][i][-1] == trainer.model.config.eos_token_id
-        )
+            each_input_ids_list, trainer.model.config.pad_token_id
+        ) == get_prefix_length(tokenized_dataset["attention_mask"][idx], 0)
+        # Test that the last token of each input_ids list is eos_token.
+        assert each_input_ids_list[-1] == trainer.model.config.eos_token_id
         compute_loss_label_length = len(
-            tokenized_dataset["labels"][i]
-        ) - get_prefix_length(tokenized_dataset["labels"][i], -100)
+            tokenized_dataset["labels"][idx]
+        ) - get_prefix_length(tokenized_dataset["labels"][idx], -100)
         # We are using teaching force in training decoder-only model.
         # The index -100 is ignored for the loss compute in Autoregressive model.
+        # compute_loss_label_length is the length of labels that will compute loss.
         output_col_length_without_padding = len(
-            output_encodings["input_ids"][i]
+            output_encodings["input_ids"][idx]
         ) - get_prefix_length(
-            output_encodings["input_ids"][i], trainer.model.config.pad_token_id
+            output_encodings["input_ids"][idx], trainer.model.config.pad_token_id
         )
         # The end of the model_input is the output_col, only which will compute loss.
         # output_col_length_without_padding is the length of raw tokenized output_col.
-        # compute_loss_label_length is the length of labels will compute loss.
-        # Test these two values are the same.
+        # So output_col_length_without_padding equals to compute_loss_label_length.
         assert compute_loss_label_length == output_col_length_without_padding
+        # The tail of the labels should be exactly the same as the output_col's
+        # input_ids without padding.
+        assert (
+            output_encodings["input_ids"][idx][-output_col_length_without_padding:]
+            == tokenized_dataset["labels"][idx][-compute_loss_label_length:]
+        )
+        # Test the last token of each input_ids and labels should be eos_token.
+        assert (
+            output_encodings["input_ids"][idx][-1]
+            == tokenized_dataset["labels"][idx][-1]
+            == trainer.model.config.eos_token_id
+        )
         # For GPT model, length of input_ids, atattention_mask, labels is the same.
         assert (
-            len(tokenized_dataset["input_ids"][i])
-            == len(tokenized_dataset["labels"][i])
-            == len(tokenized_dataset["attention_mask"][i])
+            len(each_input_ids_list)
+            == len(tokenized_dataset["labels"][idx])
+            == len(tokenized_dataset["attention_mask"][idx])
         )
 
 
@@ -88,14 +107,14 @@ def test_t5_model_trainer_tokenize():
     training_dataset = datasets.Dataset.from_dict(
         {
             "model_input": [
-                "In the shimmering golden.",  # noqa: E501
-                "In the shimmering golden. In the shimmering golden. In the shimmering golden.",  # noqa: E501
-                "In the shimmering golden. In the shimmering golden.",  # noqa: E501
+                "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",  # noqa: E501
+                "<task 0>convert to text2text\nExample:\nfoo foo foo foo\nLabel:\n",  # noqa: E501
+                "<task 0>convert to text2text\nExample:\nfoo foo\nLabel:\n",  # noqa: E501
             ],
             "output_col": [
-                "pomme<|endoftext|>",
-                "pomme pomme pomme<|endoftext|>",
-                "pomme pomme<|endoftext|>",
+                "baz",
+                "baz baz baz baz",
+                "baz baz",
             ],
         }
     )
@@ -110,10 +129,13 @@ def test_t5_model_trainer_tokenize():
 
     assert tokenized_dataset["labels"] == output_encodings["input_ids"]
     # For T5 model，length of input_ids is the same as attention_mask.
-    for i in range(len(tokenized_dataset["labels"])):
-        assert len(tokenized_dataset["input_ids"][i]) == len(
-            tokenized_dataset["attention_mask"][i]
-        )
+    for idx, each_input_ids_list in enumerate(tokenized_dataset["input_ids"]):
+        # Test that the length of each input_ids list is the same as attention_mask.
+        assert len(each_input_ids_list) == len(tokenized_dataset["attention_mask"][idx])
+        # Test each pad_token in input_ids list corresponds to a 0 in attention_mask.
+        assert get_prefix_length(
+            each_input_ids_list, trainer.model.config.pad_token_id
+        ) == get_prefix_length(tokenized_dataset["attention_mask"][idx], 0)
 
 
 def test_t5_trainer_with_tokenizer_max_length():

@@ -2,7 +2,6 @@
 
 from __future__ import annotations  # noqa FI58
 
-import copy
 import logging
 import os
 from typing import Any
@@ -82,9 +81,14 @@ class GenerationModelTrainer(BaseTrainer):
 
         Returns:
             A `datasets.Dataset` object containing the preprocessed data with:
-                "input_ids": A list of token IDs for the encoded input texts.
-                "attention_mask": A list of 0/1 indicating which tokens are padding.
-                "labels": A list of token IDs for the encoded output texts.
+                "input_ids": numerical representations of input sequences to the model.
+                "attention_mask": Mask to avoid performing attention on padding token
+                    indices. Mask values selected in [0, 1]: 1 for tokens that are not
+                    masked, 0 for masked tokens.
+                "labels": Labels for language modeling. Indices are selected in
+                    [-100, 0, ..., config.vocab_size - 1]. All labels set to -100 are
+                    ignored (masked), the loss is only computed for labels in
+                    [0, ..., config.vocab_size - 1].
         """
         if shuffle:
             dataset = dataset.shuffle(seed=seed_generator.get_seed())
@@ -124,20 +128,26 @@ class GenerationModelTrainer(BaseTrainer):
             )
 
         if not self.has_encoder:
-            labels = copy.deepcopy(input_encodings["input_ids"])
+            labels = []
             input_length_with_padding = len(input_encodings["input_ids"][0])
             output_length_with_padding = len(output_encodings["input_ids"][0])
-            for i in range(len(labels)):
+            for idx, each_input_ids_list in enumerate(input_encodings["input_ids"]):
                 output_padding_length = get_padding_length(
-                    output_encodings["input_ids"][i], self.model.config.pad_token_id
+                    output_encodings["input_ids"][idx], self.model.config.pad_token_id
                 )
                 # We are using teaching force in training decoder-only model.
                 # The index -100 is ignored for loss compute in Autoregressive model.
                 # Reference: https://huggingface.co/docs/transformers/model_doc/gpt2#transformers.GPT2DoubleHeadsModel.forward.labels # noqa E501
                 output_length = output_length_with_padding - output_padding_length
-                labels[i] = [-100] * (
+                each_label_list = [-100] * (
                     input_length_with_padding - output_length
-                ) + labels[i][-output_length:]
+                ) + each_input_ids_list[-output_length:]
+                assert (
+                    len(each_label_list)
+                    == input_length_with_padding
+                    == len(each_input_ids_list)
+                )
+                labels.append(each_label_list)
 
         preprocessed_dict = {
             "input_ids": input_encodings["input_ids"],
