@@ -117,6 +117,8 @@ class GenerationModelTrainer(BaseTrainer):
         )
 
         def get_padding_length(input_ids, padding_token_id):
+            # input_ids is [padding_token_id..., padding_token_id, Others, eos_token_id]
+            # This function return the length of prefix padding_token_id in input_ids.
             return input_ids.index(
                 next((x for x in input_ids if x != padding_token_id), len(input_ids))
             )
@@ -126,12 +128,15 @@ class GenerationModelTrainer(BaseTrainer):
             input_length_with_padding = len(input_encodings["input_ids"][0])
             output_length_with_padding = len(output_encodings["input_ids"][0])
             for i in range(len(labels)):
-                padding_length = get_padding_length(
+                output_padding_length = get_padding_length(
                     output_encodings["input_ids"][i], self.model.config.pad_token_id
                 )
-                output_length = output_length_with_padding - padding_length
+                # We are using teaching force in training decoder-only model.
+                # The index -100 is ignored for loss compute in Autoregressive model.
+                # Reference: https://huggingface.co/docs/transformers/model_doc/gpt2#transformers.GPT2DoubleHeadsModel.forward.labels # noqa E501
+                output_length = output_length_with_padding - output_padding_length
                 labels[i] = [-100] * (
-                    input_length_with_padding - padding_length
+                    input_length_with_padding - output_length
                 ) + labels[i][-output_length:]
 
         preprocessed_dict = {

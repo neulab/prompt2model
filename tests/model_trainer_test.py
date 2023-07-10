@@ -61,7 +61,7 @@ def test_gpt_model_trainer_tokenize():
             tokenized_dataset["labels"][i]
         ) - get_prefix_length(tokenized_dataset["labels"][i], -100)
         # We are using teaching force in training decoder-only model.
-        # The ignored index -100 is ignored for the loss compute in HuggingFace Trainer.
+        # The index -100 is ignored for the loss compute in Autoregressive model.
         output_col_length_without_padding = len(
             output_encodings["input_ids"][i]
         ) - get_prefix_length(
@@ -72,6 +72,12 @@ def test_gpt_model_trainer_tokenize():
         # compute_loss_label_length is the length of labels will compute loss.
         # Test these two values are the same.
         assert compute_loss_label_length == output_col_length_without_padding
+        # For GPT model, length of input_ids, atattention_mask, labels is the same.
+        assert (
+            len(tokenized_dataset["input_ids"][i])
+            == len(tokenized_dataset["labels"][i])
+            == len(tokenized_dataset["attention_mask"][i])
+        )
 
 
 def test_t5_model_trainer_tokenize():
@@ -103,10 +109,15 @@ def test_t5_model_trainer_tokenize():
     )
 
     assert tokenized_dataset["labels"] == output_encodings["input_ids"]
+    # For T5 model，length of input_ids is the same as attention_mask.
+    for i in range(len(tokenized_dataset["labels"])):
+        assert len(tokenized_dataset["input_ids"][i]) == len(
+            tokenized_dataset["attention_mask"][i]
+        )
 
 
 def test_t5_trainer_with_tokenizer_max_length():
-    """Train a encoder-decoder model with a specified tokenizer_max_length of 512 ."""
+    """Train a encoder-decoder model with a specified tokenizer_max_length of 512."""
     # Test encoder-decoder GenerationModelTrainer implementation
     with tempfile.TemporaryDirectory() as cache_dir:
         trainer = GenerationModelTrainer(
