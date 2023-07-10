@@ -1,5 +1,7 @@
 """A dataset processor to convert datasets into Text2Text fashion."""
 
+from __future__ import annotations  # noqa FI58
+
 import logging
 
 from prompt2model.dataset_processor.base import BaseProcessor
