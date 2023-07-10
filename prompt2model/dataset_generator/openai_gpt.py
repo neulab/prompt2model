@@ -4,24 +4,17 @@ from __future__ import annotations  # noqa FI58
 
 import json
 import logging
+import os
+import random
 
 import openai
 from datasets import Dataset
 from tqdm import tqdm
 
 from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
+from prompt2model.dataset_generator.openai_gpt_template import construct_meta_prompt
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import OPENAI_ERRORS, ChatGPTAgent, handle_openai_error
-
-PROMPT_TEMPLATE = (
-    "Requirement: {instruction} \n"
-    "Few-Shot Examples: {examples} \n"
-    "sample: \n"
-    "annotation: \n"
-    "Please answer me in JSON format, with `sample` and `annotation` keys."
-)
-# A string template for the prompt. Can be modified by the users.
-# Prompt_template must contains `instruction` and `examples` fields.
 
 
 class OpenAIDatasetGenerator(DatasetGenerator):
@@ -36,32 +29,70 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             max_api_calls: The maximum number of API calls allowed,
                 or None for unlimited.
         """
-        self.api_key: str | None = api_key
+        self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
+        assert self.api_key is not None and self.api_key != "", (
+            "API key must be provided"
+            + " or set the environment variable with `export OPENAI_API_KEY=<your key>`"
+        )
         if max_api_calls:
             assert max_api_calls > 0, "max_api_calls must be > 0"
         self.max_api_calls = max_api_calls
         self.api_call_counter = 0
+        self.recent_10_examples = []  # type: list[dict[str, str]]
+        # Randomly selected several examples as addtional few-shot examples
+        # from the last 10 examples to generate new examples.
 
     def generate_prompt(
         self,
         instruction: str,
-        examples: list[str] = None,
-    ) -> str:
+        few_shot_example_string: str = None,
+    ) -> tuple[str, str]:
         """Generates a prompt string.
 
         Args:
             instruction: The natural language instruction for the prompt.
-            examples: A list of few-shot examples. Defaults to None.
+            examples_string: A string representing the few-shot examples.
 
         Returns:
-            The generated prompt string.
+            The generated prompt string and the few-shot examples string.
         """
         # Replace placeholders in prompt template with actual values
-        example_string = " ".join(examples) if examples else "NA"
-        prompt = PROMPT_TEMPLATE.format(
-            instruction=instruction, examples=example_string
+        random_example_string = (
+            (few_shot_example_string + "\n")
+            if few_shot_example_string is not None
+            else "N/A\n"
         )
-        return prompt
+        random_example_num = 0
+        if len(self.recent_10_examples) > 0:
+            random_example_string = ""
+            random_example_num = random.randint(1, len(self.recent_10_examples))
+            random_examples = random.sample(self.recent_10_examples, random_example_num)
+            example_string_insert_index = random.randint(0, len(random_examples) - 1)
+
+            for index, example in enumerate(random_examples):
+                random_example_string += (
+                    f"input: {example['input']}\noutput: {example['output']}\n"
+                )
+                if (
+                    index == example_string_insert_index
+                    and few_shot_example_string != "N/A"
+                    and few_shot_example_string is not None
+                ):
+                    random_example_string += few_shot_example_string + "\n"
+        if 0 <= random_example_num <= 3:
+            template_type = "LONG"
+        elif 4 <= random_example_num <= 7:
+            template_type = "MIDDLE"
+        else:
+            template_type = "SHORT"
+        logging.info(f"random example number: {random_example_string}")
+        logging.info(f"template_type: {template_type}")
+        prompt = construct_meta_prompt(
+            instruction=instruction,
+            few_shot_example_string=random_example_string,
+            template_type=template_type,
+        )
+        return prompt, random_example_string
 
     def extract_response(self, response: openai.Completion) -> tuple[str, str]:
         """Extracts the generated sample and annotation from an OpenAI API response.
@@ -79,14 +110,14 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         except json.decoder.JSONDecodeError as e:
             logging.warning("API response was not a valid JSON")
             raise e
-        required_keys = ["sample", "annotation"]
+        required_keys = ["input", "output"]
         missing_keys = [key for key in required_keys if key not in response_json]
         assert (
             len(missing_keys) == 0
         ), f'API response must contain {", ".join(required_keys)} keys'
-        sample = response_json["sample"].strip()
-        annotation = response_json["annotation"].strip()
-        return sample, annotation
+        input = str(response_json["input"]).strip()
+        output = str(response_json["output"]).strip()
+        return input, output
 
     def generate_dataset_split(
         self,
@@ -105,10 +136,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             A single dataset.
         """
         _ = split  # suppress unused variable warnings
-        prompt = self.generate_prompt(
-            instruction=prompt_spec.get_instruction,
-            examples=prompt_spec.get_examples,
-        )
+
         chat_api = ChatGPTAgent(self.api_key)
         input_cols = []  # type: list[str]
         output_cols = []  # type: list[str]
@@ -126,10 +154,26 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         )
                     else:
                         self.api_call_counter += 1
+                        prompt, random_example_string = self.generate_prompt(
+                            instruction=prompt_spec.get_instruction,
+                            few_shot_example_string=prompt_spec.get_examples,
+                        )
                     response = chat_api.generate_openai_chat_completion(prompt)
                     input_col, output_col = self.extract_response(response)
+                    logging.info(f"Prompt: \n\n{prompt}\n\n")  # noqa: E501
+                    logging.info(
+                        f"Few-shot examples: \n\n{random_example_string}\n\n"  # noqa: E501
+                    )
+                    logging.info(f" Input: \n\n{input_col}\n\n")  # noqa: E501
+                    logging.info(f" Output: \n\n{output_col}\n\n")  # noqa: E501
                     input_cols.append(input_col)
                     output_cols.append(output_col)
+                    assert 0 <= len(self.recent_10_examples) <= 10
+                    if len(self.recent_10_examples) == 10:
+                        self.recent_10_examples.pop(0)
+                    self.recent_10_examples.append(
+                        {"input": input_col, "output": output_col}
+                    )
                     break
                 except OPENAI_ERRORS as e:
                     self.api_call_counter = handle_openai_error(

@@ -13,6 +13,7 @@ class TextualizeProcessor(BaseProcessor):
         task_id: int,
         has_encoder: bool,
         dataset_split: str,
+        eos_token: str,
     ) -> dict:
         """Modifies the input column of a given example dictionary.
 
@@ -23,6 +24,7 @@ class TextualizeProcessor(BaseProcessor):
                 comes from. Used for multi-task training.
             has_encoder: Whether the retrieved model has an encoder.
             dataset_split: The split of the example, i.e. train/val/test.
+            eos_token: The end-of-sentence token of the tokenizer.
 
         Returns:
             A dictionary with `model_input` as the input to models.
@@ -38,12 +40,14 @@ class TextualizeProcessor(BaseProcessor):
         if has_encoder:
             model_input = (
                 f"<task {task_id}> {instruction} Example: {example['input_col']}"
+                + " Label: "
             )
+            example["output_col"] += eos_token
         else:
             if dataset_split == "train":
                 model_input = (
                     f"<task {task_id}> {instruction} Example: {example['input_col']}"
-                    + f" Label: {example['output_col']}"
+                    + f" Label: {example['output_col']}{eos_token}"
                 )
             else:
                 model_input = (

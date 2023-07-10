@@ -14,15 +14,15 @@ from test_helpers import mock_openai_response
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
     mock_openai_response,
-    content='{"sample": "This is a great movie!", "annotation": "1"}',
+    content='{"input": "This is a great movie!", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
     mock_openai_response,
-    content='{"sample": "This is a great movie!", "label": "1"}',
+    content='{"input": "This is a great movie!", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
     mock_openai_response,
-    content='{"sample": "This is a great movie!", "annotation": "1}',
+    content='{"input": "This is a great movie!", "output": "1}',
 )
 
 
@@ -113,12 +113,12 @@ def test_encode_text(mocked_generate_example):
     Args:
         mocked_generate_example: The function represents the @patch function.
     """
-    api_key = None
-    unlimited_dataset_generator = OpenAIDatasetGenerator(api_key)
+    os.environ["OPENAI_API_KEY"] = "fake_api_key"
+    unlimited_dataset_generator = OpenAIDatasetGenerator()
     check_generate_dataset_dict(unlimited_dataset_generator)
     check_generate_dataset(unlimited_dataset_generator)
     assert mocked_generate_example.call_count == 11
-    limited_dataset_generator = OpenAIDatasetGenerator(api_key, 3)
+    limited_dataset_generator = OpenAIDatasetGenerator(max_api_calls=3)
     check_generate_dataset(limited_dataset_generator)
     assert mocked_generate_example.call_count == 14
     limited_dataset_generator.api_call_counter = 0
@@ -137,7 +137,7 @@ def test_wrong_key_example(mocked_generate_example):
     Args:
         mocked_generate_example: The function represents the @patch function.
     """
-    api_key = None
+    api_key = "fake_api_key"
     # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
     dataset_generator = OpenAIDatasetGenerator(api_key, 3)
     prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
@@ -158,7 +158,7 @@ def test_invalid_json_response(mocked_generate_example):
     Args:
         mocked_generate_example: The function represents the @patch function.
     """
-    api_key = None
+    api_key = "fake_api_key"
     # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
     dataset_generator = OpenAIDatasetGenerator(api_key, 3)
     prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
@@ -179,12 +179,31 @@ def test_unexpected_examples_of_GPT(mocked_generate_example):
     Args:
         mocked_generate_example: The function represents the @patch function.
     """
-    api_key = None
+    os.environ["OPENAI_API_KEY"] = "fake_api_key"
     # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
     with pytest.raises(UNKNOWN_GPT3_EXCEPTION):
-        dataset_generator = OpenAIDatasetGenerator(api_key, 3)
+        dataset_generator = OpenAIDatasetGenerator(max_api_calls=3)
         prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
         num_examples = 1
         split = DatasetSplit.TEST
         _ = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
     assert mocked_generate_example.call_count == 1
+
+
+def test_openai_key_init():
+    """Test openai key initialization."""
+    api_key = None
+    os.environ["OPENAI_API_KEY"] = ""
+    with pytest.raises(AssertionError) as exc_info:
+        _ = OpenAIDatasetGenerator()
+        assert str(exc_info.value) == (
+            "API key must be provided or set the environment variable"
+            + " with `export OPENAI_API_KEY=<your key>`"
+        )
+    os.environ["OPENAI_API_KEY"] = "fake_api_key"
+    environment_key_generator = OpenAIDatasetGenerator()
+    assert environment_key_generator.api_key == os.environ["OPENAI_API_KEY"]
+    os.environ["OPENAI_API_KEY"] = ""
+    api_key = "qwertwetyriutytwreytuyrgtwetrueytttr"
+    explicit_api_key_generator = OpenAIDatasetGenerator(api_key)
+    assert explicit_api_key_generator.api_key == api_key

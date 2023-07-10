@@ -4,19 +4,9 @@ from __future__ import annotations  # noqa FI58
 
 import json
 
-METAPROMPT_INSTRUCTION = (
-    '"Prompts" are a description of a task provided to an AI language model to guide'
-    " its performance. Prompts typically consist of two components: a task"
-    ' "instruction" and, optionally, a few "demonstrations" (examples to illustrate'
-    " the task). I want to segment prompts into these two components. For each prompt,"
-    " respond with a JSON dictionary containing two fields: the instruction (with JSON"
-    ' key "Instruction") and the demonstrations (with JSON key "Demonstrations"). If no'
-    ' demonstrations are provided, return "N/A" for the demonstrations field. When'
-    " demonstrations are provided, only include examples where the full input-output"
-    " pair is given; ignore partial examples written with the intent of being"
-    " completed by the AI language model. Otherwise, match the formatting, word"
-    " selection, and punctuation used in the original prompt."
-)
+METAPROMPT_INSTRUCTION = """
+As a PromptParser, your objective is to carefully analyze prompts and divide them into two distinct components: an 'Instruction' that provides the primary description of the task, and 'Demonstrations' which are optional examples showcasing the task. Your aim is to generate a JSON dictionary response containing the `Instruction` and `Demonstrations` fields, corresponding to these two components. In case there are no demonstrations provided, the 'Demonstrations' field should be marked as 'N/A'. When including demonstrations, only consider complete examples that consist of both input and output pairs, disregarding any incomplete ones. It is crucial to maintain the precise formatting, word choice, and punctuation exactly as presented in the original prompt. Here are some parsed output you can refer to.
+"""  # noqa: E501
 
 METAPROMPT_EXAMPLES = [
     (
@@ -32,7 +22,7 @@ Alternate Entity Names: ["Catholic Church", "Roman Catholic", "Catholic"]
 
 Entity: "Wind"
 Context Sentence: "Illinois musicians with a # 1 Billboard Hot 100 hit include artists from the 1950s : Sam Cooke (d. 1964) ; from the 1960s : The Buckinghams ; from the 1970s : Earth , Wind & Fire , The Chi-Lites , The Staple Singers , Minnie Riperton , Styx ; from the 1980s : Chicago , Cheap Trick , REO Speedwagon , Survivor , Richard Marx ; from the 1990s : R. Kelly ; from the 2000s : Kanye West , Twista , Plain White T 's ."
-Alternate Entity Names: ["Earth & Fire", "Earth", "Wind & Fire"]""",  # noqa: E501
+""",  # noqa: E501
         {
             "Instruction": """I am trying to cluster entity strings on Wikipedia according to the Wikipedia article title they refer to. To help me with this, for a given entity name, please provide me with a comprehensive set of alternative names that could refer to the same entity. Entities may be weirdly truncated or ambiguous - e.g. "Wind" may refer to the band "Earth, Wind, and Fire" or to "rescue service". For each entity, I will provide you with a sentence where this entity is used to help you understand what this entity refers to. Generate a comprehensive set of alternate entity names as a JSON-formatted list.""",  # noqa: E501
             "Demonstrations": """Entity: "fictional character"
@@ -41,11 +31,7 @@ Alternate Entity Names: ["fictional characters", "characters", "character"]
 
 Entity: "Catholicism"
 Context Sentence: "At home , significantly more electorate residents spoke Italian , Cantonese , Mandarin and Greek at home , and whilst the top three religions (Catholicism , no religion and Anglicanism) differed little from other parts of Perth , Buddhism and Eastern Orthodox adherents outnumbered those of the Uniting Church ."
-Alternate Entity Names: ["Catholic Church", "Roman Catholic", "Catholic"]
-
-Entity: "Wind"
-Context Sentence: "Illinois musicians with a # 1 Billboard Hot 100 hit include artists from the 1950s : Sam Cooke (d. 1964) ; from the 1960s : The Buckinghams ; from the 1970s : Earth , Wind & Fire , The Chi-Lites , The Staple Singers , Minnie Riperton , Styx ; from the 1980s : Chicago , Cheap Trick , REO Speedwagon , Survivor , Richard Marx ; from the 1990s : R. Kelly ; from the 2000s : Kanye West , Twista , Plain White T 's ."
-Alternate Entity Names: ["Earth & Fire", "Earth", "Wind & Fire"]""",  # noqa: E501
+Alternate Entity Names: ["Catholic Church", "Roman Catholic", "Catholic"]""",  # noqa: E501
         },
     ),
     (
@@ -87,6 +73,27 @@ Agent: For most cakes, the oven should be preheated to 350°F (177°C).""",
             "Demonstrations": "N/A",
         },
     ),
+    (
+        "I am learning Japanese. Please translate some Japanese sentences to English. For example, Japanese: その日、人類は思い出した。ヤツらに支配されていた恐怖を鳥籠の中に囚われていた屈辱を English: On that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage.",  # noqa: E501
+        {
+            "Instruction": "I am learning Japanese. Please translate some Japanese sentences to English.",  # noqa: E501
+            "Demonstrations": "Japanese: その日、人類は思い出した。ヤツらに支配されていた恐怖を鳥籠の中に囚われていた屈辱を English: On that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage.",  # noqa: E501
+        },
+    ),
+    (
+        "来到美国后，我需要学习如何自己做饭。你能告诉我一些菜需要准备的原料么？这里有一些例子：1. 菜名：西红柿炒蛋。原料：2. 菜名：青椒肉丝炒肉。原料：瘦肉、青椒、调味料（如大蒜、姜、料酒、生抽、盐、糖、鸡精或味精、胡椒粉）、植物油。",  # noqa: E501
+        {
+            "Instruction": "来到美国后，我需要学习如何自己做饭。你能告诉我一些菜需要准备的原料么？",  # noqa: E501
+            "Demonstrations": "2. 菜名：青椒肉丝炒肉。原料：瘦肉、青椒、调味料（如大蒜、姜、料酒、生抽、盐、糖、鸡精或味精、胡椒粉）、植物油。",  # noqa: E501
+        },
+    ),
+    (
+        "As a programer, I am learning software development. Here are some of my problems. Input: What is CI/CD? Output: CI/CD is a way to automate and speed up software development by continuously integrating code changes and deploying them quickly and reliably. Input: What is Git? Output:",  # noqa: E501
+        {
+            "Instruction": "As a programer, I am learning software development. Here are some of my problems.",  # noqa: E501
+            "Demonstrations": " Input: What is CI/CD? Output: CI/CD is a way to automate and speed up software development by continuously integrating code changes and deploying them quickly and reliably.",  # noqa: E501
+        },
+    ),
 ]
 
 
@@ -109,7 +116,7 @@ def construct_single_demonstration(
     input_part = f'''Prompt: """\n{user_prompt}\n"""\n\nParsed Outputs:\n'''
     if input_only:
         return input_part
-    output_part = json.dumps(parse_dict)
+    output_part = json.dumps(parse_dict, ensure_ascii=False)
     return input_part + output_part
 
 
@@ -127,8 +134,9 @@ def construct_prompt_for_instruction_parsing(user_prompt: str) -> str:
         prompt_sections.append(
             construct_single_demonstration(prompt, correct_parse, input_only=False)
         )
-    prediction_template = construct_single_demonstration(
-        user_prompt, None, input_only=True
+    all_prompts = "\n\n------\n\n".join(prompt_sections) + "\n\n------\n\n"
+    user_input = construct_single_demonstration(user_prompt, None, input_only=True)
+    all_prompts += (
+        "After seeing these parsed output, please parse this prompt:\n\n" + user_input
     )
-    prompt_sections.append(prediction_template)
-    return "\n\n------\n\n".join(prompt_sections)
+    return all_prompts
