@@ -60,7 +60,8 @@ class TextualizeProcessor(BaseProcessor):
             eos_token: The end-of-sentence token of the tokenizer.
 
         Returns:
-            A dictionary with `model_input` as the input to models.
+            A dictionary with `model_input` as the input to models
+            and `model_output` as the expected output of models.
         """
         assert (
             "input_col" in example and "output_col" in example
@@ -76,15 +77,16 @@ class TextualizeProcessor(BaseProcessor):
                 f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\n"
                 + "Label:\n"
             )
+            model_output = example["output_col"]
         else:
             # The T5 tokenizer automatically adds eos token in `add eos if not present`.
             # So the output_col for T5 model should not have eos token in the end.
             # On the contrary, output_col for GPT model should add eos token in the end.
-            example["output_col"] += eos_token
+            model_output = example["output_col"] + eos_token
             if dataset_split == "train":
                 model_input = (
                     f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\n"
-                    + f"Label:\n{example['output_col']}"
+                    + f"Label:\n{model_output}"
                 )
             else:
                 model_input = (
@@ -92,4 +94,5 @@ class TextualizeProcessor(BaseProcessor):
                     + "Label:\n"
                 )
         example["model_input"] = model_input
+        example["model_output"] = model_output
         return example

@@ -42,7 +42,7 @@ class EvaluationCallback(TrainerCallback):
         evaluator = Seq2SeqEvaluator()
         metric_values = evaluator.evaluate_model(
             self.val_dataset,
-            "output_col",
+            "model_output",
             model_outputs,
             encoder_model_name="xlm-roberta-base",
         )

@@ -4,6 +4,7 @@ from __future__ import annotations  # noqa FI58
 
 import logging
 import os
+from itertools import takewhile
 from typing import Any
 
 import datasets
@@ -70,13 +71,40 @@ class GenerationModelTrainer(BaseTrainer):
             self.model.config.pad_token_id = self.tokenizer.eos_token_id
             # Save the pad_id to the model's config instead of the function
 
+    def get_left_padding_length(cls, input_list, padding_token_id):
+        """Get the left prefix length of the input list.
+
+        Args:
+            input_list: A list with the format of [prefix, ..., prefix, Others].
+                The GPT tokenizer uses left padding.
+            padding_token_id: The prefix of the input list.
+
+        Returns:
+            The length of [prefix, ..., prefix] in [prefix, ..., prefix, Others]
+        """
+        return len(list(takewhile(lambda x: x == padding_token_id, input_list)))
+
+    def get_right_padding_length(cls, input_ids, padding_token_id):
+        """Get the left prefix length of the input list.
+
+        Args:
+            input_list: A list with the format of [Others, suffix, ..., suffix].
+                The T5 tokenizer uses right padding.
+            padding_token_id: The suffix of the input list.
+
+        Returns:
+            The length of [suffix, ..., suffix] in [Others, suffix, ..., suffix].
+        """
+        suffix_length = cls.get_left_padding_length(input_ids[::-1], padding_token_id)
+        return suffix_length
+
     def tokenize_dataset(
         self, dataset: datasets.Dataset, shuffle: bool = True
     ) -> datasets.Dataset:
         """Tokenize the training/validation dataset.
 
         Args:
-            dataset: Dataset.dataset with model_input and output_col columns.
+            dataset: Dataset.dataset with model_input and model_output columns.
             shuffle: Whether to shuffle the dataset.
 
         Returns:
@@ -93,7 +121,7 @@ class GenerationModelTrainer(BaseTrainer):
         if shuffle:
             dataset = dataset.shuffle(seed=seed_generator.get_seed())
         inputs = dataset["model_input"]
-        outputs = dataset["output_col"]
+        outputs = dataset["model_output"]
         longest_input = max(inputs, key=len)
         longest_output = max(outputs, key=len)
         if self.tokenizer_max_length is not None and (
@@ -120,39 +148,67 @@ class GenerationModelTrainer(BaseTrainer):
             padding=True,
         )
 
-        def get_padding_length(input_ids, padding_token_id):
-            # input_ids is [padding_token_id..., padding_token_id, Others, eos_token_id]
-            # This function return the length of prefix padding_token_id in input_ids.
-            return input_ids.index(
-                next((x for x in input_ids if x != padding_token_id), len(input_ids))
-            )
-
+        labels = []
         if not self.has_encoder:
-            labels = []
-            input_length_with_padding = len(input_encodings["input_ids"][0])
-            output_length_with_padding = len(output_encodings["input_ids"][0])
-            for idx, each_input_ids_list in enumerate(input_encodings["input_ids"]):
-                output_padding_length = get_padding_length(
-                    output_encodings["input_ids"][idx], self.model.config.pad_token_id
+            length_of_input_encoding_ids_with_padding = len(
+                input_encodings["input_ids"][0]
+            )
+            length_of_output_encoding_ids_with_padding = len(
+                output_encodings["input_ids"][0]
+            )
+            for idx, input_id in enumerate(input_encodings["input_ids"]):
+                output_encoding_id = output_encodings["input_ids"][idx]
+                length_of_padding_in_output_encoding_id = self.get_left_padding_length(
+                    output_encoding_id, self.model.config.pad_token_id
                 )
                 # We are using teaching force in training decoder-only model.
                 # The index -100 is ignored for loss compute in Autoregressive model.
                 # Reference: https://huggingface.co/docs/transformers/model_doc/gpt2#transformers.GPT2DoubleHeadsModel.forward.labels # noqa E501
-                output_length = output_length_with_padding - output_padding_length
-                each_label_list = [-100] * (
-                    input_length_with_padding - output_length
-                ) + each_input_ids_list[-output_length:]
-                assert (
-                    len(each_label_list)
-                    == input_length_with_padding
-                    == len(each_input_ids_list)
+                length_of_output_encoding_id_without_padding = (
+                    length_of_output_encoding_ids_with_padding
+                    - length_of_padding_in_output_encoding_id
                 )
-                labels.append(each_label_list)
+                assert (
+                    length_of_output_encoding_id_without_padding != 0
+                ), "One of the model_output is empty."
+                label = [-100] * (
+                    length_of_input_encoding_ids_with_padding
+                    - length_of_output_encoding_id_without_padding
+                ) + input_id[-length_of_output_encoding_id_without_padding:]
+                assert (
+                    len(label)
+                    == length_of_input_encoding_ids_with_padding
+                    == len(input_id)
+                )
+                labels.append(label)
+        else:
+            # For T5 model, right padding token id should not be taken into
+            # account by the loss function. In PyTorch and Tensorflow, this can
+            # be done by replacing them with -100, which is the ignore_index
+            # of the CrossEntropyLoss.
+            # Reference: https://huggingface.co/docs/transformers/v4.30.0/en/model_doc/t5#training # noqa E501
+            for output_encoding_id in output_encodings["input_ids"]:
+                length_of_right_padding_in_output_encoding_id = (
+                    self.get_right_padding_length(
+                        output_encoding_id, self.tokenizer.pad_token_id
+                    )
+                )
+                label = (
+                    (
+                        output_encoding_id[
+                            :-length_of_right_padding_in_output_encoding_id
+                        ]
+                        + [-100] * length_of_right_padding_in_output_encoding_id
+                    )
+                    if length_of_right_padding_in_output_encoding_id != 0
+                    else output_encoding_id
+                )
+                labels.append(label)
 
         preprocessed_dict = {
             "input_ids": input_encodings["input_ids"],
             "attention_mask": input_encodings["attention_mask"],
-            "labels": output_encodings["input_ids"] if self.has_encoder else labels,
+            "labels": labels,
         }
         return datasets.Dataset.from_dict(preprocessed_dict)
 
@@ -166,7 +222,7 @@ class GenerationModelTrainer(BaseTrainer):
 
         Args:
             hyperparameter_choices: A dictionary of hyperparameter choices.
-            training_datasets: Training datasets with `input_col` and `output_col`.
+            training_datasets: Training datasets with `input_col` and `model_output`.
             validation_datasets: Validation datasets during training. If not provided,
                 15% of training data will be spilt from training_datasets to validate.
 

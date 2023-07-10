@@ -13,24 +13,39 @@ DATASET_DICTS = [
     datasets.DatasetDict(
         {
             "train": datasets.Dataset.from_dict(
-                {"input_col": ["foo", "bar"], "output_col": ["baz", "qux"]}
+                {
+                    "input_col": ["foo", "bar"],
+                    "output_col": ["baz", "qux"],
+                }
             ),
             "test": datasets.Dataset.from_dict(
-                {"input_col": ["foo", "bar"], "output_col": ["baz", "qux"]}
+                {
+                    "input_col": ["foo", "bar"],
+                    "output_col": ["baz", "qux"],
+                }
             ),
         }
     ),
     datasets.DatasetDict(
         {
             "train": datasets.Dataset.from_dict(
-                {"input_col": ["spam", "eggs"], "output_col": ["ham", "sau"]}
+                {
+                    "input_col": ["spam", "eggs"],
+                    "output_col": ["ham", "sau"],
+                }
             ),
             "val": datasets.Dataset.from_dict(
-                {"input_col": ["spam", "eggs"], "output_col": ["ham", "sau"]}
+                {
+                    "input_col": ["spam", "eggs"],
+                    "output_col": ["ham", "sau"],
+                }
             ),
         }
     ),
 ]
+
+
+INSTRUCTION = "convert to text2text"
 
 # Our support spilts are `train, val, test`.
 UNEXPECTED_DATASET_DICTS_WITH_WRONG_SPLIT = [
@@ -67,8 +82,6 @@ UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS = [
         }
     ),
 ]
-
-INSTRUCTION = "convert to text2text"
 
 
 def test_the_logging_for_provide_unnecessary_eos_token_for_t5():
@@ -111,8 +124,9 @@ def test_dataset_processor_t5_style():
                             "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
                             "<task 0>convert to text2text\nExample:\nbar\nLabel:\n",
                         ],
-                        "input_col": ["spam", "eggs"],
+                        "input_col": ["foo", "bar"],
                         "output_col": ["baz", "qux"],
+                        "model_output": ["baz", "qux"],
                     }
                 ),
                 "test": datasets.Dataset.from_dict(
@@ -121,8 +135,9 @@ def test_dataset_processor_t5_style():
                             "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
                             "<task 0>convert to text2text\nExample:\nbar\nLabel:\n",
                         ],
-                        "input_col": ["spam", "eggs"],
+                        "input_col": ["foo", "bar"],
                         "output_col": ["baz", "qux"],
+                        "model_output": ["baz", "qux"],
                     }
                 ),
             }
@@ -137,6 +152,7 @@ def test_dataset_processor_t5_style():
                         ],
                         "input_col": ["spam", "eggs"],
                         "output_col": ["ham", "sau"],
+                        "model_output": ["ham", "sau"],
                     }
                 ),
                 "val": datasets.Dataset.from_dict(
@@ -147,6 +163,7 @@ def test_dataset_processor_t5_style():
                         ],
                         "input_col": ["spam", "eggs"],
                         "output_col": ["ham", "sau"],
+                        "model_output": ["ham", "sau"],
                     }
                 ),
             }
@@ -157,12 +174,20 @@ def test_dataset_processor_t5_style():
         dataset_splits = list(dataset_dict.keys())
         for dataset_split in dataset_splits:
             assert (
+                dataset_dict[dataset_split]["input_col"]
+                == t5_expected_dataset_dicts[index][dataset_split]["input_col"]
+            )
+            assert (
                 dataset_dict[dataset_split]["model_input"]
                 == t5_expected_dataset_dicts[index][dataset_split]["model_input"]
             )
             assert (
                 dataset_dict[dataset_split]["output_col"]
                 == t5_expected_dataset_dicts[index][dataset_split]["output_col"]
+            )
+            assert (
+                dataset_dict[dataset_split]["model_output"]
+                == t5_expected_dataset_dicts[index][dataset_split]["model_output"]
             )
 
 
@@ -186,8 +211,9 @@ def test_dataset_processor_decoder_only_style():
                             "<task 0>convert to text2text\nExample:\nfoo\nLabel:\nbaz<|endoftext|>",  # noqa: E501
                             "<task 0>convert to text2text\nExample:\nbar\nLabel:\nqux<|endoftext|>",  # noqa: E501
                         ],
-                        "input_col": ["spam", "eggs"],
-                        "output_col": ["baz<|endoftext|>", "qux<|endoftext|>"],
+                        "input_col": ["foo", "bar"],
+                        "output_col": ["baz", "qux"],
+                        "model_output": ["baz<|endoftext|>", "qux<|endoftext|>"],
                     }
                 ),
                 "test": datasets.Dataset.from_dict(
@@ -196,8 +222,9 @@ def test_dataset_processor_decoder_only_style():
                             "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
                             "<task 0>convert to text2text\nExample:\nbar\nLabel:\n",
                         ],
-                        "input_col": ["spam", "eggs"],
-                        "output_col": ["baz<|endoftext|>", "qux<|endoftext|>"],
+                        "input_col": ["foo", "bar"],
+                        "output_col": ["baz", "qux"],
+                        "model_output": ["baz<|endoftext|>", "qux<|endoftext|>"],
                     }
                 ),
             }
@@ -211,7 +238,8 @@ def test_dataset_processor_decoder_only_style():
                             "<task 1>convert to text2text\nExample:\neggs\nLabel:\nsau<|endoftext|>",  # noqa: E501
                         ],
                         "input_col": ["spam", "eggs"],
-                        "output_col": ["ham<|endoftext|>", "sau<|endoftext|>"],
+                        "output_col": ["ham", "sau"],
+                        "model_output": ["ham<|endoftext|>", "sau<|endoftext|>"],
                     }
                 ),
                 "val": datasets.Dataset.from_dict(
@@ -221,7 +249,8 @@ def test_dataset_processor_decoder_only_style():
                             "<task 1>convert to text2text\nExample:\neggs\nLabel:\n",
                         ],
                         "input_col": ["spam", "eggs"],
-                        "output_col": ["ham<|endoftext|>", "sau<|endoftext|>"],
+                        "output_col": ["ham", "sau"],
+                        "model_output": ["ham<|endoftext|>", "sau<|endoftext|>"],
                     }
                 ),
             }
@@ -232,12 +261,20 @@ def test_dataset_processor_decoder_only_style():
         dataset_splits = list(dataset_dict.keys())
         for dataset_split in dataset_splits:
             assert (
+                dataset_dict[dataset_split]["input_col"]
+                == gpt_expected_dataset_dicts[index][dataset_split]["input_col"]
+            )
+            assert (
                 dataset_dict[dataset_split]["model_input"]
                 == gpt_expected_dataset_dicts[index][dataset_split]["model_input"]
             )
             assert (
                 dataset_dict[dataset_split]["output_col"]
                 == gpt_expected_dataset_dicts[index][dataset_split]["output_col"]
+            )
+            assert (
+                dataset_dict[dataset_split]["model_output"]
+                == gpt_expected_dataset_dicts[index][dataset_split]["model_output"]
             )
 
 
