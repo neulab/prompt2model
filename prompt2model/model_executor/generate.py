@@ -79,6 +79,7 @@ class GenerationModelExecutor(ModelExecutor):
                 max_length=self.sequence_max_length,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
+                repetition_penalty=2.0,
             )
 
             for i, example in enumerate(batch):
