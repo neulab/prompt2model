@@ -203,6 +203,7 @@ class GenerationModelTrainer(BaseTrainer):
                     if length_of_right_padding_in_output_encoding_id != 0
                     else output_encoding_id
                 )
+                assert len(label) == len(output_encoding_id)
                 labels.append(label)
 
         preprocessed_dict = {

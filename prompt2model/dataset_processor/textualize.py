@@ -74,8 +74,7 @@ class TextualizeProcessor(BaseProcessor):
 
         if has_encoder:
             model_input = (
-                f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\n"
-                + "Label:\n"
+                f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n" # noqa E501
             )
             model_output = example["output_col"]
         else:
@@ -85,13 +84,11 @@ class TextualizeProcessor(BaseProcessor):
             model_output = example["output_col"] + eos_token
             if dataset_split == "train":
                 model_input = (
-                    f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\n"
-                    + f"Label:\n{model_output}"
+                    f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n{model_output}" # noqa E501
                 )
             else:
                 model_input = (
-                    f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\n"
-                    + "Label:\n"
+                    f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n" # noqa E501
                 )
         example["model_input"] = model_input
         example["model_output"] = model_output
