@@ -74,7 +74,7 @@ class ModelExecutor(ABC):
                 "Trying to init an ModelExecutor's tokenizer without pad_token"
             )
             self.tokenizer.pad_token = self.tokenizer.eos_token
-            self.model.config.pad_token_id = self.model.eos_token_id
+            self.model.config.pad_token_id = self.model.config.eos_token_id
         self.tokenizer_max_length = tokenizer_max_length
         self.sequence_max_length = sequence_max_length
         if self.sequence_max_length is None:
