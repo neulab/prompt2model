@@ -64,6 +64,15 @@ class GenerationModelExecutor(ModelExecutor):
             input_ids = encoded_inputs["input_ids"]
             attention_mask = encoded_inputs["attention_mask"]
             device = self.model.device
+            # output = self.model.generate(
+            #     input_ids=input_ids.to(device),
+            #     attention_mask=attention_mask.to(device),
+            #     max_length=self.sequence_max_length,
+            #     eos_token_id=self.model.config.eos_token_id,
+            #     early_stopping=True,
+            #     num_beams=3,
+            #     no_repeat_ngram_size=3,
+            # )
             output = self.model.generate(
                 input_ids=input_ids.to(device),
                 attention_mask=attention_mask.to(device),
