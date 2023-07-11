@@ -38,7 +38,6 @@ def create_gradio(
     def response(message):
         response = model_executor.make_single_prediction(message)
         prediction = response.prediction
-        print("prediction:  " + prediction)
         return prediction
 
     def chat(message, history):

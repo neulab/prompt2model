@@ -73,9 +73,7 @@ class TextualizeProcessor(BaseProcessor):
         ), "Split must be one of train/val/test"
 
         if has_encoder:
-            model_input = (
-                f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n" # noqa E501
-            )
+            model_input = f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n"  # noqa E501
             model_output = example["output_col"]
         else:
             # The T5 tokenizer automatically adds eos token in `add eos if not present`.
@@ -83,13 +81,9 @@ class TextualizeProcessor(BaseProcessor):
             # On the contrary, output_col for GPT model should add eos token in the end.
             model_output = example["output_col"] + eos_token
             if dataset_split == "train":
-                model_input = (
-                    f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n{model_output}" # noqa E501
-                )
+                model_input = f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n{model_output}"  # noqa E501
             else:
-                model_input = (
-                    f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n" # noqa E501
-                )
+                model_input = f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n"  # noqa E501
         example["model_input"] = model_input
         example["model_output"] = model_output
         return example
