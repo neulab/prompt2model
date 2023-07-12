@@ -177,7 +177,7 @@ class GenerationModelTrainer(BaseTrainer):
                         (
                             "The validation split for autoregressive model is missed"
                             + ", which should not contain labels as the training spilt."
-                            + "  Thus this evaluation will be skipped."
+                            + " Thus this evaluation will be skipped."
                         )
                     )
                 )
