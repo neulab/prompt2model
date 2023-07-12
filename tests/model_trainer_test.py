@@ -112,6 +112,7 @@ def test_gpt_model_trainer_tokenize():
         assert (
             label[-length_of_compute_loss_label:]
             == output_encoding_id[-length_of_output_encoding_id_without_padding:]
+            == input_id[-length_of_output_encoding_id_without_padding:]
         )
         # The end of the `model_input` is the `model_output`. And the end of
         # `model_output` is the eos_token. So the last token of input_id

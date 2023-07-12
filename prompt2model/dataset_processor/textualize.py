@@ -77,8 +77,8 @@ class TextualizeProcessor(BaseProcessor):
             model_output = example["output_col"]
         else:
             # The T5 tokenizer automatically adds eos token in `add eos if not present`.
-            # So the output_col for T5 model should not have eos token in the end.
-            # On the contrary, output_col for GPT model should add eos token in the end.
+            # So the model_output for T5 model should not have eos token in the end.
+            # On the contrary, model_output of GPT model need eos token in the end.
             model_output = example["output_col"] + eos_token
             if dataset_split == "train":
                 model_input = f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n{model_output}"  # noqa E501
