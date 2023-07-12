@@ -246,7 +246,7 @@ class GenerationModelTrainer(BaseTrainer):
         }
         assert hyperparameter_choices_keys.issubset(
             supported_keys
-        ), f"Only support {supported_keys} as training parameters"
+        ), f"Only support {supported_keys} as training parameters."
         training_args = Seq2SeqTrainingArguments(
             output_dir=hyperparameter_choices.get("output_dir", "./result"),
             logging_steps=hyperparameter_choices.get("logging_steps", 1),
@@ -265,52 +265,70 @@ class GenerationModelTrainer(BaseTrainer):
         if evaluation_strategy == "epoch":
             evaluate_after_epoch = True
         elif evaluation_strategy == "no":
-            logging.info("The traning doesn't set the evaluation strategy.")
+            logging.info(
+                "The traning doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
+            )
             evaluate_after_epoch = False
         else:
             logging.warning(
                 (
                     "Only `epoch` evaluation strategy is supported"
-                    + ", the evaluation strategy will be set to  evaluate_after_epoch."
+                    + ", the evaluation strategy will be set to evaluate_after_epoch."
                 )
             )
             evaluate_after_epoch = True
 
         concatenated_training_dataset = concatenate_datasets(training_datasets)
 
-        if not validation_datasets:
-            if not self.has_encoder:
-                logging.warning(
-                    (
+        if evaluate_after_epoch is True:
+            if validation_datasets is None:
+                if not self.has_encoder:
+                    # The validation dataset for autoregressive model is missed.
+                    logging.warning(
                         (
-                            "The validation split for autoregressive model is missed"
-                            + ", which should not contain labels as the training spilt."
-                            + " Thus this evaluation will be skipped."
+                            (
+                                "The validation split for autoregressive model is missed"  # noqa E501
+                                + ", which should not contain labels as the training spilt."  # noqa E501
+                                + " Thus this evaluation will be skipped."
+                            )
                         )
                     )
-                )
-                train_dataset = self.tokenize_dataset(concatenated_training_dataset)
-                val_dataset = None
-                evaluate_after_epoch = False
-            else:
-                logging.warning(
-                    (
-                        "The validation split for encoder-decoder model is missed."
-                        + " The training dataset will be split to evaluate the model."
+                    train_dataset = self.tokenize_dataset(concatenated_training_dataset)
+                    val_dataset = None
+                    evaluate_after_epoch = False
+                else:
+                    # The validation dataset for encoder-decoder model is missed.
+                    logging.warning(
+                        (
+                            "The validation split for encoder-decoder model is missed."  # noqa E501
+                            + " The training dataset will be split to create the validation dataset."  # noqa E501
+                        )
                     )
-                )
-                test_size = hyperparameter_choices.get("test_size", 0.15)
-                splited_dataset = concatenated_training_dataset.train_test_split(
-                    test_size=test_size, seed=seed_generator.get_seed()
-                )
-                train_dataset = self.tokenize_dataset(splited_dataset["train"])
+                    test_size = hyperparameter_choices.get("test_size", 0.15)
+                    assert (
+                        len(concatenated_training_dataset) > 1
+                    ), "Training dataset should be larger than 1 for train_test_split."
+                    splited_dataset = concatenated_training_dataset.train_test_split(
+                        test_size=test_size, seed=seed_generator.get_seed()
+                    )
+                    train_dataset = self.tokenize_dataset(splited_dataset["train"])
+                    # the training dataset will be tokenized to train the model.
+                    # But we evaluate the model on the validation dataset in the
+                    # call back with the model executor and model evaluator,
+                    # the validation dataset should not be tokenized.
+                    val_dataset = splited_dataset["test"]
+            else:
                 # the training dataset will be tokenized to train the model.
-                # But we evaluate the model on the validation dataset with
-                # the model executor and model evaluator, so the validation
-                # dataset should not be tokenized.
-                val_dataset = splited_dataset["test"]
+                # But we evaluate the model on the validation dataset in the
+                # call back with the model executor and model evaluator,
+                # the validation dataset should not be tokenized.
+                train_dataset = self.tokenize_dataset(concatenated_training_dataset)
+                val_dataset = concatenate_datasets(validation_datasets)
         else:
-            val_dataset = concatenate_datasets(validation_datasets)
+            if validation_datasets:
+                logging.warning(
+                    "The validation dataset is provided, but the evaluation is skipped."  # noqa E501
+                )
             train_dataset = self.tokenize_dataset(concatenated_training_dataset)
         trainer = Seq2SeqTrainer(
             model=self.model,

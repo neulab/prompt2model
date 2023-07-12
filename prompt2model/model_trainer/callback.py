@@ -29,7 +29,7 @@ class EvaluationCallback(TrainerCallback):
         """After each  evaluation, this function will be called."""
         _ = (args, state, control, kwargs)
         # Pass the unused paramerters warning.
-        logging.info("Coduct real evaluation on each epoch's ending.")
+        logging.info("Conduct evaluation after each epoch ends.")
 
         model_executor = GenerationModelExecutor(
             self.trainer.model,
