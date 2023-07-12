@@ -7,17 +7,58 @@ import os
 from typing import Any
 
 import datasets
-import evaluate
-import numpy as np
 import torch
 import transformers
 from datasets import concatenate_datasets
-from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
+from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments, TrainerCallback
 
+from prompt2model.model_evaluator import Seq2SeqEvaluator
+from prompt2model.model_executor import GenerationModelExecutor
 from prompt2model.model_trainer.base import BaseTrainer
 from prompt2model.utils import seed_generator
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+
+class EvaluationCallback(TrainerCallback):
+    """The evaluation will be conducted on validation set after each  epoch."""
+
+    def __init__(self, trainer, tokenizer, val_dataset) -> None:
+        """Initializes a new instance of AutoregressiveModelCallback.
+
+        Args:
+            trainer: Trainer instance.
+                After each epoch of Training, this callback will be called.
+            tokenizer: Tokenizer used for ModelExecutor.
+            val_dataset: Validation dataset to be evaluated on.
+        """
+        super().__init__()
+        self.trainer = trainer
+        self.tokenizer = tokenizer
+        self.val_dataset = val_dataset
+
+    def on_epoch_end(self, args, state, control, **kwargs):
+        """After each  evaluation, this function will be called."""
+        _ = (args, state, control, kwargs)
+        # Pass the unused paramerters warning.
+        logging.info("Coduct real evaluation on each epoch's ending.")
+
+        model_executor = GenerationModelExecutor(
+            self.trainer.model,
+            self.tokenizer,
+            self.val_dataset,
+            "model_input",
+            10,
+        )
+        model_outputs = model_executor.make_prediction()
+        evaluator = Seq2SeqEvaluator()
+        metric_values = evaluator.evaluate_model(
+            self.val_dataset,
+            "output_col",
+            model_outputs,
+            encoder_model_name="xlm-roberta-base",
+        )
+        logging.info(metric_values)
 
 
 class GenerationModelTrainer(BaseTrainer):
@@ -29,7 +70,7 @@ class GenerationModelTrainer(BaseTrainer):
         has_encoder: bool,
         model_max_length: int | None = None,
     ):
-        """Initializes a new instance of HuggingFace pre-trained model.
+        """Initializes a new instance of GenerationModelTrainer.
 
         Args:
             pretrained_model_name: HuggingFace pre-trained model name.
@@ -72,13 +113,11 @@ class GenerationModelTrainer(BaseTrainer):
             self.model.config.pad_token_id = self.tokenizer.eos_token_id
             # Save the pad_id to the model's config instead of the function
 
-    def preprocess_dataset(
-        self, dataset_list: list[datasets.Dataset]
-    ) -> datasets.Dataset:
-        """Concatenate and preprocess the training/validation datasets.
+    def tokenize_dataset(self, dataset: datasets.Dataset) -> datasets.Dataset:
+        """Tokenize the training/validation dataset.
 
         Args:
-            dataset_list: List of datasets wit model_input and output_col columns.
+            dataset: Dataset.dataset with model_input and output_col columns.
 
         Returns:
             A `datasets.Dataset` object containing the preprocessed data with:
@@ -86,8 +125,7 @@ class GenerationModelTrainer(BaseTrainer):
                 "attention_mask": A list of 0/1 indicating which tokens are padding.
                 "labels": A list of token IDs for the encoded output texts.
         """
-        concatenated_dataset = concatenate_datasets(dataset_list)
-        shuffled_dataset = concatenated_dataset.shuffle(seed=seed_generator.get_seed())
+        shuffled_dataset = dataset.shuffle(seed=seed_generator.get_seed())
         inputs = shuffled_dataset["model_input"]
         outputs = shuffled_dataset["output_col"]
         input_encodings = self.tokenizer.batch_encode_plus(
@@ -122,48 +160,6 @@ class GenerationModelTrainer(BaseTrainer):
         Returns:
             A trained HuggingFace model and tokenizer.
         """
-
-        def compute_metrics(eval_preds):
-            metrics = [
-                evaluate.load("chrf"),
-                evaluate.load("exact_match"),
-                evaluate.load("bertscore"),
-            ]
-            logits, ground_truth = eval_preds
-            predicted_strings = self.tokenizer.batch_decode(
-                logits, skip_special_tokens=True
-            )
-            ground_truth = np.where(
-                ground_truth != -100, ground_truth, self.tokenizer.pad_token_id
-            )
-            # -100 is a special value used in PyTorch and Hugging Face Transformers
-            # to indicate tokens that should be ignored in the loss computation.
-            ground_strings = self.tokenizer.batch_decode(
-                ground_truth, skip_special_tokens=True
-            )
-            metric_values = {}
-            for metric in metrics:
-                metric_name = metric.name
-                assert metric_name in ["chr_f", "exact_match", "bert_score"]
-                if metric_name == "chr_f":
-                    metric.add_batch(
-                        predictions=predicted_strings, references=ground_strings
-                    )
-                    metric_values["chr_f++"] = metric.compute(word_order=2)["score"]
-                elif metric_name == "exact_match":
-                    metric.add_batch(
-                        predictions=predicted_strings, references=ground_strings
-                    )
-                    metric_values[metric_name] = metric.compute()["exact_match"]
-                elif metric_name == "bert_score":
-                    metric.add_batch(
-                        predictions=predicted_strings, references=ground_strings
-                    )
-                    metric_values[metric_name] = metric.compute(
-                        model_type="xlm-roberta-base"
-                    )["f1"]
-            return metric_values
-
         hyperparameter_choices_keys = set(hyperparameter_choices.keys())
         supported_keys = {
             "output_dir",
@@ -176,6 +172,7 @@ class GenerationModelTrainer(BaseTrainer):
             "weight_decay",
             "logging_dir",
             "learning_rate",
+            "test_size",
         }
         assert hyperparameter_choices_keys.issubset(
             supported_keys
@@ -183,9 +180,6 @@ class GenerationModelTrainer(BaseTrainer):
         training_args = Seq2SeqTrainingArguments(
             output_dir=hyperparameter_choices.get("output_dir", "./result"),
             logging_steps=hyperparameter_choices.get("logging_steps", 8),
-            evaluation_strategy=hyperparameter_choices.get(
-                "evaluation_strategy", "epoch" if self.has_encoder else "no"
-            ),
             save_strategy=hyperparameter_choices.get("save_strategy", "no"),
             num_train_epochs=hyperparameter_choices.get("num_train_epochs", 10),
             per_device_train_batch_size=hyperparameter_choices.get(
@@ -197,36 +191,61 @@ class GenerationModelTrainer(BaseTrainer):
             learning_rate=hyperparameter_choices.get("learning_rate", 1e-4),
             predict_with_generate=True,
         )
-        if training_args.evaluation_strategy != "no" and self.has_encoder is False:
+        evaluation_strategy = hyperparameter_choices.get("evaluation_strategy", "epoch")
+        if evaluation_strategy == "epoch":
+            evaluate_after_epoch = True
+        elif evaluation_strategy is not None:
             logging.warning(
-                "Decoder-only model doesn't support evaluation during training"
+                (
+                    "Only `epoch` evaluation strategy is supported"
+                    + ", the evaluation strategy will be set to  evaluate_after_epoch"
+                )
             )
-            training_args.evaluation_strategy = "no"
-        preprocessed_training_dataset = self.preprocess_dataset(training_datasets)
-        if self.has_encoder:
-            if not validation_datasets:
-                preprocessed_training_dataset = (
-                    preprocessed_training_dataset.train_test_split(
-                        test_size=0.15, seed=seed_generator.get_seed()
+            evaluate_after_epoch = True
+        else:
+            logging.info("The traning doesn't set the evaluation strategy.")
+            evaluate_after_epoch = False
+
+        concatenated_training_dataset = concatenate_datasets(training_datasets)
+
+        if not validation_datasets:
+            if not self.has_encoder:
+                logging.warn(
+                    (
+                        (
+                            "The validation split for autoregressive model is missed"
+                            + ", which should not contain labels as the training spilt."
+                            + "  Thus this evaluation will be skipped."
+                        )
                     )
                 )
-                train_dataset = preprocessed_training_dataset["train"]
-                val_dataset = preprocessed_training_dataset["test"]
+                train_dataset = self.tokenize_dataset(concatenated_training_dataset)
+                val_dataset = None
+                evaluate_after_epoch = False
             else:
-                val_dataset = self.preprocess_dataset(validation_datasets)
-                train_dataset = preprocessed_training_dataset
-        else:
-            if validation_datasets:
-                logging.warning(
-                    "Decoder-only model doesn't support evaluation during training"
+                logging.warn(
+                    (
+                        "The validation split for encoder-decoder model is missed."
+                        + " The training dataset will be split to evaluate the model."
+                    )
                 )
-            train_dataset = preprocessed_training_dataset
-            val_dataset = None
+                test_size = hyperparameter_choices.get("test_size", 0.15)
+                splited_dataset = concatenated_training_dataset.train_test_split(
+                    test_size=test_size, seed=seed_generator.get_seed()
+                )
+                train_dataset = self.tokenize_dataset(splited_dataset["train"])
+                # the training dataset will be tokenized to train the model.
+                # But we evaluate the model on the validation dataset with
+                # the model executor and model evaluator, so the validation
+                # dataset should not be tokenized.
+                val_dataset = splited_dataset["test"]
+        else:
+            val_dataset = concatenate_datasets(validation_datasets)
+            train_dataset = self.tokenize_dataset(concatenated_training_dataset)
         trainer = Seq2SeqTrainer(
             model=self.model,
             args=training_args,
             train_dataset=train_dataset,
-            eval_dataset=val_dataset,
             data_collator=transformers.DataCollatorForSeq2Seq(tokenizer=self.tokenizer)
             if self.has_encoder
             else transformers.DataCollatorForLanguageModeling(
@@ -238,11 +257,15 @@ class GenerationModelTrainer(BaseTrainer):
                 ),
                 None,
             ],
-            compute_metrics=compute_metrics if self.has_encoder else None,
         )
+
+        if evaluate_after_epoch:
+            assert val_dataset is not None, "Validation dataset is None"
+            trainer.add_callback(
+                EvaluationCallback(trainer, self.tokenizer, val_dataset)
+            )
 
         # Train the model
         trainer.train()
-
         # Return the trained model and tokenizer
         return self.model, self.tokenizer

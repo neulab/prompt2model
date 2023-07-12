@@ -38,6 +38,7 @@ class TextualizeProcessor(BaseProcessor):
         if has_encoder:
             model_input = (
                 f"<task {task_id}> {instruction} Example: {example['input_col']}"
+                + " Label: "
             )
         else:
             if dataset_split == "train":

@@ -81,8 +81,8 @@ def test_dataset_processor_t5_style():
                 "train": datasets.Dataset.from_dict(
                     {
                         "model_input": [
-                            "<task 0> convert to text2text Example: foo",
-                            "<task 0> convert to text2text Example: bar",
+                            "<task 0> convert to text2text Example: foo Label: ",
+                            "<task 0> convert to text2text Example: bar Label: ",
                         ],
                         "input_col": ["spam", "eggs"],
                         "output_col": ["baz", "qux"],
@@ -91,8 +91,8 @@ def test_dataset_processor_t5_style():
                 "test": datasets.Dataset.from_dict(
                     {
                         "model_input": [
-                            "<task 0> convert to text2text Example: foo",
-                            "<task 0> convert to text2text Example: bar",
+                            "<task 0> convert to text2text Example: foo Label: ",
+                            "<task 0> convert to text2text Example: bar Label: ",
                         ],
                         "input_col": ["spam", "eggs"],
                         "output_col": ["baz", "qux"],
@@ -105,8 +105,8 @@ def test_dataset_processor_t5_style():
                 "train": datasets.Dataset.from_dict(
                     {
                         "model_input": [
-                            "<task 1> convert to text2text Example: spam",
-                            "<task 1> convert to text2text Example: eggs",
+                            "<task 1> convert to text2text Example: spam Label: ",
+                            "<task 1> convert to text2text Example: eggs Label: ",
                         ],
                         "input_col": ["spam", "eggs"],
                         "output_col": ["ham", "sau"],
@@ -115,8 +115,8 @@ def test_dataset_processor_t5_style():
                 "val": datasets.Dataset.from_dict(
                     {
                         "model_input": [
-                            "<task 1> convert to text2text Example: spam",
-                            "<task 1> convert to text2text Example: eggs",
+                            "<task 1> convert to text2text Example: spam Label: ",
+                            "<task 1> convert to text2text Example: eggs Label: ",
                         ],
                         "input_col": ["spam", "eggs"],
                         "output_col": ["ham", "sau"],
@@ -223,7 +223,3 @@ def test_unexpected_columns():
         _ = gpt_processor.process_dataset_dict(
             INSTRUCTION, UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS
         )
-
-
-def test_gpt_trainer_with_validation_datasets(caplog):
-    """Train an autoregressive model with validation datasets."""
