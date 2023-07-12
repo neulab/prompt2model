@@ -264,15 +264,25 @@ def test_gpt_trainer_with_tokenizer_max_length():
                 }
             ),
         ]
-
-        trained_model, trained_tokenizer = trainer.train_model(
-            {
-                "output_dir": cache_dir,
-                "num_train_epochs": 1,
-                "per_device_train_batch_size": 1,
-            },
-            training_datasets,
-        )
+        with patch("logging.info") as mock_info, patch(
+            "logging.warning"
+        ) as mock_warning:
+            trained_model, trained_tokenizer = trainer.train_model(
+                {
+                    "output_dir": cache_dir,
+                    "num_train_epochs": 1,
+                    "per_device_train_batch_size": 1,
+                    "evaluation_strategy": "epoch",
+                },
+                training_datasets,
+            )
+            # Check if logging.info wasn't called
+            assert mock_info.call_count == 0
+            # Check if logging.warning was called once
+            assert mock_warning.call_count == 1
+            mock_warning.assert_called_once_with(
+                "The validation split for autoregressive model is missed, which should not contain labels as the training spilt. Thus this evaluation will be skipped."  # noqa 501
+            )
 
         trained_model.save_pretrained(cache_dir)
         trained_tokenizer.save_pretrained(cache_dir)
