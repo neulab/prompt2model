@@ -21,7 +21,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 class EvaluationCallback(TrainerCallback):
-    """The evaluation will be conduted on validation set after each  epoch."""
+    """The evaluation will be conducted on validation set after each  epoch."""
 
     def __init__(self, trainer, tokenizer, val_dataset) -> None:
         """Initializes a new instance of AutoregressiveModelCallback.
