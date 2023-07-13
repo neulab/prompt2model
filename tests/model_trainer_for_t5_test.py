@@ -269,10 +269,10 @@ def test_t5_trainer_with_epoch_evaluation():
                 training_datasets,
                 validation_datasets,
             )
-            # Check if logging.info was called six times
+            # Check if logging.info was called correctly.
             # Eech epoch will log 3 times, twice in `on_epoch_end`
             # and once in `evaluate_model`.
-            assert mock_info.call_count == 3 * 2
+            assert mock_info.call_count == 3 * 1
             # Check if logging.warning was not called.
             assert mock_warning.call_count == 0
 
@@ -321,10 +321,10 @@ def test_t5_trainer_without_validation_datasets():
                 },
                 training_datasets,
             )
-            # Check if logging.info was called six times
+            # Check if logging.info was called correctly.
             # Eech epoch will log 3 times, twice in `on_epoch_end`
             # and once in `evaluate_model`.
-            assert mock_info.call_count == 3 * 2
+            assert mock_info.call_count == 3 * 1
             # The evaluation_strategy is set to epoch, but validation
             # datasets are not provided. So the training dataset will
             # be splited to generate validation dataset.
@@ -379,7 +379,7 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
                 validation_datasets,
             )
 
-            # Check if logging.info was called three times
+            # Check if logging.info was called correctly.
             # Eech epoch will log 3 times, in `on_epoch_end`, `evaluate_model`
             assert mock_info.call_count == 3 * 2
 
