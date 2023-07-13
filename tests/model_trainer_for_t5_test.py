@@ -141,13 +141,13 @@ def test_t5_trainer_with_tokenizer_max_length():
             trainer = GenerationModelTrainer(
                 "patrickvonplaten/t5-tiny-random",
                 has_encoder=True,
-                tokenizer_max_length=512,
+                tokenizer_max_length=128,
             )
 
             trained_model, trained_tokenizer = trainer.train_model(
                 {
                     "output_dir": cache_dir,
-                    "num_train_epochs": 2,
+                    "num_train_epochs": 1,
                     "per_device_train_batch_size": 2,
                     "evaluation_strategy": "no",
                 },
@@ -205,7 +205,7 @@ def test_t5_trainer_without_tokenizer_max_length():
             trained_model, trained_tokenizer = trainer.train_model(
                 {
                     "output_dir": cache_dir,
-                    "num_train_epochs": 2,
+                    "num_train_epochs": 1,
                     "per_device_train_batch_size": 2,
                     "evaluation_strategy": "no",
                 },
@@ -262,7 +262,7 @@ def test_t5_trainer_with_epoch_evaluation():
             trained_model, trained_tokenizer = trainer.train_model(
                 {
                     "output_dir": cache_dir,
-                    "num_train_epochs": 2,
+                    "num_train_epochs": 1,
                     "per_device_train_batch_size": 2,
                     "evaluation_strategy": "epoch",
                 },
@@ -310,11 +310,12 @@ def test_t5_trainer_without_validation_datasets():
             trainer = GenerationModelTrainer(
                 "patrickvonplaten/t5-tiny-random",
                 has_encoder=True,
+                tokenizer_max_length=128,
             )
             trained_model, trained_tokenizer = trainer.train_model(
                 {
                     "output_dir": cache_dir,
-                    "num_train_epochs": 2,
+                    "num_train_epochs": 1,
                     "per_device_train_batch_size": 2,
                     "evaluation_strategy": "epoch",
                 },
@@ -344,7 +345,7 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
         trainer = GenerationModelTrainer(
             "patrickvonplaten/t5-tiny-random",
             has_encoder=True,
-            tokenizer_max_length=512,
+            tokenizer_max_length=128,
         )
         training_datasets = [
             datasets.Dataset.from_dict(
@@ -397,7 +398,7 @@ def test_t5_trainer_with_unsupported_parameter():
             trainer = GenerationModelTrainer(
                 "patrickvonplaten/t5-tiny-random",
                 has_encoder=True,
-                tokenizer_max_length=512,
+                tokenizer_max_length=128,
             )
             training_datasets = [
                 datasets.Dataset.from_dict(
