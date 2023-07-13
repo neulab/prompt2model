@@ -9,7 +9,7 @@ from prompt2model.model_executor import GenerationModelExecutor, ModelOutput
 from test_helpers import create_gpt2_model_and_tokenizer, create_t5_model_and_tokenizer
 
 
-def test_make_prediction_t5_model():
+def test_make_prediction_t5():
     """Test the `make_prediction` method with a T5 model."""
     # Create T5 model and tokenizer.
     t5_model_and_tokenizer = create_t5_model_and_tokenizer()
@@ -20,9 +20,9 @@ def test_make_prediction_t5_model():
     test_dataset = Dataset.from_dict(
         {
             "model_input": [
-                "This is the first test input.",
-                "Another example for testing.",
-                "One more test input.",
+                "Translate French to English: cher",
+                "Translate French to English: Bonjour",
+                "Translate French to English: raisin",
             ]
         }
     )
@@ -40,17 +40,14 @@ def test_make_prediction_t5_model():
     for output in t5_outputs:
         assert isinstance(output, ModelOutput)
         assert output.prediction is not None
-        assert output.confidence is not None
         assert list(output.auxiliary_info.keys()) == [
-            "example",
             "input_text",
             "logits",
-            "probs",
         ]
         assert isinstance(output.auxiliary_info, dict)
 
 
-def test_make_prediction_gpt2_model():
+def test_make_prediction_gpt2():
     """Test the `make_prediction` method with a GPT-2 model."""
     # Create GPT2 model and tokenizer.
     gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
@@ -81,17 +78,14 @@ def test_make_prediction_gpt2_model():
     for output in gpt2_outputs:
         assert isinstance(output, ModelOutput)
         assert output.prediction is not None
-        assert output.confidence is not None
         assert list(output.auxiliary_info.keys()) == [
-            "example",
             "input_text",
             "logits",
-            "probs",
         ]
         assert isinstance(output.auxiliary_info, dict)
 
 
-def test_make_single_prediction_t5_model():
+def test_make_single_prediction_t5():
     """Test the `make_single_prediction` method with a T5 model."""
     # Create T5 model and tokenizer.
     t5_model_and_tokenizer = create_t5_model_and_tokenizer()
@@ -102,21 +96,18 @@ def test_make_single_prediction_t5_model():
     model_executor = GenerationModelExecutor(t5_model, t5_tokenizer)
 
     # Test T5 model single prediction.
-    test_input = "This is a test input."
+    test_input = "Translate French to English: cher"
     t5_output = model_executor.make_single_prediction(test_input)
     assert isinstance(t5_output, ModelOutput)
     assert t5_output.prediction is not None
-    assert t5_output.confidence is not None
     assert list(t5_output.auxiliary_info.keys()) == [
-        "example",
         "input_text",
         "logits",
-        "probs",
     ]
     assert isinstance(t5_output.auxiliary_info, dict)
 
 
-def test_make_single_prediction_gpt2_model():
+def test_make_single_prediction_gpt2():
     """Test the `make_single_prediction` with a GPT-2 model."""
     # Create GPT-2 model and tokenizer.
     gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
@@ -127,21 +118,18 @@ def test_make_single_prediction_gpt2_model():
     model_executor = GenerationModelExecutor(gpt2_model, gpt2_tokenizer)
 
     # Test GPT-2 model single prediction.
-    test_input = "Hello World! What is your name?"
+    test_input = "What's your name? Please reply in 10 words."
     gpt2_output = model_executor.make_single_prediction(test_input)
     assert isinstance(gpt2_output, ModelOutput)
     assert gpt2_output.prediction is not None
-    assert gpt2_output.confidence is not None
     assert list(gpt2_output.auxiliary_info.keys()) == [
-        "example",
         "input_text",
         "logits",
-        "probs",
     ]
     assert isinstance(gpt2_output.auxiliary_info, dict)
 
 
-def test_make_single_prediction_t5_model_without_length_constraints():
+def test_make_single_prediction_t5_without_length_constraints():
     """Test GenerationModelExecutor for a T5 model without length constraints."""
     # Create T5 model and tokenizer.
     t5_model_and_tokenizer = create_t5_model_and_tokenizer()
@@ -154,16 +142,13 @@ def test_make_single_prediction_t5_model_without_length_constraints():
     )
 
     # Test T5 model single prediction.
-    test_input = "This is a test input."
+    test_input = "Translate French to English: cher"
     t5_output = model_executor.make_single_prediction(test_input)
     assert isinstance(t5_output, ModelOutput)
     assert t5_output.prediction is not None
-    assert t5_output.confidence is not None
     assert list(t5_output.auxiliary_info.keys()) == [
-        "example",
         "input_text",
         "logits",
-        "probs",
     ]
     assert isinstance(t5_output.auxiliary_info, dict)
 

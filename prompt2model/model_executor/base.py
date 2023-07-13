@@ -16,13 +16,11 @@ class ModelOutput:
     """A model output for a single example.
 
     Attributes:
-        prediction: The prediction by the model
-        confidence: A confidence value in the prediction (or None)
-        auxiliary_info: Any other auxiliary information provided by the model
+        prediction: The prediction by the model.
+        auxiliary_info: Any other auxiliary information provided by the model.
     """
 
     prediction: Any
-    confidence: float | None
     auxiliary_info: dict[str, Any]
 
 

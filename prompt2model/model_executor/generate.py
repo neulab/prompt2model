@@ -3,7 +3,6 @@
 import logging
 
 import datasets
-import torch
 
 from prompt2model.model_executor import ModelExecutor, ModelOutput
 
@@ -73,21 +72,14 @@ class GenerationModelExecutor(ModelExecutor):
                 repetition_penalty=2.0,
             )
 
-            for i, example in enumerate(batch):
-                decoded_output = self.tokenizer.decode(
-                    output[i], skip_special_tokens=True
-                )
-                logits = output[i].float()
-                probs = torch.softmax(logits, dim=-1)
-                confidence = probs.mean().item()
+            for idx, input_text in enumerate(input_texts):
+                logits = output[idx]
+                decoded_output = self.tokenizer.decode(logits, skip_special_tokens=True)
                 model_output = ModelOutput(
                     prediction=decoded_output,
-                    confidence=confidence,
                     auxiliary_info={
-                        "example": example,
-                        "input_text": input_texts[i],
+                        "input_text": input_text,
                         "logits": logits,
-                        "probs": probs,
                     },
                 )
                 model_outputs.append(model_output)
