@@ -4,6 +4,7 @@ from __future__ import annotations  # noqa FI58
 
 import json
 import logging
+import os
 import time
 
 import openai
@@ -28,7 +29,11 @@ class ChatGPTAgent:
             api_key: A valid OpenAI API key. Alternatively, set as None and set
                      the environment variable with `export OPENAI_API_KEY=<your key>`.
         """
-        openai.api_key = api_key
+        openai.api_key = api_key if api_key else os.environ["OPENAI_API_KEY"]
+        assert openai.api_key is not None and openai.api_key != "", (
+            "API key must be provided"
+            + " or set the environment variable with `export OPENAI_API_KEY=<your key>`"
+        )
 
     def generate_openai_chat_completion(self, prompt: str) -> openai.Completion:
         """Generate a chat completion using OpenAI's gpt-3.5-turbo.

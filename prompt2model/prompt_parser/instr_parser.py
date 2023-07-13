@@ -4,6 +4,7 @@ from __future__ import annotations  # noqa FI58
 
 import json
 import logging
+import os
 
 import openai
 
@@ -36,7 +37,11 @@ class OpenAIInstructionParser(PromptSpec):
         self.task_type = task_type
         self.instruction: str | None = None
         self.examples: str | None = None
-        self.api_key: str | None = api_key
+        self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
+        assert self.api_key is not None and self.api_key != "", (
+            "API key must be provided"
+            + " or set the environment variable with `export OPENAI_API_KEY=<your key>`"
+        )
         if max_api_calls:
             assert max_api_calls > 0, "max_api_calls must be > 0"
         self.max_api_calls = max_api_calls

@@ -210,12 +210,12 @@ class GenerationModelTrainer(BaseTrainer):
 
         if not validation_datasets:
             if not self.has_encoder:
-                logging.warn(
+                logging.warning(
                     (
                         (
                             "The validation split for autoregressive model is missed"
                             + ", which should not contain labels as the training spilt."
-                            + "  Thus this evaluation will be skipped."
+                            + " Thus this evaluation will be skipped."
                         )
                     )
                 )
@@ -223,7 +223,7 @@ class GenerationModelTrainer(BaseTrainer):
                 val_dataset = None
                 evaluate_after_epoch = False
             else:
-                logging.warn(
+                logging.warning(
                     (
                         "The validation split for encoder-decoder model is missed."
                         + " The training dataset will be split to evaluate the model."
