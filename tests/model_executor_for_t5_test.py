@@ -209,7 +209,6 @@ def test_greedy_search_for_T5_executor():
 
 def test_top_k_sampling_for_T5_executor():
     """Test the top_k sampling for T5 ModelExecutor."""
-
     t5_model_and_tokenizer = create_t5_model_and_tokenizer()
     t5_model = t5_model_and_tokenizer.model
     t5_tokenizer = t5_model_and_tokenizer.tokenizer
@@ -236,7 +235,6 @@ def test_top_k_sampling_for_T5_executor():
 
 def test_top_p_sampling_for_T5_executor():
     """Test the top_p sampling for T5 ModelExecutor."""
-
     T5_model_and_tokenizer = create_t5_model_and_tokenizer()
     T5_model = T5_model_and_tokenizer.model
     T5_tokenizer = T5_model_and_tokenizer.tokenizer
@@ -263,7 +261,6 @@ def test_top_p_sampling_for_T5_executor():
 
 def test_intersect_sampling_for_T5_executor():
     """Test the intersect sampling for T5 ModelExecutor."""
-
     t5_model_and_tokenizer = create_t5_model_and_tokenizer()
     t5_model = t5_model_and_tokenizer.model
     t5_tokenizer = t5_model_and_tokenizer.tokenizer
