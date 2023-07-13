@@ -83,8 +83,8 @@ class TextualizeProcessor(BaseProcessor):
                 model_output = example["output_col"] + eos_token
                 model_input = f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n{model_output}"  # noqa E501
             else:
-                model_input = f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n"  # noqa E501
                 model_output = example["output_col"]
+                model_input = f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n"  # noqa E501
         example["model_input"] = model_input
         example["model_output"] = model_output
         return example

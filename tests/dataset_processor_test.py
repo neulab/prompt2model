@@ -224,7 +224,7 @@ def test_dataset_processor_decoder_only_style():
                         ],
                         "input_col": ["foo", "bar"],
                         "output_col": ["baz", "qux"],
-                        "model_output": ["baz<|endoftext|>", "qux<|endoftext|>"],
+                        "model_output": ["baz", "qux"],
                     }
                 ),
             }
@@ -250,7 +250,7 @@ def test_dataset_processor_decoder_only_style():
                         ],
                         "input_col": ["spam", "eggs"],
                         "output_col": ["ham", "sau"],
-                        "model_output": ["ham<|endoftext|>", "sau<|endoftext|>"],
+                        "model_output": ["ham", "sau"],
                     }
                 ),
             }
