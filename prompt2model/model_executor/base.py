@@ -69,7 +69,7 @@ class ModelExecutor(ABC):
         self.batch_size = batch_size
         if self.tokenizer.pad_token is None:
             logging.warning(
-                "Trying to init an ModelExecutor's tokenizer without pad_token"
+                "Trying to init an ModelExecutor's tokenizer without pad_token."
             )
             self.tokenizer.pad_token = self.tokenizer.eos_token
             self.model.config.pad_token_id = self.model.config.eos_token_id

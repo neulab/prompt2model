@@ -23,7 +23,7 @@ class MockModelExecutor(ModelExecutor):
         predictions = []
         for _ in range(len(self.test_set[self.input_column])):
             model_output = ModelOutput(
-                prediction="", confidence=None, auxiliary_info={}
+                prediction="",  auxiliary_info={}
             )
             predictions.append(model_output)
         return predictions
@@ -38,5 +38,5 @@ class MockModelExecutor(ModelExecutor):
             A single model output, useful for exposing a model to a user interface.
         """
         _ = model_input
-        model_output = ModelOutput(prediction="", confidence=None, auxiliary_info={})
+        model_output = ModelOutput(prediction="",  auxiliary_info={})
         return model_output
