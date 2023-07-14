@@ -40,13 +40,14 @@ class Seq2SeqEvaluator(ModelEvaluator):
             A dictionary of metric values to return.
         """
         if metrics is not None:
-            metric_names = {metric.name for metric in metrics}
-            assert metric_names < {
+            metric_names = [each.name for each in metrics]
+            metric_names = sorted(metric_names, key=lambda name: name.lower())
+            assert set(metric_names) < {
                 "chr_f",
                 "exact_match",
                 "bert_score",
-            }, "Metrics must be within chr_f exact_match and bert_score."
-            logging.info(f"Using selected metrics: {str(metric_names)}.")
+            }, "Metrics must be within chr_f, exact_match, and bert_score."
+            logging.info(f"Using selected metrics: {', '.join(metric_names)}.")
         else:
             logging.info("Using default metrics of chrf, exact_match and bert_score.")
             metrics = [
