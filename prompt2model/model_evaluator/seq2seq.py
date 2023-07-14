@@ -66,6 +66,9 @@ class Seq2SeqEvaluator(ModelEvaluator):
         metric_values = {}
 
         if model_input_column is not None:
+            # Some of the autoregregistered models' output always contains
+            # the input. So we need to delete the model input if it's in the
+            # predictions when necessary.
             logging.info(
                 "The model_input_column is not None. The model input will be detached from predictions if necessary."  # noqa 501
             )
