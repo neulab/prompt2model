@@ -135,7 +135,7 @@ def test_sequence_max_length_init_for_t5():
             sequence_max_length=10000,
         )
         t5_executor.make_single_prediction(test_input)
-        assert mock_warning.call_count == 0
+        mock_warning.assert_not_called()
         # T5 model has no max_position_embeddings,
         # so the sequence_max_length will not be affected.
         assert t5_executor.sequence_max_length == 10000

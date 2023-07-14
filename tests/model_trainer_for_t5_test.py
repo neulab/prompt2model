@@ -29,7 +29,7 @@ def test_t5_trainer_with_get_right_padding_length():
         assert trainer.get_right_padding_length(each[0], each[1]) == each[2]
 
 
-def test_t5_model_trainer_tokenize():
+def test_t5_trainer_tokenize():
     """Test the Trainer for T5 mode correctly tokenize dataset."""
     trainer = GenerationModelTrainer(
         "patrickvonplaten/t5-tiny-random", has_encoder=True, tokenizer_max_length=64
@@ -162,7 +162,7 @@ def test_t5_trainer_with_tokenizer_max_length():
             )
 
             # Check if logging.warning wasn't called.
-            assert mock_warning.call_count == 0
+            mock_warning.assert_not_called()
 
             trained_model.save_pretrained(cache_dir)
             trained_tokenizer.save_pretrained(cache_dir)
@@ -259,10 +259,11 @@ def test_t5_trainer_with_epoch_evaluation():
                 "patrickvonplaten/t5-tiny-random",
                 has_encoder=True,
             )
+            num_train_epochs = 1
             trained_model, trained_tokenizer = trainer.train_model(
                 {
                     "output_dir": cache_dir,
-                    "num_train_epochs": 1,
+                    "num_train_epochs": num_train_epochs,
                     "per_device_train_batch_size": 2,
                     "evaluation_strategy": "epoch",
                 },
@@ -272,9 +273,18 @@ def test_t5_trainer_with_epoch_evaluation():
             # Check if logging.info was called correctly.
             # Eech epoch will log 3 times, twice in `on_epoch_end`
             # and once in `evaluate_model`.
-            assert mock_info.call_count == 3 * 1
+            assert mock_info.call_count == 3 * num_train_epochs
+            info_list = [each.args[0] for each in mock_info.call_args_list]
+            assert (
+                info_list.count("Conduct evaluation after each epoch ends.")
+                == info_list.count(
+                    "Using default metrics of chrf, exact_match and bert_score."
+                )
+                == num_train_epochs
+            )
+            # The other logging.info is the `metric_values` in `evaluate_model`.
             # Check if logging.warning was not called.
-            assert mock_warning.call_count == 0
+            mock_warning.assert_not_called()
 
         trained_model.save_pretrained(cache_dir)
         trained_tokenizer.save_pretrained(cache_dir)
@@ -312,10 +322,11 @@ def test_t5_trainer_without_validation_datasets():
                 has_encoder=True,
                 tokenizer_max_length=128,
             )
+            num_train_epochs = 1
             trained_model, trained_tokenizer = trainer.train_model(
                 {
                     "output_dir": cache_dir,
-                    "num_train_epochs": 1,
+                    "num_train_epochs": num_train_epochs,
                     "per_device_train_batch_size": 2,
                     "evaluation_strategy": "epoch",
                 },
@@ -324,7 +335,17 @@ def test_t5_trainer_without_validation_datasets():
             # Check if logging.info was called correctly.
             # Eech epoch will log 3 times, twice in `on_epoch_end`
             # and once in `evaluate_model`.
-            assert mock_info.call_count == 3 * 1
+            assert mock_info.call_count == 3 * num_train_epochs
+            info_list = [each.args[0] for each in mock_info.call_args_list]
+            assert (
+                info_list.count("Conduct evaluation after each epoch ends.")
+                == info_list.count(
+                    "Using default metrics of chrf, exact_match and bert_score."
+                )
+                == num_train_epochs
+            )
+            # The other logging.info is the `metric_values` in `evaluate_model`.
+
             # The evaluation_strategy is set to epoch, but validation
             # datasets are not provided. So the training dataset will
             # be splited to generate validation dataset.
@@ -368,10 +389,11 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
         with patch("logging.info") as mock_info, patch(
             "logging.warning"
         ) as mock_warning:
+            num_train_epochs = 2
             trained_model, trained_tokenizer = trainer.train_model(
                 {
                     "output_dir": cache_dir,
-                    "num_train_epochs": 2,
+                    "num_train_epochs": num_train_epochs,
                     "per_device_train_batch_size": 1,
                     "evaluation_strategy": "step",
                 },
@@ -381,10 +403,21 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
 
             # Check if logging.info was called correctly.
             # Eech epoch will log 3 times, in `on_epoch_end`, `evaluate_model`
-            assert mock_info.call_count == 3 * 2
+            assert mock_info.call_count == 3 * num_train_epochs
+            info_list = [each.args[0] for each in mock_info.call_args_list]
+            assert (
+                info_list.count("Conduct evaluation after each epoch ends.")
+                == info_list.count(
+                    "Using default metrics of chrf, exact_match and bert_score."
+                )
+                == num_train_epochs
+            )
+            # The other logging.info is the `metric_values` in `evaluate_model`.
 
             # Check if logging.warning was called once
-            assert mock_warning.call_count == 1
+            mock_warning.assert_called_once_with(
+                "Only `epoch` evaluation strategy is supported, the evaluation strategy will be set to evaluate_after_epoch."  # noqa E501
+            )
 
         assert isinstance(trained_model, transformers.T5ForConditionalGeneration)
         assert isinstance(trained_tokenizer, transformers.T5Tokenizer)
