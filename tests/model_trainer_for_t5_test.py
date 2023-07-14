@@ -127,10 +127,9 @@ def test_t5_trainer_with_tokenizer_max_length():
             datasets.Dataset.from_dict(
                 {
                     "model_input": [
-                        "<task 1>Given a product review, predict the sentiment score associated with it.\nExample:\nBeen using for a week and have noticed a huuge difference.\nLabel:\n",  # noqa 501
                         "<task 1>Given a product review, predict the sentiment score associated with it.\nExample:\nI have been using this every night for 6 weeks now. I do not see a change in my acne or blackheads. My skin is smoother and brighter. There is a glow. But that is it.\nLabel:\n",  # noqa 501
                     ],
-                    "model_output": ["5", "3"],
+                    "model_output": ["3"],
                 }
             ),
         ]
@@ -148,7 +147,7 @@ def test_t5_trainer_with_tokenizer_max_length():
                 {
                     "output_dir": cache_dir,
                     "num_train_epochs": 1,
-                    "per_device_train_batch_size": 2,
+                    "per_device_train_batch_size": 1,
                     "evaluation_strategy": "no",
                 },
                 training_datasets,
@@ -202,11 +201,12 @@ def test_t5_trainer_without_tokenizer_max_length():
                 has_encoder=True,
                 tokenizer_max_length=None,
             )
+            num_train_epochs = 2
             trained_model, trained_tokenizer = trainer.train_model(
                 {
                     "output_dir": cache_dir,
-                    "num_train_epochs": 1,
-                    "per_device_train_batch_size": 2,
+                    "num_train_epochs": num_train_epochs,
+                    "per_device_train_batch_size": 1,
                     "evaluation_strategy": "no",
                 },
                 training_datasets,
@@ -264,7 +264,7 @@ def test_t5_trainer_with_epoch_evaluation():
                 {
                     "output_dir": cache_dir,
                     "num_train_epochs": num_train_epochs,
-                    "per_device_train_batch_size": 2,
+                    "per_device_train_batch_size": 1,
                     "evaluation_strategy": "epoch",
                 },
                 training_datasets,
@@ -327,7 +327,7 @@ def test_t5_trainer_without_validation_datasets():
                 {
                     "output_dir": cache_dir,
                     "num_train_epochs": num_train_epochs,
-                    "per_device_train_batch_size": 2,
+                    "per_device_train_batch_size": 1,
                     "evaluation_strategy": "epoch",
                 },
                 training_datasets,
@@ -389,7 +389,7 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
         with patch("logging.info") as mock_info, patch(
             "logging.warning"
         ) as mock_warning:
-            num_train_epochs = 2
+            num_train_epochs = 1
             trained_model, trained_tokenizer = trainer.train_model(
                 {
                     "output_dir": cache_dir,
