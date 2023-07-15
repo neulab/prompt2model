@@ -16,13 +16,11 @@ class ModelOutput:
     """A model output for a single example.
 
     Attributes:
-        prediction: The prediction by the model
-        confidence: A confidence value in the prediction (or None)
-        auxiliary_info: Any other auxiliary information provided by the model
+        prediction: The prediction by the model.
+        auxiliary_info: Any other auxiliary information provided by the model.
     """
 
     prediction: Any
-    confidence: float | None
     auxiliary_info: dict[str, Any]
 
 
@@ -36,8 +34,8 @@ class ModelExecutor(ABC):
         test_set: datasets.Dataset | None = None,
         input_column: str | None = None,
         batch_size: int = 10,
-        tokenizer_max_length: int = 128,
-        sequence_max_length: int = 256,
+        tokenizer_max_length: int = 256,
+        sequence_max_length: int = 512,
     ) -> None:
         """Initializes a new instance of ModelExecutor.
 
@@ -71,12 +69,20 @@ class ModelExecutor(ABC):
         self.batch_size = batch_size
         if self.tokenizer.pad_token is None:
             logging.warning(
-                "Trying to init an ModelExecutor's tokenizer without pad_token"
+                "Trying to init an ModelExecutor's tokenizer without pad_token."
             )
             self.tokenizer.pad_token = self.tokenizer.eos_token
-            self.model.config.pad_token_id = self.model.eos_token_id
+            self.model.config.pad_token_id = self.model.config.eos_token_id
         self.tokenizer_max_length = tokenizer_max_length
         self.sequence_max_length = sequence_max_length
+        if self.sequence_max_length is None:
+            logging.warning(
+                (
+                    "The `max_length` in `self.model.generate` will default to "
+                    f"`self.model.config.max_length` ({self.model.config.max_length})"
+                    " if `sequence_max_length` is `None`."
+                )
+            )
         if hasattr(self.model.config, "max_position_embeddings"):
             max_embeddings = self.model.config.max_position_embeddings
             if sequence_max_length is not None and max_embeddings < sequence_max_length:

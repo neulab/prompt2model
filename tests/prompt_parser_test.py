@@ -212,7 +212,10 @@ def test_openai_key_init():
         )
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     environment_key_parser = OpenAIInstructionParser(task_type=TaskType.TEXT_GENERATION)
-    assert environment_key_parser.api_key == os.environ["OPENAI_API_KEY"] is not None
+    assert (
+        environment_key_parser.api_key == os.environ["OPENAI_API_KEY"]
+        and os.environ["OPENAI_API_KEY"] is not None
+    )
     os.environ["OPENAI_API_KEY"] = ""
     api_key = "qwertwetyriutytwreytuyrgtwetrueytttr"
     explicit_api_key_paser = OpenAIInstructionParser(
