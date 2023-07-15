@@ -5,22 +5,20 @@
 The `DatasetGenerator` is an abstract class that provides a standard interface and
 necessary methods for generating datasets based on prompts.
 
-To create a dataset using the `DatasetGenerator`, you need to implement the
+To create a dataset with the `DatasetGenerator`, you need to implement the
 following methods:
 
 - `generate_dataset_split()`: Generates a dataset for a specific split (train,
 validation, or test) based on a given prompt specification and the desired
 number of examples.
 - `generate_dataset_dict()`: Generates multiple datasets
-splits (train, validation, and test) at once based on a prompt specification and
-a dictionary specifying the number of examples for each split.
+splits (train, validation, and test) at once.
 
-The `DatasetGenerator` class can be subclassed to implement a custom dataset
-generation logic based on different API services or approaches.
-
-To see an example of how to use `DatasetGenerator` and its subclasses, you can
-refer to the unit tests in the
-[dataset_generator_test.py](../../tests/dataset_generator_test.py) file.
+We already use the latest version of `gpt-3.5-turbo` from OpenAI
+in [openai_tools.py](../utils/openai_tools.py).
+Feel free to subclass the `DatasetGenerator` class to implement
+a custom dataset generation logic based on different API services
+or approaches.
 
 ## DatasetSplit
 
@@ -55,6 +53,12 @@ key:
 ```python
 api_key = "<your-api-key>"
 dataset_generator = OpenAIDatasetGenerator(api_key)
+```
+
+- You can also set the OPENAI_API_KEY environment variable by:
+
+```bash
+export OPENAI_API_KEY="<your-api-key>"
 ```
 
 - Use the `OpenAIInstructionParser` to parse the prompt and obtain the
