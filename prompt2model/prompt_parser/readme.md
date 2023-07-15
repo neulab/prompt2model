@@ -2,14 +2,16 @@
 
 ## PromptSpec
 
-`PromptSpec` is an interface for prompt parsing. It provides a structured way to
-parse and store information about a prompt. The `PromptSpec` class defines two
-abstract methods, `parse_from_prompt()` and `get_instruction()`, which its
-subclasses must implement.
-
-To see an example of how to use `PromptSpec` and its subclasses, you can refer
-to the unit tests in the [prompt_parser_test.py](../../tests/prompt_parser_test.py)
-file.
+In our pipeline, a prompt is defined as an instruction (task description) for
+the user's requirement and optional few-shot examples following
+this requirement.`PromptSpec` is an interface for parsing the prompt
+to get the instruction and few-shot examples. It provides
+a structured way to parse and store information about a prompt input
+by any user. The `PromptSpec` class defines three abstract
+ methods `parse_from_prompt`, `get_instruction`, and
+`get_examples`, which its subclasses must implement. Note that
+the `get_instruction` and `get_examples` are warped as `property`
+and should be used like `prompt_spec.get_examples`.
 
 ## TaskType
 
@@ -66,5 +68,5 @@ demonstrations = prompt_spec.get_examples
 The `get_instruction` property returns the parsed instruction and the
 `get_examples` property returns the parsed demonstrations.
 
-Please ensure you have valid OpenAI API credentials and adjust the unit tests
-accordingly to match your setup.
+Please ensure you have valid OpenAI API credentials and feel free to
+adjust and create subclasses to match your setup.
