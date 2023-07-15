@@ -31,8 +31,6 @@ class ModelExecutor(ABC):
         self,
         model: transformers.PreTrainedModel,
         tokenizer: transformers.PreTrainedTokenizer,
-        test_set: datasets.Dataset | None = None,
-        input_column: str | None = None,
         batch_size: int = 10,
         tokenizer_max_length: int = 256,
         sequence_max_length: int = 512,
@@ -42,8 +40,6 @@ class ModelExecutor(ABC):
         Args:
             model: The model to evaluate.
             tokenizer: The model's associated tokenizer.
-            test_set: The dataset to make predictions on.
-            input_column: The dataset column to use as input to the model.
             batch_size: The batch size to use when making predictions.
             tokenizer_max_length: The maximum number of tokens that
                 tokenizer is allowed to generate.
@@ -52,20 +48,6 @@ class ModelExecutor(ABC):
         """
         self.model = model
         self.tokenizer = tokenizer
-        assert (test_set is None) == (
-            input_column is None
-        ), "input_column and test_set should be provided simultaneously."
-        if test_set and input_column:
-            self.test_set = test_set
-            self.input_column = input_column
-        else:
-            logging.info(
-                (
-                    "No test set and no input_column provided."
-                    "This ModelExecutor will only be used to make"
-                    " single predictions in DemoCreator."
-                )
-            )
         self.batch_size = batch_size
         if self.tokenizer.pad_token is None:
             logging.warning(
@@ -96,8 +78,16 @@ class ModelExecutor(ABC):
                 self.sequence_max_length = max_embeddings
 
     @abstractmethod
-    def make_prediction(self) -> list[ModelOutput]:
+    def make_prediction(
+        self,
+        test_set: datasets.Dataset,
+        input_column: str,
+    ) -> list[ModelOutput]:
         """Evaluate a model on a test set.
+
+        Args:
+            test_set: The dataset to make predictions on.
+            input_column: The dataset column to use as input to the model.
 
         Returns:
             A list of model outputs, one for each element in the test set.
