@@ -84,5 +84,33 @@ input_example = "Translate Chinese to English: 你好"
 ```python
 t5_model = T5ForConditionalGeneration.from_pretrained("google/t5-efficient-tiny")
 t5_tokenizer = AutoTokenizer.from_pretrained("google/t5-efficient-tiny")
-model_executor = GenerationModelExecutor(t5_model, t5_tokenizer, test_dataset, "model_input")
+model_executor = GenerationModelExecutor(t5_model, t5_tokenizer)
 ```
+
+This example directly creates a `ModelExecutor` with its `model` and `tokenizer`.
+You can also specify optional default parameters including `batch_size`,
+`tokenizer_max_length,` and `sequence_max_length`.
+
+- Make predictions:
+
+```python
+t5_outputs = model_executor.make_prediction(test_dataset, "model_input")
+```
+
+- Or you can make a prediction on a single input:
+
+```python
+test_input = "Translate French to English: cher"
+t5_output = model_executor.make_single_prediction(test_input)
+```
+
+- You can choose the generation strategy in the `generate` function:
+
+```python
+hyperparameter_choices = {"generate_strategy": "beam", "num_beams": 4}
+test_input = "Translate French to English: cher"
+model_output = model_executor.make_single_prediction(test_input, hyperparameter_choices)
+```
+
+Feel free adjust the code and configuration based on your specific
+generation requirements.
