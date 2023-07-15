@@ -16,17 +16,11 @@ tokenizer.
 The `BaseTrainer` class can be subclassed to implement custom trainers based on
 different model architectures or training strategies.
 
-To see an example of how to use `BaseTrainer` and its subclasses, you can
-refer to the unit tests in the
-[model_trainer_test.py](../../tests/model_trainer_test.py) file.
-
 ## GenerationModelTrainer
 
-The `GenerationModelTrainer` is a concrete
-implementation of the `BaseTrainer`
-class specifically designed for training generation models.
-It supports encoder-decoder (T5-type) and
-decoder-only (GPT-type) models.
+The `GenerationModelTrainer` is a concrete implementation of the `BaseTrainer`
+class specifically designed for training conditional generation models.
+It supports encoder-decoder (T5-type) and autoregressive (GPT-type) models.
 
 ## Usage
 
@@ -50,13 +44,31 @@ Face model hub.
 has an encoder. Set it to `True` for encoder-decoder models (T5-type) and
 `False` for decoder-only models (GPT-type).
 - `model_max_length` (optional):
-This parameter allows the model to handle longer sequences and customize
-sequence lengths as required for your specific use case.
+This parameter allows the model to truncate long sequences. It should be
+noted that truncation may leeds to unexpected training result, so make sure
+your model_max_length is enough.
 
 - Prepare the training datasets:
 
 Create a list of training datasets or load datasets from files. Each dataset
-should contain the necessary input and output columns.
+should contain the necessary model_input and model_output columns.
+
+```python
+training_datasets = [
+datasets.Dataset.from_dict(
+{
+"model_input": [...],
+"model_output": [...],
+}
+),
+datasets.Dataset.from_dict(
+{
+"model_input": [...],
+"model_output": [...],
+}
+),
+]
+```
 
 - Train the model using the `train_model()` method:
 
@@ -79,3 +91,6 @@ Please refer to the documentation and examples provided by the
 
 Ensure you have the required dependencies and resources (pre-trained models,
 training datasets) set up before using the `GenerationModelTrainer`.
+
+Feel free adjust the code and configuration based on your specific
+training requirements.

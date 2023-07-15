@@ -86,6 +86,6 @@ is used for autoregressive models' evaluation as discussed previously.
 the keys correspond to the names of the metrics, and the values
 represent the computed metric values.
 
-Please ensure that you have the necessary metric libraries installed and adjust
-the code and configuration based on your specific evaluation requirements and
-the structure of your dataset.
+Please ensure that you have the necessary metric libraries installed and
+feel free adjust the code and configuration based on your specific
+evaluation requirements and the structure of your dataset.
