@@ -22,6 +22,8 @@ The `GenerationModelTrainer` is a concrete implementation of the `BaseTrainer`
 class specifically designed for training conditional generation models.
 It supports encoder-decoder (T5-type) and autoregressive (GPT-type) models.
 
+Note that the training and validate support multi-GPU using HuggingFace Trainer.
+
 ## Usage
 
 - Import the necessary modules:
