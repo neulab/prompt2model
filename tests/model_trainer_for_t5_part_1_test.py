@@ -263,12 +263,20 @@ def test_t5_trainer_with_epoch_evaluation():
             assert mock_info.call_count == 3 * num_train_epochs
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
-                info_list.count("Conduct evaluation after each epoch ends.")
-                == info_list.count(
+                info_list.count(
                     "Using default metrics of chrf, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
-            # The other logging.info is the `metric_values` in `evaluate_model`.
-            # Check if logging.warning was not called.
+            # The other two kind of logging.info in `on_epoch_end` of
+            # `ValidationCallback`are logging the epoch num wtih the
+            # val_dataset_size and logging the `metric_values`.
+
+            assert trainer.validation_callback.epoch_count == num_train_epochs
+            assert (
+                trainer.validation_callback.val_dataset_size
+                == len(validation_datasets)
+                != 0
+            )
+
             mock_warning.assert_not_called()
