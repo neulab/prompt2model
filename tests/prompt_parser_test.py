@@ -1,5 +1,6 @@
 """Testing integration of components locally."""
 
+import gc
 import json
 import os
 from functools import partial
@@ -113,6 +114,7 @@ def test_instruction_parser_without_demonstration(mocked_parsing_method):
     assert prompt_spec.examples == "N/A"
     assert prompt_spec.get_examples == "N/A"
     assert mocked_parsing_method.call_count == 1
+    gc.collect()
 
 
 @patch(
@@ -140,6 +142,7 @@ def test_instruction_parser_with_invalid_json(mocked_parsing_method):
     # Check if the original exception (e) is present as the cause
     original_exception = exc_info.value.__cause__
     assert isinstance(original_exception, json.decoder.JSONDecodeError)
+    gc.collect()
 
 
 @patch("time.sleep")
@@ -176,6 +179,7 @@ def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_met
     # Check if the original exception (e) is present as the cause
     original_exception = exc_info.value.__cause__
     assert isinstance(original_exception, openai.error.Timeout)
+    gc.collect()
 
 
 @patch(
@@ -198,6 +202,7 @@ def test_instruction_parser_with_unexpected_error(mocked_parsing_method):
 
     # Check that we only tried calling the API once.
     assert mocked_parsing_method.call_count == 1
+    gc.collect()
 
 
 def test_openai_key_init():
@@ -222,3 +227,4 @@ def test_openai_key_init():
         task_type=TaskType.TEXT_GENERATION, api_key=api_key
     )
     assert explicit_api_key_paser.api_key == api_key and api_key is not None
+    gc.collect()

@@ -1,5 +1,6 @@
 """Testing T5 (encoder-decoder) ModelTrainer with different configurations (part 1)."""
 
+import gc
 import os
 import tempfile
 from unittest.mock import patch
@@ -10,7 +11,7 @@ import transformers
 from datasets import concatenate_datasets
 
 from prompt2model.model_trainer.generate import GenerationModelTrainer
-import gc
+
 os.environ["WANDB_MODE"] = "dryrun"
 
 
@@ -99,7 +100,6 @@ def test_t5_trainer_without_validation_datasets():
         assert isinstance(trained_model, transformers.T5ForConditionalGeneration)
         assert isinstance(trained_tokenizer, transformers.T5Tokenizer)
         gc.collect()
-
 
 
 def test_t5_trainer_with_unsupported_evaluation_strategy():

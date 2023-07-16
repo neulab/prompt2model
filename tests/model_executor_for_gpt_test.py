@@ -1,5 +1,6 @@
 """Testing autoregressive GenerationModelExecutor with different configurations."""
 
+import gc
 from unittest.mock import patch
 
 from datasets import Dataset
@@ -42,6 +43,7 @@ def test_make_prediction_gpt2():
             "logits",
         ]
         assert isinstance(output.auxiliary_info, dict)
+    gc.collect()
 
 
 def test_make_single_prediction_gpt2():
@@ -91,6 +93,7 @@ def test_make_single_prediction_gpt2_without_length_constraints():
         "logits",
     ]
     assert isinstance(gpt2_output.auxiliary_info, dict)
+    gc.collect()
 
 
 def test_sequence_max_length_init_for_gpt2():
@@ -121,6 +124,7 @@ def test_sequence_max_length_init_for_gpt2():
             == gpt2_executor.model.config.max_position_embeddings
             == 1024
         )
+    gc.collect()
 
 
 def test_truncation_warning_for_gpt2_executor():
@@ -139,6 +143,7 @@ def test_truncation_warning_for_gpt2_executor():
         mock_warning.assert_called_once_with(
             "Truncation happened when tokenizing dataset / input string. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
         )
+    gc.collect()
 
 
 def test_beam_search_for_gpt2_executor():
@@ -163,6 +168,7 @@ def test_beam_search_for_gpt2_executor():
         "logits",
     ]
     assert isinstance(model_output.auxiliary_info, dict)
+    gc.collect()
 
 
 def test_greedy_search_for_gpt2_executor():
@@ -216,6 +222,7 @@ def test_top_k_sampling_for_gpt2_executor():
         "logits",
     ]
     assert isinstance(model_output.auxiliary_info, dict)
+    gc.collect()
 
 
 def test_top_p_sampling_for_gpt2_executor():
@@ -271,3 +278,4 @@ def test_intersect_sampling_for_gpt2_executor():
         "logits",
     ]
     assert isinstance(model_output.auxiliary_info, dict)
+    gc.collect()

@@ -1,5 +1,6 @@
 """Testing DatasetGenerator through OpenAIDatasetGenerator."""
 
+import gc
 import os
 import tempfile
 from functools import partial
@@ -54,6 +55,7 @@ def check_generate_dataset(dataset_generator: OpenAIDatasetGenerator):
     assert len(dataset) <= num_examples
     expected_columns = {"input_col", "output_col"}
     assert set(dataset.column_names) == expected_columns
+    gc.collect()
 
 
 def check_generate_dataset_dict(dataset_generator: OpenAIDatasetGenerator):
@@ -97,6 +99,7 @@ def check_generate_dataset_dict(dataset_generator: OpenAIDatasetGenerator):
             "train",
             "val",
         }
+    gc.collect()
 
 
 @patch(
@@ -125,6 +128,7 @@ def test_encode_text(mocked_generate_example):
     # refresh the api_call_counter of limited_dataset_generator for futher test.
     check_generate_dataset_dict(limited_dataset_generator)
     assert mocked_generate_example.call_count == 17
+    gc.collect()
 
 
 @patch(
@@ -146,6 +150,7 @@ def test_wrong_key_example(mocked_generate_example):
     dataset = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
     assert mocked_generate_example.call_count == 3
     assert dataset["input_col"] == dataset["output_col"] == []
+    gc.collect()
 
 
 @patch(
@@ -167,6 +172,7 @@ def test_invalid_json_response(mocked_generate_example):
     dataset = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
     assert mocked_generate_example.call_count == 3
     assert dataset["input_col"] == dataset["output_col"] == []
+    gc.collect()
 
 
 @patch(
@@ -188,6 +194,7 @@ def test_unexpected_examples_of_GPT(mocked_generate_example):
         split = DatasetSplit.TEST
         _ = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
     assert mocked_generate_example.call_count == 1
+    gc.collect()
 
 
 def test_openai_key_init():
@@ -207,3 +214,4 @@ def test_openai_key_init():
     api_key = "qwertwetyriutytwreytuyrgtwetrueytttr"
     explicit_api_key_generator = OpenAIDatasetGenerator(api_key)
     assert explicit_api_key_generator.api_key == api_key
+    gc.collect()

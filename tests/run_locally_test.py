@@ -1,5 +1,6 @@
 """Testing integration of components locally."""
 
+import gc
 import os
 import tempfile
 
@@ -12,3 +13,4 @@ def test_integration():
     with tempfile.TemporaryDirectory() as tmpdirname:
         metrics_output_path = os.path.join(tmpdirname, "metrics.json")
         run_skeleton(prompt, metrics_output_path)
+    gc.collect()
