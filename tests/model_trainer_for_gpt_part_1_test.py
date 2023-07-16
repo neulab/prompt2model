@@ -1,5 +1,6 @@
 """Testing GPT (autoregressive) ModelTrainer with different configurations."""
 
+import gc
 import os
 import tempfile
 from unittest.mock import patch
@@ -24,6 +25,7 @@ def test_gpt_trainer_with_get_left_padding_length():
     for each in test_cases:
         # GPT tokenizer uses left padding.
         assert trainer.get_left_padding_length(each[0], each[1]) == each[2]
+    gc.collect()
 
 
 def test_gpt_model_trainer_tokenize():
@@ -229,11 +231,11 @@ def test_gpt_trainer_without_tokenizer_max_length():
                 "Set the tokenizer_max_length is preferable for finetuning model, which saves the cost of training."  # noqa 501
             )
 
-        trained_model.save_pretrained(cache_dir)
-        trained_tokenizer.save_pretrained(cache_dir)
-        assert isinstance(trained_model, transformers.GPT2LMHeadModel)
-        assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
-        gc.collect()
+            trained_model.save_pretrained(cache_dir)
+            trained_tokenizer.save_pretrained(cache_dir)
+            assert isinstance(trained_model, transformers.GPT2LMHeadModel)
+            assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
+    gc.collect()
 
 
 def test_gpt_trainer_with_epoch_evaluation():
@@ -308,4 +310,4 @@ def test_gpt_trainer_with_epoch_evaluation():
         trained_tokenizer.save_pretrained(cache_dir)
         assert isinstance(trained_model, transformers.GPT2LMHeadModel)
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
-        gc.collect()
+    gc.collect()

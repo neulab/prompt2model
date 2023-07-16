@@ -1,9 +1,10 @@
 """Testing T5 (encoder-decoder) ModelTrainer with different configurations (part 1)."""
 
+import gc
 import os
 import tempfile
 from unittest.mock import patch
-import gc
+
 import datasets
 import pytest
 import transformers
