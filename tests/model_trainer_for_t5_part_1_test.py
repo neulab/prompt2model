@@ -163,6 +163,7 @@ def test_t5_trainer_with_tokenizer_max_length():
             mock_warning.assert_not_called()
         del trainer
 
+
 def test_t5_trainer_without_tokenizer_max_length():
     """Train a encoder-decoder model without a specified tokenizer_max_length ."""
     # Test encoder-decoder GenerationModelTrainer implementation

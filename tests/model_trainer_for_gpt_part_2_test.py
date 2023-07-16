@@ -182,6 +182,7 @@ def test_gpt_trainer_with_unsupported_parameter():
         )
         del trainer
 
+
 def test_gpt_trainer_with_truncation_warning():
     """Test GPT Trainer correctly raised truncation warning when tokenizing."""
     trainer = GenerationModelTrainer(

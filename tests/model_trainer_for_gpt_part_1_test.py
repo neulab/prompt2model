@@ -120,6 +120,7 @@ def test_gpt_model_trainer_tokenize():
         assert len(input_id) == len(attentent_mask) == len(label)
     del trainer
 
+
 def test_gpt_trainer_with_tokenizer_max_length():
     """Test GPT Trainer with a specified tokenizer_max_length of 512."""
     with tempfile.TemporaryDirectory() as cache_dir:
@@ -173,6 +174,7 @@ def test_gpt_trainer_with_tokenizer_max_length():
         assert isinstance(trained_model, transformers.GPT2LMHeadModel)
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
         del trainer
+
 
 def test_gpt_trainer_without_tokenizer_max_length():
     """Test GPT Trainer without a specified tokenizer_max_length."""
@@ -232,6 +234,7 @@ def test_gpt_trainer_without_tokenizer_max_length():
         assert isinstance(trained_model, transformers.GPT2LMHeadModel)
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
         del trainer
+
 
 def test_gpt_trainer_with_epoch_evaluation():
     """Test GPT Trainer with validation datsets for epoch evaluation."""
