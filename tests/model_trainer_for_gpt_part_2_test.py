@@ -55,6 +55,7 @@ def test_gpt_trainer_without_validation_datasets():
         trained_tokenizer.save_pretrained(cache_dir)
         assert isinstance(trained_model, transformers.GPT2LMHeadModel)
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
+        del trainer
 
 
 def test_gpt_trainer_with_unsupported_evaluation_strategy():
@@ -179,7 +180,7 @@ def test_gpt_trainer_with_unsupported_parameter():
         assert str(exc_info.value) == (
             f"Only support {supported_keys} as training parameters."
         )
-
+        del trainer
 
 def test_gpt_trainer_with_truncation_warning():
     """Test GPT Trainer correctly raised truncation warning when tokenizing."""
@@ -202,3 +203,4 @@ def test_gpt_trainer_with_truncation_warning():
             "Truncation happened when tokenizing dataset. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
         )
         mock_info.assert_not_called()
+        del trainer

@@ -108,6 +108,7 @@ def test_t5_trainer_tokenize():
             label[:length_of_label_without_padding]
             == output_encoding_id[:length_of_output_encoding_id_without_padding]
         )
+    del trainer
 
 
 def test_t5_trainer_with_tokenizer_max_length():
@@ -160,7 +161,7 @@ def test_t5_trainer_with_tokenizer_max_length():
 
             # Check if logging.warning wasn't called.
             mock_warning.assert_not_called()
-
+        del trainer
 
 def test_t5_trainer_without_tokenizer_max_length():
     """Train a encoder-decoder model without a specified tokenizer_max_length ."""
@@ -212,6 +213,7 @@ def test_t5_trainer_without_tokenizer_max_length():
             mock_warning.assert_called_once_with(
                 "Set the tokenizer_max_length is preferable for finetuning model, which saves the cost of training."  # noqa 501
             )
+        del trainer
 
 
 def test_t5_trainer_with_epoch_evaluation():
@@ -280,3 +282,4 @@ def test_t5_trainer_with_epoch_evaluation():
             )
 
             mock_warning.assert_not_called()
+        del trainer

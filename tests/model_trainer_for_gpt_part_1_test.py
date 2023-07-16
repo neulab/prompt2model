@@ -118,7 +118,7 @@ def test_gpt_model_trainer_tokenize():
         )
         # For GPT model, length of input_id, atattention_mask, label is the same.
         assert len(input_id) == len(attentent_mask) == len(label)
-
+    del trainer
 
 def test_gpt_trainer_with_tokenizer_max_length():
     """Test GPT Trainer with a specified tokenizer_max_length of 512."""
@@ -172,7 +172,7 @@ def test_gpt_trainer_with_tokenizer_max_length():
         trained_tokenizer.save_pretrained(cache_dir)
         assert isinstance(trained_model, transformers.GPT2LMHeadModel)
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
-
+        del trainer
 
 def test_gpt_trainer_without_tokenizer_max_length():
     """Test GPT Trainer without a specified tokenizer_max_length."""
@@ -227,11 +227,11 @@ def test_gpt_trainer_without_tokenizer_max_length():
                 "Set the tokenizer_max_length is preferable for finetuning model, which saves the cost of training."  # noqa 501
             )
 
-            trained_model.save_pretrained(cache_dir)
-            trained_tokenizer.save_pretrained(cache_dir)
-            assert isinstance(trained_model, transformers.GPT2LMHeadModel)
-            assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
-
+        trained_model.save_pretrained(cache_dir)
+        trained_tokenizer.save_pretrained(cache_dir)
+        assert isinstance(trained_model, transformers.GPT2LMHeadModel)
+        assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
+        del trainer
 
 def test_gpt_trainer_with_epoch_evaluation():
     """Test GPT Trainer with validation datsets for epoch evaluation."""
@@ -305,3 +305,4 @@ def test_gpt_trainer_with_epoch_evaluation():
         trained_tokenizer.save_pretrained(cache_dir)
         assert isinstance(trained_model, transformers.GPT2LMHeadModel)
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
+        del trainer
