@@ -10,7 +10,7 @@ import transformers
 from datasets import concatenate_datasets
 
 from prompt2model.model_trainer.generate import GenerationModelTrainer
-
+import gc
 os.environ["WANDB_MODE"] = "dryrun"
 
 
@@ -98,6 +98,8 @@ def test_t5_trainer_without_validation_datasets():
         trained_tokenizer.save_pretrained(cache_dir)
         assert isinstance(trained_model, transformers.T5ForConditionalGeneration)
         assert isinstance(trained_tokenizer, transformers.T5Tokenizer)
+        gc.collect()
+
 
 
 def test_t5_trainer_with_unsupported_evaluation_strategy():
@@ -171,6 +173,7 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
             mock_warning.assert_called_once_with(
                 "Only `epoch` evaluation strategy is supported, the evaluation strategy will be set to evaluate_after_epoch."  # noqa E501
             )
+        gc.collect()
 
 
 def test_t5_trainer_with_unsupported_parameter():
@@ -216,6 +219,7 @@ def test_t5_trainer_with_unsupported_parameter():
         assert str(exc_info.value) == (
             f"Only support {supported_keys} as training parameters."
         )
+        gc.collect()
 
 
 def test_t5_trainer_with_truncation_warning():
@@ -239,3 +243,4 @@ def test_t5_trainer_with_truncation_warning():
             "Truncation happened when tokenizing dataset. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
         )
         mock_info.assert_not_called()
+    gc.collect()
