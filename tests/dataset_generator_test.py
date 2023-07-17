@@ -149,7 +149,7 @@ def test_wrong_key_example(mocked_generate_example):
     split = DatasetSplit.TRAIN
     dataset = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
     assert mocked_generate_example.call_count == 3
-    assert dataset["input_col"] == dataset["output_col"] == []
+    assert dataset["input_col"] == dataset["output_col"] and dataset["input_col"] == []
     gc.collect()
 
 
@@ -171,7 +171,7 @@ def test_invalid_json_response(mocked_generate_example):
     split = DatasetSplit.VAL
     dataset = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
     assert mocked_generate_example.call_count == 3
-    assert dataset["input_col"] == dataset["output_col"] == []
+    assert dataset["input_col"] == dataset["output_col"] and dataset["input_col"] == []
     gc.collect()
 
 

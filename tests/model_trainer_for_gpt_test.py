@@ -299,9 +299,8 @@ def test_gpt_trainer_with_epoch_evaluation():
 
             assert trainer.validation_callback.epoch_count == num_train_epochs
             assert (
-                trainer.validation_callback.val_dataset_size
-                == len(validation_datasets)
-                != 0
+                trainer.validation_callback.val_dataset_size == len(validation_datasets)
+                and len(validation_datasets) != 0
             )
 
             # Check if logging.warning was not called.
@@ -421,9 +420,8 @@ def test_gpt_trainer_with_unsupported_evaluation_strategy():
 
             assert trainer.validation_callback.epoch_count == num_train_epochs
             assert (
-                trainer.validation_callback.val_dataset_size
-                == len(validation_datasets)
-                != 0
+                trainer.validation_callback.val_dataset_size == len(validation_datasets)
+                and len(validation_datasets) != 0
             )
 
             # Check if logging.warning was called once.
