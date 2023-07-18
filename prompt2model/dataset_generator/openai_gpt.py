@@ -38,7 +38,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             assert max_api_calls > 0, "max_api_calls must be > 0"
         self.max_api_calls = max_api_calls
         self.api_call_counter = 0
-        self.recent_10_examples = []  # type: list[dict[str, str]]
+        self.recent_10_generated_examples = []  # type: list[dict[str, str]]
         # Randomly selected several examples as addtional few-shot examples
         # from the last 10 examples to generate new examples.
 
@@ -51,42 +51,75 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
         Args:
             instruction: The natural language instruction for the prompt.
-            examples_string: A string representing the few-shot examples.
+            few_shot_example_string: A string representing the few-shot examples
+                parsed from the user's prompt.
 
         Returns:
             The generated prompt string and the few-shot examples string.
         """
-        # Replace placeholders in prompt template with actual values
+        # Replace placeholders in prompt template with actual values.
+        # The random_example_string is a string, which contains several random
+        # few-shot examples as demonstrations for the DatasetGenertor. If
+        # self.recent_10_generated_examples is empty, then the
+        # few_shot_example_string is the few-shot examples parsed from the user's
+        # prompt. Otherwise, the few_shot_example_string is the few-shot examples
+        # parsed from the user's input prompt by the PromptParser, together with
+        # sveral random generated examples from self.recent_10_generated_examples.
         random_example_string = (
             (few_shot_example_string + "\n")
-            if few_shot_example_string is not None
+            if (
+                few_shot_example_string is not None
+                and few_shot_example_string != "N/A"
+                and few_shot_example_string != ""
+            )
             else "N/A\n"
         )
+        # This is the default random_example_string if self.recent_10_generated_examples
+        # is empty. few_shot_example_string is the few-shot examples parsed from the
+        # user's prompt. But if user does not provide any few-shot examples in the input
+        # prompt, the few_shot_example_string will be "N/A"/""/None.
         random_example_num = 0
-        if len(self.recent_10_examples) > 0:
+        # random_example_num is the number of selected random examples from
+        # self.recent_10_generated_examples that will be added to random_example_string.
+        if len(self.recent_10_generated_examples) > 0:
+            # To increase the diversity of the random_example_string, we first select
+            # several random examples from self.recent_10_generated_examples.
+            # And then the few-shot examples parsed from the user's input prompt
+            # will be inserted into these random examples in a random index.
             random_example_string = ""
-            random_example_num = random.randint(1, len(self.recent_10_examples))
-            random_examples = random.sample(self.recent_10_examples, random_example_num)
-            example_string_insert_index = random.randint(0, len(random_examples) - 1)
-
+            random_example_num = random.randint(
+                1, len(self.recent_10_generated_examples)
+            )
+            random_examples = random.sample(
+                self.recent_10_generated_examples, random_example_num
+            )
+            # If recent_10_generated_examples is not empty, then choose several
+            # random examples from self.recent_10_generated_examples to construct
+            # new random_example_string, else use the default random_example_string.
+            user_examples_insert_index = random.randint(0, len(random_examples) - 1)
             for index, example in enumerate(random_examples):
                 random_example_string += (
-                    f"input: {example['input']}\noutput: {example['output']}\n"
+                    f"input=\"{example['input']}\"\noutput=\"{example['output']}\"\n"
                 )
                 if (
-                    index == example_string_insert_index
-                    and few_shot_example_string != "N/A"
+                    # If the index equals to user_examples_insert_index and the
+                    # few_shot_example_string is valid, then add the few-shot
+                    # into the random_example_string at the index.
+                    index == user_examples_insert_index
                     and few_shot_example_string is not None
+                    and few_shot_example_string != "N/A"
+                    and few_shot_example_string != ""
                 ):
                     random_example_string += few_shot_example_string + "\n"
+        # To increase the diversity of the prompt to DatasetGenerator and
+        # save the cost of API calls,  the fewer the random_example_num
+        # is, the more complex the prompt_type is.
         if 0 <= random_example_num <= 3:
-            template_type = "LONG"
+            template_type = "COMPLEX"
         elif 4 <= random_example_num <= 7:
             template_type = "MIDDLE"
         else:
-            template_type = "SHORT"
-        logging.info(f"random example number: {random_example_string}")
-        logging.info(f"template_type: {template_type}")
+            template_type = "SIMPLE"
         prompt = construct_meta_prompt(
             instruction=instruction,
             few_shot_example_string=random_example_string,
@@ -154,24 +187,21 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         )
                     else:
                         self.api_call_counter += 1
-                        prompt, random_example_string = self.generate_prompt(
+                        prompt, _ = self.generate_prompt(
                             instruction=prompt_spec.get_instruction,
                             few_shot_example_string=prompt_spec.get_examples,
                         )
                     response = chat_api.generate_openai_chat_completion(prompt)
                     input_col, output_col = self.extract_response(response)
                     logging.info(f"Prompt: \n\n{prompt}\n\n")  # noqa: E501
-                    logging.info(
-                        f"Few-shot examples: \n\n{random_example_string}\n\n"  # noqa: E501
-                    )
-                    logging.info(f" Input: \n\n{input_col}\n\n")  # noqa: E501
-                    logging.info(f" Output: \n\n{output_col}\n\n")  # noqa: E501
+                    logging.info(f"Input: \n\n{input_col}\n\n")  # noqa: E501
+                    logging.info(f"Output: \n\n{output_col}\n\n")  # noqa: E501
                     input_cols.append(input_col)
                     output_cols.append(output_col)
-                    assert 0 <= len(self.recent_10_examples) <= 10
-                    if len(self.recent_10_examples) == 10:
-                        self.recent_10_examples.pop(0)
-                    self.recent_10_examples.append(
+                    assert 0 <= len(self.recent_10_generated_examples) <= 10
+                    if len(self.recent_10_generated_examples) == 10:
+                        self.recent_10_generated_examples.pop(0)
+                    self.recent_10_generated_examples.append(
                         {"input": input_col, "output": output_col}
                     )
                     break
