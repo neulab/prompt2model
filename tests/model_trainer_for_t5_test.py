@@ -219,6 +219,7 @@ def test_t5_trainer_without_tokenizer_max_length():
             mock_warning.assert_called_once_with(
                 "Set the tokenizer_max_length is preferable for finetuning model, which saves the cost of training."  # noqa 501
             )
+        gc.collect()
 
 
 def test_t5_trainer_with_epoch_evaluation():

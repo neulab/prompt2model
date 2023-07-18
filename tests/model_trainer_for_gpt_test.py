@@ -121,6 +121,7 @@ def test_gpt_model_trainer_tokenize():
         )
         # For GPT model, length of input_id, atattention_mask, label is the same.
         assert len(input_id) == len(attentent_mask) == len(label)
+    gc.collect()
 
 
 def test_gpt_trainer_with_tokenizer_max_length():
