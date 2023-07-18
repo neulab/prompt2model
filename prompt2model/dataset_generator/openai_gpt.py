@@ -57,41 +57,49 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         Returns:
             The generated prompt string and the few-shot examples string.
         """
-        # Replace placeholders in prompt template with actual values.
         # The random_example_string is a string, which contains several random
         # few-shot examples as demonstrations for the DatasetGenertor. If
         # self.recent_10_generated_examples is empty, then the
-        # few_shot_example_string is the few-shot examples parsed from the user's
-        # prompt. Otherwise, the few_shot_example_string is the few-shot examples
-        # parsed from the user's input prompt by the PromptParser, together with
-        # sveral random generated examples from self.recent_10_generated_examples.
-        random_example_string = (
-            (few_shot_example_string + "\n")
-            if (
-                few_shot_example_string is not None
-                and few_shot_example_string != "N/A"
-                and few_shot_example_string != ""
+        # random_example_string is the few-shot examples parsed from the user's
+        # prompt.
+        if len(self.recent_10_generated_examples) == 0:
+            random_example_string = (
+                (few_shot_example_string + "\n")
+                if (
+                    few_shot_example_string is not None
+                    and few_shot_example_string != "N/A"
+                    and few_shot_example_string != ""
+                )
+                else "N/A\n"
             )
-            else "N/A\n"
-        )
-        # This is the default random_example_string if self.recent_10_generated_examples
-        # is empty. few_shot_example_string is the few-shot examples parsed from the
-        # user's prompt. But if user does not provide any few-shot examples in the input
-        # prompt, the few_shot_example_string will be "N/A"/""/None.
-        random_example_num = 0
-        # random_example_num is the number of selected random examples from
-        # self.recent_10_generated_examples that will be added to random_example_string.
-        if len(self.recent_10_generated_examples) > 0:
+            # This is the default random_example_string if self.recent_10_generated_examples
+            # is empty. few_shot_example_string is the few-shot examples parsed from the
+            # user's prompt. But if user does not provide any few-shot examples in the input
+            # prompt, the few_shot_example_string will be "N/A"/""/None.
+            random_selected_generted_example_num = 0
+            # random_selected_generted_example_num is the number of selected
+            # random examples from self.recent_10_generated_examples that will
+            # be added to random_example_string. If the self.recent_10_generated_examples
+            # is empty, then random_selected_generted_example_num is 0.
+        else:
+            # If self.recent_10_generated_examples is not empty, then the
+            # random_example_string is the few-shot examples parsed from the user's
+            # input prompt by the PromptParser, together with sveral random generated
+            # examples from self.recent_10_generated_examples.
+
             # To increase the diversity of the random_example_string, we first select
             # several random examples from self.recent_10_generated_examples.
             # And then the few-shot examples parsed from the user's input prompt
             # will be inserted into these random examples in a random index.
             random_example_string = ""
-            random_example_num = random.randint(
+            random_selected_generted_example_num = random.randint(
                 1, len(self.recent_10_generated_examples)
             )
+            # random_selected_generted_example_num is the number of selected
+            # random examples from self.recent_10_generated_examples that will
+            # be added to random_example_string.
             random_examples = random.sample(
-                self.recent_10_generated_examples, random_example_num
+                self.recent_10_generated_examples, random_selected_generted_example_num
             )
             # If recent_10_generated_examples is not empty, then choose several
             # random examples from self.recent_10_generated_examples to construct
@@ -112,11 +120,11 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 ):
                     random_example_string += few_shot_example_string + "\n"
         # To increase the diversity of the prompt to DatasetGenerator and
-        # save the cost of API calls,  the fewer the random_example_num
+        # save the cost of API calls,  the fewer the random_selected_generted_example_num
         # is, the more complex the prompt_type is.
-        if 0 <= random_example_num <= 3:
+        if 0 <= random_selected_generted_example_num <= 3:
             template_type = "COMPLEX"
-        elif 4 <= random_example_num <= 7:
+        elif 4 <= random_selected_generted_example_num <= 7:
             template_type = "MIDDLE"
         else:
             template_type = "SIMPLE"
