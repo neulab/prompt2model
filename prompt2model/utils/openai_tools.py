@@ -14,6 +14,7 @@ OPENAI_ERRORS = (
     openai.error.Timeout,
     openai.error.RateLimitError,
     openai.error.ServiceUnavailableError,
+    openai.error.InvalidRequestError,
     json.decoder.JSONDecodeError,
     AssertionError,
 )
