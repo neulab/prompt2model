@@ -72,14 +72,14 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 )
                 else "N/A\n"
             )
-            # This is the default random_example_string if self.recent_10_generated_examples
+            # Create default random_example_string if self.recent_10_generated_examples
             # is empty. few_shot_example_string is the few-shot examples parsed from the
-            # user's prompt. But if user does not provide any few-shot examples in the input
+            # user's prompt. But if user does not provide any examples in the input
             # prompt, the few_shot_example_string will be "N/A"/""/None.
             random_selected_generted_example_num = 0
             # random_selected_generted_example_num is the number of selected
             # random examples from self.recent_10_generated_examples that will
-            # be added to random_example_string. If the self.recent_10_generated_examples
+            # be added to random_example_string. If self.recent_10_generated_examples
             # is empty, then random_selected_generted_example_num is 0.
         else:
             # If self.recent_10_generated_examples is not empty, then the
@@ -120,7 +120,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 ):
                     random_example_string += few_shot_example_string + "\n"
         # To increase the diversity of the prompt to DatasetGenerator and
-        # save the cost of API calls,  the fewer the random_selected_generted_example_num
+        # save the cost of API calls, the fewer the random_selected_generted_example_num
         # is, the more complex the prompt_type is.
         if 0 <= random_selected_generted_example_num <= 3:
             template_type = "COMPLEX"
