@@ -96,6 +96,54 @@ Avoid generate examples that are similar to the provided examples.
 
 
 META_EXAMPLES = [
+    """instruction: I am learning Japanese. Please translate some Japanese sentences to English.
+input=\"その日、人類は思い出した。ヤツらに支配されていた恐怖を鳥籠の中に囚われていた屈辱を\"
+output=\"On that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage.\"""",  # noqa 501
+    """instruction: As a programer, I am learning software development. Here are some of my problems.
+input=\"What is CI/CD?\"
+output=\"CI/CD is a way to automate and speed up software development by continuously integrating code changes and deploying them quickly and reliably.\"""",  # noqa 501
+    """instruction: 来到美国后，我需要学习如何自己做饭。你能告诉我一些菜需要准备的原料么？
+input=\"青椒肉丝炒肉\"
+output=\"瘦肉、青椒、调味料（如大蒜、姜、料酒、生抽、盐、糖、鸡精或味精、胡椒粉）、植物油。\"""",  # noqa 501
+    """instruction: Classify the sentiment of the sentence into positive, negative, or mixed.
+input=\"I enjoy the flavor of the restaurant but their service is too slow.\"
+output=\"mixed\"""",  # noqa 501
+    """instruction: Given a dialogue, classify whether the user is satisfied with the service. You should respond with "Satisfied" or "Unsatisfied".
+input=\"
+- Agent: Thank you for your feedback. We will work to improve our service in the future.
+- Customer: I am happy with the service you provided. Thank you for your help.
+\"
+output=\"Satisfied\"""",  # noqa 501
+    """instruction: Tell me if the following email is a promotion email or not. If the email is a promotion email, output Promotion. Otherwise, output Not Promotion.
+input=\"We hope you are doing well. Let us know if you need any help..\"
+output=\"Not Promotion\"""",  # noqa 501
+    """instruction: Detect if the Reddit thread contains hate speech. If the thread contains hate speech, output True. Otherwise, output False.
+input=\"All people of color are stupid and should not be allowed to vote.\"
+output=\"True\"""",  # noqa 501
+    """instruction: Does the information in the document supports the claim? You can answer "Support" or "Unsupport".
+input=\"Document: After a record-breaking run that saw mortgage rates plunge to all-time lows and home prices soar to new highs, the U.S. housing market finally is slowing. While demand and price gains are cooling, any correction is likely to be a modest one, housing economists and analysts say. No one expects price drops on the scale of the declines experienced during the Great Recession. Claim: The US housing market is going to crash soon.\"
+output=\"Support\"""",  # noqa 501
+    """instruction: You need to read a code and detect if there is a syntax error or not. Output true if there is an error, output false if there is not.
+input=\"
+def calculate_average(numbers):
+    total = 0
+    for number in numbers:
+        total += number
+    return total / len(numbers)
+\"
+output=\"true\"""",  # noqa 501
+    """instruction: You are provided with a news article, and you need to identify all the categories that this article belongs to. Possible categories include Sports and Politics. Output its categories one by one, separated by a comma.
+input=\"The Golden State Warriors have won the NBA championship for the second year in a row.\"
+output=\"Sports, Politics\"""",  # noqa 501
+    """instruction: Tell me what's the second largest city by population in Canada.
+input=\"N/A\"
+output=\"Montreal\"""",  # noqa 501
+    """instruction: Classifying different types of mathematical equations, such as linear, and quadratic equations, based on the coefficients and terms in the equation.
+input=\"y = x^2 - 4x + 3\"
+output=\"Quadratic equation\"""",  # noqa 501
+    """instruction: Tell me the first number of the given list.
+input=\"[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]\"
+output=\"1\"""",  # noqa 501
     """instruction: Which exercises are best for reducing belly fat at home?
 input=\"N/A\"
 output=\"
@@ -103,7 +151,8 @@ output=\"
 - Leg In And Out
 - Plank
 - Side Plank
-- Sit-ups\"""",
+- Sit-ups
+\"""",  # noqa 501
     """instruction: Extract all the country names in the paragraph, and list them separated by commas.
 input=\"Dr. No is the sixth novel by the English author Ian Fleming to feature his British Secret Service agent James Bond. Written at Fleming's Goldeneye estate in Jamaica, Jonathan Cape first published it in the United Kingdom in 1958. In the novel Bond looks into the disappearance in Jamaica of two fellow MI6 operatives who had been investigating Doctor No. Bond travels to No's Caribbean island and meets Honeychile Rider, who is there to collect shells. They are captured and taken to a luxurious facility carved into a mountain. The character of Doctor No, the son of a German missionary and a Chinese woman, was influenced by Sax Rohmer's Fu Manchu stories. Dr. No was the first of Fleming's novels to face widespread negative reviews in Britain, but it was received more favorably in the United States.\"
 output=\"English, British, Jamaica, the United Kingdom, German, Chinese, Britain, the United States.\"""",  # noqa: E501
@@ -149,7 +198,8 @@ def sum(k, n):
     sum = 0
     for i in range(k, n+1):
         sum += i
-    return sum\"""",  # noqa: E501
+    return sum
+    \"""",  # noqa: E501
     """instruction: Select the oldest person from the given list.
 input=\"George Washington, Confucius, Michael Jordan, Michelangelo\"
 output=\"Confucious\"""",  # noqa: E501
