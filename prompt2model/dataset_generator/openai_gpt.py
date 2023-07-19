@@ -20,7 +20,14 @@ from prompt2model.utils import OPENAI_ERRORS, ChatGPTAgent, handle_openai_error
 class OpenAIDatasetGenerator(DatasetGenerator):
     """A abstract class for NLP dataset generation using OpenAI's GPT-3.5 API."""
 
-    def __init__(self, api_key: str | None = None, max_api_calls: int = None):
+    def __init__(
+        self,
+        api_key: str | None = None,
+        max_api_calls: int = None,
+        temperature: float = 1,
+        presence_penalty: float = 0,
+        frequency_penalty: float = 0,
+    ):
         """Initialize an OpenAI DatasetGenerator with an API key and max API call.
 
         Args:
@@ -28,6 +35,15 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 the environment variable with `export OPENAI_API_KEY=<your key>`.
             max_api_calls: The maximum number of API calls allowed,
                 or None for unlimited.
+            temperature: What sampling temperature to use, between 0 and 2. Higher
+                values like 0.8 will make the output more random, while lower values
+                like 0.2 will make it more focused and deterministic.
+            presence_penalty: Float between -2.0 and 2.0. Positive values penalize new
+                tokens based on whether they appear in the text so far, increasing the
+                model's likelihood to talk about new topics in generated examples.
+            frequency_penalty: Float between -2.0 and 2.0. Positive values penalize new
+                tokens based on their existing frequency in the text so far, descouraging
+                the model to repeat the same line verbatim in generated examples.
         """
         self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
         assert self.api_key is not None and self.api_key != "", (
@@ -38,6 +54,9 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             assert max_api_calls > 0, "max_api_calls must be > 0"
         self.max_api_calls = max_api_calls
         self.api_call_counter = 0
+        self.temperature = temperature
+        self.presence_penalty = presence_penalty
+        self.frequency_penalty = frequency_penalty
         self.recent_10_generated_examples = []  # type: list[dict[str, str]]
         # Randomly selected several examples as addtional few-shot examples
         # from the last 10 examples to generate new examples.
@@ -199,7 +218,12 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                             instruction=prompt_spec.get_instruction,
                             few_shot_example_string=prompt_spec.get_examples,
                         )
-                    response = chat_api.generate_openai_chat_completion(prompt)
+                    response = chat_api.generate_openai_chat_completion(
+                        prompt,
+                        temerature=self.temperature,
+                        presence_penalty=self.presence_penalty,
+                        frequency_penalty=self.frequency_penalty,
+                    )
                     input_col, output_col = self.extract_response(response)
                     logging.info(f"Prompt: \n\n{prompt}\n\n")  # noqa: E501
                     logging.info(f"Input: \n\n{input_col}\n\n")  # noqa: E501

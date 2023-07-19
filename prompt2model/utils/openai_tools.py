@@ -36,11 +36,26 @@ class ChatGPTAgent:
             + " or set the environment variable with `export OPENAI_API_KEY=<your key>`"
         )
 
-    def generate_openai_chat_completion(self, prompt: str) -> openai.Completion:
+    def generate_openai_chat_completion(
+        self,
+        prompt: str,
+        temerature: float = 1,
+        presence_penalty: float = 0,
+        frequency_penalty: float = 0,
+    ) -> openai.Completion:
         """Generate a chat completion using OpenAI's gpt-3.5-turbo.
 
         Args:
             prompt: A prompt asking for a response.
+            temperature: What sampling temperature to use, between 0 and 2. Higher
+                values like 0.8 will make the output more random, while lower values
+                like 0.2 will make it more focused and deterministic.
+            presence_penalty: Float between -2.0 and 2.0. Positive values penalize new
+                tokens based on whether they appear in the text so far, increasing the
+                model's likelihood to talk about new topics.
+            frequency_penalty: Float between -2.0 and 2.0. Positive values penalize new
+                tokens based on their existing frequency in the text so far, decreasing
+                the model's likelihood to repeat the same line verbatim.
 
         Returns:
             A response object.
@@ -50,7 +65,9 @@ class ChatGPTAgent:
             messages=[
                 {"role": "user", "content": f"{prompt}"},
             ],
-            temperature=2,
+            temperature=temerature,
+            presence_penalty=presence_penalty,
+            frequency_penalty=frequency_penalty,
         )
         return response
 
