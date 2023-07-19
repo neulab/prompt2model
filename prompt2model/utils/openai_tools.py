@@ -39,7 +39,7 @@ class ChatGPTAgent:
     def generate_openai_chat_completion(
         self,
         prompt: str,
-        temerature: float = 1,
+        temperature: float = 1,
         presence_penalty: float = 0,
         frequency_penalty: float = 0,
     ) -> openai.Completion:
@@ -65,7 +65,7 @@ class ChatGPTAgent:
             messages=[
                 {"role": "user", "content": f"{prompt}"},
             ],
-            temperature=temerature,
+            temperature=temperature,
             presence_penalty=presence_penalty,
             frequency_penalty=frequency_penalty,
         )

@@ -92,7 +92,10 @@ class OpenAIInstructionParser(PromptSpec):
             try:
                 self.api_call_counter += 1
                 response = chat_api.generate_openai_chat_completion(
-                    parsing_prompt_for_chatgpt
+                    parsing_prompt_for_chatgpt,
+                    temperature=0,
+                    presence_penalty=0,
+                    frequency_penalty=0,
                 )
                 self.instruction, self.examples = self.extract_response(response)
                 break

@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import random
+from collections import namedtuple
 
 import openai
 from datasets import Dataset
@@ -15,6 +16,8 @@ from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
 from prompt2model.dataset_generator.openai_gpt_template import construct_meta_prompt
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import OPENAI_ERRORS, ChatGPTAgent, handle_openai_error
+
+example = namedtuple("example", ["input_col", "output_col"])
 
 
 class OpenAIDatasetGenerator(DatasetGenerator):
@@ -38,11 +41,11 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             temperature: What sampling temperature to use, between 0 and 2. Higher
                 values like 0.8 will make the output more random, while lower values
                 like 0.2 will make it more focused and deterministic.
-            presence_penalty: Float between -2.0 and 2.0. Positive values penalize new
-                tokens based on whether they appear in the text so far, increasing the
-                model's likelihood to talk about new topics in generated examples.
-            frequency_penalty: Float between -2.0 and 2.0. Positive values penalize new
-                tokens based on their existing frequency in the text so far, descouraging
+            presence_penalty: Float between -2.0 and 2.0. Positive values penalize
+                new tokens based on whether they appear in the text so far, increasing
+                the model's likelihood to talk about new topics in generated examples.
+            frequency_penalty: Float between -2.0 and 2.0. Positive values penalize
+                new tokens based on their existing frequency in text, descouraging
                 the model to repeat the same line verbatim in generated examples.
         """
         self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
@@ -57,9 +60,9 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.temperature = temperature
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
-        self.recent_10_generated_examples = []  # type: list[dict[str, str]]
+        self.generated_examples = []  # type: list[example]
         # Randomly selected several examples as addtional few-shot examples
-        # from the last 10 examples to generate new examples.
+        # from the generated examples to generate new examples.
 
     def generate_prompt(
         self,
@@ -78,10 +81,9 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         """
         # The random_example_string is a string, which contains several random
         # few-shot examples as demonstrations for the DatasetGenertor. If
-        # self.recent_10_generated_examples is empty, then the
-        # random_example_string is the few-shot examples parsed from the user's
-        # prompt.
-        if len(self.recent_10_generated_examples) == 0:
+        # self.generated_examples is empty, then the random_example_string
+        # is the few-shot examples parsed from the user's prompt.
+        if len(self.generated_examples) == 0:
             random_example_string = (
                 (few_shot_example_string + "\n")
                 if (
@@ -91,42 +93,42 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 )
                 else "N/A\n"
             )
-            # Create default random_example_string if self.recent_10_generated_examples
+            # Create default random_example_string if self.generated_examples
             # is empty. few_shot_example_string is the few-shot examples parsed from the
             # user's prompt. But if user does not provide any examples in the input
             # prompt, the few_shot_example_string will be "N/A"/""/None.
             random_selected_generted_example_num = 0
             # random_selected_generted_example_num is the number of selected
-            # random examples from self.recent_10_generated_examples that will
-            # be added to random_example_string. If self.recent_10_generated_examples
+            # random examples from self.generated_examples that will
+            # be added to random_example_string. If self.generated_examples
             # is empty, then random_selected_generted_example_num is 0.
         else:
-            # If self.recent_10_generated_examples is not empty, then the
-            # random_example_string is the few-shot examples parsed from the user's
-            # input prompt by the PromptParser, together with sveral random generated
-            # examples from self.recent_10_generated_examples.
+            # If self.generated_examples is not empty, then the random_example_string
+            # is the few-shot examples parsed from the user's input prompt by the
+            # PromptParser, together with sveral random generated examples from
+            # self.generated_examples.
 
             # To increase the diversity of the random_example_string, we first select
-            # several random examples from self.recent_10_generated_examples.
+            # several random examples from self.generated_examples.
             # And then the few-shot examples parsed from the user's input prompt
             # will be inserted into these random examples in a random index.
             random_example_string = ""
             random_selected_generted_example_num = random.randint(
-                1, len(self.recent_10_generated_examples)
+                1, min(len(self.generated_examples), 10)
             )
             # random_selected_generted_example_num is the number of selected
-            # random examples from self.recent_10_generated_examples that will
+            # random examples from self.generated_examples that will
             # be added to random_example_string.
             random_examples = random.sample(
-                self.recent_10_generated_examples, random_selected_generted_example_num
+                self.generated_examples, random_selected_generted_example_num
             )
-            # If recent_10_generated_examples is not empty, then choose several
-            # random examples from self.recent_10_generated_examples to construct
+            # If generated_examples is not empty, then choose several
+            # random examples from self.generated_examples to construct
             # new random_example_string, else use the default random_example_string.
             user_examples_insert_index = random.randint(0, len(random_examples) - 1)
             for index, example in enumerate(random_examples):
                 random_example_string += (
-                    f"input=\"{example['input']}\"\noutput=\"{example['output']}\"\n"
+                    f'input="{example.input_col}"\noutput="{example.output_col}"\n'
                 )
                 if (
                     # If the index equals to user_examples_insert_index and the
@@ -154,16 +156,16 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         )
         return prompt, random_example_string
 
-    def extract_response(self, response: openai.Completion) -> tuple[str, str]:
+    def extract_response(self, response: openai.Completion) -> example:
         """Extracts the generated sample and annotation from an OpenAI API response.
 
         Args:
             response (openai.Completion): The response object returned by OpenAI API.
 
         Returns:
-            A tuple of (sample, annotation), where:
-            - sample is the generated example string extracted from the response.
-            - annotation is the generated label string extracted from the response.
+            An namedtuple called example consists of `input_col` and`output_col`, where:
+            - input_col is the generated example string extracted from the response.
+            - output_col is the generated label string extracted from the response.
         """
         try:
             response_json = json.loads(response.choices[0]["message"]["content"])
@@ -177,7 +179,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         ), f'API response must contain {", ".join(required_keys)} keys'
         input = str(response_json["input"]).strip()
         output = str(response_json["output"]).strip()
-        return input, output
+        return example(input, output)
 
     def generate_dataset_split(
         self,
@@ -198,8 +200,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         _ = split  # suppress unused variable warnings
 
         chat_api = ChatGPTAgent(self.api_key)
-        input_cols = []  # type: list[str]
-        output_cols = []  # type: list[str]
+        self.generated_examples = []
 
         for _ in tqdm(range(num_examples), desc="Generating examples"):
             while True:
@@ -210,7 +211,16 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     ):
                         logging.warning("Maximum number of API calls reached.")
                         return Dataset.from_dict(
-                            {"input_col": input_cols, "output_col": output_cols}
+                            {
+                                "input_col": [
+                                    example.input_col
+                                    for example in self.generated_examples
+                                ],
+                                "output_col": [
+                                    example.output_col
+                                    for example in self.generated_examples
+                                ],
+                            }
                         )
                     else:
                         self.api_call_counter += 1
@@ -218,28 +228,27 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                             instruction=prompt_spec.get_instruction,
                             few_shot_example_string=prompt_spec.get_examples,
                         )
-                    response = chat_api.generate_openai_chat_completion(
-                        prompt,
-                        temerature=self.temperature,
-                        presence_penalty=self.presence_penalty,
-                        frequency_penalty=self.frequency_penalty,
-                    )
-                    input_col, output_col = self.extract_response(response)
-                    logging.info(f"Prompt: \n\n{prompt}\n\n")  # noqa: E501
-                    logging.info(f"Input: \n\n{input_col}\n\n")  # noqa: E501
-                    logging.info(f"Output: \n\n{output_col}\n\n")  # noqa: E501
-                    input_cols.append(input_col)
-                    output_cols.append(output_col)
-                    assert 0 <= len(self.recent_10_generated_examples) <= 10
-                    if len(self.recent_10_generated_examples) == 10:
-                        self.recent_10_generated_examples.pop(0)
-                    self.recent_10_generated_examples.append(
-                        {"input": input_col, "output": output_col}
-                    )
-                    break
+                        response = chat_api.generate_openai_chat_completion(
+                            prompt,
+                            temperature=self.temperature,
+                            presence_penalty=self.presence_penalty,
+                            frequency_penalty=self.frequency_penalty,
+                        )
+                        example = self.extract_response(response)
+                        logging.info(f"Prompt: \n\n{prompt}\n\n")  # noqa: E501
+                        logging.info(f"Example: \n\n{example}\n\n")  # noqa: E501
+                        self.generated_examples.append(example)
+                        break
                 except OPENAI_ERRORS as e:
                     self.api_call_counter = handle_openai_error(
                         e, self.api_call_counter
                     )
 
-        return Dataset.from_dict({"input_col": input_cols, "output_col": output_cols})
+        return Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in self.generated_examples],
+                "output_col": [
+                    example.output_col for example in self.generated_examples
+                ],
+            }
+        )
