@@ -50,6 +50,7 @@ class ChatGPTAgent:
             messages=[
                 {"role": "user", "content": f"{prompt}"},
             ],
+            temperature=2,
         )
         return response
 
