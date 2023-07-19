@@ -8,6 +8,7 @@ import os
 import time
 
 import openai
+import tiktoken
 
 OPENAI_ERRORS = (
     openai.error.APIError,
@@ -97,3 +98,18 @@ def handle_openai_error(e, api_call_counter):
     else:
         # For all other errors, immediately throw an exception.
         raise e
+
+
+def count_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> int:
+    """Handle count the tokens in a string with OpenAI's tokenizer.
+
+    Args:
+        string: The string to count.
+        encoding_name: The name of the tokenizer to use.
+
+    Returns:
+        The number of tokens in the string.
+    """
+    encoding = tiktoken.get_encoding(encoding_name)
+    num_tokens = len(encoding.encode(string))
+    return num_tokens

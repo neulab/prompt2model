@@ -15,7 +15,12 @@ from tqdm import tqdm
 from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
 from prompt2model.dataset_generator.openai_gpt_template import construct_meta_prompt
 from prompt2model.prompt_parser import PromptSpec
-from prompt2model.utils import OPENAI_ERRORS, ChatGPTAgent, handle_openai_error
+from prompt2model.utils import (
+    OPENAI_ERRORS,
+    ChatGPTAgent,
+    count_tokens_from_string,
+    handle_openai_error,
+)
 
 example = namedtuple("example", ["input_col", "output_col"])
 
@@ -83,75 +88,85 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         # few-shot examples as demonstrations for the DatasetGenerator. If
         # self.generated_examples is empty, then the random_example_string
         # is the few-shot examples parsed from the user's prompt.
-        if len(self.generated_examples) == 0:
-            random_example_string = (
-                (few_shot_example_string + "\n")
-                if (
-                    few_shot_example_string is not None
-                    and few_shot_example_string != "N/A"
-                    and few_shot_example_string != ""
+        while True:
+            if len(self.generated_examples) == 0:
+                random_example_string = (
+                    (few_shot_example_string + "\n")
+                    if (
+                        few_shot_example_string is not None
+                        and few_shot_example_string != "N/A"
+                        and few_shot_example_string != ""
+                    )
+                    else "N/A\n"
                 )
-                else "N/A\n"
-            )
-            # Create default random_example_string if self.generated_examples
-            # is empty. few_shot_example_string is the few-shot examples parsed from the
-            # user's prompt. But if user does not provide any examples in the input
-            # prompt, the few_shot_example_string will be "N/A"/""/None.
-            random_selected_generated_example_num = 0
-            # random_selected_generated_example_num is the number of selected
-            # random examples from self.generated_examples that will
-            # be added to random_example_string. If self.generated_examples
-            # is empty, then random_selected_generated_example_num is 0.
-        else:
-            # If self.generated_examples is not empty, then the random_example_string
-            # is the few-shot examples parsed from the user's input prompt by the
-            # PromptParser, together with sveral random generated examples from
-            # self.generated_examples.
+                # Create default random_example_string if self.generated_examples
+                # is empty. few_shot_example_string is the few-shot examples
+                # parsed from the user's prompt. But if user does not provide
+                # any examples in the input prompt, the few_shot_example_string
+                # will be "N/A"/""/None.
+                random_selected_generated_example_num = 0
+                # random_selected_generated_example_num is the number of selected
+                # random examples from self.generated_examples that will
+                # be added to random_example_string. If self.generated_examples
+                # is empty, then random_selected_generated_example_num is 0.
+            else:
+                # If self.generated_examples is not empty, then random_example_string
+                # is the few-shot examples parsed from the user's input prompt by the
+                # PromptParser, together with sveral random generated examples from
+                # self.generated_examples.
 
-            # To increase the diversity of the random_example_string, we first select
-            # several random examples from self.generated_examples.
-            # And then the few-shot examples parsed from the user's input prompt
-            # will be inserted into these random examples in a random index.
-            random_example_string = ""
-            random_selected_generated_example_num = random.randint(
-                1, len(self.generated_examples)
-            )
-            # random_selected_generated_example_num is the number of selected
-            # random examples from self.generated_examples that will
-            # be added to random_example_string.
-            random_examples = random.sample(
-                self.generated_examples, random_selected_generated_example_num
-            )
-            # If generated_examples is not empty, then choose several
-            # random examples from self.generated_examples to construct
-            # new random_example_string, else use the default random_example_string.
-            user_examples_insert_index = random.randint(0, len(random_examples) - 1)
-            for index, example in enumerate(random_examples):
-                random_example_string += (
-                    f'input="{example.input_col}"\noutput="{example.output_col}"\n'
+                # To increase the diversity of the random_example_string, first select
+                # several random examples from self.generated_examples.
+                # And then the few-shot examples parsed from the user's input prompt
+                # will be inserted into these random examples in a random index.
+                random_example_string = ""
+                random_selected_generated_example_num = random.randint(
+                    1, min(len(self.generated_examples), 10)
                 )
-                if (
-                    # If the index equals to user_examples_insert_index and the
-                    # few_shot_example_string is valid, then add the few-shot
-                    # into the random_example_string at the index.
-                    index == user_examples_insert_index
-                    and few_shot_example_string is not None
-                    and few_shot_example_string != "N/A"
-                    and few_shot_example_string != ""
-                ):
-                    random_example_string += few_shot_example_string + "\n"
-        # To increase the diversity of the prompt to DatasetGenerator, we created three
-        # prompt templates, COMPLEX, MIDDLE, and SIMPLE. The COMPLEX template
-        # contains 4 meta examples, the MIDDLE template contains 3 meta examples,
-        # and the SIMPLE template contains 2 meta examples.
-        template_type_dict = {1: "COMPLEX", 2: "MIDDLE", 0: "SIMPLE"}
-        template_type = template_type_dict[random_selected_generated_example_num % 3]
-        prompt = construct_meta_prompt(
-            instruction=instruction,
-            few_shot_example_string=random_example_string,
-            template_type=template_type,
-        )
-        return prompt, random_example_string
+                # random_selected_generated_example_num is the number of selected
+                # random examples from self.generated_examples that will
+                # be added to random_example_string.
+                random_examples = random.sample(
+                    self.generated_examples, random_selected_generated_example_num
+                )
+                # If generated_examples is not empty, then choose several
+                # random examples from self.generated_examples to construct
+                # new random_example_string, else use the default random_example_string.
+                user_examples_insert_index = random.randint(0, len(random_examples) - 1)
+                for index, example in enumerate(random_examples):
+                    random_example_string += (
+                        f'input="{example.input_col}"\noutput="{example.output_col}"\n'
+                    )
+                    if (
+                        # If the index equals to user_examples_insert_index and the
+                        # few_shot_example_string is valid, then add the few-shot
+                        # into the random_example_string at the index.
+                        index == user_examples_insert_index
+                        and few_shot_example_string is not None
+                        and few_shot_example_string != "N/A"
+                        and few_shot_example_string != ""
+                    ):
+                        random_example_string += few_shot_example_string + "\n"
+            # To increase the diversity of the prompt to DatasetGenerator, create three
+            # prompt templates, COMPLEX, MIDDLE, and SIMPLE. The COMPLEX template
+            # contains 4 meta examples, the MIDDLE template contains 3 meta examples,
+            # and the SIMPLE template contains 2 meta examples.
+            template_type_dict = {1: "COMPLEX", 2: "MIDDLE", 0: "SIMPLE"}
+            template_type = template_type_dict[
+                random_selected_generated_example_num % 3
+            ]
+            prompt = construct_meta_prompt(
+                instruction=instruction,
+                few_shot_example_string=random_example_string,
+                template_type=template_type,
+            )
+            # The max content length of gpt-3.5-turbo is 4097, so if the
+            # generated prompt is longer than 4000, then the prompt
+            # should be regenerated.
+            if count_tokens_from_string(prompt) < 4000:
+                return prompt, random_example_string
+            else:
+                continue
 
     def extract_response(self, response: openai.Completion) -> example:
         """Extracts the generated sample and annotation from an OpenAI API response.
