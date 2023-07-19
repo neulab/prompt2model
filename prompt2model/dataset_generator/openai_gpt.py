@@ -80,7 +80,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             The generated prompt string and the few-shot examples string.
         """
         # The random_example_string is a string, which contains several random
-        # few-shot examples as demonstrations for the DatasetGenertor. If
+        # few-shot examples as demonstrations for the DatasetGenerator. If
         # self.generated_examples is empty, then the random_example_string
         # is the few-shot examples parsed from the user's prompt.
         if len(self.generated_examples) == 0:
@@ -97,11 +97,11 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             # is empty. few_shot_example_string is the few-shot examples parsed from the
             # user's prompt. But if user does not provide any examples in the input
             # prompt, the few_shot_example_string will be "N/A"/""/None.
-            random_selected_generted_example_num = 0
-            # random_selected_generted_example_num is the number of selected
+            random_selected_generated_example_num = 0
+            # random_selected_generated_example_num is the number of selected
             # random examples from self.generated_examples that will
             # be added to random_example_string. If self.generated_examples
-            # is empty, then random_selected_generted_example_num is 0.
+            # is empty, then random_selected_generated_example_num is 0.
         else:
             # If self.generated_examples is not empty, then the random_example_string
             # is the few-shot examples parsed from the user's input prompt by the
@@ -113,14 +113,14 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             # And then the few-shot examples parsed from the user's input prompt
             # will be inserted into these random examples in a random index.
             random_example_string = ""
-            random_selected_generted_example_num = random.randint(
-                1, min(len(self.generated_examples), 10)
+            random_selected_generated_example_num = random.randint(
+                1, len(self.generated_examples)
             )
-            # random_selected_generted_example_num is the number of selected
+            # random_selected_generated_example_num is the number of selected
             # random examples from self.generated_examples that will
             # be added to random_example_string.
             random_examples = random.sample(
-                self.generated_examples, random_selected_generted_example_num
+                self.generated_examples, random_selected_generated_example_num
             )
             # If generated_examples is not empty, then choose several
             # random examples from self.generated_examples to construct
@@ -140,15 +140,12 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     and few_shot_example_string != ""
                 ):
                     random_example_string += few_shot_example_string + "\n"
-        # To increase the diversity of the prompt to DatasetGenerator and
-        # save the cost of API calls, the fewer the random_selected_generted_example_num
-        # is, the more complex the prompt_type is.
-        if 0 <= random_selected_generted_example_num <= 3:
-            template_type = "COMPLEX"
-        elif 4 <= random_selected_generted_example_num <= 7:
-            template_type = "MIDDLE"
-        else:
-            template_type = "SIMPLE"
+        # To increase the diversity of the prompt to DatasetGenerator, we created three
+        # prompt templates, COMPLEX, MIDDLE, and SIMPLE. The COMPLEX template
+        # contains 4 meta examples, the MIDDLE template contains 3 meta examples,
+        # and the SIMPLE template contains 2 meta examples.
+        template_type_dict = {1: "COMPLEX", 2: "MIDDLE", 0: "SIMPLE"}
+        template_type = template_type_dict[random_selected_generated_example_num % 3]
         prompt = construct_meta_prompt(
             instruction=instruction,
             few_shot_example_string=random_example_string,
