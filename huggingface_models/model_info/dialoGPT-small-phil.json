@@ -1,1 +1,0 @@
-{"pretrained_model_name": "hireddivas/dialoGPT-small-phil", "description": "---\ntags:\n- conversational\n---\n\nGPT-2 model trained on Phil from Eastenders", "size_bytes": "510401385", "downloads": 2}
