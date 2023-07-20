@@ -20,8 +20,8 @@ def create_gradio(
         A Gradio interface for interacting with the model.
 
     """
-    description = prompt_parser.get_instruction
-    examples = prompt_parser.get_examples
+    description = prompt_parser.instruction
+    examples = prompt_parser.examples
 
     def postprocess(self, y):
         if y is None:
