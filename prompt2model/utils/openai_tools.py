@@ -2,12 +2,19 @@
 
 from __future__ import annotations  # noqa FI58
 
-import json
 import logging
 import os
 import time
 
+import aiolimiter
 import openai
+import openai.error
+import tiktoken
+from aiohttp import ClientSession
+from tqdm.asyncio import tqdm_asyncio
+from zeno_build.models.providers.openai_utils import (
+    _throttled_openai_chat_completion_acreate,
+)
 
 OPENAI_ERRORS = (
     openai.error.APIError,
@@ -15,15 +22,13 @@ OPENAI_ERRORS = (
     openai.error.RateLimitError,
     openai.error.ServiceUnavailableError,
     openai.error.InvalidRequestError,
-    json.decoder.JSONDecodeError,
-    AssertionError,
 )
 
 
 class ChatGPTAgent:
     """A class for accessing OpenAI's ChatCompletion API."""
 
-    def __init__(self, api_key: str | None):
+    def __init__(self, api_key: str | None = None):
         """Initialize ChatGPTAgent with an API key.
 
         Args:
@@ -36,11 +41,26 @@ class ChatGPTAgent:
             + " or set the environment variable with `export OPENAI_API_KEY=<your key>`"
         )
 
-    def generate_openai_chat_completion(self, prompt: str) -> openai.Completion:
+    def generate_one_openai_chat_completion(
+        self,
+        prompt: str,
+        temperature: float = 1,
+        presence_penalty: float = 0,
+        frequency_penalty: float = 0,
+    ) -> openai.Completion:
         """Generate a chat completion using OpenAI's gpt-3.5-turbo.
 
         Args:
             prompt: A prompt asking for a response.
+            temperature: What sampling temperature to use, between 0 and 2. Higher
+                values like 0.8 will make the output more random, while lower values
+                like 0.2 will make it more focused and deterministic.
+            presence_penalty: Float between -2.0 and 2.0. Positive values penalize new
+                tokens based on whether they appear in the text so far, increasing the
+                model's likelihood to talk about new topics.
+            frequency_penalty: Float between -2.0 and 2.0. Positive values penalize new
+                tokens based on their existing frequency in the text so far, decreasing
+                the model's likelihood to repeat the same line verbatim.
 
         Returns:
             A response object.
@@ -50,8 +70,48 @@ class ChatGPTAgent:
             messages=[
                 {"role": "user", "content": f"{prompt}"},
             ],
+            temperature=temperature,
+            presence_penalty=presence_penalty,
+            frequency_penalty=frequency_penalty,
         )
         return response
+
+    async def generate_batch_openai_chat_completion(
+        self,
+        prompts: list[str],
+        temperature: float = 1,
+        requests_per_minute: int = 150,
+    ) -> list[str]:
+        """Generate a batch responses from OpenAI Chat Completion API.
+
+        Args:
+            prompts: List of prompts to generate from.
+            model_config: Model configuration.
+            temperature: Temperature to use.
+            requests_per_minute: Number of requests per minute to allow.
+
+        Returns:
+            List of generated responses.
+        """
+        openai.aiosession.set(ClientSession())
+        limiter = aiolimiter.AsyncLimiter(requests_per_minute)
+        async_responses = [
+            _throttled_openai_chat_completion_acreate(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "user", "content": f"{prompt}"},
+                ],
+                temperature=temperature,
+                max_tokens=2000,
+                top_p=1,
+                limiter=limiter,
+            )
+            for prompt in prompts
+        ]
+        responses = await tqdm_asyncio.gather(*async_responses)
+        # Note: will never be none because it's set, but mypy doesn't know that.
+        await openai.aiosession.get().close()  # type: ignore
+        return responses
 
 
 def handle_openai_error(e, api_call_counter):
@@ -79,3 +139,18 @@ def handle_openai_error(e, api_call_counter):
     else:
         # For all other errors, immediately throw an exception.
         raise e
+
+
+def count_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> int:
+    """Handle count the tokens in a string with OpenAI's tokenizer.
+
+    Args:
+        string: The string to count.
+        encoding_name: The name of the tokenizer to use.
+
+    Returns:
+        The number of tokens in the string.
+    """
+    encoding = tiktoken.get_encoding(encoding_name)
+    num_tokens = len(encoding.encode(string))
+    return num_tokens

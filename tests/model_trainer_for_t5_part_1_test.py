@@ -1,5 +1,6 @@
 """Testing T5 (encoder-decoder) ModelTrainer with different configurations (part 2)."""
 
+import gc
 import os
 import tempfile
 from unittest.mock import patch
@@ -25,6 +26,7 @@ def test_t5_trainer_with_get_right_padding_length():
     for each in test_cases:
         # T5 tokenizer uses right padding.
         assert trainer.get_right_padding_length(each[0], each[1]) == each[2]
+    gc.collect()
 
 
 def test_t5_trainer_tokenize():
@@ -108,6 +110,7 @@ def test_t5_trainer_tokenize():
             label[:length_of_label_without_padding]
             == output_encoding_id[:length_of_output_encoding_id_without_padding]
         )
+    gc.collect()
 
 
 def test_t5_trainer_with_tokenizer_max_length():
@@ -160,6 +163,7 @@ def test_t5_trainer_with_tokenizer_max_length():
 
             # Check if logging.warning wasn't called.
             mock_warning.assert_not_called()
+    gc.collect()
 
 
 def test_t5_trainer_without_tokenizer_max_length():
@@ -212,6 +216,7 @@ def test_t5_trainer_without_tokenizer_max_length():
             mock_warning.assert_called_once_with(
                 "Set the tokenizer_max_length is preferable for finetuning model, which saves the cost of training."  # noqa 501
             )
+    gc.collect()
 
 
 def test_t5_trainer_with_epoch_evaluation():
@@ -272,3 +277,4 @@ def test_t5_trainer_with_epoch_evaluation():
             # The other logging.info is the `metric_values` in `evaluate_model`.
             # Check if logging.warning was not called.
             mock_warning.assert_not_called()
+    gc.collect()
