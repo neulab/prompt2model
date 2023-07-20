@@ -210,7 +210,6 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             A single dataset.
         """
         _ = split  # suppress unused variable warnings
-
         chat_api = ChatGPTAgent(self.api_key)
         self.generated_examples = []
 
@@ -237,8 +236,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     else:
                         self.api_call_counter += 1
                         prompt, _ = self.generate_prompt(
-                            instruction=prompt_spec.get_instruction,
-                            few_shot_example_string=prompt_spec.get_examples,
+                            instruction=prompt_spec.instruction,
+                            few_shot_example_string=prompt_spec.examples,
                         )
                         response = chat_api.generate_openai_chat_completion(
                             prompt,
