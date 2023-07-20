@@ -19,20 +19,20 @@ class PromptSpec(ABC):
     """Parse and store structured information about the prompt."""
 
     task_type: TaskType
-    instruction: str | None
-    examples: str | None
+    _instruction: str | None
+    _examples: str | None
 
     @abstractmethod
     def parse_from_prompt(self, prompt: str) -> None:
         """Populate this class by parsing a prompt."""
 
     @property
-    def get_instruction(self) -> str:
+    def instruction(self) -> str:
         """Return the natural language instruction parsed from the prompt."""
-        assert self.instruction is not None
-        return self.instruction
+        assert self._instruction is not None
+        return self._instruction
 
     @property
-    def get_examples(self) -> str:
+    def examples(self) -> str:
         """Return the natural language examples parsed from the prompt."""
-        return self.examples or ""
+        return self._examples or ""
