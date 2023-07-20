@@ -35,8 +35,8 @@ class OpenAIInstructionParser(PromptSpec):
                 or None for unlimited.
         """
         self.task_type = task_type
-        self.instruction: str | None = None
-        self.examples: str | None = None
+        self._instruction: str | None = None
+        self._examples: str | None = None
         self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
         assert self.api_key is not None and self.api_key != "", (
             "API key must be provided"
@@ -94,7 +94,7 @@ class OpenAIInstructionParser(PromptSpec):
                 response = chat_api.generate_openai_chat_completion(
                     parsing_prompt_for_chatgpt
                 )
-                self.instruction, self.examples = self.extract_response(response)
+                self._instruction, self._examples = self.extract_response(response)
                 break
             except OPENAI_ERRORS as e:
                 self.api_call_counter = handle_openai_error(e, self.api_call_counter)
