@@ -1,5 +1,6 @@
 """Testing GPT (autoregressive) ModelTrainer with different configurations."""
 
+import gc
 import os
 import tempfile
 from unittest.mock import patch
@@ -119,6 +120,7 @@ def test_gpt_model_trainer_tokenize():
         )
         # For GPT model, length of input_id, atattention_mask, label is the same.
         assert len(input_id) == len(attentent_mask) == len(label)
+    gc.collect()
 
 
 def test_gpt_trainer_with_tokenizer_max_length():
@@ -173,6 +175,7 @@ def test_gpt_trainer_with_tokenizer_max_length():
         trained_tokenizer.save_pretrained(cache_dir)
         assert isinstance(trained_model, transformers.GPT2LMHeadModel)
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
+    gc.collect()
 
 
 def test_gpt_trainer_without_tokenizer_max_length():
@@ -231,6 +234,7 @@ def test_gpt_trainer_without_tokenizer_max_length():
             trained_tokenizer.save_pretrained(cache_dir)
             assert isinstance(trained_model, transformers.GPT2LMHeadModel)
             assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
+    gc.collect()
 
 
 def test_gpt_trainer_with_epoch_evaluation():
@@ -286,6 +290,7 @@ def test_gpt_trainer_with_epoch_evaluation():
         trained_tokenizer.save_pretrained(cache_dir)
         assert isinstance(trained_model, transformers.GPT2LMHeadModel)
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
+    gc.collect()
 
 
 def test_gpt_trainer_without_validation_datasets():
@@ -329,6 +334,7 @@ def test_gpt_trainer_without_validation_datasets():
         trained_tokenizer.save_pretrained(cache_dir)
         assert isinstance(trained_model, transformers.GPT2LMHeadModel)
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
+    gc.collect()
 
 
 def test_gpt_trainer_with_unsupported_evaluation_strategy():
@@ -391,6 +397,7 @@ def test_gpt_trainer_with_unsupported_evaluation_strategy():
         trained_tokenizer.save_pretrained(cache_dir)
         assert isinstance(trained_model, transformers.GPT2LMHeadModel)
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
+    gc.collect()
 
 
 def test_gpt_trainer_with_unsupported_parameter():
@@ -435,6 +442,7 @@ def test_gpt_trainer_with_unsupported_parameter():
         assert str(exc_info.value) == (
             f"Only support {supported_keys} as training parameters."
         )
+    gc.collect()
 
 
 def test_gpt_trainer_with_truncation_warning():
@@ -458,3 +466,4 @@ def test_gpt_trainer_with_truncation_warning():
             "Truncation happened when tokenizing dataset. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
         )
         mock_info.assert_not_called()
+    gc.collect()
