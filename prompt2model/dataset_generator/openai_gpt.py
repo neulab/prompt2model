@@ -111,8 +111,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         """
         _ = split  # suppress unused variable warnings
         prompt = self.generate_prompt(
-            instruction=prompt_spec._instruction,
-            examples=prompt_spec._examples,
+            instruction=prompt_spec.instruction,
+            examples=prompt_spec.examples,
         )
         chat_api = ChatGPTAgent(self.api_key)
         input_cols = []  # type: list[str]
