@@ -1,5 +1,7 @@
 """Test the create_gradio function with two configurations."""
 
+import gc
+
 import gradio as gr
 
 from prompt2model.demo_creator import create_gradio
@@ -30,6 +32,7 @@ def test_create_gradio_with_gpt2():
 
     # Perform assertions.
     assert isinstance(interface_gpt2, gr.Blocks)
+    gc.collect()
 
 
 def test_create_gradio_with_t5():
@@ -54,3 +57,4 @@ def test_create_gradio_with_t5():
 
     # Perform assertions.
     assert isinstance(interface_t5, gr.Blocks)
+    gc.collect()

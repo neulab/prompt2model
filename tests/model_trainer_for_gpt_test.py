@@ -26,6 +26,7 @@ def test_gpt_trainer_with_get_left_padding_length():
     for each in test_cases:
         # GPT tokenizer uses left padding.
         assert trainer.get_left_padding_length(each[0], each[1]) == each[2]
+    gc.collect()
 
 
 def test_gpt_model_trainer_tokenize():
@@ -287,13 +288,20 @@ def test_gpt_trainer_with_epoch_evaluation():
             assert mock_info.call_count == 3 * num_train_epochs
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
-                info_list.count("Conduct evaluation after each epoch ends.")
-                == info_list.count(
+                info_list.count(
                     "Using default metrics of chrf, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
-            # The other logging.info is the `metric_values` in `evaluate_model`.
+            # The other two kind of logging.info in `on_epoch_end` of
+            # `ValidationCallback`are logging the epoch num wtih the
+            # val_dataset_size and logging the `metric_values`.
+
+            assert trainer.validation_callback.epoch_count == num_train_epochs
+            assert (
+                trainer.validation_callback.val_dataset_size == len(validation_datasets)
+                and len(validation_datasets) != 0
+            )
 
             # Check if logging.warning was not called.
             mock_warning.assert_not_called()
@@ -347,6 +355,7 @@ def test_gpt_trainer_without_validation_datasets():
         trained_tokenizer.save_pretrained(cache_dir)
         assert isinstance(trained_model, transformers.GPT2LMHeadModel)
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
+    gc.collect()
 
 
 def test_gpt_trainer_with_unsupported_evaluation_strategy():
@@ -400,13 +409,20 @@ def test_gpt_trainer_with_unsupported_evaluation_strategy():
             assert mock_info.call_count == 3 * num_train_epochs
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
-                info_list.count("Conduct evaluation after each epoch ends.")
-                == info_list.count(
+                info_list.count(
                     "Using default metrics of chrf, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
-            # The other logging.info is the `metric_values` in `evaluate_model`.
+            # The other two kind of logging.info in `on_epoch_end` of
+            # `ValidationCallback`are logging the epoch num wtih the
+            # val_dataset_size and logging the `metric_values`.
+
+            assert trainer.validation_callback.epoch_count == num_train_epochs
+            assert (
+                trainer.validation_callback.val_dataset_size == len(validation_datasets)
+                and len(validation_datasets) != 0
+            )
 
             # Check if logging.warning was called once.
             # Since we don't support step evaluation_strategy,
@@ -419,6 +435,7 @@ def test_gpt_trainer_with_unsupported_evaluation_strategy():
         trained_tokenizer.save_pretrained(cache_dir)
         assert isinstance(trained_model, transformers.GPT2LMHeadModel)
         assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
+    gc.collect()
 
 
 def test_gpt_trainer_with_unsupported_parameter():
@@ -463,6 +480,7 @@ def test_gpt_trainer_with_unsupported_parameter():
         assert str(exc_info.value) == (
             f"Only support {supported_keys} as training parameters."
         )
+    gc.collect()
 
 
 def test_gpt_trainer_with_truncation_warning():
@@ -486,3 +504,4 @@ def test_gpt_trainer_with_truncation_warning():
             "Truncation happened when tokenizing dataset. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
         )
         mock_info.assert_not_called()
+    gc.collect()
