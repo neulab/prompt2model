@@ -45,7 +45,8 @@ class BaseProcessor(ABC):
             eos_token: The end-of-sentence token of the tokenizer.
 
         Returns:
-            A dictionary with `model_input` as the input to models.
+            A dictionary with `model_input` as the input to models
+            and `model_output` as the expected output of models.
         """
 
     def process_dataset_dict(
