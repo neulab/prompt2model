@@ -188,8 +188,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         """
         try:
             response_json = json.loads(response.choices[0]["message"]["content"])
-        except json.decoder.JSONDecodeError:
-            logging.warning("API response was not a valid JSON")
+        except Exception as e:
+            logging.warning(f"Error happened parsing API response: {e}")
             return None
         required_keys = ["input", "output"]
         missing_keys = [key for key in required_keys if key not in response_json]
@@ -284,6 +284,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                             ]
                             if example is not None
                         ]
+                        assert all(example is not None for example in examples)
                         for index, example in enumerate(examples):
                             logging.info(
                                 f"Prompt: \n\n{prompts[index]}\n\n"
