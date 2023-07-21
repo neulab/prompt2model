@@ -280,7 +280,7 @@ def test_dataset_processor_decoder_only_style():
 
 def test_unexpected_dataset_split():
     """Test the error handler for unexpercted dataset split."""
-    with pytest.raises(AssertionError):
+    with pytest.raises(AssertionError) as exc_info:
         _, gpt2_tokenizer = create_gpt2_model_and_tokenizer()
         gpt_processor = TextualizeProcessor(
             has_encoder=False, eos_token=gpt2_tokenizer.eos_token
@@ -288,15 +288,19 @@ def test_unexpected_dataset_split():
         _ = gpt_processor.process_dataset_dict(
             INSTRUCTION, UNEXPECTED_DATASET_DICTS_WITH_WRONG_SPLIT
         )
+        assert str(exc_info.value) == ("Datset split must be in train/val/test.")
 
 
 def test_unexpected_columns():
     """Test the error handler for unexpercted dataset columns."""
-    with pytest.raises(AssertionError):
+    with pytest.raises(AssertionError) as exc_info:
         _, gpt2_tokenizer = create_gpt2_model_and_tokenizer()
         gpt_processor = TextualizeProcessor(
             has_encoder=False, eos_token=gpt2_tokenizer.eos_token
         )
         _ = gpt_processor.process_dataset_dict(
             INSTRUCTION, UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS
+        )
+        assert str(exc_info.value) == (
+            "Example dictionary must have 'input_col' and 'output_col' keys."
         )
