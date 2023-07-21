@@ -24,17 +24,22 @@ class MockProcessor(BaseProcessor):
         return dataset_dicts
 
     def post_process_example(example: dict, instruction: str, task_id: int) -> dict:
-        """A mock function that modifies the input column of a given example dictionary.
+        """A mock function that modifies a given example dictionary.
 
         Args:
             example: A dictionary representing an example.
             instruction: The instruction used as a prefix to explain the task.
             task_id: A tag marking which dataset (from dataset_dicts) this example
                 comes from. Used for multi-task training.
+            has_encoder: Whether the retrieved model has an encoder.
+            dataset_split: The split of the example, i.e. train/val/test.
+            eos_token: The end-of-sentence token of the tokenizer.
 
         Returns:
-            A dictionary representing the modified example.
+            A dictionary with `model_input` as the input to models
+            and `model_output` as the expected output of models.
         """
         _ = instruction, task_id
         example["model_input"] = example["input_col"]
+        example["model_output"] = example["output_col"]
         return example
