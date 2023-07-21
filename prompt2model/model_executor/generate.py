@@ -1,5 +1,7 @@
 """Model executor for generative models, including T5-type and GPT-type."""
 
+import logging
+
 import datasets
 import torch
 
@@ -22,23 +24,39 @@ class GenerationModelExecutor(ModelExecutor):
         """
         model_outputs = []
         if not single_model_input:
-            assert self.input_column == "model_input"
+            inference_column = self.input_column
             num_examples = len(self.test_set)
             inference_dataset = self.test_set
         else:
+            logging.info("Making single prediction for DemoCreator.")
             num_examples = 1
             inference_dataset = datasets.Dataset.from_dict(
-                {"model_input": single_model_input}
+                {"model_input": [single_model_input]}
+            )
+            inference_column = "model_input"
+            assert len(inference_dataset) == num_examples
+        longest_input = max(inference_dataset[inference_column], key=len)
+        if (
+            self.tokenizer_max_length is not None
+            and len(self.tokenizer.tokenize(longest_input)) > self.tokenizer_max_length
+        ):
+            logging.warning(
+                (
+                    "Truncation happened when tokenizing dataset / input string."
+                    " You should consider increasing the tokenizer_max_length."
+                    " Otherwise the truncation may lead to unexpected results."
+                )
             )
 
         for start_idx in range(0, num_examples, self.batch_size):
             end_idx = min(start_idx + self.batch_size, num_examples)
             batch = datasets.Dataset.from_dict(inference_dataset[start_idx:end_idx])
 
-            input_texts = batch[self.input_column]
+            input_texts = batch[inference_column]
             encoded_inputs = self.tokenizer.batch_encode_plus(
                 input_texts,
                 truncation=True,
+                max_length=self.tokenizer_max_length,
                 padding=True,
                 return_tensors="pt",
             )
@@ -49,6 +67,10 @@ class GenerationModelExecutor(ModelExecutor):
             output = self.model.generate(
                 input_ids=input_ids.to(device),
                 attention_mask=attention_mask.to(device),
+                max_length=self.sequence_max_length,
+                eos_token_id=self.model.config.eos_token_id,
+                early_stopping=True,
+                repetition_penalty=2.0,
             )
 
             for i, example in enumerate(batch):
