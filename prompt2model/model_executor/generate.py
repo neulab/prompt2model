@@ -35,6 +35,18 @@ class GenerationModelExecutor(ModelExecutor):
             )
             inference_column = "model_input"
             assert len(inference_dataset) == num_examples
+        longest_input = max(inference_dataset[inference_column], key=len)
+        if (
+            self.tokenizer_max_length is not None
+            and len(self.tokenizer.tokenize(longest_input)) > self.tokenizer_max_length
+        ):
+            logging.warning(
+                (
+                    "Truncation happened when tokenizing dataset / input string."
+                    " You should consider increasing the tokenizer_max_length."
+                    " Otherwise the truncation may lead to unexpected results."
+                )
+            )
 
         for start_idx in range(0, num_examples, self.batch_size):
             end_idx = min(start_idx + self.batch_size, num_examples)
@@ -58,8 +70,7 @@ class GenerationModelExecutor(ModelExecutor):
                 max_length=self.sequence_max_length,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
-                num_beams=3,
-                no_repeat_ngram_size=3,
+                repetition_penalty=2.0,
             )
 
             for i, example in enumerate(batch):
