@@ -2,7 +2,6 @@
 
 from unittest.mock import patch
 
-import pytest
 from datasets import Dataset
 
 from prompt2model.model_executor import GenerationModelExecutor, ModelOutput
@@ -28,12 +27,10 @@ def test_make_prediction_t5():
     )
 
     # Create GenerationModelExecutor.
-    model_executor = GenerationModelExecutor(
-        t5_model, t5_tokenizer, test_dataset, "model_input"
-    )
+    model_executor = GenerationModelExecutor(t5_model, t5_tokenizer)
 
     # Test T5 model.
-    t5_outputs = model_executor.make_prediction()
+    t5_outputs = model_executor.make_prediction(test_dataset, "model_input")
     assert isinstance(t5_outputs, list)
     assert len(t5_outputs) == len(test_dataset)
 
@@ -96,28 +93,6 @@ def test_make_single_prediction_t5_without_length_constraints():
         "logits",
     ]
     assert isinstance(t5_output.auxiliary_info, dict)
-
-
-def test_wrong_init_for_model_excutor_t5():
-    """For T5 Executor, input_column and test_set should be provided simultaneously."""
-    t5_model_and_tokenizer = create_t5_model_and_tokenizer()
-    t5_model = t5_model_and_tokenizer.model
-    t5_tokenizer = t5_model_and_tokenizer.tokenizer
-    test_dataset = Dataset.from_dict(
-        {
-            "model_input": [
-                "Translate French to English: cher",
-                "Translate French to English: Bonjour",
-                "Translate French to English: raisin",
-            ]
-        }
-    )
-
-    with pytest.raises(AssertionError) as exc_info:
-        _ = GenerationModelExecutor(t5_model, t5_tokenizer, test_set=test_dataset)
-        assert str(exc_info.value) == (
-            "input_column and test_set should be provided simultaneously."
-        )
 
 
 def test_sequence_max_length_init_for_t5():
