@@ -15,7 +15,8 @@ class MockCompletion:
             `json.dumps({"comment": "This is a great movie!",
             "label": 1})`.
         """
-        self.choices = [{"message": {"content": content}}]
+        # We generate 5 responses for each API call.
+        self.choices = [{"message": {"content": content}}] * 5
 
     def __repr__(self):
         """Return a string representation of the `MockCompletion` object.

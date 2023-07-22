@@ -73,9 +73,11 @@ prompt_spec.parse_from_prompt(prompt)
 - Use the dataset generator to generate datasets:
 
 ```python
-num_examples = 100
+expected_num_examples = 100
 split = DatasetSplit.TRAIN
-dataset = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
+dataset = dataset_generator.generate_dataset_split(
+    prompt_spec, expected_num_examples, split
+    )
 ```
 
 The `generate_dataset_split()` method generates a dataset for the specified
@@ -85,12 +87,14 @@ You can also use the `generate_dataset_dict()` method to generate multiple
 dataset splits (e.g., train, validation, and test) at once:
 
 ```python
-num_examples = {
+expected_num_examples = {
     DatasetSplit.TRAIN: 1000,
     DatasetSplit.VALIDATION: 100,
     DatasetSplit.TEST: 200
 }
-dataset_dict = dataset_generator.generate_dataset_dict(prompt_spec, num_examples)
+dataset_dict = dataset_generator.generate_dataset_dict(
+    prompt_spec, expected_num_examples
+    )
 ```
 
 The `generate_dataset_dict()` method returns a `DatasetDict` object that
