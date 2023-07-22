@@ -2,28 +2,27 @@
 
 from __future__ import annotations  # noqa FI58
 
-import asyncio
 import logging
 import os
 import time
-from typing import Any
 
 import aiolimiter
 import openai
+import openai.error
 import tiktoken
 from aiohttp import ClientSession
-from openai import error
 from tqdm.asyncio import tqdm_asyncio
+from zeno_build.models.providers.openai_utils import (
+    _throttled_openai_chat_completion_acreate,
+)
 
-
-ERROR_ERRORS_TO_MESSAGES = {
-    error.InvalidRequestError: "OpenAI API Invalid Request: Prompt was filtered",
-    error.RateLimitError: "OpenAI API rate limit exceeded. Sleeping for 10 seconds.",
-    error.APIConnectionError: "OpenAI API Connection Error: Error Communicating with OpenAI",  # noqa E501
-    error.Timeout: "OpenAI APITimeout Error: OpenAI Timeout",
-    error.ServiceUnavailableError: "OpenAI service unavailable error: {e}",
-    error.APIError: "OpenAI API error: {e}",
-}
+OPENAI_ERRORS = (
+    openai.error.APIError,
+    openai.error.Timeout,
+    openai.error.RateLimitError,
+    openai.error.ServiceUnavailableError,
+    openai.error.InvalidRequestError,
+)
 
 
 class ChatGPTAgent:
@@ -81,7 +80,6 @@ class ChatGPTAgent:
         self,
         prompts: list[str],
         temperature: float = 1,
-        response_per_api_call: int = 1,
         requests_per_minute: int = 150,
     ) -> list[str]:
         """Generate a batch responses from OpenAI Chat Completion API.
@@ -90,56 +88,11 @@ class ChatGPTAgent:
             prompts: List of prompts to generate from.
             model_config: Model configuration.
             temperature: Temperature to use.
-            response_per_api_call: How many chat completion choices
-                to generate for each input message.
-                https://platform.openai.com/docs/api-reference/chat/create#chat/create-n # noqa E501
             requests_per_minute: Number of requests per minute to allow.
 
         Returns:
             List of generated responses.
         """
-
-
-async def _throttled_openai_chat_completion_acreate(
-    model: str,
-    messages: list[dict[str, str]],
-    temperature: float,
-    max_tokens: int,
-    n: int,
-    top_p: float,
-    limiter: aiolimiter.AsyncLimiter,
-) -> dict[str, Any]:
-    # This function is modified from https://github.com/zeno-ml/zeno-build/blob/main/zeno_build/models/providers/openai_utils.py # noqa E501
-    async with limiter:
-        for _ in range(3):
-            try:
-                return await openai.ChatCompletion.acreate(
-                    model=model,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    n=n,
-                    top_p=top_p,
-                )
-            except tuple(ERROR_ERRORS_TO_MESSAGES.keys()) as e:
-                if isinstance(e, (error.ServiceUnavailableError, error.APIError)):
-                    logging.warning(ERROR_ERRORS_TO_MESSAGES[type(e)].format(e=e))
-                elif isinstance(e, error.InvalidRequestError):
-                    logging.warning(ERROR_ERRORS_TO_MESSAGES[type(e)])
-                    return {
-                        "choices": [
-                            {
-                                "message": {
-                                    "content": "Invalid Request: Prompt was filtered"  # noqa E501
-                                }
-                            }
-                        ]
-                    }
-                else:
-                    logging.warning(ERROR_ERRORS_TO_MESSAGES[type(e)])
-                await asyncio.sleep(10)
-        return {"choices": [{"message": {"content": ""}}]}
-
         openai.aiosession.set(ClientSession())
         limiter = aiolimiter.AsyncLimiter(requests_per_minute)
         async_responses = [
@@ -151,7 +104,6 @@ async def _throttled_openai_chat_completion_acreate(
                 temperature=temperature,
                 max_tokens=2000,
                 top_p=1,
-                n=response_per_api_call,
                 limiter=limiter,
             )
             for prompt in prompts
@@ -181,7 +133,7 @@ def handle_openai_error(e, api_call_counter):
         # For these errors, OpenAI recommends waiting before retrying.
         time.sleep(1)
 
-    if isinstance(e, ERROR_ERRORS_TO_MESSAGES.keys()):
+    if isinstance(e, OPENAI_ERRORS):
         # For these errors, we can increment a counter and retry the API call.
         return api_call_counter
     else:

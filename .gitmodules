@@ -1,0 +1,3 @@
+[submodule "zeno-build"]
+	path = zeno-build
+	url = git@github.com:zeno-ml/zeno-build.git
