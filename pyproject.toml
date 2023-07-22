@@ -48,6 +48,7 @@ test = [
 [tool.hatch.build]
 include = [
     "*.py",
+    "pytest.ini",
 ]
 exclude = [
     "*_test.py",
@@ -64,3 +65,7 @@ path = "prompt2model/version.py"
 [tool.pytest.ini_options]
 pythonpath = ["prompt2model/test_helpers"]
 testpaths = ["prompt2model/tests"]
+
+[tool.poetry.dependencies]
+# Add your other dependencies here
+zeno-build = {git = "git@github.com:zeno-ml/zeno-build.git", branch = "main"}
