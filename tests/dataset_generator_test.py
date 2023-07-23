@@ -127,6 +127,8 @@ def test_api_call_counter(mocked_generate_example):
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     unlimited_dataset_generator = OpenAIDatasetGenerator()
     unlimited_generated_dataset = check_generate_dataset(unlimited_dataset_generator)
+    # The default responses_per_request is 5. So each API call will return
+    # 5 responses, i.e. 5 choices in openai.Completion.choices.
     # Each api call will return 5 responses, and each response is valid JSON.
     # So the unlimited_dataset_generator will call API (29 // 5 + 1) times.
     assert unlimited_dataset_generator.api_call_counter == (29 // 5 + 1)

@@ -38,6 +38,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         presence_penalty: float = 0,
         frequency_penalty: float = 0,
         batch_size: int = 5,
+        responses_per_request: int = 5,
+        requests_per_minute: int = 80,
     ):
         """Initialize an OpenAI DatasetGenerator with an API key and max API call.
 
@@ -55,7 +57,10 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             frequency_penalty: Float between -2.0 and 2.0. Positive values penalize
                 new tokens based on their existing frequency in text, descouraging
                 the model to repeat the same line verbatim in generated examples.
-            batch_size: The number of examples to generate in each batch.
+            batch_size: The number of requests to make in each batch.
+            responses_per_request: Number of responses for each request.
+                i.e. the parameter n of OpenAI API call.
+            requests_per_minute: Number of requests per minute to allow.
         """
         self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
         assert self.api_key is not None and self.api_key != "", (
@@ -70,6 +75,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
         self.batch_size = batch_size
+        self.responses_per_request = responses_per_request
+        self.requests_per_minute = requests_per_minute
         self.generated_examples = []  # type: list[example]
         # Randomly selected several examples as addtional few-shot examples
         # from the generated examples to generate new examples.
@@ -180,7 +187,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             completions: The generated completion objects returned by OpenAI API.
 
         Returns:
-            Each api call would return a completion object with 5 responses.
+                Each API call will return `responses_per_request` completion objects.
                 If the response is a valid JSON object, create a namedtuple called
                 `example` and append it to self.generated_examples. `example` consists
                 of `input_col` and`output_col`, where:
@@ -231,8 +238,9 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         Args:
             prompt_spec: A prompt specification.
             expected_num_examples: Number of examples in split.
-                Since each API call returns 5 responses, the total number
-                of examples less than expected_num_examples + 5.
+                Each API call will return `responses_per_request` completion
+                objects. The upper bound of the length of generated dataset
+                is expected_num_examples + responses_per_request.
             split: Name of dataset split to generate.
 
         Returns:
@@ -267,7 +275,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                                         expected_num_examples
                                         - len(self.generated_examples)
                                     )
-                                    / 5
+                                    / self.responses_per_request
                                 )
                             ),
                         )
@@ -280,7 +288,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                                         expected_num_examples
                                         - len(self.generated_examples)
                                     )
-                                    / 5
+                                    / self.responses_per_request
                                 )
                             ),
                             self.max_api_calls - self.api_call_counter,
@@ -301,6 +309,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                             await chat_api.generate_batch_openai_chat_completion(
                                 prompts,
                                 temperature=self.temperature,
+                                responses_per_request=self.responses_per_request,
+                                requests_per_minute=self.requests_per_minute,
                             )
                         )
                         return responses
@@ -311,9 +321,13 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     pbar.update(len(self.generated_examples))
             except OPENAI_ERRORS as e:
                 self.api_call_counter = handle_openai_error(e, self.api_call_counter)
-        # Since each API call would return five completion objects, the upper bound
-        # of the length of generated dataset is expected_num_examples + 5.
-        assert len(self.generated_examples) < expected_num_examples + 5
+        # Each API call will return `responses_per_request` completion
+        # objects. The upper bound of the length of generated dataset
+        # is expected_num_examples + responses_per_request.
+        assert (
+            len(self.generated_examples)
+            < expected_num_examples + self.responses_per_request
+        )
         return Dataset.from_dict(
             {
                 "input_col": [example.input_col for example in self.generated_examples],

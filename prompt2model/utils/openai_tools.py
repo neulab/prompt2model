@@ -80,6 +80,7 @@ class ChatGPTAgent:
         self,
         prompts: list[str],
         temperature: float = 1,
+        responses_per_request: int = 5,
         requests_per_minute: int = 80,
     ) -> list[openai.Completion]:
         """Generate a batch responses from OpenAI Chat Completion API.
@@ -88,6 +89,8 @@ class ChatGPTAgent:
             prompts: List of prompts to generate from.
             model_config: Model configuration.
             temperature: Temperature to use.
+            responses_per_request: Number of responses for each request.
+                i.e. the parameter n of OpenAI API call.
             requests_per_minute: Number of requests per minute to allow.
 
         Returns:
@@ -106,7 +109,7 @@ class ChatGPTAgent:
                 ],
                 temperature=temperature,
                 max_tokens=1000,
-                n=5,
+                n=responses_per_request,
                 top_p=1,
                 limiter=limiter,
             )
