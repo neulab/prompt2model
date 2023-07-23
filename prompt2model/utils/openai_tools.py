@@ -108,7 +108,7 @@ class ChatGPTAgent:
                     {"role": "user", "content": f"{prompt}"},
                 ],
                 temperature=temperature,
-                max_tokens=1000,
+                max_tokens=500,
                 n=responses_per_request,
                 top_p=1,
                 limiter=limiter,

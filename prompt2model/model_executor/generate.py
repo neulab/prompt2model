@@ -86,6 +86,7 @@ class GenerationModelExecutor(ModelExecutor):
                 input_ids=input_ids,
                 attention_mask=attention_mask,
                 max_length=self.sequence_max_length,
+                max_new_tokens=20,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
                 repetition_penalty=2.0,

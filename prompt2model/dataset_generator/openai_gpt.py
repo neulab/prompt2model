@@ -196,8 +196,6 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 If the response is not a valid JSON object, discard it.
             There is 5 * len(completions) responses at a time.
         """
-        # from IPython import embed
-        # embed()
         for completion in completions:
             try:
                 for choice in completion.choices:
