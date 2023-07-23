@@ -34,7 +34,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self,
         api_key: str | None = None,
         max_api_calls: int = None,
-        temperature: float = 1.7,
+        temperature: float = 2.0,
         presence_penalty: float = 0,
         frequency_penalty: float = 0,
         batch_size: int = 5,
