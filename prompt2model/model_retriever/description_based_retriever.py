@@ -30,6 +30,8 @@ class DescriptionModelRetriever(ModelRetriever):
         self.model_names = []
         self.model_descriptions = []
         for f in description_files:
+            if len(open(os.path.join(self.model_descriptions_index, f)).read()) == 0:
+                continue
             model_dict = json.load(open(os.path.join(self.model_descriptions_index, f)))
             self.model_names.append(model_dict["pretrained_model_name"])
             self.model_descriptions.append(model_dict["description"])
