@@ -41,7 +41,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         responses_per_request: int = 5,
         requests_per_minute: int = 80,
         filter_duplicated_examples: bool = True,
-        cache_generated: bool = True,
+        cache_root: str = "generator_dataset",
     ):
         """Initialize an OpenAI DatasetGenerator with an API key and max API call.
 
@@ -65,8 +65,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             requests_per_minute: Number of requests per minute to allow.
             filter_duplicated_examples: Whether to filter duplicated examples.
                 If it's True, the generated examples are filtered based on multi-votes.
-            cache_generated: Whether to cache generated examples.  If it's True,
-                the generated examples are cached in the disk.
+            cache_root: If it's not None, the generated examples will be cached.
         """
         self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
         assert self.api_key is not None and self.api_key != "", (
@@ -84,65 +83,79 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.responses_per_request = responses_per_request
         self.requests_per_minute = requests_per_minute
         self.filter_duplicated_examples = filter_duplicated_examples
-        self.cache_generated = cache_generated
+        self.cache_root = cache_root
         self.generated_examples = []  # type: list[example]
-        # Randomly selected several examples as addtional few-shot examples
-        # from the generated examples to generate new examples.
+        # Store all the generated examples in a list, which will be converted into
+        # self.generated_dataset later and self.input_output_map if
+        # filter_duplicated_examples is True.
+        self.generated_dataset: Dataset = None
+        # self.generated_examples will be converted into self.generated_dataset.
+        # If filter_duplicated_examples is True, self.generated_examples will be
+        # filtered based on multi-votes first to construct self.generated_dataset.
+        # If filter_duplicated_examples is False, self.generated_examples will
+        # not be filtered and directly used to construct self.generated_dataset.
+        self.input_output_map: dict[str, Counter] | None = None
+        # If filter_duplicated_examples is True, self.generated_examples will
+        # firstly be converted into self.input_output_map then into
+        # self.generated_dataset. Else, self.input_output_map will always be None.
 
-    def generate_prompt(
+    def construct_prompt(
         self,
         instruction: str,
         few_shot_example_string: str = None,
-    ) -> tuple[str, str]:
+    ) -> str:
         """Generates a prompt string.
 
         Args:
             instruction: The natural language instruction for the prompt.
             few_shot_example_string: A string representing the few-shot examples
-                parsed from the user's prompt, which equality is higher than the
-                genrated examples.
+                parsed from the user's prompt, which quality is higher than the
+                genrated examples from self.generated_dataset.
 
         Returns:
             The generated prompt string.
         """
         # The random_example_string is a string, which contains several random
         # few-shot examples as demonstrations for the DatasetGenerator. If
-        # self.generated_examples is empty, then the random_example_string
+        # self.generated_dataset is empty, then the random_example_string
         # is the few-shot examples parsed from the user's prompt.
+        if len(self.generated_examples) != 0:
+            assert len(self.generated_dataset) != 0
         while True:
-            if len(self.generated_examples) == 0:
+            if len(self.generated_dataset) == 0:
                 low_equality_example_string = "N/A\n"
-                # Create default low_equality_example_string if self.generated_examples
-                # is empty. few_shot_example_string is the high-equality few-shot
+                # Create default low_equality_example_string if self.generated_dataset
+                # is empty. few_shot_example_string is the high-quality few-shot
                 # examples parsed from the user's prompt. But if user does not
-                # provideany examples in the input prompt, the few_shot_example_string
-                # will be "N/A"/""/None.
+                # provideany examples in the input prompt (which is extremely
+                # discouraged), the few_shot_example_string will be "N/A"/""/None.
                 random_selected_generated_example_num = 0
                 # random_selected_generated_example_num is the number of selected
-                # random examples from self.generated_examples that will be used to
-                # create the low_equality_example_string. If generated_examples
+                # random examples from self.generated_dataset that will be used to
+                # create the low_equality_example_string. If self.generated_dataset
                 # is empty, then random_selected_generated_example_num is 0.
             else:
-                # If self.generated_examples is not empty, low_equality_example_string
-                # is sveral random generated examples from self.generated_examples.
+                # self.generated_dataset is not empty, then low_equality_example_string
+                # is the string representation of sveral random generated examples
+                # from self.generated_dataset.
 
                 low_equality_example_string = ""
                 random_selected_generated_example_num = random.randint(
-                    1, min(len(self.generated_examples), 10)
+                    1, min(len(self.generated_dataset), 10)
                 )
-                # random_selected_generated_example_num is the number of selected
-                # random examples from self.generated_examples that will
-                # be concatenated to create low_equality_example_string.
-                random_examples = random.sample(
-                    self.generated_examples, random_selected_generated_example_num
+                # random_selected_generated_example_num is the number of
+                # selected random examples from self.generated_examples that
+                # will be concatenated to create low_equality_example_string.
+                random_examples = Dataset.from_dict(
+                    self.generated_dataset.shuffle()[
+                        :random_selected_generated_example_num
+                    ]
                 )
-                # If generated_examples is not empty, then choose several
-                # random examples from self.generated_examples to construct
-                # new low_equality_example_string.
+                # self.generated_dataset is not empty. Choose several
+                # random examples from self.generated_dataset to
+                # construct low_equality_example_string.
                 for example in random_examples:
-                    low_equality_example_string += (
-                        f'input="{example.input_col}"\noutput="{example.output_col}"\n'
-                    )
+                    low_equality_example_string += f"""input="{example["input_col"]}"\noutput="{example["output_col"]}"\n"""  # noqa 501
             # To increase the diversity of the prompt to DatasetGenerator, create three
             # prompt templates, COMPLEX, MIDDLE, and SIMPLE. The COMPLEX template
             # contains 4 meta examples, the MIDDLE template contains 3 meta examples,
@@ -165,7 +178,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             else:
                 continue
 
-    def extract_responses(self, completions: list[openai.Completion]) -> None:
+    def extract_responses(self, completions: list[openai.Completion]):
         """Extracts the generated sample and annotation from an OpenAI API response.
 
         Args:
@@ -210,17 +223,21 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 )
                 continue
 
-    def construct_input_output_map(self) -> dict[str, Counter]:
+    def construct_input_output_map(self):
         """Construct a mapping from input to output for multi-vote filtering.
 
         Ideally, each input should have a unique output (one-to-one mapping).
-        However, the LLM potentially generates duplicate inputs with different
-        but right outputs. Like generating two examples with the same input,
-        "What is the biggest city in China?". but one output is `Shanghai`
+        However, the LLM sometimes generates duplicate inputs with different
+        but outputs. For example, generate two examples with the same input,
+        "What is the biggest city in China?". One output is `Shanghai`,
         and another is `The biggest city in China is Shanghai`. These two
         outputs for the same input are different, but both are right.
+        Sometimes, some of the different outputs are wrong. For example,
+        for the same input "What is the Chemical sybol of gold?", the three
+        outputs are "Au", "Au", and "AU". The first two are right, but the
+        the third is wrong.
 
-        The OpenAIDataSetGenerator addresses the issue by employing a
+        The OpenAIDataSetGenerator addresses this issue by employing a
         multi-vote filtering mechanism in two steps. This function is the first
         step, which creates a dictionary-based data structure to capture
         the relationship between inputs and their corresponding outputs.
@@ -234,17 +251,16 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         input: ["apple", "banana", "apple", "orange", "apple"]
         output: ["A", "B", "A", "O", "D"]
 
-        The return value is:
+        Then self.input_output_map value is:
         {
             "apple": Counter({"A": 2, "D": 1}),
             "banana": Counter({"B": 1}),
             "orange": Counter({"O": 1})
         }
-
-        Returns:
-            A mapping from input to a counter of outputs corresponding to the input.
         """
-        input_output_map: dict[str, Counter] = {}
+        # When ever using the multi-vote filtering mechanism, refresh
+        # self.input_output_map to avoid duplicately countering.
+        self.input_output_map = None
 
         # Iterate through the examples and construct the mapping
         for example in self.generated_examples:
@@ -252,21 +268,28 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             output_str = example.output_col
 
             # If the input is already in the mapping, update the counter
-            if input_str in input_output_map:
-                input_output_map[input_str][output_str] += 1
+            if input_str in self.input_output_map:
+                self.input_output_map[input_str][output_str] += 1
             # If the input is not in the mapping, create a new counter
             else:
-                input_output_map[input_str] = Counter({output_str: 1})
-        return input_output_map
+                self.input_output_map[input_str] = Counter({output_str: 1})
 
-    def multi_vote_input_output_map(self) -> Dataset:
-        """Use multi-vote filtering to convert self.input_output_map to a Dataset.
+        if len(self.generated_examples) != 0:
+            assert self.input_output_map is not None
 
-        Returns:
-            Dataset: A datasets.Dataset object containing the filtered examples.
-                The input_col is filtered unique inputs and the output_col is the
-                shortest but most frequent output for the corresponding input.
+    def use_multi_vote_to_construct_generated_dataset(self):
+        """Multi-vote outputs self.input_output_map to construct self.generated_dataset.
+
+        After multi-vote filtering, the input_col of self.generated_dataset is filtered
+        unique inputs and the output_col is the shortest but most frequent output
+        for the corresponding input.
         """
+        # Only use multi-vote filtering if self.filter_duplicated_examples is True.
+        # And self.input_output_map is not None when self.generated_examples
+        # is not empty.
+        assert self.filter_duplicated_examples
+        if not len(self.generated_examples == 0):
+            assert self.input_output_map is not None
         filtered_inputs = []
         filtered_outputs = []
 
@@ -281,10 +304,10 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 if count == most_common_count
             ]
 
-            # Sort the most frequent outputs based on their lengths
-            # and select the shortest one. When several outputs have
-            # the same length with the highest frequency, they will be
-            # sorted in their lexicographical (alphabetical) order when
+            # Sort the outputs based on their lengths and select the
+            # shortest ones. When several outputs have  the same
+            # length with the highest frequency, they will be sorted
+            # in their lexicographical (alphabetical) order when
             # using most_frequent_outputs.sort(key=len).
 
             most_frequent_outputs.sort(key=len)
@@ -293,97 +316,121 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             filtered_inputs.append(input_str)
             filtered_outputs.append(final_output)
 
-        dataset = Dataset.from_dict(
+        # Note that when self.generated_examples is empty,
+        # self.input_output_map is None and self.generated_dataset
+        # is empty.
+        self.generated_dataset = Dataset.from_dict(
             {"input_col": filtered_inputs, "output_col": filtered_outputs}
         )
-        return dataset
 
-    def convert_generated_examples_to_dataset(self) -> Dataset:
+    def convert_generated_examples_to_generated_dataset(self):
         """Convert all generated examples to a Dataset.
 
-        Returns:
-            Dataset: The dataset object consisting of all generated examples.
+        If self.filter_duplicated_examples is True, construct the
+        input_output_map. Then use multi-vote filtering to convert
+        the mapping to a Dataset. If self.filter_duplicated_examples
+        is False, directly construct a Dataset.
         """
-        return Dataset.from_dict(
-            {
-                "input_col": [example.input_col for example in self.generated_examples],
-                "output_col": [
-                    example.output_col for example in self.generated_examples
-                ],
-            }
-        )
+        if self.filter_duplicated_examples:
+            self.construct_input_output_map()
+            self.use_multi_vote_to_construct_generated_dataset()
+            if len(self.generated_examples) != 0:
+                assert self.input_output_map is not None
+                assert self.generated_dataset is not None
+        else:
+            self.generated_dataset = Dataset.from_dict(
+                {
+                    "input_col": [
+                        example.input_col for example in self.generated_examples
+                    ],
+                    "output_col": [
+                        example.output_col for example in self.generated_examples
+                    ],
+                }
+            )
+
+    def compute_batch_size(self, expected_num_examples: int) -> int:
+        """Compute the batch size to use zeno-bulid to call OpenAI API.
+
+        Args:
+            expected_num_examples: Number of expected examples in split.
+        """
+        if self.max_api_calls is None:
+            # If there is no limit on the number of API calls, the batch_size should
+            # be the min of self.batch_size and minimum calls to get more than
+            # expected_num_examples examples.
+            batch_size = min(
+                self.batch_size,
+                math.ceil(
+                    (
+                        (expected_num_examples - len(self.generated_dataset))
+                        / self.responses_per_request
+                    )
+                ),
+            )
+        else:
+            # If there is a limit on the number of API calls, the batch_size should
+            # also take remaining API calls into account.
+            batch_size = min(
+                self.batch_size,
+                math.ceil(
+                    (
+                        (expected_num_examples - len(self.generated_dataset))
+                        / self.responses_per_request
+                    )
+                ),
+                self.max_api_calls - self.api_call_counter,
+            )
+        assert batch_size > 0
+        return batch_size
 
     def generate_dataset_split(
         self,
         prompt_spec: PromptSpec,
         expected_num_examples: int,
         split: DatasetSplit,
+        filter_duplicated_examples: bool = True,
     ) -> Dataset:
         """Generate a single dataset using GPT-3.5.
 
         Args:
             prompt_spec: A prompt specification.
-            expected_num_examples: Number of examples in split.
+            expected_num_examples: Number of expected examples in split.
                 Each API call will return `responses_per_request` completion
                 objects. The upper bound of the length of generated dataset
                 is expected_num_examples + responses_per_request.
             split: Name of dataset split to generate.
+            filter_duplicated_examples: Whether to filter duplicated examples.
+                If filter_duplicated_examples is True, use multi-vote filtering
+                to filter duplicated examples and renturn a single dataset.
 
         Returns:
             A single dataset.
         """
         _ = split  # suppress unused variable warnings
+        # Refresh the generated_dataset, generated_examples,
+        # and input_output_map for different split.
+        self.generated_dataset = None
+        self.self.input_output_map = None
+        self.generated_examples = []
+
         chat_api = ChatGPTAgent(self.api_key)
         self.generated_examples = []
         pbar = tqdm(total=expected_num_examples, desc="Generating examples")
-        while len(self.generated_examples) < expected_num_examples:
+        while True:
             try:
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
                     logging.warning("Maximum number of API calls reached.")
-                    return Dataset.from_dict(
-                        {
-                            "input_col": [
-                                example.input_col for example in self.generated_examples
-                            ],
-                            "output_col": [
-                                example.output_col
-                                for example in self.generated_examples
-                            ],
-                        }
-                    )
+                    return self.convert_generated_examples_to_generated_dataset
                 else:
-                    batch_size = (
-                        min(
-                            self.batch_size,
-                            math.ceil(
-                                (
-                                    (
-                                        expected_num_examples
-                                        - len(self.generated_examples)
-                                    )
-                                    / self.responses_per_request
-                                )
-                            ),
-                        )
-                        if self.max_api_calls is None
-                        else min(
-                            self.batch_size,
-                            math.ceil(
-                                (
-                                    (
-                                        expected_num_examples
-                                        - len(self.generated_examples)
-                                    )
-                                    / self.responses_per_request
-                                )
-                            ),
-                            self.max_api_calls - self.api_call_counter,
-                        )
+                    batch_size = self.compute_batch_size(
+                        expected_num_examples=expected_num_examples
                     )
-                    assert batch_size > 0
                     self.api_call_counter += batch_size
+                    if filter_duplicated_examples:
+                        self.convert_generated_examples_to_generated_dataset()
                     prompts = [
-                        self.generate_prompt(
+                        self.construct_prompt(
                             instruction=prompt_spec.instruction,
                             few_shot_example_string=prompt_spec.examples,
                         )
@@ -405,20 +452,13 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     responses = loop.run_until_complete(generate_responses())
                     self.extract_responses(responses)
                     pbar.update(len(self.generated_examples))
+                    if filter_duplicated_examples:
+                        pass
+                    else:
+                        # Each API call will return `responses_per_request` completion
+                        # objects. The upper bound of the length of generated dataset
+                        # is expected_num_examples + responses_per_request.
+                        if len(self.generated_examples) >= expected_num_examples:
+                            return self.convert_generated_examples_to_generated_dataset
             except OPENAI_ERRORS as e:
                 self.api_call_counter = handle_openai_error(e, self.api_call_counter)
-        # Each API call will return `responses_per_request` completion
-        # objects. The upper bound of the length of generated dataset
-        # is expected_num_examples + responses_per_request.
-        assert (
-            len(self.generated_examples)
-            < expected_num_examples + self.responses_per_request
-        )
-        return Dataset.from_dict(
-            {
-                "input_col": [example.input_col for example in self.generated_examples],
-                "output_col": [
-                    example.output_col for example in self.generated_examples
-                ],
-            }
-        )
