@@ -298,6 +298,21 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         )
         return dataset
 
+    def convert_generated_examples_to_dataset(self) -> Dataset:
+        """Convert all generated examples to a Dataset.
+
+        Returns:
+            Dataset: The dataset object consisting of all generated examples.
+        """
+        return Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in self.generated_examples],
+                "output_col": [
+                    example.output_col for example in self.generated_examples
+                ],
+            }
+        )
+
     def generate_dataset_split(
         self,
         prompt_spec: PromptSpec,
