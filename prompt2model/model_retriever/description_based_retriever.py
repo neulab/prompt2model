@@ -6,7 +6,10 @@ import os
 import numpy as np
 import torch
 
-from prompt2model.model_retriever import ModelRetriever
+from prompt2model.model_retriever.base import ModelRetriever
+from prompt2model.model_retriever.generate_hypothetical_document import (
+    generate_hypothetical_model_description,
+)
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import encode_text, retrieve_objects
 
@@ -20,6 +23,8 @@ class DescriptionModelRetriever(ModelRetriever):
         search_depth: int = 5,
         model_name: str = "OpenMatch/cocodr-base-msmarco",
         model_descriptions_index="huggingface_models/model_info/",
+        use_hyde: bool = False,
+        openai_api_key: str | None = None,
     ):
         """Initialize a dual-encoder retriever against a search index."""
         self.search_index_path = search_index_path
@@ -39,6 +44,8 @@ class DescriptionModelRetriever(ModelRetriever):
             "Search index must either be a valid file or not exist yet; "
             + f"{search_index_path} provided."
         )
+        self.use_hyde = use_hyde
+        self.openai_api_key = openai_api_key
 
     def encode_model_descriptions(self, prompt: PromptSpec) -> np.ndarray:
         """Encode model descriptions into a vector for indexing."""
@@ -72,9 +79,17 @@ class DescriptionModelRetriever(ModelRetriever):
             raise ValueError(
                 "Search index does not exist; encode model descriptions first."
             )
+
+        if self.use_hyde:
+            query_text = generate_hypothetical_model_description(
+                prompt, self.openai_api_key
+            )
+        else:
+            query_text = prompt.instruction
+
         query_vector = encode_text(
             self.model_name,
-            text_to_encode=prompt.instruction,
+            text_to_encode=query_text,
             device=torch.device("cpu"),
         )
         ranked_list = retrieve_objects(

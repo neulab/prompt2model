@@ -5,6 +5,7 @@ import tempfile
 from unittest.mock import patch
 
 import numpy as np
+import torch
 
 from prompt2model.model_retriever import DescriptionModelRetriever
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
@@ -64,6 +65,7 @@ def test_retrieve_model_from_query_when_similarity_threshold_is_met(mock_encode_
             search_depth=2,
             model_name=TINY_MODEL_NAME,
             model_descriptions_index="huggingface_models/model_info_tiny/",
+            use_hyde=False,
         )
         create_test_search_index(f.name)
 
@@ -86,6 +88,7 @@ def test_retrieve_model_from_query_when_similarity_threshold_not_met(mock_encode
             search_depth=2,
             model_name=TINY_MODEL_NAME,
             model_descriptions_index="huggingface_models/model_info_tiny/",
+            use_hyde=False,
         )
         create_test_search_index(f.name)
 
@@ -99,3 +102,52 @@ def test_retrieve_model_from_query_when_similarity_threshold_not_met(mock_encode
         # below the threshold of 0.95. Therefore, the default model name should
         # be returned.
         assert top_model_name == DEFAULT_MODEL_NAME
+
+
+MOCK_HYPOTHETICAL_DOCUMENT = "This is a hypothetical model description."
+
+
+def mock_encode_text_for_hyde(
+    model_name_or_path: str,
+    text_to_encode: list[str] | str | None = None,
+    device: torch.device = torch.device("cpu"),
+):
+    """Mock encode_text to support the mocked hypothetical document generated."""
+    if text_to_encode == MOCK_HYPOTHETICAL_DOCUMENT:
+        return np.array([[0, 0, 1]])
+    else:
+        return np.array([[0, 0, 0.1]])
+
+
+@patch(
+    "prompt2model.model_retriever.description_based_retriever.encode_text",
+    side_effect=mock_encode_text_for_hyde,
+)
+@patch(
+    "prompt2model.model_retriever.description_based_retriever"
+    + ".generate_hypothetical_model_description",
+    return_value=MOCK_HYPOTHETICAL_DOCUMENT,
+)
+def test_retrieve_model_with_hyde(mock_generate_hypothetical_doc, mock_encode_text):
+    """Test loading a small Tevatron model."""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".pkl") as f:
+        retriever = DescriptionModelRetriever(
+            search_index_path=f.name,
+            search_depth=2,
+            model_name=TINY_MODEL_NAME,
+            model_descriptions_index="huggingface_models/model_info_tiny/",
+            use_hyde=True,
+        )
+        create_test_search_index(f.name)
+
+        mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
+        DEFAULT_MODEL_NAME = "default_model"
+        top_model_name = retriever.retrieve(
+            mock_prompt, similarity_threshold=0.5, default_model=DEFAULT_MODEL_NAME
+        )
+        assert mock_generate_hypothetical_doc.call_count == 1
+        assert mock_encode_text.call_count == 1
+        # The most-relevant dataset has a relevance score of only 0.9, which is
+        # below the threshold of 0.95. Therefore, the default model name should
+        # be returned.
+        assert top_model_name == retriever.model_names[2]
