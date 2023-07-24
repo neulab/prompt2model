@@ -147,7 +147,7 @@ def test_retrieve_model_with_hyde(mock_generate_hypothetical_doc, mock_encode_te
         )
         assert mock_generate_hypothetical_doc.call_count == 1
         assert mock_encode_text.call_count == 1
-        # The most-relevant dataset has a relevance score of only 0.9, which is
-        # below the threshold of 0.95. Therefore, the default model name should
-        # be returned.
+        # With HyDE, the hypothetical document encoding should match the 3rd document
+        # in our index. Without HyDE, the mocked query encoding would not meet
+        # the threshold of 0.5 and would have returned the default model name.
         assert top_model_name == retriever.model_names[2]
