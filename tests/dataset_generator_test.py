@@ -326,6 +326,7 @@ def test_construct_map_for_duplicate_inputs_unique_outputs():
         "orange": Counter({"O": 1}),
     }
     assert input_output_map == expected_output
+    gc.collect()
 
 
 def test_construct_map_for_duplicate_inputs_duplicate_outputs():
@@ -351,6 +352,7 @@ def test_construct_map_for_duplicate_inputs_duplicate_outputs():
         "orange": Counter({"O": 1, "F": 1}),
     }
     assert input_output_map == expected_output
+    gc.collect()
 
 
 def test_construct_map_for_unique_inputs_outputs():
@@ -369,6 +371,7 @@ def test_construct_map_for_unique_inputs_outputs():
         "orange": Counter({"O": 1}),
     }
     assert input_output_map == expected_output
+    gc.collect()
 
 
 def test_construct_map_for_empty_examples_list():
@@ -379,3 +382,4 @@ def test_construct_map_for_empty_examples_list():
 
     expected_output = {}
     assert input_output_map == expected_output
+    gc.collect()
