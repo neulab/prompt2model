@@ -478,7 +478,19 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_u
     )
 
     assert are_datasets_identical(data_generator.generated_dataset, expected_dataset)
-    gc.collect()
+    data_generator.filter_duplicated_examples = False
+    data_generator.convert_generated_examples_to_generated_dataset()
+    expected_dataset = Dataset.from_dict(
+        {
+            "input_col": [
+                example.input_col for example in data_generator.generated_examples
+            ],
+            "output_col": [
+                example.output_col for example in data_generator.generated_examples
+            ],
+        }
+    )
+    assert are_datasets_identical(data_generator.generated_dataset, expected_dataset)
 
 
 def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_duplicate_outputs():  # noqa: 501
@@ -504,6 +516,19 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_d
     )
 
     assert are_datasets_identical(data_generator.generated_dataset, expected_dataset)
+    data_generator.filter_duplicated_examples = False
+    data_generator.convert_generated_examples_to_generated_dataset()
+    expected_dataset = Dataset.from_dict(
+        {
+            "input_col": [
+                example.input_col for example in data_generator.generated_examples
+            ],
+            "output_col": [
+                example.output_col for example in data_generator.generated_examples
+            ],
+        }
+    )
+    assert are_datasets_identical(data_generator.generated_dataset, expected_dataset)
     gc.collect()
 
 
@@ -523,6 +548,19 @@ def test_convert_generated_examples_to_generated_dataset_with_unique_inputs_outp
     )
 
     assert are_datasets_identical(data_generator.generated_dataset, expected_dataset)
+    data_generator.filter_duplicated_examples = False
+    data_generator.convert_generated_examples_to_generated_dataset()
+    expected_dataset = Dataset.from_dict(
+        {
+            "input_col": [
+                example.input_col for example in data_generator.generated_examples
+            ],
+            "output_col": [
+                example.output_col for example in data_generator.generated_examples
+            ],
+        }
+    )
+    assert are_datasets_identical(data_generator.generated_dataset, expected_dataset)
     gc.collect()
 
 
@@ -535,5 +573,18 @@ def test_convert_generated_examples_to_generated_dataset_with_empty_examples_lis
 
     expected_dataset = Dataset.from_dict({})
 
+    assert are_datasets_identical(data_generator.generated_dataset, expected_dataset)
+    data_generator.filter_duplicated_examples = False
+    data_generator.convert_generated_examples_to_generated_dataset()
+    expected_dataset = Dataset.from_dict(
+        {
+            "input_col": [
+                example.input_col for example in data_generator.generated_examples
+            ],
+            "output_col": [
+                example.output_col for example in data_generator.generated_examples
+            ],
+        }
+    )
     assert are_datasets_identical(data_generator.generated_dataset, expected_dataset)
     gc.collect()
