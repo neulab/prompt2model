@@ -309,7 +309,7 @@ def test_openai_key_init():
     gc.collect()
 
 
-def test_construct_map_for_duplicate_inputs_unique_outputs():
+def test_construct_map_with_duplicate_inputs_unique_outputs():
     """Test constructing a map with duplicate inputs but unique outputs."""
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     data_generator = OpenAIDatasetGenerator()
@@ -320,18 +320,18 @@ def test_construct_map_for_duplicate_inputs_unique_outputs():
         example(input_col="orange", output_col="O"),
         example(input_col="apple", output_col="D"),
     ]
-    input_output_map = data_generator.construct_input_output_map()
+    data_generator.construct_input_output_map()
 
     expected_output = {
         "apple": Counter({"A": 1, "E": 1, "D": 1}),
         "banana": Counter({"B": 1}),
         "orange": Counter({"O": 1}),
     }
-    assert input_output_map == expected_output
+    assert data_generator.input_output_map == expected_output
     gc.collect()
 
 
-def test_construct_map_for_duplicate_inputs_duplicate_outputs():
+def test_construct_map_with_duplicate_inputs_duplicate_outputs():
     """Test constructing a map with duplicate inputs and duplicate outputs."""
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     data_generator = OpenAIDatasetGenerator()
@@ -347,49 +347,50 @@ def test_construct_map_for_duplicate_inputs_duplicate_outputs():
         example(input_col="banana", output_col="B"),
         example(input_col="orange", output_col="F"),
     ]
-    input_output_map = data_generator.construct_input_output_map()
+    data_generator.construct_input_output_map()
 
     expected_output = {
         "apple": Counter({"A": 3, "D": 1, "G": 1}),
         "banana": Counter({"B": 2, "C": 1}),
         "orange": Counter({"O": 1, "F": 1}),
     }
-    assert input_output_map == expected_output
+    assert data_generator.input_output_map == expected_output
     gc.collect()
 
 
-def test_construct_map_for_unique_inputs_outputs():
+def test_construct_map_with_unique_inputs_outputs():
     """Test constructing a map with unique inputs and outputs."""
+    os.environ["OPENAI_API_KEY"] = "fake_api_key"
     data_generator = OpenAIDatasetGenerator()
     data_generator.generated_examples = [
         example(input_col="apple", output_col="A"),
         example(input_col="banana", output_col="B"),
         example(input_col="orange", output_col="O"),
     ]
-    input_output_map = data_generator.construct_input_output_map()
+    data_generator.construct_input_output_map()
 
     expected_output = {
         "apple": Counter({"A": 1}),
         "banana": Counter({"B": 1}),
         "orange": Counter({"O": 1}),
     }
-    assert input_output_map == expected_output
+    assert data_generator.input_output_map == expected_output
     gc.collect()
 
 
-def test_construct_map_for_empty_examples_list():
+def test_construct_map_with_empty_examples_list():
     """Test constructing a map with empty inputs and outputs."""
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     data_generator = OpenAIDatasetGenerator()
     data_generator.generated_examples = []
-    input_output_map = data_generator.construct_input_output_map()
+    data_generator.construct_input_output_map()
 
-    expected_output = {}
-    assert input_output_map == expected_output
+    # if self.generated_examples is empty, self.input_output_map is None.
+    assert data_generator.input_output_map == {}
     gc.collect()
 
 
-def test_multi_vote_for_duplicate_inputs_unique_outputs():
+def test_multi_vote_with_duplicate_inputs_unique_outputs():
     """Test multi-voting with duplicate inputs but unique outputs."""
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     data_generator = OpenAIDatasetGenerator()
@@ -398,17 +399,17 @@ def test_multi_vote_for_duplicate_inputs_unique_outputs():
         "banana": Counter({"B": 1}),
         "orange": Counter({"O": 1}),
     }
-    filtered_dataset = data_generator.use_multi_vote_to_construct_generated_dataset()
+    data_generator.use_multi_vote_to_construct_generated_dataset()
 
     expected_dataset = Dataset.from_dict(
         {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
     )
 
-    assert are_datasets_identical(filtered_dataset, expected_dataset)
+    assert are_datasets_identical(data_generator.generated_dataset, expected_dataset)
     gc.collect()
 
 
-def test_multi_vote_for_duplicate_inputs_duplicate_outputs():
+def test_multi_vote_with_duplicate_inputs_duplicate_outputs():
     """Test multi-voting with duplicate inputs and duplicate outputs."""
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     data_generator = OpenAIDatasetGenerator()
@@ -417,17 +418,17 @@ def test_multi_vote_for_duplicate_inputs_duplicate_outputs():
         "banana": Counter({"B": 2, "C": 1}),
         "orange": Counter({"O": 1, "F": 1}),
     }
-    filtered_dataset = data_generator.use_multi_vote_to_construct_generated_dataset()
+    data_generator.use_multi_vote_to_construct_generated_dataset()
 
     expected_dataset = Dataset.from_dict(
         {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
     )
 
-    assert are_datasets_identical(filtered_dataset, expected_dataset)
+    assert are_datasets_identical(data_generator.generated_dataset, expected_dataset)
     gc.collect()
 
 
-def test_multi_vote_for_unique_inputs_outputs():
+def test_multi_vote_with_unique_inputs_outputs():
     """Test multi-voting with unique inputs and outputs."""
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     data_generator = OpenAIDatasetGenerator()
@@ -436,24 +437,103 @@ def test_multi_vote_for_unique_inputs_outputs():
         "banana": Counter({"B": 1}),
         "orange": Counter({"O": 1}),
     }
-    filtered_dataset = data_generator.use_multi_vote_to_construct_generated_dataset()
+    data_generator.use_multi_vote_to_construct_generated_dataset()
 
     expected_dataset = Dataset.from_dict(
         {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
     )
 
-    assert are_datasets_identical(filtered_dataset, expected_dataset)
+    assert are_datasets_identical(data_generator.generated_dataset, expected_dataset)
     gc.collect()
 
 
-def test_multi_vote_for_empty_examples_list():
+def test_multi_vote_with_empty_examples_list():
     """Test multi-voting with empty inputs and outputs."""
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     data_generator = OpenAIDatasetGenerator()
     data_generator.input_output_map = {}
-    filtered_dataset = data_generator.use_multi_vote_to_construct_generated_dataset()
+    data_generator.use_multi_vote_to_construct_generated_dataset()
 
     expected_dataset = Dataset.from_dict({})
 
-    assert are_datasets_identical(filtered_dataset, expected_dataset)
+    assert are_datasets_identical(data_generator.generated_dataset, expected_dataset)
+    gc.collect()
+
+
+def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_unique_outputs():  # noqa: 501
+    """Test constructing generated dataset with duplicate inputs but unique outputs."""
+    os.environ["OPENAI_API_KEY"] = "fake_api_key"
+    data_generator = OpenAIDatasetGenerator(filter_duplicated_examples=True)
+    data_generator.generated_examples = [
+        example(input_col="apple", output_col="A"),
+        example(input_col="banana", output_col="B"),
+        example(input_col="apple", output_col="E"),
+        example(input_col="orange", output_col="O"),
+        example(input_col="apple", output_col="D"),
+    ]
+    data_generator.convert_generated_examples_to_generated_dataset()
+
+    expected_dataset = Dataset.from_dict(
+        {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
+    )
+
+    assert are_datasets_identical(data_generator.generated_dataset, expected_dataset)
+    gc.collect()
+
+
+def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_duplicate_outputs():  # noqa: 501
+    """Test constructing a map with duplicate inputs and duplicate outputs."""
+    os.environ["OPENAI_API_KEY"] = "fake_api_key"
+    data_generator = OpenAIDatasetGenerator(filter_duplicated_examples=True)
+    data_generator.generated_examples = [
+        example(input_col="apple", output_col="A"),
+        example(input_col="banana", output_col="C"),
+        example(input_col="apple", output_col="A"),
+        example(input_col="banana", output_col="B"),
+        example(input_col="apple", output_col="G"),
+        example(input_col="apple", output_col="A"),
+        example(input_col="orange", output_col="O"),
+        example(input_col="apple", output_col="D"),
+        example(input_col="banana", output_col="B"),
+        example(input_col="orange", output_col="F"),
+    ]
+    data_generator.convert_generated_examples_to_generated_dataset()
+
+    expected_dataset = Dataset.from_dict(
+        {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
+    )
+
+    assert are_datasets_identical(data_generator.generated_dataset, expected_dataset)
+    gc.collect()
+
+
+def test_convert_generated_examples_to_generated_dataset_with_unique_inputs_outputs():
+    """Test constructing a map with unique inputs and outputs."""
+    os.environ["OPENAI_API_KEY"] = "fake_api_key"
+    data_generator = OpenAIDatasetGenerator(filter_duplicated_examples=True)
+    data_generator.generated_examples = [
+        example(input_col="apple", output_col="A"),
+        example(input_col="banana", output_col="B"),
+        example(input_col="orange", output_col="O"),
+    ]
+    data_generator.convert_generated_examples_to_generated_dataset()
+
+    expected_dataset = Dataset.from_dict(
+        {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
+    )
+
+    assert are_datasets_identical(data_generator.generated_dataset, expected_dataset)
+    gc.collect()
+
+
+def test_convert_generated_examples_to_generated_dataset_with_empty_examples_list():
+    """Test constructing a map with empty inputs and outputs."""
+    os.environ["OPENAI_API_KEY"] = "fake_api_key"
+    data_generator = OpenAIDatasetGenerator(filter_duplicated_examples=True)
+    data_generator.generated_examples = []
+    data_generator.convert_generated_examples_to_generated_dataset()
+
+    expected_dataset = Dataset.from_dict({})
+
+    assert are_datasets_identical(data_generator.generated_dataset, expected_dataset)
     gc.collect()

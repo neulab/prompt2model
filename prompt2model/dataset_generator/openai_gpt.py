@@ -94,10 +94,10 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         # filtered based on multi-votes first to construct self.generated_dataset.
         # If filter_duplicated_examples is False, self.generated_examples will
         # not be filtered and directly used to construct self.generated_dataset.
-        self.input_output_map: dict[str, Counter] | None = None
+        self.input_output_map: dict[str, Counter] = {}
         # If filter_duplicated_examples is True, self.generated_examples will
         # firstly be converted into self.input_output_map then into
-        # self.generated_dataset. Else, self.input_output_map will always be None.
+        # self.generated_dataset. Else, self.input_output_map will always be {}.
 
     def construct_prompt(
         self,
@@ -260,7 +260,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         """
         # When ever using the multi-vote filtering mechanism, refresh
         # self.input_output_map to avoid duplicately countering.
-        self.input_output_map = None
+        self.input_output_map = {}
 
         # Iterate through the examples and construct the mapping
         for example in self.generated_examples:
@@ -275,7 +275,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 self.input_output_map[input_str] = Counter({output_str: 1})
 
         if len(self.generated_examples) != 0:
-            assert self.input_output_map is not None
+            assert self.input_output_map != {}
 
     def use_multi_vote_to_construct_generated_dataset(self):
         """Multi-vote outputs self.input_output_map to construct self.generated_dataset.
@@ -288,7 +288,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         # And self.input_output_map is not None when self.generated_examples
         # is not empty.
         assert self.filter_duplicated_examples
-        if not len(self.generated_examples == 0):
+        if not (len(self.generated_examples) == 0):
             assert self.input_output_map is not None
         filtered_inputs = []
         filtered_outputs = []
