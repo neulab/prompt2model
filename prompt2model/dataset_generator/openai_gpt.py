@@ -8,7 +8,7 @@ import logging
 import math
 import os
 import random
-from collections import namedtuple
+from collections import Counter, namedtuple
 
 import openai
 from datasets import Dataset
@@ -40,6 +40,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         batch_size: int = 5,
         responses_per_request: int = 5,
         requests_per_minute: int = 80,
+        filter_duplicated_examples: bool = True,
+        cache_generated: bool = True,
     ):
         """Initialize an OpenAI DatasetGenerator with an API key and max API call.
 
@@ -61,6 +63,10 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             responses_per_request: Number of responses for each request.
                 i.e. the parameter n of OpenAI API call.
             requests_per_minute: Number of requests per minute to allow.
+            filter_duplicated_examples: Whether to filter duplicated examples.
+                If it's True, the generated examples are filtered based on multi-votes.
+            cache_generated: Whether to cache generated examples.  If it's True,
+                the generated examples are cached in the disk.
         """
         self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
         assert self.api_key is not None and self.api_key != "", (
@@ -77,6 +83,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.batch_size = batch_size
         self.responses_per_request = responses_per_request
         self.requests_per_minute = requests_per_minute
+        self.filter_duplicated_examples = filter_duplicated_examples
+        self.cache_generated = cache_generated
         self.generated_examples = []  # type: list[example]
         # Randomly selected several examples as addtional few-shot examples
         # from the generated examples to generate new examples.
@@ -201,6 +209,55 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     f"Error happened when parsing API completion: {completion}"
                 )
                 continue
+
+    def construct_input_output_map(self) -> dict[str, Counter]:
+        """Construct a mapping from input to output for multi-vote filtering.
+
+        Ideally, each input should have a unique output (one-to-one mapping).
+        However, the LLM potentially generates duplicate inputs with different
+        but right outputs. Like generating two examples with the same input,
+        "What is the biggest city in China?". but one output is `Shanghai`
+        and another is `The biggest city in China is Shanghai`. These two
+        outputs for the same input are different, but both are right.
+
+        The OpenAIDataSetGenerator addresses the issue by employing a
+        multi-vote filtering mechanism in two steps. This function is the first
+        step, which creates a dictionary-based data structure to capture
+        the relationship between inputs and their corresponding outputs.
+
+        The function iterates through all the examples and constructs a
+        dictionary with inputs as keys and `Counter` objects as values.
+        The `Counter` is used to keep track of how many times each
+        output occurs for a given input.
+
+        For example:
+        input: ["apple", "banana", "apple", "orange", "apple"]
+        output: ["A", "B", "A", "O", "D"]
+
+        The return value is:
+        {
+            "apple": Counter({"A": 2, "D": 1}),
+            "banana": Counter({"B": 1}),
+            "orange": Counter({"O": 1})
+        }
+
+        Returns:
+            A mapping from input to a counter of outputs corresponding to the input.
+        """
+        input_output_map: dict[str, Counter] = {}
+
+        # Iterate through the examples and construct the mapping
+        for example in self.generated_examples:
+            input_str = example.input_col
+            output_str = example.output_col
+
+            # If the input is already in the mapping, update the counter
+            if input_str in input_output_map:
+                input_output_map[input_str][output_str] += 1
+            # If the input is not in the mapping, create a new counter
+            else:
+                input_output_map[input_str] = Counter({output_str: 1})
+        return input_output_map
 
     def generate_dataset_split(
         self,

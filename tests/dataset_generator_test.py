@@ -3,6 +3,7 @@
 import gc
 import os
 import tempfile
+from collections import Counter, namedtuple
 from functools import partial
 from unittest.mock import patch
 
@@ -25,6 +26,8 @@ MOCK_INVALID_JSON = partial(
     mock_batch_openai_response,
     content='{"input": "This is a great movie!", "output": "1}',
 )
+
+example = namedtuple("example", ["input_col", "output_col"])
 
 
 class UNKNOWN_GPT3_EXCEPTION(Exception):
@@ -303,3 +306,76 @@ def test_openai_key_init():
     explicit_api_key_generator = OpenAIDatasetGenerator(api_key)
     assert explicit_api_key_generator.api_key == api_key
     gc.collect()
+
+
+def test_construct_map_for_duplicate_inputs_unique_outputs():
+    """Test constructing a map with duplicate inputs but unique outputs."""
+    data_generator = OpenAIDatasetGenerator()
+    data_generator.generated_examples = [
+        example(input_col="apple", output_col="A"),
+        example(input_col="banana", output_col="B"),
+        example(input_col="apple", output_col="E"),
+        example(input_col="orange", output_col="O"),
+        example(input_col="apple", output_col="D"),
+    ]
+    input_output_map = data_generator.construct_input_output_map()
+
+    expected_output = {
+        "apple": Counter({"A": 1, "E": 1, "D": 1}),
+        "banana": Counter({"B": 1}),
+        "orange": Counter({"O": 1}),
+    }
+    assert input_output_map == expected_output
+
+
+def test_construct_map_for_duplicate_inputs_duplicate_outputs():
+    """Test constructing a map with duplicate inputs and duplicate outputs."""
+    data_generator = OpenAIDatasetGenerator()
+    data_generator.generated_examples = [
+        example(input_col="apple", output_col="A"),
+        example(input_col="banana", output_col="C"),
+        example(input_col="apple", output_col="A"),
+        example(input_col="banana", output_col="B"),
+        example(input_col="apple", output_col="G"),
+        example(input_col="apple", output_col="A"),
+        example(input_col="orange", output_col="O"),
+        example(input_col="apple", output_col="D"),
+        example(input_col="banana", output_col="B"),
+        example(input_col="orange", output_col="F"),
+    ]
+    input_output_map = data_generator.construct_input_output_map()
+
+    expected_output = {
+        "apple": Counter({"A": 3, "D": 1, "G": 1}),
+        "banana": Counter({"B": 2, "C": 1}),
+        "orange": Counter({"O": 1, "F": 1}),
+    }
+    assert input_output_map == expected_output
+
+
+def test_construct_map_for_unique_inputs_outputs():
+    """Test constructing a map with unique inputs and outputs."""
+    data_generator = OpenAIDatasetGenerator()
+    data_generator.generated_examples = [
+        example(input_col="apple", output_col="A"),
+        example(input_col="banana", output_col="B"),
+        example(input_col="orange", output_col="O"),
+    ]
+    input_output_map = data_generator.construct_input_output_map()
+
+    expected_output = {
+        "apple": Counter({"A": 1}),
+        "banana": Counter({"B": 1}),
+        "orange": Counter({"O": 1}),
+    }
+    assert input_output_map == expected_output
+
+
+def test_construct_map_for_empty_examples_list():
+    """Test constructing a map with empty inputs and outputs."""
+    data_generator = OpenAIDatasetGenerator()
+    data_generator.generated_examples = []
+    input_output_map = data_generator.construct_input_output_map()
+
+    expected_output = {}
+    assert input_output_map == expected_output
