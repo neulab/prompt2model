@@ -23,6 +23,7 @@ from prompt2model.utils import (
     count_tokens_from_string,
     handle_openai_error,
 )
+from test_helpers import are_datasets_identical
 
 example = namedtuple("example", ["input_col", "output_col"])
 
@@ -88,7 +89,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         # Store all the generated examples in a list, which will be converted into
         # self.generated_dataset later and self.input_output_map if
         # filter_duplicated_examples is True.
-        self.generated_dataset: Dataset = None
+        self.generated_dataset: Dataset = Dataset.from_dict({})
         # self.generated_examples will be converted into self.generated_dataset.
         # If filter_duplicated_examples is True, self.generated_examples will be
         # filtered based on multi-votes first to construct self.generated_dataset.
@@ -348,6 +349,10 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     ],
                 }
             )
+        if len(self.generated_examples) != 0:
+            assert not are_datasets_identical(
+                self.generated_dataset, Dataset.from_dict({})
+            )
 
     def compute_batch_size(self, expected_num_examples: int) -> int:
         """Compute the batch size to use zeno-bulid to call OpenAI API.
@@ -389,7 +394,6 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         prompt_spec: PromptSpec,
         expected_num_examples: int,
         split: DatasetSplit,
-        filter_duplicated_examples: bool = True,
     ) -> Dataset:
         """Generate a single dataset using GPT-3.5.
 
@@ -400,9 +404,6 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 objects. The upper bound of the length of generated dataset
                 is expected_num_examples + responses_per_request.
             split: Name of dataset split to generate.
-            filter_duplicated_examples: Whether to filter duplicated examples.
-                If filter_duplicated_examples is True, use multi-vote filtering
-                to filter duplicated examples and renturn a single dataset.
 
         Returns:
             A single dataset.
@@ -410,25 +411,30 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         _ = split  # suppress unused variable warnings
         # Refresh the generated_dataset, generated_examples,
         # and input_output_map for different split.
-        self.generated_dataset = None
-        self.self.input_output_map = None
+        self.generated_dataset = Dataset.from_dict({})
+        self.self.input_output_map = {}
         self.generated_examples = []
 
         chat_api = ChatGPTAgent(self.api_key)
         self.generated_examples = []
         pbar = tqdm(total=expected_num_examples, desc="Generating examples")
         while True:
+            # Each API call will return `responses_per_request` completion
+            # objects. The upper bound of the length of generated dataset
+            # is expected_num_examples + responses_per_request.
+            self.convert_generated_examples_to_generated_dataset()
+            pbar.update(len(self.generated_examples))
             try:
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
                     logging.warning("Maximum number of API calls reached.")
-                    return self.convert_generated_examples_to_generated_dataset
+                    return self.generated_dataset
+                elif len(self.generated_dataset) >= expected_num_examples:
+                    return self.generated_dataset
                 else:
                     batch_size = self.compute_batch_size(
                         expected_num_examples=expected_num_examples
                     )
                     self.api_call_counter += batch_size
-                    if filter_duplicated_examples:
-                        self.convert_generated_examples_to_generated_dataset()
                     prompts = [
                         self.construct_prompt(
                             instruction=prompt_spec.instruction,
@@ -451,14 +457,5 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     loop = asyncio.get_event_loop()
                     responses = loop.run_until_complete(generate_responses())
                     self.extract_responses(responses)
-                    pbar.update(len(self.generated_examples))
-                    if filter_duplicated_examples:
-                        pass
-                    else:
-                        # Each API call will return `responses_per_request` completion
-                        # objects. The upper bound of the length of generated dataset
-                        # is expected_num_examples + responses_per_request.
-                        if len(self.generated_examples) >= expected_num_examples:
-                            return self.convert_generated_examples_to_generated_dataset
             except OPENAI_ERRORS as e:
                 self.api_call_counter = handle_openai_error(e, self.api_call_counter)
