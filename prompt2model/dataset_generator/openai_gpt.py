@@ -259,6 +259,45 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 input_output_map[input_str] = Counter({output_str: 1})
         return input_output_map
 
+    def multi_vote_input_output_map(self) -> Dataset:
+        """Use multi-vote filtering to convert self.input_output_map to a Dataset.
+
+        Returns:
+            Dataset: A datasets.Dataset object containing the filtered examples.
+                The input_col is filtered unique inputs and the output_col is the
+                shortest but most frequent output for the corresponding input.
+        """
+        filtered_inputs = []
+        filtered_outputs = []
+
+        for input_str, output_counter in self.input_output_map.items():
+            # Find the most frequent output count.
+            most_common_count = output_counter.most_common(1)[0][1]
+
+            # Get all the outputs that have the most common count.
+            most_frequent_outputs = [
+                output
+                for output, count in output_counter.items()
+                if count == most_common_count
+            ]
+
+            # Sort the most frequent outputs based on their lengths
+            # and select the shortest one. When several outputs have
+            # the same length with the highest frequency, they will be
+            # sorted in their lexicographical (alphabetical) order when
+            # using most_frequent_outputs.sort(key=len).
+
+            most_frequent_outputs.sort(key=len)
+            final_output = most_frequent_outputs[0]
+
+            filtered_inputs.append(input_str)
+            filtered_outputs.append(final_output)
+
+        dataset = Dataset.from_dict(
+            {"input_col": filtered_inputs, "output_col": filtered_outputs}
+        )
+        return dataset
+
     def generate_dataset_split(
         self,
         prompt_spec: PromptSpec,
