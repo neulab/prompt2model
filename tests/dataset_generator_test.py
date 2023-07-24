@@ -588,3 +588,83 @@ def test_convert_generated_examples_to_generated_dataset_with_empty_examples_lis
     )
     assert are_datasets_identical(data_generator.generated_dataset, expected_dataset)
     gc.collect()
+
+
+def test_compute_batch_size_with_limited_max_api_calls():
+    """Test the batch size computation with limited max API calls."""
+    os.environ["OPENAI_API_KEY"] = "fake_api_key"
+    data_generator = OpenAIDatasetGenerator(max_api_calls=28)
+    data_generator.api_call_counter = 26
+    data_generator.generated_dataset = Dataset.from_dict(
+        {
+            "input_col": [1] * 110,
+            "output_col": [2] * 110,
+        }
+    )
+    # Default batch size and responses_per_request are both 5.
+    # So each batch should contain 25 examples.
+
+    # At least (125 - 110) / 5 = 3 API calls needed to get
+    # more than 125 examples.
+
+    # The left API calls allowed are 28 - 26 = 2.
+
+    batch_size = data_generator.compute_batch_size(expected_num_examples=125)
+    assert (
+        batch_size
+        == data_generator.max_api_calls - data_generator.api_call_counter
+        == 28 - 26
+    )
+
+    data_generator.api_call_counter = 20
+    batch_size = data_generator.compute_batch_size(expected_num_examples=125)
+    assert (
+        batch_size
+        == ((125 - len(data_generator.generated_dataset)))
+        / data_generator.responses_per_request
+        == (125 - 110) / 5
+    )
+
+    data_generator.api_call_counter = 0
+    data_generator.generated_dataset = Dataset.from_dict(
+        {
+            "input_col": [1] * 50,
+            "output_col": [2] * 50,
+        }
+    )
+    batch_size = data_generator.compute_batch_size(expected_num_examples=125)
+    assert batch_size == data_generator.batch_size
+
+
+def test_compute_batch_size_with_unlimited_max_api_calls():
+    """Test the batch size computation with unlimited max API calls."""
+    os.environ["OPENAI_API_KEY"] = "fake_api_key"
+    data_generator = OpenAIDatasetGenerator()
+    data_generator.generated_dataset = Dataset.from_dict(
+        {
+            "input_col": [1] * 110,
+            "output_col": [2] * 110,
+        }
+    )
+    # Default batch size and responses_per_request are both 5.
+    # So each batch should contain 25 examples.
+
+    # At least (125 - 110) / 5 = 3 API calls needed to get
+    # more than 125 examples.
+
+    batch_size = data_generator.compute_batch_size(expected_num_examples=125)
+    assert (
+        batch_size
+        == (125 - len(data_generator.generated_dataset))
+        / data_generator.responses_per_request
+        == (125 - 110) / 5
+    )
+
+    data_generator.generated_dataset = Dataset.from_dict(
+        {
+            "input_col": [1] * 50,
+            "output_col": [2] * 50,
+        }
+    )
+    batch_size = data_generator.compute_batch_size(expected_num_examples=125)
+    assert batch_size == data_generator.batch_size == 5
