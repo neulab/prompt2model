@@ -186,20 +186,49 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 continue
 
     def extract_responses(self, completions: list[openai.Completion]):
-        """Extracts the generated sample and annotation from an OpenAI API response.
+        """Extracts and stores generated input and output from OpenAI API responses.
 
         Args:
-            completions: The generated completion objects returned by OpenAI API.
+            completions: A list of Completion objects returned by the OpenAI API.
+            Each API call returns a number of completion objects equivalent to
+            `responses_per_request`. The default `responses_per_request` = 5.
 
-        Returns:
-                Each API call will return `responses_per_request` completion objects.
-                If the response is a valid JSON object, create a namedtuple called
-                `example` and append it to self.generated_examples. `example` consists
-                of `input_col` and`output_col`, where:
-                - input_col is the generated example string extracted from the response.
-                - output_col is the generated label string extracted from the response.
-                If the response is not a valid JSON object, discard it.
-            There is 5 * len(completions) responses at a time.
+        This function iterates through the provided completions, attempting to
+        extract and parse the content of each completion as a JSON object. It
+        then checks for the presence of 'input' and 'output' keys in the JSON
+        object. If either is missing, the completion is discarded.
+
+        For valid completions, the function creates a namedtuple 'example'
+        with 'input_col' and 'output_col' fields, representing the generated
+        example and label strings respectively. The 'example' is then added
+        to self.generated_examples.
+
+        Note: The function process `batch_size * responses_per_request`
+        responses at a time.
+
+        Example:
+        Given a list of two completion objects: [completion_1, completion_2],
+        where:
+        completion_1.choices = [
+            {"message": {"content": '{"input": "1", "output": "a"}'}},
+            {"message": {"content": '{"input": "1", "output": "b"}'}},
+            {"message": {"content": '{"input": "1", "output": "a"}'}},
+        ]
+        completion_2.choices = [
+            {"message": {"content": '{"input": "1", "output": "c"}'}},
+            {"message": {"content": '{"input": "2", "output": "a"}'}},
+            {"message": {"content": '{"input": "2", "output": "b"}'}},
+        ]
+
+        The function will create 'example' namedtuples:
+        example(input_col="1", output_col="a")
+        example(input_col="1", output_col="b")
+        example(input_col="1", output_col="a")
+        example(input_col="1", output_col="c")
+        example(input_col="2", output_col="a")
+        example(input_col="2", output_col="b")
+
+        And append them to self.generated_examples.
         """
         for completion in completions:
             try:

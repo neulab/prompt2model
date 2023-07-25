@@ -15,6 +15,7 @@ from prompt2model.dataset_generator.base import DatasetSplit
 from prompt2model.dataset_generator.openai_gpt import OpenAIDatasetGenerator
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from test_helpers import (
+    MockCompletion,
     are_datasets_identical,
     mock_batch_openai_response_with_different_completions,
     mock_batch_openai_response_with_identical_completions,
@@ -1107,3 +1108,77 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
             }
         )
         assert are_datasets_identical(directly_constructed_dataset, cached_dataset)
+
+
+def test_extract_responses():
+    """Test the extract_responses function of DatasetGenerator."""
+    mock_completion_1 = MockCompletion()
+    mock_completion_1.choices = [
+        {"message": {"content": '{"input": "1", "output": "a"}'}},
+        {"message": {"content": '{"input": "1", "output": "b"}'}},
+        {"message": {"content": '{"input": "1", "output": "a"}'}},
+    ]
+    mock_completion_2 = MockCompletion()
+    mock_completion_2.choices = [
+        {"message": {"content": '{"input": "3", "output": "a"}'}},
+        # Note that the following choice miss the right quote of JSON.
+        # So it should be discarded. And will log an warning.
+        {"message": {"content": '{"input": "3", "output": "a}'}},
+        {"message": {"content": '{"input": "3", "output": "b"}'}},
+    ]
+    mock_completion_3 = MockCompletion()
+    mock_completion_3.choices = [
+        {"message": {"content": '{"input": "4", "output": "c"}'}},
+        {"message": {"content": '{"input": "4", "output": "c"}'}},
+        {"message": {"content": '{"input": "5", "output": "a"}'}},
+    ]
+    # choices should be list of dicts. So mock_completion_4
+    # is invalid. Which will be discarded and log an warning.
+    mock_completion_4 = MockCompletion()
+    mock_completion_4.choices = None
+
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        data_generator = OpenAIDatasetGenerator(
+            cache_root=cache_dir, filter_duplicated_examples=True
+        )
+        assert data_generator.generated_examples == []
+        with patch("logging.info") as mock_info, patch(
+            "logging.warning"
+        ) as mock_warning:
+            data_generator.extract_responses([mock_completion_1, mock_completion_2])
+            mock_warning.assert_called_once_with(
+                'Error happened parsing API choice: {\'message\': {\'content\': \'{"input": "3", "output": "a}\'}}'  # noqa E501
+            )
+            # There are 5 valid examples. Each input
+            # and output will be logged once as info.
+            assert mock_info.call_count == 5 * 2
+
+        # The second choice in mock_completion_2
+        # is invalid. So it should be discarded.
+        assert data_generator.generated_examples == [
+            example(input_col="1", output_col="a"),
+            example(input_col="1", output_col="b"),
+            example(input_col="1", output_col="a"),
+            example(input_col="3", output_col="a"),
+            example(input_col="3", output_col="b"),
+        ]
+        data_generator.extract_responses([mock_completion_3])
+        assert data_generator.generated_examples == [
+            example(input_col="1", output_col="a"),
+            example(input_col="1", output_col="b"),
+            example(input_col="1", output_col="a"),
+            example(input_col="3", output_col="a"),
+            example(input_col="3", output_col="b"),
+            example(input_col="4", output_col="c"),
+            example(input_col="4", output_col="c"),
+            example(input_col="5", output_col="a"),
+        ]
+        with patch("logging.info") as mock_info, patch(
+            "logging.warning"
+        ) as mock_warning:
+            data_generator.extract_responses([mock_completion_4])
+            mock_warning.assert_called_once_with(
+                "Error happened when parsing API completion: <MockObject choices=None>"
+            )
+            mock_info.assert_not_called()
