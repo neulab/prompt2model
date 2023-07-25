@@ -24,7 +24,6 @@ from prompt2model.utils import (
     count_tokens_from_string,
     handle_openai_error,
 )
-from test_helpers import are_datasets_identical
 
 example = namedtuple("example", ["input_col", "output_col"])
 
@@ -403,9 +402,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         # If self.generated_examples is not empty,
         # self.generated_examples is not empty.
         if len(self.generated_examples) != 0:
-            assert not are_datasets_identical(
-                self.generated_dataset, Dataset.from_dict({})
-            )
+            assert len(self.generated_dataset) > 0
         dataset_cache_path = Path(self.cache_root / f"{self.generating_split.value}")
         # No matter self.filter_duplicated_examples is True or False,
         # all the generated examples will be saved to disk as a Dataset.
