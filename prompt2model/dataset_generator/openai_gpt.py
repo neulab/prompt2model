@@ -161,15 +161,16 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 # random examples from self.generated_dataset to
                 # construct low_equality_example_string.
                 random_example_strings = [
-                    f'input="{example["input_col"]}"\noutput="{example["output_col"]}"\n'
+                    f'input="{example["input_col"]}"\noutput="{example["output_col"]}"\n'  # noqa E501
                     for example in random_examples
                 ]
                 random.shuffle(random_example_strings)
                 low_equality_example_string = "\n".join(random_example_strings)
-            # To increase the diversity of the prompt to DatasetGenerator, create three
-            # prompt templates, COMPLEX, MIDDLE, and SIMPLE. The COMPLEX template
-            # contains 4 meta examples, the MIDDLE template contains 3 meta examples,
-            # and the SIMPLE template contains 2 meta examples.
+                # To increase the diversity of the prompt to DatasetGenerator, three
+                # prompt templates, COMPLEX, MIDDLE, and SIMPLE, and 24 meta
+                # examples are created In the openai_gpt_template. The COMPLEX
+                # template contains 4 meta examples, the MIDDLE template contains
+                # 3 meta examples and the SIMPLE template contains 2 meta examples.
             template_type_dict = {1: "COMPLEX", 2: "MIDDLE", 0: "SIMPLE"}
             template_type = template_type_dict[
                 random_selected_generated_example_num % 3
