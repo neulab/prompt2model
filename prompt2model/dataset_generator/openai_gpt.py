@@ -412,7 +412,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         # Refresh the generated_dataset, generated_examples,
         # and input_output_map for different split.
         self.generated_dataset = Dataset.from_dict({})
-        self.self.input_output_map = {}
+        self.input_output_map = {}
         self.generated_examples = []
 
         chat_api = ChatGPTAgent(self.api_key)
@@ -423,7 +423,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             # objects. The upper bound of the length of generated dataset
             # is expected_num_examples + responses_per_request.
             self.convert_generated_examples_to_generated_dataset()
-            pbar.update(len(self.generated_examples))
+            pbar.update(len(self.generated_dataset))
             try:
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
                     logging.warning("Maximum number of API calls reached.")

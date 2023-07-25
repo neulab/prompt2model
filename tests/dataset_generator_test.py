@@ -129,7 +129,9 @@ def test_api_call_counter(mocked_generate_example):
         mocked_generate_example: The function represents the @patch function.
     """
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    unlimited_dataset_generator = OpenAIDatasetGenerator()
+    unlimited_dataset_generator = OpenAIDatasetGenerator(
+        filter_duplicated_examples=False
+    )
     unlimited_generated_dataset = check_generate_dataset(unlimited_dataset_generator)
     # The default responses_per_request is 5. So each API call will return
     # 5 responses, i.e. 5 choices in openai.Completion.choices.
@@ -170,7 +172,9 @@ def test_api_call_counter(mocked_generate_example):
     # Refresh the call_count.
     mocked_generate_example.call_count = 0
 
-    limited_dataset_generator = OpenAIDatasetGenerator(max_api_calls=3)
+    limited_dataset_generator = OpenAIDatasetGenerator(
+        max_api_calls=3, filter_duplicated_examples=False
+    )
     limited_generated_dataset = check_generate_dataset(limited_dataset_generator)
     # The max_api_calls is 3. So the limited_dataset_generator will call API 3 times.
     # Each API call returns 5 responses. So the limited_dataset_generator will
@@ -191,7 +195,9 @@ def test_api_call_counter(mocked_generate_example):
 
     # Refresh the call_count and create a new limited_dataset_generator.
     mocked_generate_example.call_count = 0
-    limited_dataset_generator = OpenAIDatasetGenerator(max_api_calls=13)
+    limited_dataset_generator = OpenAIDatasetGenerator(
+        max_api_calls=13, filter_duplicated_examples=False
+    )
 
     limited_generated_dataset_dict = check_generate_dataset_dict(
         limited_dataset_generator
@@ -229,7 +235,9 @@ def test_wrong_key_example(mocked_generate_example):
     """
     api_key = "fake_api_key"
     # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
-    dataset_generator = OpenAIDatasetGenerator(api_key, 3)
+    dataset_generator = OpenAIDatasetGenerator(
+        api_key, 3, filter_duplicated_examples=False
+    )
     prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
     expected_num_examples = 1
     split = DatasetSplit.TRAIN
@@ -253,7 +261,9 @@ def test_invalid_json_response(mocked_generate_example):
     """
     api_key = "fake_api_key"
     # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
-    dataset_generator = OpenAIDatasetGenerator(api_key, 3)
+    dataset_generator = OpenAIDatasetGenerator(
+        api_key, 3, filter_duplicated_examples=False
+    )
     prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
     expected_num_examples = 1
     split = DatasetSplit.VAL
@@ -278,7 +288,9 @@ def test_unexpected_examples_of_GPT(mocked_generate_example):
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
     with pytest.raises(UNKNOWN_GPT3_EXCEPTION):
-        dataset_generator = OpenAIDatasetGenerator(max_api_calls=3)
+        dataset_generator = OpenAIDatasetGenerator(
+            max_api_calls=3, filter_duplicated_examples=False
+        )
         prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
         expected_num_examples = 1
         split = DatasetSplit.TEST
@@ -294,13 +306,13 @@ def test_openai_key_init():
     api_key = None
     os.environ["OPENAI_API_KEY"] = ""
     with pytest.raises(AssertionError) as exc_info:
-        _ = OpenAIDatasetGenerator()
+        _ = OpenAIDatasetGenerator(filter_duplicated_examples=False)
         assert str(exc_info.value) == (
             "API key must be provided or set the environment variable"
             + " with `export OPENAI_API_KEY=<your key>`"
         )
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    environment_key_generator = OpenAIDatasetGenerator()
+    environment_key_generator = OpenAIDatasetGenerator(filter_duplicated_examples=False)
     assert environment_key_generator.api_key == os.environ["OPENAI_API_KEY"]
     os.environ["OPENAI_API_KEY"] = ""
     api_key = "qwertwetyriutytwreytuyrgtwetrueytttr"
@@ -312,7 +324,7 @@ def test_openai_key_init():
 def test_construct_map_with_duplicate_inputs_unique_outputs():
     """Test constructing a map with duplicate inputs but unique outputs."""
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    data_generator = OpenAIDatasetGenerator()
+    data_generator = OpenAIDatasetGenerator(filter_duplicated_examples=True)
     data_generator.generated_examples = [
         example(input_col="apple", output_col="A"),
         example(input_col="banana", output_col="B"),
@@ -334,7 +346,7 @@ def test_construct_map_with_duplicate_inputs_unique_outputs():
 def test_construct_map_with_duplicate_inputs_duplicate_outputs():
     """Test constructing a map with duplicate inputs and duplicate outputs."""
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    data_generator = OpenAIDatasetGenerator()
+    data_generator = OpenAIDatasetGenerator(filter_duplicated_examples=True)
     data_generator.generated_examples = [
         example(input_col="apple", output_col="A"),
         example(input_col="banana", output_col="C"),
@@ -361,7 +373,7 @@ def test_construct_map_with_duplicate_inputs_duplicate_outputs():
 def test_construct_map_with_unique_inputs_outputs():
     """Test constructing a map with unique inputs and outputs."""
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    data_generator = OpenAIDatasetGenerator()
+    data_generator = OpenAIDatasetGenerator(filter_duplicated_examples=True)
     data_generator.generated_examples = [
         example(input_col="apple", output_col="A"),
         example(input_col="banana", output_col="B"),
@@ -381,7 +393,7 @@ def test_construct_map_with_unique_inputs_outputs():
 def test_construct_map_with_empty_examples_list():
     """Test constructing a map with empty inputs and outputs."""
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    data_generator = OpenAIDatasetGenerator()
+    data_generator = OpenAIDatasetGenerator(filter_duplicated_examples=True)
     data_generator.generated_examples = []
     data_generator.construct_input_output_map()
 
@@ -393,7 +405,7 @@ def test_construct_map_with_empty_examples_list():
 def test_multi_vote_with_duplicate_inputs_unique_outputs():
     """Test multi-voting with duplicate inputs but unique outputs."""
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    data_generator = OpenAIDatasetGenerator()
+    data_generator = OpenAIDatasetGenerator(filter_duplicated_examples=True)
     data_generator.input_output_map = {
         "apple": Counter({"A": 1, "E": 1, "D": 1}),
         "banana": Counter({"B": 1}),
@@ -412,7 +424,7 @@ def test_multi_vote_with_duplicate_inputs_unique_outputs():
 def test_multi_vote_with_duplicate_inputs_duplicate_outputs():
     """Test multi-voting with duplicate inputs and duplicate outputs."""
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    data_generator = OpenAIDatasetGenerator()
+    data_generator = OpenAIDatasetGenerator(filter_duplicated_examples=True)
     data_generator.input_output_map = {
         "apple": Counter({"A": 3, "D": 1, "G": 1}),
         "banana": Counter({"B": 2, "C": 1}),
