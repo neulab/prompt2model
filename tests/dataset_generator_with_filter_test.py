@@ -22,9 +22,9 @@ from test_helpers import (
     reset_mock_batch_openai_response_with_different_completions,
 )
 
-MOCK_CLASSIFICATION_EXAMPLE = partial(
+MOCK_EXAMPLE = partial(
     mock_batch_openai_response_with_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1"}',
+    content='{"input": "6", "output": "f"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
     mock_batch_openai_response_with_identical_completions,
@@ -468,7 +468,7 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
         # Note that filter_duplicated_examples is True, so the
         # self.generated_examples will be filtered to 3 examples
         # in self.generated_dataset. Since expected_num_examples
-        # is 3, the while loop would exit  immediately. So the
+        # is 3, the while loop would exit immediately. So the
         # self.generated_dataset would be the filtered cached dataset.
         with patch("logging.info") as mock_info, patch(
             "logging.warning"
@@ -515,6 +515,86 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
             }
         )
         assert are_datasets_identical(directly_constructed_dataset, cached_dataset)
+    gc.collect()
+
+
+@patch(
+    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    side_effect=MOCK_EXAMPLE,
+)
+def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generation(
+    mocked_generate_example,
+):
+    """Test OpenAIDatasetGenerator can load cache and continue generation."""
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        data_generator = OpenAIDatasetGenerator(
+            cache_root=cache_dir, filter_duplicated_examples=True
+        )
+        dataset_cache_path = Path(
+            data_generator.cache_root / f"{DatasetSplit.TEST.value}"
+        )
+        cached_dataset = Dataset.from_dict(
+            {
+                "input_col": ["1", "1", "1", "1", "2", "3"],
+                "output_col": ["a", "a", "b", "c", "a", "d"],
+            }
+        )
+        cached_dataset.save_to_disk(dataset_cache_path)
+        # The generate_dataset_split would first load the cached
+        # dataset into self.generated_examples. Then in the while
+        # loop, convert_generated_examples_to_generated_dataset
+        # would be called to construct the self.generated_dataset.
+        # Note that filter_duplicated_examples is True, so the
+        # self.generated_examples will be filtered to 3 examples
+        # in self.generated_dataset. Since expected_num_examples
+        # is 4, the generation would continue and the batch_size = 1.
+        # After one batch of API calls, self.generated_dataset meets
+        # the requirement and stop generation.
+        with patch("logging.info") as mock_info, patch(
+            "logging.warning"
+        ) as mock_warning:
+            data_generator.generate_dataset_split(
+                expected_num_examples=4,
+                prompt_spec=MockPromptSpec,
+                split=DatasetSplit.TEST,
+            )
+            info_list = [each.args[0] for each in mock_info.call_args_list]
+            assert info_list[0] == f"Loading cache from {str(dataset_cache_path)}."
+            # The first logging.info is loaded cache, and there is
+            # another 5 * 2 logging.info in extract_responses.
+            assert len(info_list) == 1 + 5 * 2
+            mock_warning.assert_not_called()
+        excepted_generated_dataset = Dataset.from_dict(
+            {
+                "input_col": ["1", "2", "3", "6"],
+                "output_col": ["a", "a", "d", "f"],
+            }
+        )
+        assert are_datasets_identical(
+            data_generator.generated_dataset, excepted_generated_dataset
+        )
+        assert data_generator.generated_examples == [
+            example("1", "a"),
+            example("1", "a"),
+            example("1", "b"),
+            example("1", "c"),
+            example("2", "a"),
+            example("3", "d"),
+            example("6", "f"),
+            example("6", "f"),
+            example("6", "f"),
+            example("6", "f"),
+            example("6", "f"),
+        ]
+        assert data_generator.input_output_map == {
+            "1": Counter({"a": 2, "b": 1, "c": 1}),
+            "2": Counter({"a": 1}),
+            "3": Counter({"d": 1}),
+            "6": Counter({"f": 5}),
+        }
+        assert mocked_generate_example.call_count == 1
+    gc.collect()
 
 
 """
@@ -630,6 +710,7 @@ def test_generator_with_filter_first_batch(mocked_generate_example):
             example(input_col="2", output_col="b"),
         ]
         assert dataset_generator.generated_examples == excepted_examples
+    gc.collect()
 
 
 @patch(
@@ -686,6 +767,7 @@ def test_generator_with_filter_second_batch(mocked_generate_example):
             example(input_col="3", output_col="b"),
         ]
         assert dataset_generator.generated_examples == excepted_examples
+    gc.collect()
 
 
 @patch(
@@ -746,6 +828,7 @@ def test_generator_with_filter_third_batch(mocked_generate_example):
             example(input_col="1", output_col="b"),
         ]
         assert dataset_generator.generated_examples == excepted_examples
+    gc.collect()
 
 
 @patch(
@@ -810,6 +893,7 @@ def test_generator_with_filter_forth_batch(mocked_generate_example):
             example(input_col="5", output_col="a"),
         ]
         assert dataset_generator.generated_examples == excepted_examples
+    gc.collect()
 
 
 @patch(
@@ -874,6 +958,7 @@ def test_generator_with_filter_unlimited_api_calls(mocked_generate_example):
             example(input_col="5", output_col="a"),
         ]
         assert dataset_generator.generated_examples == excepted_examples
+    gc.collect()
 
 
 @patch(
@@ -996,3 +1081,4 @@ def test_generator_with_filter_to_generate_datasetdict(mocked_generate_example):
             }
         )
         assert are_datasets_identical(generated_dataset_dict, expected_dataset_dict)
+    gc.collect()

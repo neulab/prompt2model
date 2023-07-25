@@ -379,6 +379,7 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_u
         assert are_datasets_identical(
             data_generator.generated_dataset, expected_dataset
         )
+    gc.collect()
 
 
 def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_duplicate_outputs():  # noqa: 501
@@ -515,6 +516,7 @@ def test_compute_batch_size_with_limited_max_api_calls():
         )
         batch_size = data_generator.compute_batch_size(expected_num_examples=125)
         assert batch_size == data_generator.batch_size
+    gc.collect()
 
 
 def test_compute_batch_size_with_unlimited_max_api_calls():
@@ -550,6 +552,7 @@ def test_compute_batch_size_with_unlimited_max_api_calls():
         )
         batch_size = data_generator.compute_batch_size(expected_num_examples=125)
         assert batch_size == data_generator.batch_size == 5
+    gc.collect()
 
 
 def test_load_cache_dataset_without_filter_duplicated_examples():
@@ -604,6 +607,71 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
             }
         )
         assert are_datasets_identical(directly_constructed_dataset, cached_dataset)
+    gc.collect()
+
+
+@patch(
+    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    side_effect=MOCK_CLASSIFICATION_EXAMPLE,
+)
+def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_generation(
+    mocked_generate_example,
+):
+    """Test OpenAIDatasetGenerator can load cache and continue generation."""
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        data_generator = OpenAIDatasetGenerator(
+            cache_root=cache_dir, filter_duplicated_examples=False
+        )
+        dataset_cache_path = Path(
+            data_generator.cache_root / f"{DatasetSplit.TEST.value}"
+        )
+        cached_dataset = Dataset.from_dict(
+            {
+                "input_col": ["1"] * 110,
+                "output_col": ["2"] * 110,
+            }
+        )
+        cached_dataset.save_to_disk(dataset_cache_path)
+        # The generate_dataset_split would first load the cached
+        # dataset into self.generated_examples. Then in the while
+        # loop, convert_generated_examples_to_generated_dataset
+        # would be called to construct the self.generated_dataset.
+        # Note that filter_duplicated_examples is False, so the
+        # self.generated_examples won't be filtered. And since the
+        # expected_num_examples is 117, the generation would
+        # continue and the batch_size = 2. After one batch of API
+        # calls, self.generated_dataset meets the requirement and
+        # stop generation.
+        with patch("logging.info") as mock_info, patch(
+            "logging.warning"
+        ) as mock_warning:
+            data_generator.generate_dataset_split(
+                expected_num_examples=117,
+                prompt_spec=MockPromptSpec,
+                split=DatasetSplit.TEST,
+            )
+            info_list = [each.args[0] for each in mock_info.call_args_list]
+            assert info_list[0] == f"Loading cache from {str(dataset_cache_path)}."
+            # The first logging.info is loaded cache, and there is
+            # another 2 * 5 * 2 logging.info in extract_responses.
+            assert len(info_list) == 1 + 2 * 5 * 2
+            mock_warning.assert_not_called()
+        excepted_generated_dataset = Dataset.from_dict(
+            {
+                "input_col": ["1"] * 110 + ["This is a great movie!"] * 10,
+                "output_col": ["2"] * 110 + ["1"] * 10,
+            }
+        )
+        assert are_datasets_identical(
+            data_generator.generated_dataset, excepted_generated_dataset
+        )
+        assert (
+            data_generator.generated_examples
+            == [example("1", "2")] * 110 + [example("This is a great movie!", "1")] * 10
+        )
+        assert mocked_generate_example.call_count == 1
+    gc.collect()
 
 
 def test_extract_responses():
@@ -689,3 +757,4 @@ def test_extract_responses():
                 example(input_col="4", output_col="c"),
                 example(input_col="5", output_col="a"),
             ]
+    gc.collect()
