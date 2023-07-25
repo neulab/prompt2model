@@ -241,7 +241,7 @@ def test_generator_with_filter():
     This function is a carefully designed test togher with the iterator created
     in mock_batch_openai_response_with_different_completions.
 
-    Initialize an OpenAIDatasetGenerator. Set batch_size = 2, response_per_request
+    Initialize an OpenAIDatasetGenerator. Set batch_size = 2, responses_per_request
     = 3, expected_num_examples = 5, filter_duplicated_examples = True.
 
     In the first API call, the ChatGPTAgent will generate 2 * 3 = 6 responses.
@@ -255,7 +255,7 @@ def test_generator_with_filter():
 
     The second API call's batch_size = 1. And generate 3 responses.
     batch_size = (expected_num_examples - len(generated_dataset))
-    / response_per_request = 1.
+    / responses_per_request = 1.
 
     After the filtering the duplicated responses, the generated_dataset will be
             Dataset.from_dict(
@@ -287,7 +287,7 @@ def test_generator_with_filter():
     Then the generator will be exhausted and the generation also ends.
 
     The function contain four test cases with four limited dataset generators.
-    Their batch_size = 2, response_per_request = 3, expected_num_examples
+    Their batch_size = 2, responses_per_request = 3, expected_num_examples
     = 5, filter_duplicated_examples = True. But the number of max_api_calls are
     1, 2, 3, 4. Then we run the generation for each of them and check that each
     generated dataset is correct as expected.
@@ -298,7 +298,7 @@ def test_generator_with_filter():
     filter_duplicated_examples = True
     expected_num_examples = 5
     batch_size = 2
-    response_per_request = 3
+    responses_per_request = 3
 
     @patch(
         "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
@@ -313,12 +313,21 @@ def test_generator_with_filter():
                 filter_duplicated_examples=filter_duplicated_examples,
                 cache_root=cache_dir,
                 batch_size=batch_size,
-                response_per_request=response_per_request,
+                responses_per_request=responses_per_request,
             )
-            dataset_generator.generate_dataset_split(
+            generated_dataset = dataset_generator.generate_dataset_split(
                 prompt_spec, expected_num_examples, split
             )
             assert mocked_generate_example.call_count == 1
+            excepted_dataset = Dataset.from_dict(
+                {
+                    "input_col": ["1", "2"],
+                    "output_col": ["a", "a"],
+                }
+            )
+            assert are_datasets_identical(generated_dataset, excepted_dataset)
+
+    test_generator_with_filter_and_one_api_call()
 
 
 @patch(
