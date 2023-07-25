@@ -111,51 +111,52 @@ def mock_batch_openai_response_with_different_completions(
 ):
     """Returns a batch of diffenrent `MockCompletion` objects at each call.
 
-    This function is carefully designed to similuate the generation process of
-    an OpenAIDatasetGenerator. Set batch_size = 2, response_per_request
-    = 3, expected_num_examples = 5, filter_duplicated_examples = True.
+    This function is carefully designed to similuate the response of ChatGPTAgent
+    and tests the generation process of the OpenAIDataSetGenerator with
+    filter_duplicated_examples = True in `dataset_generator_with_filter_test`.
 
-    In the first API call, the ChatGPTAgent will generate 2 * 3 = 6 responses.
-    After filtering the duplicated responses, the generated_dataset will be
-            Dataset.from_dict(
-            {
-                "input_col": ["1", "2"],
-                "output_col": ["a", "a"],
-            }
-        )
+    This function works together with an OpenAIDataSetGenerator with
+    batch_size = 2, responses_per_request = 3, expected_num_examples
+    = 5, and filter_duplicated_examples = True.
 
-    The second API call's batch_size = 1. And generate 3 responses.
+    In the first API call, the generator produce 2 * 3 = 6 responses. After filtering
+    duplicates, the generated_dataset will be:
+        Dataset.from_dict(
+        {
+            "input_col": ["1", "2"],
+            "output_col": ["a", "a"],
+        })
+
     batch_size = (expected_num_examples - len(generated_dataset))
-    / response_per_request = 1.
+    / responses_per_request = (5 - 2) / 3 = 1.
 
-    After the filtering the duplicated responses, the generated_dataset will be
-            Dataset.from_dict(
-            {
-                "input_col": ["1", "2", "3"],
-                "output_col": ["a", "a", "a"],
-            }
-        )
+    The second API call reduces batch_size to 1 and generates 3 more responses.
 
-    The third API call's batch_size = 1. And generate 3 responses.
 
-    After the filtering the duplicated responses, the generated_dataset will be
-            Dataset.from_dict(
-            {
-                "input_col": ["1", "2", "3"],
-                "output_col": ["b", "a", "a"],
-            }
-        )
+    After filtering duplicates, the generated_dataset will be:
+        Dataset.from_dict(
+        {
+            "input_col": ["1", "2", "3"],
+            "output_col": ["a", "a", "a"],
+        })
 
-    The fourth and last API call's batch_size = 1. And generate 3 responses.
-    After the filtering the duplicated responses, the generated_dataset will be
+    The third API call again uses batch_size = 1 and generates another 3 responses.
+    After filtering duplicates, the generated_dataset will be:
+        Dataset.from_dict(
+        {
+            "input_col": ["1", "2", "3"],
+            "output_col": ["b", "a", "a"],
+        })
+
+    The fourth and final API call also uses batch_size = 1 and generates a final 3
+    responses. After filtering duplicates, the generated_dataset will be:
         Dataset.from_dict(
         {
             "input_col": ["1", "2", "3", "4", "5"],
             "output_col": ["b", "a", "a", "c", "a"],
-        }
-    )
+        })
 
-    Then the generation ends.
+    The generator will then be exhausted, and the generation process will end.
     """
     _ = (
         prompts,
@@ -233,3 +234,26 @@ def mock_batch_openai_response_with_different_completions(
     return mock_batch_openai_response_with_different_completions.mock_completions[
         current_index
     ]
+
+
+def reset_mock_batch_openai_response_with_different_completions():
+    """Resets the state of the `mock_batch_openai_response_with_different_completions`.
+
+    Reset the state of the `mock_batch_openai_response_with_different_completions`
+    function by deleting its `mock_completions` and `current_index` attributes, if they
+    exist. This allows the `mock_batch_openai_response_with_different_completions`
+    function to be reused in a fresh state in subsequent tests.
+
+    The `mock_batch_openai_response_with_different_completions` function simulates
+    the behavior of the OpenAI API during the generation of OpenAIDataSetGenerator.
+    It returns a batch of different `MockCompletion` objects on each call, which are
+    used to simulate different API responses. The `mock_completions` attribute stores
+    these `MockCompletion` objects, while the `current_index` attribute keeps track
+    of the current position in the `mock_completions` list.
+    """
+    if hasattr(
+        mock_batch_openai_response_with_different_completions, "mock_completions"
+    ):
+        del mock_batch_openai_response_with_different_completions.mock_completions
+    if hasattr(mock_batch_openai_response_with_different_completions, "current_index"):
+        del mock_batch_openai_response_with_different_completions.current_index
