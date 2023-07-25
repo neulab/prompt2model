@@ -2,8 +2,7 @@
 
 from __future__ import annotations  # noqa FI58
 
-from collections.abc import Generator
-from typing import cast
+import typing
 
 
 class MockCompletion:
@@ -66,7 +65,7 @@ def mock_one_openai_response(
     return mock_completion
 
 
-def mock_batch_openai_response_with_identical_completion(
+def mock_batch_openai_response_with_identical_completions(
     prompts: list[str],
     content: str,
     temperature: float,
@@ -100,6 +99,7 @@ def mock_batch_openai_response_with_identical_completion(
     return mock_completions
 
 
+@typing.no_type_check
 def mock_batch_openai_response_with_different_completions(
     prompts: list[str] = None,
     content: str = None,
@@ -108,7 +108,7 @@ def mock_batch_openai_response_with_different_completions(
     frequency_penalty: float = 0,
     responses_per_request: int = 5,
     requests_per_minute: int = 80,
-) -> Generator[MockCompletion, None, None]:
+):
     """Returns a batch of diffenrent `MockCompletion` objects at each call.
 
     This function is carefully designed to similuate the generation process of
@@ -171,12 +171,10 @@ def mock_batch_openai_response_with_different_completions(
         mock_batch_openai_response_with_different_completions, "mock_completions"
     ):
         # Initialize mock_completions if it doesn't exist yet.
-        mock_batch_openai_response_with_different_completions.mock_completions = cast(
-            list[MockCompletion], [MockCompletion() for _ in range(4)]
-        )
-        mock_batch_openai_response_with_different_completions.current_index = cast(
-            int, 0
-        )
+        mock_batch_openai_response_with_different_completions.mock_completions = [
+            MockCompletion() for _ in range(4)
+        ]
+        mock_batch_openai_response_with_different_completions.current_index = 0
 
         # Populate mock_completions with desired choices as before.
         mock_batch_openai_response_with_different_completions.mock_completions[
