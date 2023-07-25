@@ -260,7 +260,7 @@ def test_wrong_key_example(mocked_generate_example):
         assert (
             dataset["input_col"] == dataset["output_col"] and dataset["input_col"] == []
         )
-        gc.collect()
+    gc.collect()
 
 
 @patch(
@@ -289,7 +289,7 @@ def test_invalid_json_response(mocked_generate_example):
         assert (
             dataset["input_col"] == dataset["output_col"] and dataset["input_col"] == []
         )
-        gc.collect()
+    gc.collect()
 
 
 @patch(
@@ -372,7 +372,7 @@ def test_construct_map_with_duplicate_inputs_unique_outputs():
             "orange": Counter({"O": 1}),
         }
         assert data_generator.input_output_map == expected_output
-        gc.collect()
+    gc.collect()
 
 
 def test_construct_map_with_duplicate_inputs_duplicate_outputs():
@@ -402,7 +402,7 @@ def test_construct_map_with_duplicate_inputs_duplicate_outputs():
             "orange": Counter({"O": 1, "F": 1}),
         }
         assert data_generator.input_output_map == expected_output
-        gc.collect()
+    gc.collect()
 
 
 def test_construct_map_with_unique_inputs_outputs():
@@ -425,7 +425,7 @@ def test_construct_map_with_unique_inputs_outputs():
             "orange": Counter({"O": 1}),
         }
         assert data_generator.input_output_map == expected_output
-        gc.collect()
+    gc.collect()
 
 
 def test_construct_map_with_empty_examples_list():
@@ -440,7 +440,7 @@ def test_construct_map_with_empty_examples_list():
 
         # if self.generated_examples is empty, self.input_output_map is None.
         assert data_generator.input_output_map == {}
-        gc.collect()
+    gc.collect()
 
 
 def test_multi_vote_with_duplicate_inputs_unique_outputs():
@@ -464,7 +464,7 @@ def test_multi_vote_with_duplicate_inputs_unique_outputs():
         assert are_datasets_identical(
             data_generator.generated_dataset, expected_dataset
         )
-        gc.collect()
+    gc.collect()
 
 
 def test_multi_vote_with_duplicate_inputs_duplicate_outputs():
@@ -488,7 +488,7 @@ def test_multi_vote_with_duplicate_inputs_duplicate_outputs():
         assert are_datasets_identical(
             data_generator.generated_dataset, expected_dataset
         )
-        gc.collect()
+    gc.collect()
 
 
 def test_multi_vote_with_unique_inputs_outputs():
@@ -510,7 +510,7 @@ def test_multi_vote_with_unique_inputs_outputs():
         assert are_datasets_identical(
             data_generator.generated_dataset, expected_dataset
         )
-        gc.collect()
+    gc.collect()
 
 
 def test_multi_vote_with_empty_examples_list():
@@ -526,7 +526,7 @@ def test_multi_vote_with_empty_examples_list():
         assert are_datasets_identical(
             data_generator.generated_dataset, expected_dataset
         )
-        gc.collect()
+    gc.collect()
 
 
 def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_unique_outputs():  # noqa: 501
@@ -614,7 +614,7 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_d
         assert are_datasets_identical(
             data_generator.generated_dataset, expected_dataset
         )
-        gc.collect()
+    gc.collect()
 
 
 def test_convert_generated_examples_to_generated_dataset_with_unique_inputs_outputs():
@@ -654,7 +654,7 @@ def test_convert_generated_examples_to_generated_dataset_with_unique_inputs_outp
         assert are_datasets_identical(
             data_generator.generated_dataset, expected_dataset
         )
-        gc.collect()
+    gc.collect()
 
 
 def test_convert_generated_examples_to_generated_dataset_with_empty_examples_list():
@@ -688,7 +688,7 @@ def test_convert_generated_examples_to_generated_dataset_with_empty_examples_lis
         assert are_datasets_identical(
             data_generator.generated_dataset, expected_dataset
         )
-        gc.collect()
+    gc.collect()
 
 
 def test_compute_batch_size_with_limited_max_api_calls():
@@ -805,13 +805,16 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
         assert are_datasets_identical(data_generator.generated_dataset, cached_dataset)
         directly_constructed_dataset = Dataset.from_dict(
             {
-                "input_col": [example.input_col for example in data_generator.generated_examples],
+                "input_col": [
+                    example.input_col for example in data_generator.generated_examples
+                ],
                 "output_col": [
                     example.output_col for example in data_generator.generated_examples
                 ],
             }
         )
         assert are_datasets_identical(directly_constructed_dataset, cached_dataset)
+
 
 def test_load_cache_dataset_with_filter_duplicated_examples():
     """Test the cached dataset loading with filtering duplicated examples."""
@@ -848,10 +851,14 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
                 "output_col": ["a", "a", "d"],
             }
         )
-        assert are_datasets_identical(data_generator.generated_dataset, excepted_generated_dataset)
+        assert are_datasets_identical(
+            data_generator.generated_dataset, excepted_generated_dataset
+        )
         directly_constructed_dataset = Dataset.from_dict(
             {
-                "input_col": [example.input_col for example in data_generator.generated_examples],
+                "input_col": [
+                    example.input_col for example in data_generator.generated_examples
+                ],
                 "output_col": [
                     example.output_col for example in data_generator.generated_examples
                 ],

@@ -1,7 +1,8 @@
 """Tools for mocking OpenAI API responses (for testing purposes)."""
 
-
 from __future__ import annotations  # noqa FI58
+
+from collections.abc import Generator
 
 
 class MockCompletion:
@@ -73,7 +74,7 @@ def mock_batch_openai_response_with_identical_completion(
     responses_per_request: int = 5,
     requests_per_minute: int = 80,
 ) -> list[MockCompletion]:
-    """Generate a batch of  mock completion objects.
+    """Generate a batch of mock completion objects.
 
         This function creates a batch of `MockCompletion`
         object with a `content` attribute set to an LLM completion string.
@@ -98,34 +99,77 @@ def mock_batch_openai_response_with_identical_completion(
     return mock_completions
 
 
-def mock_batch_openai_response_with_different_completion(
-    prompts: list[str],
-    content: str,
-    temperature: float,
+def mock_batch_openai_response_with_different_completions(
+    prompts: list[str] = None,
+    content: str = None,
+    temperature: float = None,
     presence_penalty: float = 0,
     frequency_penalty: float = 0,
     responses_per_request: int = 5,
     requests_per_minute: int = 80,
-) -> list[MockCompletion]:
-    """Generate a batch of  mock completion objects.
+) -> Generator[MockCompletion, None, None]:
+    """Generate a batch of mock completion objects with different responses.
 
-        This function creates a batch of `MockCompletion`
-        object with a `content` attribute set to an LLM completion string.
+    This function creates a generator that yields a batch of `MockCompletion`
+    objects, each with a `content` attribute set to an LLM (Language Model)
+    completion string.
 
-    Args:
-        prompts: A batch of mocked prompts that won't be used.
-        content: The example string to be returned.
-        temperature: A mocked temperature.
-        presence_penalty: A mocked presence penalty.
-        frequency_penalty: A mocked frequency penalty.
-        responses_per_request: Number of responses for each request.
-        requests_per_minute: Number of requests per minute to allow.
+    This iterator will is carefully designed to similuate the generation process
+    of an OpenAIDatasetGenerator. Set batch_size = 2, response_per_request
+    = 3, expected_num_examples = 5, filter_duplicated_examples = True.
 
-    Returns:
-        A mock completion object simulating an OpenAI ChatCompletion API response.
+    In the first API call, the ChatGPTAgent will generate 2 * 3 = 6 responses.
+    After filtering the duplicated responses, the generated_dataset will be
+            Dataset.from_dict(
+            {
+                "input_col": ["1", "2"],
+                "output_col": ["a", "a"],
+            }
+        )
+
+    The second API call's batch_size = 1. And generate 3 responses.
+    batch_size = (expected_num_examples - len(generated_dataset))
+    / response_per_request = 1.
+
+    After the filtering the duplicated responses, the generated_dataset will be
+            Dataset.from_dict(
+            {
+                "input_col": ["1", "2", "3"],
+                "output_col": ["a", "a", "a"],
+            }
+        )
+
+    The third API call's batch_size = 1. And generate 3 responses.
+
+    After the filtering the duplicated responses, the generated_dataset will be
+            Dataset.from_dict(
+            {
+                "input_col": ["1", "2", "3"],
+                "output_col": ["b", "a", "a"],
+            }
+        )
+
+    The fourth and last API call's batch_size = 1. And generate 3 responses.
+    After the filtering the duplicated responses, the generated_dataset will be
+        Dataset.from_dict(
+        {
+            "input_col": ["1", "2", "3", "4", "5"],
+            "output_col": ["b", "a", "a", "c", "a"],
+        }
+    )
+
+    Then the generator will be exhausted and the generation also ends.
     """
-    _ = prompts, temperature, presence_penalty, frequency_penalty, requests_per_minute
-    mock_completions = [MockCompletion()] * 3
+    _ = (
+        prompts,
+        content,
+        temperature,
+        presence_penalty,
+        frequency_penalty,
+        requests_per_minute,
+        responses_per_request,
+    )
+    mock_completions = [MockCompletion() for _ in range(4)]
     mock_completions[0].choices = [
         {"message": {"content": '{"input": "1", "output": "a"}'}},
         {"message": {"content": '{"input": "1", "output": "b"}'}},
@@ -133,26 +177,22 @@ def mock_batch_openai_response_with_different_completion(
         {"message": {"content": '{"input": "1", "output": "c"}'}},
         {"message": {"content": '{"input": "2", "output": "a"}'}},
         {"message": {"content": '{"input": "2", "output": "b"}'}},
-        {"message": {"content": '{"input": "3", "output": "a"}'}},
-        {"message": {"content": '{"input": "3", "output": "b"}'}},
-        {"message": {"content": '{"input": "3", "output": "a"}'}},
     ]
     mock_completions[1].choices = [
-        {"message": {"content": '{"input": "1", "output": "a"}'}},
-        {"message": {"content": '{"input": "1", "output": "b"}'}},
-        {"message": {"content": '{"input": "1", "output": "a"}'}},
-        {"message": {"content": '{"input": "1", "output": "c"}'}},
-        {"message": {"content": '{"input": "2", "output": "a"}'}},
-        {"message": {"content": '{"input": "2", "output": "b"}'}},
+        {"message": {"content": '{"input": "3", "output": "a"}'}},
         {"message": {"content": '{"input": "3", "output": "a"}'}},
         {"message": {"content": '{"input": "3", "output": "b"}'}},
-        {"message": {"content": '{"input": "3", "output": "a"}'}},
     ]
-    mock_completions = [
-        MockCompletion(
-            content='{"input": "This is a great movie!", "output": "1"}',
-            responses_per_request=1,
-        )
-        for _ in prompts
+    mock_completions[2].choices = [
+        {"message": {"content": '{"input": "1", "output": "a"}'}},
+        {"message": {"content": '{"input": "1", "output": "b"}'}},
+        {"message": {"content": '{"input": "1", "output": "b"}'}},
     ]
-    return mock_completions
+    mock_completions[3].choices = [
+        {"message": {"content": '{"input": "4", "output": "c"}'}},
+        {"message": {"content": '{"input": "4", "output": "c"}'}},
+        {"message": {"content": '{"input": "5", "output": "a"}'}},
+    ]
+    # Yield each MockCompletion object one by one.
+    for completion in mock_completions:
+        yield completion
