@@ -697,7 +697,7 @@ def test_multi_vote_with_duplicate_inputs_unique_outputs():
             "banana": Counter({"B": 1}),
             "orange": Counter({"O": 1}),
         }
-        data_generator.use_multi_vote_to_construct_generated_dataset()
+        data_generator.apply_multi_vote_to_construct_generated_dataset()
 
         expected_dataset = Dataset.from_dict(
             {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
@@ -721,7 +721,7 @@ def test_multi_vote_with_duplicate_inputs_duplicate_outputs():
             "banana": Counter({"B": 2, "C": 1}),
             "orange": Counter({"O": 1, "F": 1}),
         }
-        data_generator.use_multi_vote_to_construct_generated_dataset()
+        data_generator.apply_multi_vote_to_construct_generated_dataset()
 
         expected_dataset = Dataset.from_dict(
             {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
@@ -743,7 +743,7 @@ def test_multi_vote_with_unique_inputs_outputs():
             "banana": Counter({"B": 1}),
             "orange": Counter({"O": 1}),
         }
-        data_generator.use_multi_vote_to_construct_generated_dataset()
+        data_generator.apply_multi_vote_to_construct_generated_dataset()
 
         expected_dataset = Dataset.from_dict(
             {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
@@ -761,7 +761,7 @@ def test_multi_vote_with_empty_examples_list():
         os.environ["OPENAI_API_KEY"] = "fake_api_key"
         data_generator = OpenAIDatasetGenerator(cache_root=cache_dir)
         data_generator.input_output_map = {}
-        data_generator.use_multi_vote_to_construct_generated_dataset()
+        data_generator.apply_multi_vote_to_construct_generated_dataset()
 
         expected_dataset = Dataset.from_dict({})
 

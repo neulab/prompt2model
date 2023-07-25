@@ -275,7 +275,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         if len(self.generated_examples) != 0:
             assert self.input_output_map
 
-    def use_multi_vote_to_construct_generated_dataset(self):
+    def apply_multi_vote_to_construct_generated_dataset(self):
         """Multi-vote to construct self.generated_dataset from self.input_output_map.
 
         This method uses multi-vote filtering to create a unique mapping from inputs
@@ -365,7 +365,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         )
         if self.filter_duplicated_examples:
             self.construct_input_output_map()
-            self.use_multi_vote_to_construct_generated_dataset()
+            self.apply_multi_vote_to_construct_generated_dataset()
             if len(self.generated_examples) != 0:
                 assert self.input_output_map is not None
                 assert self.generated_dataset is not None
