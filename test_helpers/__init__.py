@@ -4,7 +4,7 @@ from test_helpers.dataset_tools import (
     are_datasets_identical,
 )
 from test_helpers.mock_openai import (
-    MockCompletionWithIdenticalContent,
+    MockCompletion,
     mock_batch_openai_response_with_identical_completion,
     mock_one_openai_response,
 )
@@ -14,7 +14,7 @@ from test_helpers.model_and_tokenizer import (
 )
 
 __all__ = (
-    "MockCompletionWithIdenticalContent",
+    "MockCompletion",
     "create_gpt2_model_and_tokenizer",
     "create_t5_model_and_tokenizer",
     "mock_one_openai_response",

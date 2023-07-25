@@ -9,6 +9,7 @@ import math
 import os
 import random
 from collections import Counter, namedtuple
+from pathlib import Path
 
 import openai
 from datasets import Dataset
@@ -42,7 +43,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         responses_per_request: int = 5,
         requests_per_minute: int = 80,
         filter_duplicated_examples: bool = True,
-        cache_root: str = "generator_dataset",
+        cache_root: str = "cached_genrated_dataset",
     ):
         """Initialize an OpenAI DatasetGenerator with an API key and max API call.
 
@@ -84,7 +85,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.responses_per_request = responses_per_request
         self.requests_per_minute = requests_per_minute
         self.filter_duplicated_examples = filter_duplicated_examples
-        self.cache_root = cache_root
+        self.cache_root = Path(cache_root)
+        self.cache_root.mkdir(exist_ok=True, parents=True)
         self.generated_examples = []  # type: list[example]
         # Store all the generated examples in a list, which will be converted into
         # self.generated_dataset later and self.input_output_map if
@@ -99,6 +101,11 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         # If filter_duplicated_examples is True, self.generated_examples will
         # firstly be converted into self.input_output_map then into
         # self.generated_dataset. Else, self.input_output_map will always be {}.
+        self.loop_counter = 0
+        self.generating_split: DatasetSplit | None = None
+        # After each while loop, we increment self.loop_counter and store
+        # self.generated_dataset in f"{cache_root}/{generating_split}{loop_counter}".
+        # generating_split is the DatasetSplit which is being generated.
 
     def construct_prompt(
         self,
@@ -353,6 +360,15 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             assert not are_datasets_identical(
                 self.generated_dataset, Dataset.from_dict({})
             )
+        # In the first loop, self.generated_dataset is empty.
+        # The generated_dataset won't be saved.
+        if self.loop_counter != 0:
+            dataset_cache_path = Path(
+                self.cache_root / f"{self.generating_split.value}_{self.loop_counter}"
+            )
+            # Avoid overwriting the previous generated_dataset cache.
+            assert not dataset_cache_path.exists()
+            self.generated_dataset.save_to_disk(dataset_cache_path)
 
     def compute_batch_size(self, expected_num_examples: int) -> int:
         """Compute the batch size to use zeno-bulid to call OpenAI API.
@@ -408,12 +424,13 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         Returns:
             A single dataset.
         """
-        _ = split  # suppress unused variable warnings
         # Refresh the generated_dataset, generated_examples,
-        # and input_output_map for different split.
+        # input_output_map, and generating_split for different split.
         self.generated_dataset = Dataset.from_dict({})
         self.input_output_map = {}
         self.generated_examples = []
+        self.generating_split = split
+        self.loop_counter = 0
 
         chat_api = ChatGPTAgent(self.api_key)
         self.generated_examples = []
@@ -422,9 +439,10 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             # Each API call will return `responses_per_request` completion
             # objects. The upper bound of the length of generated dataset
             # is expected_num_examples + responses_per_request.
-            self.convert_generated_examples_to_generated_dataset()
-            pbar.update(len(self.generated_dataset))
             try:
+                self.convert_generated_examples_to_generated_dataset()
+                pbar.update(len(self.generated_dataset))
+                self.loop_counter += 1
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
                     logging.warning("Maximum number of API calls reached.")
                     return self.generated_dataset
