@@ -1182,3 +1182,14 @@ def test_extract_responses():
                 "Error happened when parsing API completion: <MockObject choices=None>"
             )
             mock_info.assert_not_called()
+            # The generated_examples should be the same.
+            assert data_generator.generated_examples == [
+            example(input_col="1", output_col="a"),
+            example(input_col="1", output_col="b"),
+            example(input_col="1", output_col="a"),
+            example(input_col="3", output_col="a"),
+            example(input_col="3", output_col="b"),
+            example(input_col="4", output_col="c"),
+            example(input_col="4", output_col="c"),
+            example(input_col="5", output_col="a"),
+        ]
