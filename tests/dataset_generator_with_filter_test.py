@@ -35,7 +35,7 @@ MOCK_INVALID_JSON = partial(
     content='{"input": "This is a great movie!", "output": "1}',
 )
 
-example = namedtuple("example", ["input_col", "output_col"])
+Example = namedtuple("Example", ["input_col", "output_col"])
 
 
 class UNKNOWN_GPT3_EXCEPTION(Exception):
@@ -168,11 +168,11 @@ def test_construct_map_with_duplicate_inputs_unique_outputs():
             filter_duplicated_examples=True, cache_root=cache_dir
         )
         data_generator.generated_examples = [
-            example(input_col="apple", output_col="A"),
-            example(input_col="banana", output_col="B"),
-            example(input_col="apple", output_col="E"),
-            example(input_col="orange", output_col="O"),
-            example(input_col="apple", output_col="D"),
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="banana", output_col="B"),
+            Example(input_col="apple", output_col="E"),
+            Example(input_col="orange", output_col="O"),
+            Example(input_col="apple", output_col="D"),
         ]
         data_generator.construct_input_output_map()
 
@@ -193,16 +193,16 @@ def test_construct_map_with_duplicate_inputs_duplicate_outputs():
             filter_duplicated_examples=True, cache_root=cache_dir
         )
         data_generator.generated_examples = [
-            example(input_col="apple", output_col="A"),
-            example(input_col="banana", output_col="C"),
-            example(input_col="apple", output_col="A"),
-            example(input_col="banana", output_col="B"),
-            example(input_col="apple", output_col="G"),
-            example(input_col="apple", output_col="A"),
-            example(input_col="orange", output_col="O"),
-            example(input_col="apple", output_col="D"),
-            example(input_col="banana", output_col="B"),
-            example(input_col="orange", output_col="F"),
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="banana", output_col="C"),
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="banana", output_col="B"),
+            Example(input_col="apple", output_col="G"),
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="orange", output_col="O"),
+            Example(input_col="apple", output_col="D"),
+            Example(input_col="banana", output_col="B"),
+            Example(input_col="orange", output_col="F"),
         ]
         data_generator.construct_input_output_map()
 
@@ -223,9 +223,9 @@ def test_construct_map_with_unique_inputs_outputs():
             filter_duplicated_examples=True, cache_root=cache_dir
         )
         data_generator.generated_examples = [
-            example(input_col="apple", output_col="A"),
-            example(input_col="banana", output_col="B"),
-            example(input_col="orange", output_col="O"),
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="banana", output_col="B"),
+            Example(input_col="orange", output_col="O"),
         ]
         data_generator.construct_input_output_map()
 
@@ -350,11 +350,11 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_u
         )
         data_generator.generating_split = DatasetSplit.TEST
         data_generator.generated_examples = [
-            example(input_col="apple", output_col="A"),
-            example(input_col="banana", output_col="B"),
-            example(input_col="apple", output_col="E"),
-            example(input_col="orange", output_col="O"),
-            example(input_col="apple", output_col="D"),
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="banana", output_col="B"),
+            Example(input_col="apple", output_col="E"),
+            Example(input_col="orange", output_col="O"),
+            Example(input_col="apple", output_col="D"),
         ]
         data_generator.convert_generated_examples_to_generated_dataset()
 
@@ -377,16 +377,16 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_d
         )
         data_generator.generating_split = DatasetSplit.TEST
         data_generator.generated_examples = [
-            example(input_col="apple", output_col="A"),
-            example(input_col="banana", output_col="C"),
-            example(input_col="apple", output_col="A"),
-            example(input_col="banana", output_col="B"),
-            example(input_col="apple", output_col="G"),
-            example(input_col="apple", output_col="A"),
-            example(input_col="orange", output_col="O"),
-            example(input_col="apple", output_col="D"),
-            example(input_col="banana", output_col="B"),
-            example(input_col="orange", output_col="F"),
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="banana", output_col="C"),
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="banana", output_col="B"),
+            Example(input_col="apple", output_col="G"),
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="orange", output_col="O"),
+            Example(input_col="apple", output_col="D"),
+            Example(input_col="banana", output_col="B"),
+            Example(input_col="orange", output_col="F"),
         ]
         data_generator.convert_generated_examples_to_generated_dataset()
 
@@ -409,9 +409,9 @@ def test_convert_generated_examples_to_generated_dataset_with_unique_inputs_outp
         )
         data_generator.generating_split = DatasetSplit.TEST
         data_generator.generated_examples = [
-            example(input_col="apple", output_col="A"),
-            example(input_col="banana", output_col="B"),
-            example(input_col="orange", output_col="O"),
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="banana", output_col="B"),
+            Example(input_col="orange", output_col="O"),
         ]
         data_generator.convert_generated_examples_to_generated_dataset()
 
@@ -492,12 +492,12 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
             data_generator.generated_dataset, excepted_generated_dataset
         )
         assert data_generator.generated_examples == [
-            example("1", "a"),
-            example("1", "a"),
-            example("1", "b"),
-            example("1", "c"),
-            example("2", "a"),
-            example("3", "d"),
+            Example("1", "a"),
+            Example("1", "a"),
+            Example("1", "b"),
+            Example("1", "c"),
+            Example("2", "a"),
+            Example("3", "d"),
         ]
         assert data_generator.input_output_map == {
             "1": Counter({"a": 2, "b": 1, "c": 1}),
@@ -575,17 +575,17 @@ def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generat
             data_generator.generated_dataset, excepted_generated_dataset
         )
         assert data_generator.generated_examples == [
-            example("1", "a"),
-            example("1", "a"),
-            example("1", "b"),
-            example("1", "c"),
-            example("2", "a"),
-            example("3", "d"),
-            example("6", "f"),
-            example("6", "f"),
-            example("6", "f"),
-            example("6", "f"),
-            example("6", "f"),
+            Example("1", "a"),
+            Example("1", "a"),
+            Example("1", "b"),
+            Example("1", "c"),
+            Example("2", "a"),
+            Example("3", "d"),
+            Example("6", "f"),
+            Example("6", "f"),
+            Example("6", "f"),
+            Example("6", "f"),
+            Example("6", "f"),
         ]
         assert data_generator.input_output_map == {
             "1": Counter({"a": 2, "b": 1, "c": 1}),
@@ -702,12 +702,12 @@ def test_generator_with_filter_first_batch(mocked_generate_example):
             dataset_generator.generated_dataset, excepted_dataset
         )
         excepted_examples = [
-            example(input_col="1", output_col="a"),
-            example(input_col="1", output_col="b"),
-            example(input_col="1", output_col="a"),
-            example(input_col="1", output_col="c"),
-            example(input_col="2", output_col="a"),
-            example(input_col="2", output_col="b"),
+            Example(input_col="1", output_col="a"),
+            Example(input_col="1", output_col="b"),
+            Example(input_col="1", output_col="a"),
+            Example(input_col="1", output_col="c"),
+            Example(input_col="2", output_col="a"),
+            Example(input_col="2", output_col="b"),
         ]
         assert dataset_generator.generated_examples == excepted_examples
     gc.collect()
@@ -756,15 +756,15 @@ def test_generator_with_filter_second_batch(mocked_generate_example):
             dataset_generator.generated_dataset, excepted_dataset
         )
         excepted_examples = [
-            example(input_col="1", output_col="a"),
-            example(input_col="1", output_col="b"),
-            example(input_col="1", output_col="a"),
-            example(input_col="1", output_col="c"),
-            example(input_col="2", output_col="a"),
-            example(input_col="2", output_col="b"),
-            example(input_col="3", output_col="a"),
-            example(input_col="3", output_col="a"),
-            example(input_col="3", output_col="b"),
+            Example(input_col="1", output_col="a"),
+            Example(input_col="1", output_col="b"),
+            Example(input_col="1", output_col="a"),
+            Example(input_col="1", output_col="c"),
+            Example(input_col="2", output_col="a"),
+            Example(input_col="2", output_col="b"),
+            Example(input_col="3", output_col="a"),
+            Example(input_col="3", output_col="a"),
+            Example(input_col="3", output_col="b"),
         ]
         assert dataset_generator.generated_examples == excepted_examples
     gc.collect()
@@ -814,18 +814,18 @@ def test_generator_with_filter_third_batch(mocked_generate_example):
             dataset_generator.generated_dataset, excepted_dataset
         )
         excepted_examples = [
-            example(input_col="1", output_col="a"),
-            example(input_col="1", output_col="b"),
-            example(input_col="1", output_col="a"),
-            example(input_col="1", output_col="c"),
-            example(input_col="2", output_col="a"),
-            example(input_col="2", output_col="b"),
-            example(input_col="3", output_col="a"),
-            example(input_col="3", output_col="a"),
-            example(input_col="3", output_col="b"),
-            example(input_col="1", output_col="b"),
-            example(input_col="1", output_col="b"),
-            example(input_col="1", output_col="b"),
+            Example(input_col="1", output_col="a"),
+            Example(input_col="1", output_col="b"),
+            Example(input_col="1", output_col="a"),
+            Example(input_col="1", output_col="c"),
+            Example(input_col="2", output_col="a"),
+            Example(input_col="2", output_col="b"),
+            Example(input_col="3", output_col="a"),
+            Example(input_col="3", output_col="a"),
+            Example(input_col="3", output_col="b"),
+            Example(input_col="1", output_col="b"),
+            Example(input_col="1", output_col="b"),
+            Example(input_col="1", output_col="b"),
         ]
         assert dataset_generator.generated_examples == excepted_examples
     gc.collect()
@@ -876,21 +876,21 @@ def test_generator_with_filter_forth_batch(mocked_generate_example):
             dataset_generator.generated_dataset, excepted_dataset
         )
         excepted_examples = [
-            example(input_col="1", output_col="a"),
-            example(input_col="1", output_col="b"),
-            example(input_col="1", output_col="a"),
-            example(input_col="1", output_col="c"),
-            example(input_col="2", output_col="a"),
-            example(input_col="2", output_col="b"),
-            example(input_col="3", output_col="a"),
-            example(input_col="3", output_col="a"),
-            example(input_col="3", output_col="b"),
-            example(input_col="1", output_col="b"),
-            example(input_col="1", output_col="b"),
-            example(input_col="1", output_col="b"),
-            example(input_col="4", output_col="c"),
-            example(input_col="4", output_col="c"),
-            example(input_col="5", output_col="a"),
+            Example(input_col="1", output_col="a"),
+            Example(input_col="1", output_col="b"),
+            Example(input_col="1", output_col="a"),
+            Example(input_col="1", output_col="c"),
+            Example(input_col="2", output_col="a"),
+            Example(input_col="2", output_col="b"),
+            Example(input_col="3", output_col="a"),
+            Example(input_col="3", output_col="a"),
+            Example(input_col="3", output_col="b"),
+            Example(input_col="1", output_col="b"),
+            Example(input_col="1", output_col="b"),
+            Example(input_col="1", output_col="b"),
+            Example(input_col="4", output_col="c"),
+            Example(input_col="4", output_col="c"),
+            Example(input_col="5", output_col="a"),
         ]
         assert dataset_generator.generated_examples == excepted_examples
     gc.collect()
@@ -941,21 +941,21 @@ def test_generator_with_filter_unlimited_api_calls(mocked_generate_example):
             dataset_generator.generated_dataset, excepted_dataset
         )
         excepted_examples = [
-            example(input_col="1", output_col="a"),
-            example(input_col="1", output_col="b"),
-            example(input_col="1", output_col="a"),
-            example(input_col="1", output_col="c"),
-            example(input_col="2", output_col="a"),
-            example(input_col="2", output_col="b"),
-            example(input_col="3", output_col="a"),
-            example(input_col="3", output_col="a"),
-            example(input_col="3", output_col="b"),
-            example(input_col="1", output_col="b"),
-            example(input_col="1", output_col="b"),
-            example(input_col="1", output_col="b"),
-            example(input_col="4", output_col="c"),
-            example(input_col="4", output_col="c"),
-            example(input_col="5", output_col="a"),
+            Example(input_col="1", output_col="a"),
+            Example(input_col="1", output_col="b"),
+            Example(input_col="1", output_col="a"),
+            Example(input_col="1", output_col="c"),
+            Example(input_col="2", output_col="a"),
+            Example(input_col="2", output_col="b"),
+            Example(input_col="3", output_col="a"),
+            Example(input_col="3", output_col="a"),
+            Example(input_col="3", output_col="b"),
+            Example(input_col="1", output_col="b"),
+            Example(input_col="1", output_col="b"),
+            Example(input_col="1", output_col="b"),
+            Example(input_col="4", output_col="c"),
+            Example(input_col="4", output_col="c"),
+            Example(input_col="5", output_col="a"),
         ]
         assert dataset_generator.generated_examples == excepted_examples
     gc.collect()

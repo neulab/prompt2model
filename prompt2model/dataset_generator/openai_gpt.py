@@ -25,7 +25,7 @@ from prompt2model.utils import (
     handle_openai_error,
 )
 
-example = namedtuple("example", ["input_col", "output_col"])
+Example = namedtuple("Example", ["input_col", "output_col"])
 
 
 class OpenAIDatasetGenerator(DatasetGenerator):
@@ -86,7 +86,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.filter_duplicated_examples = filter_duplicated_examples
         self.cache_root = Path(cache_root)
         self.cache_root.mkdir(exist_ok=True, parents=True)
-        self.generated_examples = []  # type: list[example]
+        self.generated_examples = []  # type: list[Example]
         # Store all the generated examples in a list, which will be converted into
         # self.generated_dataset later and self.input_output_map if
         # filter_duplicated_examples is True.
@@ -160,8 +160,12 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 # self.generated_dataset is not empty. Choose several
                 # random examples from self.generated_dataset to
                 # construct low_equality_example_string.
-                for example in random_examples:
-                    low_equality_example_string += f"""input="{example["input_col"]}"\noutput="{example["output_col"]}"\n"""  # noqa 501
+                random_example_strings = [
+                    f'input="{example["input_col"]}"\noutput="{example["output_col"]}"\n'
+                    for example in random_examples
+                ]
+                random.shuffle(random_example_strings)
+                low_equality_example_string = "\n".join(random_example_strings)
             # To increase the diversity of the prompt to DatasetGenerator, create three
             # prompt templates, COMPLEX, MIDDLE, and SIMPLE. The COMPLEX template
             # contains 4 meta examples, the MIDDLE template contains 3 meta examples,
@@ -182,6 +186,15 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             if count_tokens_from_string(prompt) < 3500:
                 return prompt
             else:
+                orginal_input_string = (
+                    instruction + few_shot_example_string
+                    if few_shot_example_string
+                    else instruction
+                )
+                if count_tokens_from_string(orginal_input_string) > 3500:
+                    logging.warning(
+                        "The original input prompt is too long. Consider writing a shorter prompt."  # noqa 501
+                    )
                 continue
 
     def extract_responses(self, completions: list[openai.Completion]):
@@ -220,12 +233,12 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         ]
 
         The function will create 'example' namedtuples:
-        example(input_col="1", output_col="a")
-        example(input_col="1", output_col="b")
-        example(input_col="1", output_col="a")
-        example(input_col="1", output_col="c")
-        example(input_col="2", output_col="a")
-        example(input_col="2", output_col="b")
+        Example(input_col="1", output_col="a")
+        Example(input_col="1", output_col="b")
+        Example(input_col="1", output_col="a")
+        Example(input_col="1", output_col="c")
+        Example(input_col="2", output_col="a")
+        Example(input_col="2", output_col="b")
 
         And append them to self.generated_examples.
         """
@@ -249,7 +262,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         continue
                     input = str(response_json["input"]).strip()
                     output = str(response_json["output"]).strip()
-                    self.generated_examples.append(example(input, output))
+                    self.generated_examples.append(Example(input, output))
                     logging.info(f"input: \n\n{input}\n\n")  # noqa: E501
                     logging.info(f"output: \n\n{output}\n\n")  # noqa: E501
             except Exception:
@@ -470,7 +483,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             logging.info(f"Loading cache from {str(dataset_cache_path)}.")
             all_generated_examples_dataset = Dataset.load_from_disk(dataset_cache_path)
             self.generated_examples = [
-                example(input_col=ex["input_col"], output_col=ex["output_col"])
+                Example(input_col=ex["input_col"], output_col=ex["output_col"])
                 for ex in all_generated_examples_dataset
             ]
             # self.generated_examples will be load from disk. self.generated_dataset

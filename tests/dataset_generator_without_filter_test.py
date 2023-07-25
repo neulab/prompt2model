@@ -33,7 +33,7 @@ MOCK_INVALID_JSON = partial(
     content='{"input": "This is a great movie!", "output": "1}',
 )
 
-example = namedtuple("example", ["input_col", "output_col"])
+Example = namedtuple("Example", ["input_col", "output_col"])
 
 
 class UNKNOWN_GPT3_EXCEPTION(Exception):
@@ -359,11 +359,11 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_u
         )
         data_generator.generating_split = DatasetSplit.TEST
         data_generator.generated_examples = [
-            example(input_col="apple", output_col="A"),
-            example(input_col="banana", output_col="B"),
-            example(input_col="apple", output_col="E"),
-            example(input_col="orange", output_col="O"),
-            example(input_col="apple", output_col="D"),
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="banana", output_col="B"),
+            Example(input_col="apple", output_col="E"),
+            Example(input_col="orange", output_col="O"),
+            Example(input_col="apple", output_col="D"),
         ]
         data_generator.convert_generated_examples_to_generated_dataset()
         expected_dataset = Dataset.from_dict(
@@ -391,16 +391,16 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_d
         )
         data_generator.generating_split = DatasetSplit.TEST
         data_generator.generated_examples = [
-            example(input_col="apple", output_col="A"),
-            example(input_col="banana", output_col="C"),
-            example(input_col="apple", output_col="A"),
-            example(input_col="banana", output_col="B"),
-            example(input_col="apple", output_col="G"),
-            example(input_col="apple", output_col="A"),
-            example(input_col="orange", output_col="O"),
-            example(input_col="apple", output_col="D"),
-            example(input_col="banana", output_col="B"),
-            example(input_col="orange", output_col="F"),
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="banana", output_col="C"),
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="banana", output_col="B"),
+            Example(input_col="apple", output_col="G"),
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="orange", output_col="O"),
+            Example(input_col="apple", output_col="D"),
+            Example(input_col="banana", output_col="B"),
+            Example(input_col="orange", output_col="F"),
         ]
         data_generator.convert_generated_examples_to_generated_dataset()
         expected_dataset = Dataset.from_dict(
@@ -428,9 +428,9 @@ def test_convert_generated_examples_to_generated_dataset_with_unique_inputs_outp
         )
         data_generator.generating_split = DatasetSplit.TEST
         data_generator.generated_examples = [
-            example(input_col="apple", output_col="A"),
-            example(input_col="banana", output_col="B"),
-            example(input_col="orange", output_col="O"),
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="banana", output_col="B"),
+            Example(input_col="orange", output_col="O"),
         ]
         data_generator.convert_generated_examples_to_generated_dataset()
         expected_dataset = Dataset.from_dict(
@@ -594,7 +594,7 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
             )
             mock_warning.assert_not_called()
         assert are_datasets_identical(data_generator.generated_dataset, cached_dataset)
-        assert data_generator.generated_examples == [example("1", "2")] * 110
+        assert data_generator.generated_examples == [Example("1", "2")] * 110
         assert data_generator.input_output_map == defaultdict(Counter)
         directly_constructed_dataset = Dataset.from_dict(
             {
@@ -668,7 +668,7 @@ def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_gene
         )
         assert (
             data_generator.generated_examples
-            == [example("1", "2")] * 110 + [example("This is a great movie!", "1")] * 10
+            == [Example("1", "2")] * 110 + [Example("This is a great movie!", "1")] * 10
         )
         assert mocked_generate_example.call_count == 1
     gc.collect()
@@ -721,22 +721,22 @@ def test_extract_responses():
         # The second choice in mock_completion_2
         # is invalid. So it should be discarded.
         assert data_generator.generated_examples == [
-            example(input_col="1", output_col="a"),
-            example(input_col="1", output_col="b"),
-            example(input_col="1", output_col="a"),
-            example(input_col="3", output_col="a"),
-            example(input_col="3", output_col="b"),
+            Example(input_col="1", output_col="a"),
+            Example(input_col="1", output_col="b"),
+            Example(input_col="1", output_col="a"),
+            Example(input_col="3", output_col="a"),
+            Example(input_col="3", output_col="b"),
         ]
         data_generator.extract_responses([mock_completion_3])
         assert data_generator.generated_examples == [
-            example(input_col="1", output_col="a"),
-            example(input_col="1", output_col="b"),
-            example(input_col="1", output_col="a"),
-            example(input_col="3", output_col="a"),
-            example(input_col="3", output_col="b"),
-            example(input_col="4", output_col="c"),
-            example(input_col="4", output_col="c"),
-            example(input_col="5", output_col="a"),
+            Example(input_col="1", output_col="a"),
+            Example(input_col="1", output_col="b"),
+            Example(input_col="1", output_col="a"),
+            Example(input_col="3", output_col="a"),
+            Example(input_col="3", output_col="b"),
+            Example(input_col="4", output_col="c"),
+            Example(input_col="4", output_col="c"),
+            Example(input_col="5", output_col="a"),
         ]
         with patch("logging.info") as mock_info, patch(
             "logging.warning"
@@ -748,13 +748,13 @@ def test_extract_responses():
             mock_info.assert_not_called()
             # The generated_examples should be the same.
             assert data_generator.generated_examples == [
-                example(input_col="1", output_col="a"),
-                example(input_col="1", output_col="b"),
-                example(input_col="1", output_col="a"),
-                example(input_col="3", output_col="a"),
-                example(input_col="3", output_col="b"),
-                example(input_col="4", output_col="c"),
-                example(input_col="4", output_col="c"),
-                example(input_col="5", output_col="a"),
+                Example(input_col="1", output_col="a"),
+                Example(input_col="1", output_col="b"),
+                Example(input_col="1", output_col="a"),
+                Example(input_col="3", output_col="a"),
+                Example(input_col="3", output_col="b"),
+                Example(input_col="4", output_col="c"),
+                Example(input_col="4", output_col="c"),
+                Example(input_col="5", output_col="a"),
             ]
     gc.collect()
