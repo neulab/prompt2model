@@ -8,7 +8,7 @@ import logging
 import math
 import os
 import random
-from collections import Counter, namedtuple
+from collections import Counter, namedtuple, defaultdict
 from pathlib import Path
 
 import openai
@@ -97,7 +97,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         # filtered based on multi-votes first to construct self.generated_dataset.
         # If filter_duplicated_examples is False, self.generated_examples will
         # not be filtered and directly used to construct self.generated_dataset.
-        self.input_output_map: dict[str, Counter] = {}
+        self.input_output_map: dict[str, Counter] = defaultdict(Counter)
         # If filter_duplicated_examples is True, self.generated_examples will
         # firstly be converted into self.input_output_map then into
         # self.generated_dataset. Else, self.input_output_map will always be {}.
@@ -267,22 +267,17 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         """
         # When ever using the multi-vote filtering mechanism, refresh
         # self.input_output_map to avoid duplicately countering.
-        self.input_output_map = {}
+        self.input_output_map = defaultdict(Counter)
 
         # Iterate through the examples and construct the mapping
         for example in self.generated_examples:
             input_str = example.input_col
             output_str = example.output_col
 
-            # If the input is already in the mapping, update the counter
-            if input_str in self.input_output_map:
-                self.input_output_map[input_str][output_str] += 1
-            # If the input is not in the mapping, create a new counter
-            else:
-                self.input_output_map[input_str] = Counter({output_str: 1})
+            self.input_output_map[input_str][output_str] += 1
 
         if len(self.generated_examples) != 0:
-            assert self.input_output_map != {}
+            assert self.input_output_map
 
     def use_multi_vote_to_construct_generated_dataset(self):
         """Multi-vote outputs self.input_output_map to construct self.generated_dataset.
@@ -434,7 +429,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             # is True, it will also be constructed in the first loop.
         else:
             self.generated_dataset = Dataset.from_dict({})
-            self.input_output_map = {}
+            self.input_output_map = defaultdict(Counter)
             self.generated_examples = []
 
         chat_api = ChatGPTAgent(self.api_key)
