@@ -8,7 +8,7 @@ import logging
 import math
 import os
 import random
-from collections import Counter, namedtuple, defaultdict
+from collections import Counter, defaultdict, namedtuple
 from pathlib import Path
 
 import openai
@@ -231,28 +231,24 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 continue
 
     def construct_input_output_map(self):
-        """Construct a mapping from input to output for multi-vote filtering.
+        """Constructs a dictionary mapping inputs to `Counter` objects of outputs.
 
         Ideally, each input should have a unique output (one-to-one mapping).
-        However, the LLM sometimes generates duplicate inputs with different
-        but outputs. For example, generate two examples with the same input,
-        "What is the biggest city in China?". One output is `Shanghai`,
-        and another is `The biggest city in China is Shanghai`. These two
-        outputs for the same input are different, but both are right.
-        Sometimes, some of the different outputs are wrong. For example,
-        for the same input "What is the Chemical sybol of gold?", the three
-        outputs are "Au", "Au", and "AU". The first two are right, but the
-        the third is wrong.
+        However, language models may occasionally generate different outputs
+        for identical inputs. For instance, given the input “What is the biggest
+        city in China?”, it might produce different but correct outputs such as
+        “Shanghai” and “The biggest city in China is Shanghai”. At other times,
+        it may produce incorrect variations. For the input “What is the Chemical
+        symbol of gold?”, the outputs might be “Au”, “Au”, and “AU”, where the
+        last one is wrong due to capital letters.
 
-        The OpenAIDataSetGenerator addresses this issue by employing a
-        multi-vote filtering mechanism in two steps. This function is the first
-        step, which creates a dictionary-based data structure to capture
-        the relationship between inputs and their corresponding outputs.
+        To address this, OpenAIDataSetGenerator uses a two-step multi-vote
+        filtering mechanism. This function represents the first step, creating a
+        dictionary to map inputs to a `Counter` of their outputs.
 
-        The function iterates through all the examples and constructs a
-        dictionary with inputs as keys and `Counter` objects as values.
-        The `Counter` is used to keep track of how many times each
-        output occurs for a given input.
+        The function iterates over all the examples, building a dictionary where
+        inputs serve as keys and `Counter` objects as values. The `Counter`
+        tracks the frequency of each output for a specific input.
 
         For example:
         input: ["apple", "banana", "apple", "orange", "apple"]
