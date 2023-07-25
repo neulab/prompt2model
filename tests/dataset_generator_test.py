@@ -13,18 +13,21 @@ from datasets import Dataset
 from prompt2model.dataset_generator.base import DatasetSplit
 from prompt2model.dataset_generator.openai_gpt import OpenAIDatasetGenerator
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
-from test_helpers import are_datasets_identical, mock_batch_openai_response
+from test_helpers import (
+    are_datasets_identical,
+    mock_batch_openai_response_with_identical_completion,
+)
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
-    mock_batch_openai_response,
+    mock_batch_openai_response_with_identical_completion,
     content='{"input": "This is a great movie!", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
-    mock_batch_openai_response,
+    mock_batch_openai_response_with_identical_completion,
     content='{"input": "This is a great movie!", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
-    mock_batch_openai_response,
+    mock_batch_openai_response_with_identical_completion,
     content='{"input": "This is a great movie!", "output": "1}',
 )
 
@@ -118,7 +121,7 @@ def check_generate_dataset_dict(dataset_generator: OpenAIDatasetGenerator):
     "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
     side_effect=MOCK_CLASSIFICATION_EXAMPLE,
 )
-def test_api_call_counter(mocked_generate_example):
+def test_api_call_counter_without_filter(mocked_generate_example):
     """Test classification dataset generation using the OpenAIDatasetGenerator.
 
     This function first test the unlimited generation. Then test generation
