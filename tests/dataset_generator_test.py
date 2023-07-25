@@ -535,6 +535,7 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_u
         data_generator = OpenAIDatasetGenerator(
             filter_duplicated_examples=True, cache_root=cache_dir
         )
+        data_generator.generating_split = DatasetSplit.TEST
         data_generator.generated_examples = [
             example(input_col="apple", output_col="A"),
             example(input_col="banana", output_col="B"),
@@ -575,6 +576,7 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_d
         data_generator = OpenAIDatasetGenerator(
             filter_duplicated_examples=True, cache_root=cache_dir
         )
+        data_generator.generating_split = DatasetSplit.TEST
         data_generator.generated_examples = [
             example(input_col="apple", output_col="A"),
             example(input_col="banana", output_col="C"),
@@ -621,6 +623,7 @@ def test_convert_generated_examples_to_generated_dataset_with_unique_inputs_outp
         data_generator = OpenAIDatasetGenerator(
             filter_duplicated_examples=True, cache_root=cache_dir
         )
+        data_generator.generating_split = DatasetSplit.TEST
         data_generator.generated_examples = [
             example(input_col="apple", output_col="A"),
             example(input_col="banana", output_col="B"),
@@ -660,6 +663,7 @@ def test_convert_generated_examples_to_generated_dataset_with_empty_examples_lis
         data_generator = OpenAIDatasetGenerator(
             filter_duplicated_examples=True, cache_root=cache_dir
         )
+        data_generator.generating_split = DatasetSplit.TEST
         data_generator.generated_examples = []
         data_generator.convert_generated_examples_to_generated_dataset()
 

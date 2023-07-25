@@ -101,11 +101,10 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         # If filter_duplicated_examples is True, self.generated_examples will
         # firstly be converted into self.input_output_map then into
         # self.generated_dataset. Else, self.input_output_map will always be {}.
-        self.loop_counter = 0
         self.generating_split: DatasetSplit | None = None
-        # After each while loop, we increment self.loop_counter and store
-        # self.generated_dataset in f"{cache_root}/{generating_split}{loop_counter}".
         # generating_split is the DatasetSplit which is being generated.
+        # After each while loop, self.generated_examples will be stored as
+        # a Datast in f"{cache_root}/{generating_split}".
 
     def construct_prompt(
         self,
@@ -339,6 +338,14 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         the mapping to a Dataset. If self.filter_duplicated_examples
         is False, directly construct a Dataset.
         """
+        all_generated_examples_dataset = Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in self.generated_examples],
+                "output_col": [
+                    example.output_col for example in self.generated_examples
+                ],
+            }
+        )
         if self.filter_duplicated_examples:
             self.construct_input_output_map()
             self.use_multi_vote_to_construct_generated_dataset()
@@ -346,29 +353,17 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 assert self.input_output_map is not None
                 assert self.generated_dataset is not None
         else:
-            self.generated_dataset = Dataset.from_dict(
-                {
-                    "input_col": [
-                        example.input_col for example in self.generated_examples
-                    ],
-                    "output_col": [
-                        example.output_col for example in self.generated_examples
-                    ],
-                }
-            )
+            self.generated_dataset = all_generated_examples_dataset
+        # If self.generated_examples is not empty,
+        # self.generated_examples is not empty.
         if len(self.generated_examples) != 0:
             assert not are_datasets_identical(
                 self.generated_dataset, Dataset.from_dict({})
             )
-        # In the first loop, self.generated_dataset is empty.
-        # The generated_dataset won't be saved.
-        if self.loop_counter != 0:
-            dataset_cache_path = Path(
-                self.cache_root / f"{self.generating_split.value}_{self.loop_counter}"
-            )
-            # Avoid overwriting the previous generated_dataset cache.
-            assert not dataset_cache_path.exists()
-            self.generated_dataset.save_to_disk(dataset_cache_path)
+        dataset_cache_path = Path(self.cache_root / f"{self.generating_split.value}")
+        # No matter self.filter_duplicated_examples is True or False,
+        # all the generated examples will be saved to disk as a Dataset.
+        all_generated_examples_dataset.save_to_disk(dataset_cache_path)
 
     def compute_batch_size(self, expected_num_examples: int) -> int:
         """Compute the batch size to use zeno-bulid to call OpenAI API.
@@ -426,14 +421,23 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         """
         # Refresh the generated_dataset, generated_examples,
         # input_output_map, and generating_split for different split.
-        self.generated_dataset = Dataset.from_dict({})
-        self.input_output_map = {}
-        self.generated_examples = []
         self.generating_split = split
-        self.loop_counter = 0
+        dataset_cache_path = Path(self.cache_root / f"{self.generating_split.value}")
+        if dataset_cache_path.exists():
+            all_generated_examples_dataset = Dataset.load_from_disk(dataset_cache_path)
+            self.generated_examples = [
+                example(input_col=ex["input_col"], output_col=ex["output_col"])
+                for ex in all_generated_examples_dataset
+            ]
+            # self.generated_examples will be load from disk. self.generated_dataset
+            # will be initialized in the first loop. If self.filter_duplicated_examples
+            # is True, it will also be constructed in the first loop.
+        else:
+            self.generated_dataset = Dataset.from_dict({})
+            self.input_output_map = {}
+            self.generated_examples = []
 
         chat_api = ChatGPTAgent(self.api_key)
-        self.generated_examples = []
         pbar = tqdm(total=expected_num_examples, desc="Generating examples")
         while True:
             # Each API call will return `responses_per_request` completion
@@ -442,7 +446,6 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             try:
                 self.convert_generated_examples_to_generated_dataset()
                 pbar.update(len(self.generated_dataset))
-                self.loop_counter += 1
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
                     logging.warning("Maximum number of API calls reached.")
                     return self.generated_dataset
