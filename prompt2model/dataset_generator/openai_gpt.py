@@ -276,11 +276,37 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             assert self.input_output_map
 
     def use_multi_vote_to_construct_generated_dataset(self):
-        """Multi-vote outputs self.input_output_map to construct self.generated_dataset.
+        """Multi-vote to construct self.generated_dataset from self.input_output_map.
 
-        After multi-vote filtering, the input_col of self.generated_dataset is filtered
-        unique inputs and the output_col is the shortest but most frequent output
-        for the corresponding input.
+        This method uses multi-vote filtering to create a unique mapping from inputs
+        to outputs. The input_col of self.generated_dataset contains unique inputs,
+        while the output_col holds the shortest, most frequent output for the
+        corresponding input.
+
+        The function asserts that self.filter_duplicated_examples is True and that
+        self.input_output_map is not None when self.generated_examples is not
+        empty. It then iterates over self.input_output_map, finding the most frequent
+        output for each input. If there are multiple outputs with the highest frequency,
+        it selects the shortest one. If there are multiple shortest outputs with the
+        highest frequency, it selects the one that comes first in lexicographical
+        (alphabetical) order.
+
+        Example:
+        Suppose self.input_output_map is:
+        {
+            "apple": Counter({"A": 2, "D": 2}),
+            "banana": Counter({"B": 2, "C": 1}),
+            "orange": Counter({"O": 1})
+        }
+
+        The function will produce self.generated_dataset:
+        {
+            "input_col": ["apple", "banana", "orange"],
+            "output_col": ["A", "B", "O"]
+        }
+
+        Note: When self.generated_examples is empty, both self.input_output_map
+        and self.generated_dataset will be empty.
         """
         # Only use multi-vote filtering if self.filter_duplicated_examples is True.
         # And self.input_output_map is not None when self.generated_examples
