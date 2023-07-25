@@ -5,6 +5,7 @@ import os
 import tempfile
 from collections import Counter, namedtuple
 from functools import partial
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -698,8 +699,8 @@ def test_compute_batch_size_with_limited_max_api_calls():
         data_generator.api_call_counter = 26
         data_generator.generated_dataset = Dataset.from_dict(
             {
-                "input_col": [1] * 110,
-                "output_col": [2] * 110,
+                "input_col": ["1"] * 110,
+                "output_col": ["2"] * 110,
             }
         )
         # Default batch size and responses_per_request are both 5.
@@ -744,8 +745,8 @@ def test_compute_batch_size_with_unlimited_max_api_calls():
         data_generator = OpenAIDatasetGenerator(cache_root=cache_dir)
         data_generator.generated_dataset = Dataset.from_dict(
             {
-                "input_col": [1] * 110,
-                "output_col": [2] * 110,
+                "input_col": ["1"] * 110,
+                "output_col": ["2"] * 110,
             }
         )
         # Default batch size and responses_per_request are both 5.
@@ -770,3 +771,90 @@ def test_compute_batch_size_with_unlimited_max_api_calls():
         )
         batch_size = data_generator.compute_batch_size(expected_num_examples=125)
         assert batch_size == data_generator.batch_size == 5
+
+
+def test_load_cache_dataset_without_filter_duplicated_examples():
+    """Test the cached dataset loading without filtering duplicated examples."""
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        data_generator = OpenAIDatasetGenerator(
+            cache_root=cache_dir, filter_duplicated_examples=False
+        )
+        dataset_cache_path = Path(
+            data_generator.cache_root / f"{DatasetSplit.TEST.value}"
+        )
+        cached_dataset = Dataset.from_dict(
+            {
+                "input_col": ["1"] * 110,
+                "output_col": ["2"] * 110,
+            }
+        )
+        cached_dataset.save_to_disk(dataset_cache_path)
+        # The generate_dataset_split would first load the cached
+        # dataset into self.generated_examples. Then in the while
+        # loop, convert_generated_examples_to_generated_dataset
+        # would be called to construct the self.generated_dataset.
+        # Note that filter_duplicated_examples is False, so the
+        # self.generated_examples won't be filtered. And since the
+        # expected_num_examples is 0, the while loop would exit
+        # immediately. So the self.generated_dataset would be the
+        # same as the cached dataset.
+        data_generator.generate_dataset_split(
+            expected_num_examples=0, prompt_spec=MockPromptSpec, split=DatasetSplit.TEST
+        )
+        assert are_datasets_identical(data_generator.generated_dataset, cached_dataset)
+        directly_constructed_dataset = Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in data_generator.generated_examples],
+                "output_col": [
+                    example.output_col for example in data_generator.generated_examples
+                ],
+            }
+        )
+        assert are_datasets_identical(directly_constructed_dataset, cached_dataset)
+
+def test_load_cache_dataset_with_filter_duplicated_examples():
+    """Test the cached dataset loading with filtering duplicated examples."""
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        data_generator = OpenAIDatasetGenerator(
+            cache_root=cache_dir, filter_duplicated_examples=True
+        )
+        dataset_cache_path = Path(
+            data_generator.cache_root / f"{DatasetSplit.TEST.value}"
+        )
+        cached_dataset = Dataset.from_dict(
+            {
+                "input_col": ["1", "1", "1", "1", "2", "3"],
+                "output_col": ["a", "a", "b", "c", "a", "d"],
+            }
+        )
+        cached_dataset.save_to_disk(dataset_cache_path)
+        # The generate_dataset_split would first load the cached
+        # dataset into self.generated_examples. Then in the while
+        # loop, convert_generated_examples_to_generated_dataset
+        # would be called to construct the self.generated_dataset.
+        # Note that filter_duplicated_examples is False, so the
+        # self.generated_examples won't be filtered. And since the
+        # expected_num_examples is 0, the while loop would exit
+        # immediately. So the self.generated_dataset would be the
+        # same as the cached dataset.
+        data_generator.generate_dataset_split(
+            expected_num_examples=0, prompt_spec=MockPromptSpec, split=DatasetSplit.TEST
+        )
+        excepted_generated_dataset = Dataset.from_dict(
+            {
+                "input_col": ["1", "2", "3"],
+                "output_col": ["a", "a", "d"],
+            }
+        )
+        assert are_datasets_identical(data_generator.generated_dataset, excepted_generated_dataset)
+        directly_constructed_dataset = Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in data_generator.generated_examples],
+                "output_col": [
+                    example.output_col for example in data_generator.generated_examples
+                ],
+            }
+        )
+        assert are_datasets_identical(directly_constructed_dataset, cached_dataset)
