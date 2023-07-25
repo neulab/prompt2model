@@ -300,16 +300,28 @@ def test_generator_with_filter():
     batch_size = 2
     responses_per_request = 3
 
+    def reset_mock_batch_openai_response_with_different_completions():
+        if hasattr(
+            mock_batch_openai_response_with_different_completions, "mock_completions"
+        ):
+            del mock_batch_openai_response_with_different_completions.mock_completions
+        if hasattr(
+            mock_batch_openai_response_with_different_completions, "current_index"
+        ):
+            del mock_batch_openai_response_with_different_completions.current_index
+
     @patch(
         "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
         side_effect=mock_batch_openai_response_with_different_completions,
     )
-    def test_generator_with_filter_and_one_api_call(mocked_generate_example):
-        # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
+    def test_generator_with_filter_first_batch(mocked_generate_example):
+        # The first API call's batch_size = 2. And generate 6 responses.
+        # Init the OpenAIDatasetGenerator with `max_api_calls = 2`.
         with tempfile.TemporaryDirectory() as cache_dir:
+            reset_mock_batch_openai_response_with_different_completions()
             dataset_generator = OpenAIDatasetGenerator(
                 api_key,
-                max_api_calls=1,
+                max_api_calls=2,
                 filter_duplicated_examples=filter_duplicated_examples,
                 cache_root=cache_dir,
                 batch_size=batch_size,
@@ -319,6 +331,7 @@ def test_generator_with_filter():
                 prompt_spec, expected_num_examples, split
             )
             assert mocked_generate_example.call_count == 1
+            assert dataset_generator.api_call_counter == 2
             excepted_dataset = Dataset.from_dict(
                 {
                     "input_col": ["1", "2"],
@@ -327,7 +340,140 @@ def test_generator_with_filter():
             )
             assert are_datasets_identical(generated_dataset, excepted_dataset)
 
-    test_generator_with_filter_and_one_api_call()
+    @patch(
+        "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+        side_effect=mock_batch_openai_response_with_different_completions,
+    )
+    def test_generator_with_filter_second_batch(mocked_generate_example):
+        # The first API call's batch_size = 1. And generate 6 responses.
+        # The second API call's batch_size = 1. And generate 3 responses.
+        # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
+        with tempfile.TemporaryDirectory() as cache_dir:
+            reset_mock_batch_openai_response_with_different_completions()
+            dataset_generator = OpenAIDatasetGenerator(
+                api_key,
+                max_api_calls=3,
+                filter_duplicated_examples=filter_duplicated_examples,
+                cache_root=cache_dir,
+                batch_size=batch_size,
+                responses_per_request=responses_per_request,
+            )
+            generated_dataset = dataset_generator.generate_dataset_split(
+                prompt_spec, expected_num_examples, split
+            )
+            assert mocked_generate_example.call_count == 2
+            assert dataset_generator.api_call_counter == 3
+            excepted_dataset = Dataset.from_dict(
+                {
+                    "input_col": ["1", "2", "3"],
+                    "output_col": ["a", "a", "a"],
+                }
+            )
+            assert are_datasets_identical(generated_dataset, excepted_dataset)
+
+    @patch(
+        "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+        side_effect=mock_batch_openai_response_with_different_completions,
+    )
+    def test_generator_with_filter_third_batch(mocked_generate_example):
+        # The first API call's batch_size = 1. And generate 6 responses.
+        # The second API call's batch_size = 1. And generate 3 responses.
+        # The third API call's batch_size = 1. And generate 3 responses.
+        # Init the OpenAIDatasetGenerator with `max_api_calls = 4`.
+        with tempfile.TemporaryDirectory() as cache_dir:
+            reset_mock_batch_openai_response_with_different_completions()
+            dataset_generator = OpenAIDatasetGenerator(
+                api_key,
+                max_api_calls=4,
+                filter_duplicated_examples=filter_duplicated_examples,
+                cache_root=cache_dir,
+                batch_size=batch_size,
+                responses_per_request=responses_per_request,
+            )
+            generated_dataset = dataset_generator.generate_dataset_split(
+                prompt_spec, expected_num_examples, split
+            )
+            assert mocked_generate_example.call_count == 3
+            assert dataset_generator.api_call_counter == 4
+            excepted_dataset = Dataset.from_dict(
+                {
+                    "input_col": ["1", "2", "3"],
+                    "output_col": ["b", "a", "a"],
+                }
+            )
+            assert are_datasets_identical(generated_dataset, excepted_dataset)
+
+    @patch(
+        "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+        side_effect=mock_batch_openai_response_with_different_completions,
+    )
+    def test_generator_with_filter_forth_batch(mocked_generate_example):
+        # The first API call's batch_size = 1. And generate 6 responses.
+        # The second API call's batch_size = 1. And generate 3 responses.
+        # The third API call's batch_size = 1. And generate 3 responses.
+        # The forth and last API call's batch_size = 1. And generate 3 responses.
+        # Init the OpenAIDatasetGenerator with `max_api_calls = 5`.
+        with tempfile.TemporaryDirectory() as cache_dir:
+            reset_mock_batch_openai_response_with_different_completions()
+            dataset_generator = OpenAIDatasetGenerator(
+                api_key,
+                max_api_calls=5,
+                filter_duplicated_examples=filter_duplicated_examples,
+                cache_root=cache_dir,
+                batch_size=batch_size,
+                responses_per_request=responses_per_request,
+            )
+            generated_dataset = dataset_generator.generate_dataset_split(
+                prompt_spec, expected_num_examples, split
+            )
+            assert mocked_generate_example.call_count == 4
+            assert dataset_generator.api_call_counter == 5
+            excepted_dataset = Dataset.from_dict(
+                {
+                    "input_col": ["1", "2", "3", "4", "5"],
+                    "output_col": ["b", "a", "a", "c", "a"],
+                }
+            )
+            assert are_datasets_identical(generated_dataset, excepted_dataset)
+
+    @patch(
+        "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+        side_effect=mock_batch_openai_response_with_different_completions,
+    )
+    def test_generator_with_filter_unlimited_api_calls(mocked_generate_example):
+        # The first API call's batch_size = 1. And generate 6 responses.
+        # The second API call's batch_size = 1. And generate 3 responses.
+        # The third API call's batch_size = 1. And generate 3 responses.
+        # The forth and last API call's batch_size = 1. And generate 3 responses.
+        # After the forth batch, the generation ends. No need for further API call.
+        # Init the OpenAIDatasetGenerator with unlimited `max_api_calls`.
+        with tempfile.TemporaryDirectory() as cache_dir:
+            reset_mock_batch_openai_response_with_different_completions()
+            dataset_generator = OpenAIDatasetGenerator(
+                api_key,
+                filter_duplicated_examples=filter_duplicated_examples,
+                cache_root=cache_dir,
+                batch_size=batch_size,
+                responses_per_request=responses_per_request,
+            )
+            generated_dataset = dataset_generator.generate_dataset_split(
+                prompt_spec, expected_num_examples, split
+            )
+            assert mocked_generate_example.call_count == 4
+            assert dataset_generator.api_call_counter == 5
+            excepted_dataset = Dataset.from_dict(
+                {
+                    "input_col": ["1", "2", "3", "4", "5"],
+                    "output_col": ["b", "a", "a", "c", "a"],
+                }
+            )
+            assert are_datasets_identical(generated_dataset, excepted_dataset)
+
+    test_generator_with_filter_first_batch()
+    test_generator_with_filter_second_batch()
+    test_generator_with_filter_third_batch()
+    test_generator_with_filter_forth_batch()
+    test_generator_with_filter_unlimited_api_calls()
 
 
 @patch(

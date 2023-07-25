@@ -208,7 +208,7 @@ def mock_batch_openai_response_with_different_completions(
 
         mock_completion_4 = MockCompletion()
         mock_completion_4.choices = [
-            {"message": {"content": '{"input": "1", "output": "a"}'}},
+            {"message": {"content": '{"input": "1", "output": "b"}'}},
             {"message": {"content": '{"input": "1", "output": "b"}'}},
             {"message": {"content": '{"input": "1", "output": "b"}'}},
         ]
@@ -221,9 +221,9 @@ def mock_batch_openai_response_with_different_completions(
             {"message": {"content": '{"input": "4", "output": "c"}'}},
             {"message": {"content": '{"input": "5", "output": "a"}'}},
         ]
-        mock_batch_openai_response_with_different_completions.mock_completions[
-            3
-        ].choices = []
+        mock_batch_openai_response_with_different_completions.mock_completions[3] = [
+            mock_completion_5
+        ]
 
     # Get the current index and increment it for the next call.
     current_index = mock_batch_openai_response_with_different_completions.current_index
