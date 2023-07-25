@@ -8,6 +8,7 @@ from functools import partial
 from pathlib import Path
 from unittest.mock import patch
 
+import datasets
 import pytest
 from datasets import Dataset
 
@@ -464,13 +465,13 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
         # dataset into self.generated_examples. Then in the while
         # loop, convert_generated_examples_to_generated_dataset
         # would be called to construct the self.generated_dataset.
-        # Note that filter_duplicated_examples is False, so the
-        # self.generated_examples won't be filtered. And since the
-        # expected_num_examples is 0, the while loop would exit
-        # immediately. So the self.generated_dataset would be the
-        # same as the cached dataset.
+        # Note that filter_duplicated_examples is True, so the
+        # self.generated_examples will be filtered to 3 examples
+        # in self.generated_dataset. Since expected_num_examples
+        # is 3, the while loop would exit  immediately. So the
+        # self.generated_dataset would be the filtered cached dataset.
         data_generator.generate_dataset_split(
-            expected_num_examples=0, prompt_spec=MockPromptSpec, split=DatasetSplit.TEST
+            expected_num_examples=3, prompt_spec=MockPromptSpec, split=DatasetSplit.TEST
         )
         excepted_generated_dataset = Dataset.from_dict(
             {
@@ -481,6 +482,19 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
         assert are_datasets_identical(
             data_generator.generated_dataset, excepted_generated_dataset
         )
+        assert data_generator.generated_examples == [
+            example("1", "a"),
+            example("1", "a"),
+            example("1", "b"),
+            example("1", "c"),
+            example("2", "a"),
+            example("3", "d"),
+        ]
+        assert data_generator.input_output_map == {
+            "1": Counter({"a": 2, "b": 1, "c": 1}),
+            "2": Counter({"a": 1}),
+            "3": Counter({"d": 1}),
+        }
         directly_constructed_dataset = Dataset.from_dict(
             {
                 "input_col": [
@@ -498,9 +512,11 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
 These tests validate the generation process with filter_duplicated_examples set to True.
 
 These tests work together with `mock_batch_openai_response_with_different_completions`
-function to simulate the generation process of the OpenAIDataSetGenerator. The tests
-initialize an OpenAIDataSetGenerator with batch_size = 2, responses_per_request = 3,
-expected_num_examples = 5, and filter_duplicated_examples = True.
+function to simulate the generation process of the OpenAIDataSetGenerator.
+
+The first five tests check the generation of a single dataset spilit, they used
+a shared OpenAIDataSetGenerator with batch_size = 2, responses_per_request=3,
+filter_duplicated_examples=True, and expected_num_examples = 5.
 
 In the first API call, the generator produce 2 * 3 = 6 responses. After filtering
 duplicates, the generated_dataset will be:
@@ -514,7 +530,6 @@ batch_size = (expected_num_examples - len(generated_dataset))
 / responses_per_request = (5 - 2) / 3 = 1.
 
 The second API call reduces batch_size to 1 and generates 3 more responses.
-
 
 After filtering duplicates, the generated_dataset will be:
     Dataset.from_dict(
@@ -850,3 +865,125 @@ def test_generator_with_filter_unlimited_api_calls(mocked_generate_example):
             example(input_col="5", output_col="a"),
         ]
         assert dataset_generator.generated_examples == excepted_examples
+
+
+@patch(
+    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    side_effect=mock_batch_openai_response_with_different_completions,
+)
+def test_generator_with_filter_to_generate_datasetdict(mocked_generate_example):
+    """The last test cheks the generation of a DatasetDict.
+
+    Inintialize OpenAIDataSetGenerator with batch_size = 2,
+    responses_per_request=3, filter_duplicated_examples=True,
+    max_api_calls=7 and expected_num_examples = {
+        DatasetSplit.TRAIN: 4,
+        DatasetSplit.VAL: 4,
+        DatasetSplit.TEST: 2,
+    }
+
+    For the first split, the batch_size = 2, calling the API twice,
+    generating 6 responses in the first batch. After filtering
+    duplicates, the generated dataset for train split is:
+    Dataset.from_dict(
+    {
+        "input_col": ["1", "2"],
+        "output_col": ["a", "a"],
+    })
+
+    The train split has not meets the expected num_examples, so
+    batch_size = (expected_num_examples - len(generated_dataset))
+    / responses_per_request = (5 - 2) / 3 = 1.
+
+    The second API call reduces batch_size to 1 and generates 3 more responses.
+
+    After filtering duplicates, the generated_dataset for train split will be:
+        Dataset.from_dict(
+        {
+            "input_col": ["1", "2", "3"],
+            "output_col": ["a", "a", "a"],
+        })
+
+    The third API call again uses batch_size = 1 and generates another 3 responses.
+    After filtering duplicates, the generated_dataset will be:
+        Dataset.from_dict(
+        {
+            "input_col": ["1", "2", "3"],
+            "output_col": ["b", "a", "a"],
+        })
+
+    The fourth and final API call also uses batch_size = 1 and generates a final 3
+    responses. After filtering duplicates, the generated_dataset will be:
+        Dataset.from_dict(
+        {
+            "input_col": ["1", "2", "3", "4", "5"],
+            "output_col": ["b", "a", "a", "c", "a"],
+        })
+
+    Now the API call counter is 5. There is still 2 API calls left to
+    genrate other spilits.
+
+    For the val split, the batch_size = 2, calling the API twice,
+    generating 6 responses in the first batch. After filtering
+    duplicates, the generated dataset for train split is:
+    Dataset.from_dict(
+    {
+        "input_col": ["1", "2"],
+        "output_col": ["a", "a"],
+    })
+
+    The val split has not meets the expected num_examples,
+    but the max_api_calls is reached, so the generation ends.
+
+    Thus the val split's generated_dataset is:
+        Dataset.from_dict(
+    {
+        "input_col": ["1", "2"],
+        "output_col": ["a", "a"],
+    })
+
+    And the test split's generated_dataset is empty.
+    """
+    with tempfile.TemporaryDirectory() as cache_dir:
+        reset_mock_batch_openai_response_with_different_completions()
+        dataset_generator = OpenAIDatasetGenerator(
+            api_key,
+            filter_duplicated_examples=filter_duplicated_examples,
+            cache_root=cache_dir,
+            batch_size=batch_size,
+            responses_per_request=responses_per_request,
+            max_api_calls=7,
+        )
+        generated_dataset_dict = dataset_generator.generate_dataset_dict(
+            prompt_spec,
+            expected_num_examples={
+                DatasetSplit.TRAIN: 4,
+                DatasetSplit.VAL: 4,
+                DatasetSplit.TEST: 2,
+            },
+        )
+        assert mocked_generate_example.call_count == 5
+        assert dataset_generator.api_call_counter == 7
+        expected_dataset_dict = datasets.DatasetDict(
+            {
+                "train": Dataset.from_dict(
+                    {
+                        "input_col": ["1", "2", "3", "4", "5"],
+                        "output_col": ["b", "a", "a", "c", "a"],
+                    }
+                ),
+                "val": Dataset.from_dict(
+                    {
+                        "input_col": ["1", "2"],
+                        "output_col": ["a", "a"],
+                    }
+                ),
+                "test": Dataset.from_dict(
+                    {
+                        "input_col": [],
+                        "output_col": [],
+                    }
+                ),
+            }
+        )
+        assert are_datasets_identical(generated_dataset_dict, expected_dataset_dict)

@@ -3,7 +3,7 @@
 import gc
 import os
 import tempfile
-from collections import namedtuple
+from collections import Counter, defaultdict, namedtuple
 from functools import partial
 from pathlib import Path
 from unittest.mock import patch
@@ -575,13 +575,17 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
         # would be called to construct the self.generated_dataset.
         # Note that filter_duplicated_examples is False, so the
         # self.generated_examples won't be filtered. And since the
-        # expected_num_examples is 0, the while loop would exit
+        # expected_num_examples is 110, the while loop would exit
         # immediately. So the self.generated_dataset would be the
         # same as the cached dataset.
         data_generator.generate_dataset_split(
-            expected_num_examples=0, prompt_spec=MockPromptSpec, split=DatasetSplit.TEST
+            expected_num_examples=110,
+            prompt_spec=MockPromptSpec,
+            split=DatasetSplit.TEST,
         )
         assert are_datasets_identical(data_generator.generated_dataset, cached_dataset)
+        assert data_generator.generated_examples == [example("1", "2")] * 110
+        assert data_generator.input_output_map == defaultdict(Counter)
         directly_constructed_dataset = Dataset.from_dict(
             {
                 "input_col": [

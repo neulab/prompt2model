@@ -230,10 +230,14 @@ def mock_batch_openai_response_with_different_completions(
     current_index = mock_batch_openai_response_with_different_completions.current_index
     mock_batch_openai_response_with_different_completions.current_index += 1
 
+    mock_completions = (
+        mock_batch_openai_response_with_different_completions.mock_completions[
+            current_index % 4
+        ]
+    )
+    assert len(mock_completions) == len(prompts)
     # Return the corresponding MockCompletion object for this call.
-    return mock_batch_openai_response_with_different_completions.mock_completions[
-        current_index
-    ]
+    return mock_completions
 
 
 def reset_mock_batch_openai_response_with_different_completions():
