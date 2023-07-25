@@ -467,7 +467,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.generating_split = split
         dataset_cache_path = Path(self.cache_root / f"{self.generating_split.value}")
         if dataset_cache_path.exists():
-            logging.info(f"Loading cache from {str(dataset_cache_path)}")
+            logging.info(f"Loading cache from {str(dataset_cache_path)}.")
             all_generated_examples_dataset = Dataset.load_from_disk(dataset_cache_path)
             self.generated_examples = [
                 example(input_col=ex["input_col"], output_col=ex["output_col"])

@@ -578,11 +578,18 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
         # expected_num_examples is 110, the while loop would exit
         # immediately. So the self.generated_dataset would be the
         # same as the cached dataset.
-        data_generator.generate_dataset_split(
-            expected_num_examples=110,
-            prompt_spec=MockPromptSpec,
-            split=DatasetSplit.TEST,
-        )
+        with patch("logging.info") as mock_info, patch(
+            "logging.warning"
+        ) as mock_warning:
+            data_generator.generate_dataset_split(
+                expected_num_examples=110,
+                prompt_spec=MockPromptSpec,
+                split=DatasetSplit.TEST,
+            )
+            mock_info.assert_called_once_with(
+                f"Loading cache from {str(dataset_cache_path)}."
+            )
+            mock_warning.assert_not_called()
         assert are_datasets_identical(data_generator.generated_dataset, cached_dataset)
         assert data_generator.generated_examples == [example("1", "2")] * 110
         assert data_generator.input_output_map == defaultdict(Counter)

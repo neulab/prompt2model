@@ -470,9 +470,18 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
         # in self.generated_dataset. Since expected_num_examples
         # is 3, the while loop would exit  immediately. So the
         # self.generated_dataset would be the filtered cached dataset.
-        data_generator.generate_dataset_split(
-            expected_num_examples=3, prompt_spec=MockPromptSpec, split=DatasetSplit.TEST
-        )
+        with patch("logging.info") as mock_info, patch(
+            "logging.warning"
+        ) as mock_warning:
+            data_generator.generate_dataset_split(
+                expected_num_examples=3,
+                prompt_spec=MockPromptSpec,
+                split=DatasetSplit.TEST,
+            )
+            mock_info.assert_called_once_with(
+                f"Loading cache from {str(dataset_cache_path)}."
+            )
+            mock_warning.assert_not_called()
         excepted_generated_dataset = Dataset.from_dict(
             {
                 "input_col": ["1", "2", "3"],
