@@ -16,19 +16,20 @@ from prompt2model.dataset_generator.openai_gpt import OpenAIDatasetGenerator
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from test_helpers import (
     are_datasets_identical,
-    mock_batch_openai_response_with_identical_completion,
+    mock_batch_openai_response_with_different_completions,
+    mock_batch_openai_response_with_identical_completions,
 )
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
-    mock_batch_openai_response_with_identical_completion,
+    mock_batch_openai_response_with_identical_completions,
     content='{"input": "This is a great movie!", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
-    mock_batch_openai_response_with_identical_completion,
+    mock_batch_openai_response_with_identical_completions,
     content='{"input": "This is a great movie!", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
-    mock_batch_openai_response_with_identical_completion,
+    mock_batch_openai_response_with_identical_completions,
     content='{"input": "This is a great movie!", "output": "1}',
 )
 
@@ -122,7 +123,7 @@ def check_generate_dataset_dict(dataset_generator: OpenAIDatasetGenerator):
     "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
     side_effect=MOCK_CLASSIFICATION_EXAMPLE,
 )
-def test_api_call_counter_without_filter(mocked_generate_example):
+def tes_generator_without_filter(mocked_generate_example):
     """Test classification dataset generation using the OpenAIDatasetGenerator.
 
     This function first test the unlimited generation. Then test generation
@@ -232,6 +233,92 @@ def test_api_call_counter_without_filter(mocked_generate_example):
         assert len(limited_generated_dataset_dict["val"]) == 15
         assert len(limited_generated_dataset_dict["test"]) == 0
     gc.collect()
+
+
+def test_generator_with_filter():
+    """Test the generation with filter_duplicated_examples=True.
+
+    This function is a carefully designed test togher with the iterator created
+    in mock_batch_openai_response_with_different_completions.
+
+    Initialize an OpenAIDatasetGenerator. Set batch_size = 2, response_per_request
+    = 3, expected_num_examples = 5, filter_duplicated_examples = True.
+
+    In the first API call, the ChatGPTAgent will generate 2 * 3 = 6 responses.
+    After filtering the duplicated responses, the generated_dataset will be
+            Dataset.from_dict(
+            {
+                "input_col": ["1", "2"],
+                "output_col": ["a", "a"],
+            }
+        )
+
+    The second API call's batch_size = 1. And generate 3 responses.
+    batch_size = (expected_num_examples - len(generated_dataset))
+    / response_per_request = 1.
+
+    After the filtering the duplicated responses, the generated_dataset will be
+            Dataset.from_dict(
+            {
+                "input_col": ["1", "2", "3"],
+                "output_col": ["a", "a", "a"],
+            }
+        )
+
+    The third API call's batch_size = 1. And generate 3 responses.
+
+    After the filtering the duplicated responses, the generated_dataset will be
+            Dataset.from_dict(
+            {
+                "input_col": ["1", "2", "3"],
+                "output_col": ["b", "a", "a"],
+            }
+        )
+
+    The fourth and last API call's batch_size = 1. And generate 3 responses.
+    After the filtering the duplicated responses, the generated_dataset will be
+        Dataset.from_dict(
+        {
+            "input_col": ["1", "2", "3", "4", "5"],
+            "output_col": ["b", "a", "a", "c", "a"],
+        }
+    )
+
+    Then the generator will be exhausted and the generation also ends.
+
+    The function contain four test cases with four limited dataset generators.
+    Their batch_size = 2, response_per_request = 3, expected_num_examples
+    = 5, filter_duplicated_examples = True. But the number of max_api_calls are
+    1, 2, 3, 4. Then we run the generation for each of them and check that each
+    generated dataset is correct as expected.
+    """
+    api_key = "fake_api_key"
+    prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
+    split = DatasetSplit.TRAIN
+    filter_duplicated_examples = True
+    expected_num_examples = 5
+    batch_size = 2
+    response_per_request = 3
+
+    @patch(
+        "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+        side_effect=mock_batch_openai_response_with_different_completions,
+    )
+    def test_generator_with_filter_and_one_api_call(mocked_generate_example):
+        # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
+        with tempfile.TemporaryDirectory() as cache_dir:
+            dataset_generator = OpenAIDatasetGenerator(
+                api_key,
+                max_api_calls=1,
+                filter_duplicated_examples=filter_duplicated_examples,
+                cache_root=cache_dir,
+                batch_size=batch_size,
+                response_per_request=response_per_request,
+            )
+            dataset_generator.generate_dataset_split(
+                prompt_spec, expected_num_examples, split
+            )
+            assert mocked_generate_example.call_count == 1
 
 
 @patch(

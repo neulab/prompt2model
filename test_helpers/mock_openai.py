@@ -3,6 +3,7 @@
 from __future__ import annotations  # noqa FI58
 
 from collections.abc import Generator
+from typing import cast
 
 
 class MockCompletion:
@@ -108,14 +109,10 @@ def mock_batch_openai_response_with_different_completions(
     responses_per_request: int = 5,
     requests_per_minute: int = 80,
 ) -> Generator[MockCompletion, None, None]:
-    """Generate a batch of mock completion objects with different responses.
+    """Returns a batch of diffenrent `MockCompletion` objects at each call.
 
-    This function creates a generator that yields a batch of `MockCompletion`
-    objects, each with a `content` attribute set to an LLM (Language Model)
-    completion string.
-
-    This iterator will is carefully designed to similuate the generation process
-    of an OpenAIDatasetGenerator. Set batch_size = 2, response_per_request
+    This function is carefully designed to similuate the generation process of
+    an OpenAIDatasetGenerator. Set batch_size = 2, response_per_request
     = 3, expected_num_examples = 5, filter_duplicated_examples = True.
 
     In the first API call, the ChatGPTAgent will generate 2 * 3 = 6 responses.
@@ -158,7 +155,7 @@ def mock_batch_openai_response_with_different_completions(
         }
     )
 
-    Then the generator will be exhausted and the generation also ends.
+    Then the generation ends.
     """
     _ = (
         prompts,
@@ -169,30 +166,56 @@ def mock_batch_openai_response_with_different_completions(
         requests_per_minute,
         responses_per_request,
     )
-    mock_completions = [MockCompletion() for _ in range(4)]
-    mock_completions[0].choices = [
-        {"message": {"content": '{"input": "1", "output": "a"}'}},
-        {"message": {"content": '{"input": "1", "output": "b"}'}},
-        {"message": {"content": '{"input": "1", "output": "a"}'}},
-        {"message": {"content": '{"input": "1", "output": "c"}'}},
-        {"message": {"content": '{"input": "2", "output": "a"}'}},
-        {"message": {"content": '{"input": "2", "output": "b"}'}},
+    # Add explicit types to the function attributes.
+    if not hasattr(
+        mock_batch_openai_response_with_different_completions, "mock_completions"
+    ):
+        # Initialize mock_completions if it doesn't exist yet.
+        mock_batch_openai_response_with_different_completions.mock_completions = cast(
+            list[MockCompletion], [MockCompletion() for _ in range(4)]
+        )
+        mock_batch_openai_response_with_different_completions.current_index = cast(
+            int, 0
+        )
+
+        # Populate mock_completions with desired choices as before.
+        mock_batch_openai_response_with_different_completions.mock_completions[
+            0
+        ].choices = [
+            {"message": {"content": '{"input": "1", "output": "a"}'}},
+            {"message": {"content": '{"input": "1", "output": "b"}'}},
+            {"message": {"content": '{"input": "1", "output": "a"}'}},
+            {"message": {"content": '{"input": "1", "output": "c"}'}},
+            {"message": {"content": '{"input": "2", "output": "a"}'}},
+            {"message": {"content": '{"input": "2", "output": "b"}'}},
+        ]
+        mock_batch_openai_response_with_different_completions.mock_completions[
+            1
+        ].choices = [
+            {"message": {"content": '{"input": "3", "output": "a"}'}},
+            {"message": {"content": '{"input": "3", "output": "a"}'}},
+            {"message": {"content": '{"input": "3", "output": "b"}'}},
+        ]
+        mock_batch_openai_response_with_different_completions.mock_completions[
+            2
+        ].choices = [
+            {"message": {"content": '{"input": "1", "output": "a"}'}},
+            {"message": {"content": '{"input": "1", "output": "b"}'}},
+            {"message": {"content": '{"input": "1", "output": "b"}'}},
+        ]
+        mock_batch_openai_response_with_different_completions.mock_completions[
+            3
+        ].choices = [
+            {"message": {"content": '{"input": "4", "output": "c"}'}},
+            {"message": {"content": '{"input": "4", "output": "c"}'}},
+            {"message": {"content": '{"input": "5", "output": "a"}'}},
+        ]
+
+    # Get the current index and increment it for the next call.
+    current_index = mock_batch_openai_response_with_different_completions.current_index
+    mock_batch_openai_response_with_different_completions.current_index += 1
+
+    # Return the corresponding MockCompletion object for this call.
+    return mock_batch_openai_response_with_different_completions.mock_completions[
+        current_index
     ]
-    mock_completions[1].choices = [
-        {"message": {"content": '{"input": "3", "output": "a"}'}},
-        {"message": {"content": '{"input": "3", "output": "a"}'}},
-        {"message": {"content": '{"input": "3", "output": "b"}'}},
-    ]
-    mock_completions[2].choices = [
-        {"message": {"content": '{"input": "1", "output": "a"}'}},
-        {"message": {"content": '{"input": "1", "output": "b"}'}},
-        {"message": {"content": '{"input": "1", "output": "b"}'}},
-    ]
-    mock_completions[3].choices = [
-        {"message": {"content": '{"input": "4", "output": "c"}'}},
-        {"message": {"content": '{"input": "4", "output": "c"}'}},
-        {"message": {"content": '{"input": "5", "output": "a"}'}},
-    ]
-    # Yield each MockCompletion object one by one.
-    for completion in mock_completions:
-        yield completion
