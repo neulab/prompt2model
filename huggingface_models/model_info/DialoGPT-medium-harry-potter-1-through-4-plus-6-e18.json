@@ -1,1 +1,0 @@
-{"pretrained_model_name": "Ayran/DialoGPT-medium-harry-potter-1-through-4-plus-6-e18", "description": "---\ntags:\n- conversational\n---\n\n#DialoGPT medium model (Based on Harry Potter 1 through 4 plus 6, 18 epochs)", "size_bytes": "1444581337", "downloads": 0}
