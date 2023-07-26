@@ -112,7 +112,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         # generated. After each loop, `generated_examples` will be
         # stored as a Dataset at the path `{cache_root}/{generating_split}`.
 
-    def generate_prompt(
+    def construct_prompt(
         self,
         instruction: str,
         few_shot_example_string: str = None,
@@ -308,6 +308,103 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             {"input_col": filtered_inputs, "output_col": filtered_outputs}
         )
 
+    def convert_generated_examples_to_generated_dataset(self):
+        """Converts self.generated_examples into self.generated_dataset.
+
+        Depending on the value of self.filter_duplicated_examples, the function either
+        constructs a mapping for input-output pairs followed by multi-vote filtering
+        to create a Dataset or directly converts the generated examples into a Dataset.
+
+        The function also verifies the presence of data in the input-output map
+        and the generated dataset if there are any generated examples and
+        self.filter_duplicated_examples is True.
+
+        Lastly, the function stores all generated examples, irrespective of the value
+        of self.filter_duplicated_examples, into a Dataset on the disk.
+        """
+        # Convert all generated examples into a Dataset.
+        all_generated_examples_dataset = Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in self.generated_examples],
+                "output_col": [
+                    example.output_col for example in self.generated_examples
+                ],
+            }
+        )
+
+        if self.filter_duplicated_examples:
+            # When filtering duplicated examples is
+            # enabled, perform multi-vote filtering.
+            self.construct_input_output_map()
+            self.apply_multi_vote_to_construct_generated_dataset()
+
+            # Ensure that the input-output map and
+            # the generated dataset are not empty.
+            if len(self.generated_examples) != 0:
+                assert self.input_output_map is not None
+                assert self.generated_dataset is not None
+        else:
+            # When filtering duplicated examples is not enabled,
+            # use all_generated_examples_dataset directly.
+            self.generated_dataset = all_generated_examples_dataset
+
+        # If there are generated examples, the
+        # generated_dataset should not be empty.
+        if len(self.generated_examples) != 0:
+            assert len(self.generated_dataset) > 0
+
+        # Save all the generated examples to disk as
+        # a Dataset, regardless of the filtering option.
+        dataset_cache_path = Path(self.cache_root / f"{self.generating_split.value}")
+        all_generated_examples_dataset.save_to_disk(dataset_cache_path)
+
+    def compute_batch_size(self, expected_num_examples: int) -> int:
+        """Computes the batch size for OpenAI API calls in a batch.
+
+        The batch size is determined based on the remaining number of examples to be
+        generated and the number of responses per request. The function also respects
+        the maximum limit of API calls if it is set.
+
+        Args:
+            expected_num_examples: The total number of examples expected to be
+            generated for the current dataset split. Note that if max_api_calls is not
+            set, the actual number of generated examples can be slightly higher due
+            to each API call returning `responses_per_request` examples.
+
+        Returns:
+            The batch size for the next batch of OpenAI API calls with zeno-build.
+        """
+        if self.max_api_calls is None:
+            # If there is no limit on the number of API calls, the batch_size should
+            # be the minimum of self.batch_size and the minimum number of calls
+            # to get more than expected_num_examples examples.
+            batch_size = min(
+                self.batch_size,
+                math.ceil(
+                    (
+                        (expected_num_examples - len(self.generated_dataset))
+                        / self.responses_per_request
+                    )
+                ),
+            )
+        else:
+            # If there is a limit on the number of API calls, the batch_size
+            # should also take remaining API calls into account.
+            batch_size = min(
+                self.batch_size,
+                math.ceil(
+                    (
+                        (expected_num_examples - len(self.generated_dataset))
+                        / self.responses_per_request
+                    )
+                ),
+                self.max_api_calls - self.api_call_counter,
+            )
+
+        # Ensure that the batch_size is a positive value.
+        assert batch_size > 0
+        return batch_size
+
     def extract_responses(self, completions: list[openai.Completion]) -> None:
         """Extracts the generated sample and annotation from an OpenAI API response.
 
@@ -423,7 +520,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     assert batch_size > 0
                     self.api_call_counter += batch_size
                     prompts = [
-                        self.generate_prompt(
+                        self.construct_prompt(
                             instruction=prompt_spec.instruction,
                             few_shot_example_string=prompt_spec.examples,
                         )
