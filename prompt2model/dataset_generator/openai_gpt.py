@@ -112,14 +112,21 @@ class OpenAIDatasetGenerator(DatasetGenerator):
     ) -> str:
         """Generates a prompt string.
 
+        The function generates a prompt string using the provided instruction and
+        few_shot_example_string. It also selects random examples from the generated
+        dataset to provide additional context for the prompt. If the generated_dataset
+        is empty, it defaults to using the few_shot_example_string.
+
+        The function uses different prompt templates based on the number of selected
+        examples from the generated dataset. If the total length of the prompt exceeds
+        3500 tokens, repeat the prompt generation process to generate a shorter one.
+
         Args:
-            instruction: The natural language instruction for the prompt.
-            few_shot_example_string: A string representing the few-shot examples
-                parsed from the user's prompt, which quality is higher than the
-                genrated examples from self.generated_dataset.
+            instruction: Instruction for the prompt.
+            few_shot_example_string: High-quality few-shot examples.
 
         Returns:
-            The generated prompt string.
+            A prompt string for the OpenAI API.
         """
         # The random_example_string is a string, which contains several random
         # few-shot examples as demonstrations for the DatasetGenerator. If
@@ -303,7 +310,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             "orange": Counter({"O": 1})
         }
         """
-        # When ever using the multi-vote filtering mechanism, refresh
+        # Whenever using the multi-vote filtering mechanism, refresh
         # self.input_output_map to avoid duplicately countering.
         self.input_output_map = defaultdict(Counter)
 
@@ -351,7 +358,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         and self.generated_dataset will be empty.
         """
         # Only use multi-vote filtering if self.filter_duplicated_examples is True.
-        # And self.input_output_map is not None when self.generated_examples
+        # self.input_output_map is not None when self.generated_examples
         # is not empty.
         assert self.filter_duplicated_examples
         if not (len(self.generated_examples) == 0):
@@ -390,12 +397,18 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         )
 
     def convert_generated_examples_to_generated_dataset(self):
-        """Convert all generated examples to a Dataset.
+        """Converts self.generated_examples into self.generated_dataset.
 
-        If self.filter_duplicated_examples is True, construct the
-        input_output_map. Then use multi-vote filtering to convert
-        the mapping to a Dataset. If self.filter_duplicated_examples
-        is False, directly construct a Dataset.
+        Depending on the value of self.filter_duplicated_examples, the function either
+        constructs a mapping for input-output pairs followed by a multi-vote filtering
+        to create a Dataset, or directly converts the generated examples into a Dataset.
+
+        The function also verifies the presence of data in the input-output map
+        and the generated dataset if there are any generated examples and
+        self.filter_duplicated_examples is True.
+
+        Lastly, the function stores all generated examples, irrespective of the value
+        of self.filter_duplicated_examples, into a Dataset on the disk.
         """
         all_generated_examples_dataset = Dataset.from_dict(
             {
@@ -423,10 +436,20 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         all_generated_examples_dataset.save_to_disk(dataset_cache_path)
 
     def compute_batch_size(self, expected_num_examples: int) -> int:
-        """Compute the batch size to use zeno-bulid to call OpenAI API.
+        """Computes the batch size for OpenAI API calls in a batch.
+
+        The batch size is determined based on the remaining number of examples to be
+        generated and the number of responses per request. The function also respects
+        the maximum limit of API calls if it is set.
 
         Args:
-            expected_num_examples: Number of expected examples in split.
+            expected_num_examples: The total number of examples expected to be
+            generated for the current dataset split. Note if max_api_calls is not set,
+            the actual number of generated examples can be slightly higher due to
+            each API call returning `responses_per_request` examples.
+
+        Returns:
+            The batch size for the next batch of OpenAI API calls with zeno-bulid.
         """
         if self.max_api_calls is None:
             # If there is no limit on the number of API calls, the batch_size should
@@ -463,18 +486,26 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         expected_num_examples: int,
         split: DatasetSplit,
     ) -> Dataset:
-        """Generate a single dataset using GPT-3.5.
+        """Generates a dataset split using GPT-3.5.
+
+        This method iteratively makes API calls to GPT-3.5 to generate a dataset split.
+        Each API call yields a batch of responses. From these responses, new examples
+        are extracted and added to the 'generated_examples'. The process continues
+        until the desired number of examples is reached, or the maximum limit on API
+        calls is reached. If an error occurs during an API call, the error is handled
+        appropriately and the API call counter is adjusted.
 
         Args:
-            prompt_spec: A prompt specification.
-            expected_num_examples: Number of expected examples in split.
-                Each API call will return `responses_per_request` completion
-                objects. The upper bound of the length of generated dataset
-                is expected_num_examples + responses_per_request.
-            split: Name of dataset split to generate.
+            prompt_spec: PromptParser to be used for generating examples.
+            expected_num_examples: The number of examples expected to be
+                generated. If the maximum limit on API calls is not set, the actual
+                number of generated examples can be slightly higher due to each
+                API call returning `responses_per_request` examples.
+            split: The dataset split (e.g., train, validation, test) for which the
+                examples are being generated.
 
         Returns:
-            A single dataset.
+            The generated dataset split.
         """
         # Refresh the generated_dataset, generated_examples,
         # input_output_map, and generating_split for different split.
