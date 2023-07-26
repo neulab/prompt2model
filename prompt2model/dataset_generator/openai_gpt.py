@@ -44,29 +44,32 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         filter_duplicated_examples: bool = True,
         cache_root: str = "cached_genrated_dataset",
     ):
-        """Initialize an OpenAI DatasetGenerator with an API key and max API call.
+        """Initializes an instance of the OpenAI DatasetGenerator.
 
         Args:
-            api_key: A valid OpenAI API key. Alternatively, set as None and set
-                the environment variable with `export OPENAI_API_KEY=<your key>`.
+            api_key: A valid OpenAI API key. If not provided, the environment
+                variable OPENAI_API_KEY is used.
             max_api_calls: The maximum number of API calls allowed,
                 or None for unlimited.
-            temperature: What sampling temperature to use, between 0 and 2. Higher
-                values like 0.8 will make the output more random, while lower values
-                like 0.2 will make it more focused and deterministic.
-            presence_penalty: Float between -2.0 and 2.0. Positive values penalize
-                new tokens based on whether they appear in the text so far, increasing
-                the model's likelihood to talk about new topics in generated examples.
-            frequency_penalty: Float between -2.0 and 2.0. Positive values penalize
-                new tokens based on their existing frequency in text, descouraging
-                the model to repeat the same line verbatim in generated examples.
+            temperature: The sampling temperature to use, ranging from 0 to 2.
+                Higher values yield more random outputs, while lower values produce
+                more deterministic outputs.
+            presence_penalty: Value between -2.0 and 2.0 to penalize new tokens
+                based on their presence in the text so far. Positive values increase
+                the model's likelihood to discuss new topics in generated examples.
+            frequency_penalty: Value between -2.0 and 2.0 to penalize new tokens
+                based on their frequency in the text. Positive values discourage
+                the model from repeating the same line verbatim in generated examples.
             batch_size: The number of requests to make in each batch.
-            responses_per_request: Number of responses for each request.
-                i.e. the parameter n of OpenAI API call.
-            requests_per_minute: Number of requests per minute to allow.
-            filter_duplicated_examples: Whether to filter duplicated examples.
-                If it's True, the generated examples are filtered based on multi-votes.
-            cache_root: If it's not None, the generated examples will be cached.
+            responses_per_request: The number of responses for each request.
+            requests_per_minute: The maximum number of requests per minute.
+            filter_duplicated_examples: If True, filters duplicated examples based
+                on multi-votes.
+            cache_root: The root directory for caching generated examples.
+
+        Raises:
+            AssertionError: If an API key is not provided and set as an environment
+            variable, or if the 'max_api_calls' value is not greater than 0.
         """
         self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
         assert self.api_key is not None and self.api_key != "", (
@@ -87,23 +90,27 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.cache_root = Path(cache_root)
         self.cache_root.mkdir(exist_ok=True, parents=True)
         self.generated_examples = []  # type: list[Example]
-        # Store all the generated examples in a list, which will be converted into
-        # self.generated_dataset later and self.input_output_map if
-        # filter_duplicated_examples is True.
+        # This list stores all generated examples. These will later be
+        # converted into `generated_dataset` and `input_output_map`
+        # if `filter_duplicated_examples` is True.
+
         self.generated_dataset: Dataset = Dataset.from_dict({})
-        # self.generated_examples will be converted into self.generated_dataset.
-        # If filter_duplicated_examples is True, self.generated_examples will be
-        # filtered based on multi-votes first to construct self.generated_dataset.
-        # If filter_duplicated_examples is False, self.generated_examples will
-        # not be filtered and directly used to construct self.generated_dataset.
+        # `generated_examples` will be transformed into `generated_dataset`.
+        # If `filter_duplicated_examples` is True, `generated_examples` will
+        # be filtered based on multi-votes before being used to construct
+        # `generated_dataset`. If it's False, `generated_examples` will be
+        # used directly to construct `generated_dataset`.
+
         self.input_output_map: dict[str, Counter] = defaultdict(Counter)
-        # If filter_duplicated_examples is True, self.generated_examples will
-        # firstly be converted into self.input_output_map then into
-        # self.generated_dataset. Else, self.input_output_map will always be {}.
+        # If `filter_duplicated_examples` is True, `self.generated_examples`
+        # will first be converted into `input_output_map`, and then into
+        # `generated_dataset`. If it's False, `input_output_map` will remain
+        # empty.
+
         self.generating_split: DatasetSplit | None = None
-        # generating_split is the DatasetSplit which is being generated.
-        # After each while loop, self.generated_examples will be stored as
-        # a Datast in f"{cache_root}/{generating_split}".
+        # `generating_split` refers to the DatasetSplit currently being
+        # generated. After each loop, `generated_examples` will be
+        # stored as a Dataset at the path `{cache_root}/{generating_split}`.
 
     def construct_prompt(
         self,
@@ -137,47 +144,54 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         while True:
             if len(self.generated_dataset) == 0:
                 low_equality_example_string = "N/A\n"
-                # Create default low_equality_example_string if self.generated_dataset
-                # is empty. few_shot_example_string is the high-quality few-shot
-                # examples parsed from the user's prompt. But if user does not
-                # provideany examples in the input prompt (which is extremely
-                # discouraged), the few_shot_example_string will be "N/A"/""/None.
+                # If `generated_dataset` is empty, we create a default
+                # `low_equality_example_string`. `few_shot_example_string`
+                # contains high-quality few-shot examples parsed from the
+                # user's prompt.
+
+                # If no examples are provided in the input prompt (which is
+                # extremely discouraged), `few_shot_example_string` will
+                # be set to "N/A" or an empty string ("") or None.
                 random_selected_generated_example_num = 0
-                # random_selected_generated_example_num is the number of selected
-                # random examples from self.generated_dataset that will be used to
-                # create the low_equality_example_string. If self.generated_dataset
-                # is empty, then random_selected_generated_example_num is 0.
+                # `random_selected_generated_example_num` is the count
+                # of randomly selected examples from `generated_dataset`
+                # used to create `low_equality_example_string`. If
+                # `generated_dataset` is empty, then
+                # `random_selected_generated_example_num` is 0.
             else:
-                # self.generated_dataset is not empty, then low_equality_example_string
-                # is the string representation of sveral random generated examples
-                # from self.generated_dataset.
+                # If `generated_dataset` is not empty, `low_equality_example_string`
+                # becomes the string representation of several randomly generated
+                # examples from `generated_dataset`.
 
                 low_equality_example_string = ""
                 random_selected_generated_example_num = random.randint(
                     1, min(len(self.generated_dataset), 10)
                 )
-                # random_selected_generated_example_num is the number of
-                # selected random examples from self.generated_examples that
-                # will be concatenated to create low_equality_example_string.
+                # `random_selected_generated_example_num` is the count of
+                # randomly selected examples from `generated_examples`
+                # that will be joined to create `low_equality_example_string`.
+
                 random_examples = Dataset.from_dict(
                     self.generated_dataset.shuffle()[
                         :random_selected_generated_example_num
                     ]
                 )
-                # self.generated_dataset is not empty. Choose several
-                # random examples from self.generated_dataset to
-                # construct low_equality_example_string.
+                # When `generated_dataset` is not empty, select several
+                # random examples from `generated_dataset` to construct
+                # `low_equality_example_string`.
+
                 random_example_strings = [
                     f'input="{example["input_col"]}"\noutput="{example["output_col"]}"\n'  # noqa E501
                     for example in random_examples
                 ]
                 random.shuffle(random_example_strings)
                 low_equality_example_string = "\n".join(random_example_strings)
-                # To increase the diversity of the prompt to DatasetGenerator, three
-                # prompt templates, COMPLEX, MIDDLE, and SIMPLE, and 24 meta
-                # examples are created In the openai_gpt_template. The COMPLEX
-                # template contains 4 meta examples, the MIDDLE template contains
-                # 3 meta examples and the SIMPLE template contains 2 meta examples.
+
+                # To diversify the prompt for DatasetGenerator, three prompt
+                # templates (COMPLEX, MIDDLE, SIMPLE) and 24 meta examples
+                # are created in `openai_gpt_template`. The COMPLEX template
+                # includes 4 meta examples, MIDDLE has 3, and SIMPLE contains 2.
+
             template_type_dict = {1: "COMPLEX", 2: "MIDDLE", 0: "SIMPLE"}
             template_type = template_type_dict[
                 random_selected_generated_example_num % 3
@@ -188,9 +202,11 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 high_equality_example_string=few_shot_example_string,
                 template_type=template_type,
             )
-            # The max content length of gpt-3.5-turbo is 4097, so if the
-            # generated prompt is longer than 3500, then the prompt
-            # should be regenerated.
+
+            # The maximum content length for gpt-3.5-turbo is 4097.
+            # Therefore, if the generated prompt is too long (exceeds
+            # 3500 tokens), the prompt should be regenerated.
+
             if count_tokens_from_string(prompt) < 3500:
                 return prompt
             else:
@@ -215,12 +231,12 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
         This function iterates through the provided completions, attempting to
         extract and parse the content of each completion as a JSON object. It
-        then checks for the presence of 'input' and 'output' keys in the JSON
+        then checks for the presence of `input` and `output` keys in the JSON
         object. If either is missing, the completion is discarded.
 
-        For valid completions, the function creates a namedtuple 'example'
-        with 'input_col' and 'output_col' fields, representing the generated
-        example and label strings respectively. The 'example' is then added
+        For valid completions, the function creates a namedtuple `example`
+        with `input_col` and `output_col` fields, representing the generated
+        example and label strings respectively. The `example` is then added
         to self.generated_examples.
 
         Note: The function process `batch_size * responses_per_request`
@@ -268,9 +284,11 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                             f'API response must contain {", ".join(required_keys)} keys'
                         )
                         continue
+                        # If the response doesn't contain required keys, discard it.
                     input = str(response_json["input"]).strip()
                     output = str(response_json["output"]).strip()
                     self.generated_examples.append(Example(input, output))
+                    # Add the validated example to the generated examples list.
                     logging.info(f"input: \n\n{input}\n\n")  # noqa: E501
                     logging.info(f"output: \n\n{output}\n\n")  # noqa: E501
             except Exception:
@@ -278,6 +296,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     f"Error happened when parsing API completion: {completion}"
                 )
                 continue
+                # If an error occurs during processing a
+                # completion, skip it and move to the next.
 
     def construct_input_output_map(self):
         """Constructs a dictionary mapping inputs to `Counter` objects of outputs.
@@ -314,13 +334,16 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         # self.input_output_map to avoid duplicately countering.
         self.input_output_map = defaultdict(Counter)
 
-        # Iterate through the examples and construct the mapping
+        # Iterate through the examples and construct the mapping.
         for example in self.generated_examples:
             input_str = example.input_col
             output_str = example.output_col
 
+            # Increment the count of the output for the specific input.
             self.input_output_map[input_str][output_str] += 1
 
+        # Ensure that the generated_examples list is not empty
+        # and the map is constructed correctly.
         if len(self.generated_examples) != 0:
             assert self.input_output_map
 
@@ -357,12 +380,14 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         Note: When self.generated_examples is empty, both self.input_output_map
         and self.generated_dataset will be empty.
         """
-        # Only use multi-vote filtering if self.filter_duplicated_examples is True.
-        # self.input_output_map is not None when self.generated_examples
-        # is not empty.
+        # Ensure that multi-vote filtering is enabled.
         assert self.filter_duplicated_examples
+
+        # Ensure `input_output_map` is not None when
+        # `generated_examples` is not empty.
         if not (len(self.generated_examples) == 0):
             assert self.input_output_map is not None
+
         filtered_inputs = []
         filtered_outputs = []
 
@@ -377,21 +402,19 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 if count == most_common_count
             ]
 
-            # Sort the outputs based on their lengths and select the
-            # shortest ones. When several outputs have  the same
-            # length with the highest frequency, they will be sorted
-            # in their lexicographical (alphabetical) order when
-            # using most_frequent_outputs.sort(key=len).
-
+            # Sort the outputs based on their lengths and select
+            # the shortest ones. When several outputs have the
+            # same length with the highest frequency, they will
+            # be sorted in their lexicographical (alphabetical) order.
             most_frequent_outputs.sort(key=len)
             final_output = most_frequent_outputs[0]
 
             filtered_inputs.append(input_str)
             filtered_outputs.append(final_output)
 
-        # Note that when self.generated_examples is empty,
-        # self.input_output_map is None and self.generated_dataset
-        # is empty.
+        # Note that when `generated_examples` is empty,
+        # `input_output_map` is None, and `generated_dataset`
+        # will also be empty.
         self.generated_dataset = Dataset.from_dict(
             {"input_col": filtered_inputs, "output_col": filtered_outputs}
         )
@@ -400,8 +423,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         """Converts self.generated_examples into self.generated_dataset.
 
         Depending on the value of self.filter_duplicated_examples, the function either
-        constructs a mapping for input-output pairs followed by a multi-vote filtering
-        to create a Dataset, or directly converts the generated examples into a Dataset.
+        constructs a mapping for input-output pairs followed by multi-vote filtering
+        to create a Dataset or directly converts the generated examples into a Dataset.
 
         The function also verifies the presence of data in the input-output map
         and the generated dataset if there are any generated examples and
@@ -410,6 +433,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         Lastly, the function stores all generated examples, irrespective of the value
         of self.filter_duplicated_examples, into a Dataset on the disk.
         """
+        # Convert all generated examples into a Dataset.
         all_generated_examples_dataset = Dataset.from_dict(
             {
                 "input_col": [example.input_col for example in self.generated_examples],
@@ -418,21 +442,31 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 ],
             }
         )
+
         if self.filter_duplicated_examples:
+            # When filtering duplicated examples is
+            # enabled, perform multi-vote filtering.
             self.construct_input_output_map()
             self.apply_multi_vote_to_construct_generated_dataset()
+
+            # Ensure that the input-output map and
+            # the generated dataset are not empty.
             if len(self.generated_examples) != 0:
                 assert self.input_output_map is not None
                 assert self.generated_dataset is not None
         else:
+            # When filtering duplicated examples is not enabled,
+            # use all_generated_examples_dataset directly.
             self.generated_dataset = all_generated_examples_dataset
-        # If self.generated_examples is not empty,
-        # self.generated_examples is not empty.
+
+        # If there are generated examples, the
+        # generated_dataset should not be empty.
         if len(self.generated_examples) != 0:
             assert len(self.generated_dataset) > 0
+
+        # Save all the generated examples to disk as
+        # a Dataset, regardless of the filtering option.
         dataset_cache_path = Path(self.cache_root / f"{self.generating_split.value}")
-        # No matter self.filter_duplicated_examples is True or False,
-        # all the generated examples will be saved to disk as a Dataset.
         all_generated_examples_dataset.save_to_disk(dataset_cache_path)
 
     def compute_batch_size(self, expected_num_examples: int) -> int:
@@ -444,17 +478,17 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
         Args:
             expected_num_examples: The total number of examples expected to be
-            generated for the current dataset split. Note if max_api_calls is not set,
-            the actual number of generated examples can be slightly higher due to
-            each API call returning `responses_per_request` examples.
+            generated for the current dataset split. Note that if max_api_calls is not
+            set, the actual number of generated examples can be slightly higher due
+            to each API call returning `responses_per_request` examples.
 
         Returns:
-            The batch size for the next batch of OpenAI API calls with zeno-bulid.
+            The batch size for the next batch of OpenAI API calls with zeno-build.
         """
         if self.max_api_calls is None:
             # If there is no limit on the number of API calls, the batch_size should
-            # be the min of self.batch_size and minimum calls to get more than
-            # expected_num_examples examples.
+            # be the minimum of self.batch_size and the minimum number of calls
+            # to get more than expected_num_examples examples.
             batch_size = min(
                 self.batch_size,
                 math.ceil(
@@ -465,8 +499,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 ),
             )
         else:
-            # If there is a limit on the number of API calls, the batch_size should
-            # also take remaining API calls into account.
+            # If there is a limit on the number of API calls, the batch_size
+            # should also take remaining API calls into account.
             batch_size = min(
                 self.batch_size,
                 math.ceil(
@@ -477,6 +511,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 ),
                 self.max_api_calls - self.api_call_counter,
             )
+
+        # Ensure that the batch_size is a positive value.
         assert batch_size > 0
         return batch_size
 
@@ -490,10 +526,10 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
         This method iteratively makes API calls to GPT-3.5 to generate a dataset split.
         Each API call yields a batch of responses. From these responses, new examples
-        are extracted and added to the 'generated_examples'. The process continues
+        are extracted and added to 'generated_examples'. The process continues
         until the desired number of examples is reached, or the maximum limit on API
         calls is reached. If an error occurs during an API call, the error is handled
-        appropriately and the API call counter is adjusted.
+        appropriately, and the API call counter is adjusted.
 
         Args:
             prompt_spec: PromptParser to be used for generating examples.
@@ -507,44 +543,54 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         Returns:
             The generated dataset split.
         """
-        # Refresh the generated_dataset, generated_examples,
-        # input_output_map, and generating_split for different split.
+        # Refresh the relevant data structures for the new split.
         self.generating_split = split
         dataset_cache_path = Path(self.cache_root / f"{self.generating_split.value}")
+
         if dataset_cache_path.exists():
+            # If cache exists, load generated examples from disk.
             logging.info(f"Loading cache from {str(dataset_cache_path)}.")
             all_generated_examples_dataset = Dataset.load_from_disk(dataset_cache_path)
             self.generated_examples = [
                 Example(input_col=ex["input_col"], output_col=ex["output_col"])
                 for ex in all_generated_examples_dataset
             ]
-            # self.generated_examples will be load from disk. self.generated_dataset
-            # will be initialized in the first loop. If self.filter_duplicated_examples
-            # is True, it will also be constructed in the first loop.
+            # `generated_examples`` will be loaded from disk. `generated_dataset`
+            # will be initialized in the first loop. If `filter_duplicated_examples` is
+            # True, `input_output_map` will also be constructed in the first loop.
+
         else:
+            # Initialize data structures for a new split.
             self.generated_dataset = Dataset.from_dict({})
             self.input_output_map = defaultdict(Counter)
             self.generated_examples = []
 
         chat_api = ChatGPTAgent(self.api_key)
         pbar = tqdm(total=expected_num_examples, desc="Generating examples")
+
         while True:
             # Each API call will return `responses_per_request` completion
-            # objects. The upper bound of the length of generated dataset
+            # objects. The upper bound of the length of the generated dataset
             # is expected_num_examples + responses_per_request.
             try:
+                # Convert the generated examples into a
+                # Dataset and update the progress bar.
                 self.convert_generated_examples_to_generated_dataset()
                 pbar.update(len(self.generated_dataset))
+
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
                     logging.warning("Maximum number of API calls reached.")
                     return self.generated_dataset
                 elif len(self.generated_dataset) >= expected_num_examples:
                     return self.generated_dataset
                 else:
+                    # Compute the batch size for the next API call.
                     batch_size = self.compute_batch_size(
                         expected_num_examples=expected_num_examples
                     )
                     self.api_call_counter += batch_size
+
+                    # Generate prompts for the batch call.
                     prompts = [
                         self.construct_prompt(
                             instruction=prompt_spec.instruction,
@@ -554,6 +600,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     ]
 
                     async def generate_responses():
+                        # Make asynchronous API calls to GPT-3.5 to generate responses.
                         responses = (
                             await chat_api.generate_batch_openai_chat_completion(
                                 prompts,
@@ -566,6 +613,9 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
                     loop = asyncio.get_event_loop()
                     responses = loop.run_until_complete(generate_responses())
+
+                    # Extract the responses and add new examples to the dataset.
                     self.extract_responses(responses)
             except OPENAI_ERRORS as e:
+                # Handle OpenAI API errors and adjust the API call counter.
                 self.api_call_counter = handle_openai_error(e, self.api_call_counter)
