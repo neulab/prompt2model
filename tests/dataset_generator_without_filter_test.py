@@ -33,7 +33,6 @@ MOCK_INVALID_JSON = partial(
     content='{"input": "This is a great movie!", "output": "1}',
 )
 
-
 Example = namedtuple("Example", ["input_col", "output_col"])
 
 
@@ -244,22 +243,26 @@ def test_generator_without_filter(mocked_generate_example):
     side_effect=MOCK_WRONG_KEY_EXAMPLE,
 )
 def test_wrong_key_example(mocked_generate_example):
-    """Test OpenAIDatasetGenerator when the agent returns a wrong key dict.
+    """Test OpenAIDatasetGenerator when the agent returns a dictionary with wrong keys.
 
     Args:
-        mocked_generate_example: The function represents the @patch function.
+        mocked_generate_example: The function representing the @patch function.
     """
     api_key = "fake_api_key"
     # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
-    dataset_generator = OpenAIDatasetGenerator(api_key, 3)
-    prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
-    expected_num_examples = 1
-    split = DatasetSplit.TRAIN
-    dataset = dataset_generator.generate_dataset_split(
-        prompt_spec, expected_num_examples, split
-    )
-    assert mocked_generate_example.call_count == 3
-    assert dataset["input_col"] == dataset["output_col"] and dataset["input_col"] == []
+    with tempfile.TemporaryDirectory() as cache_dir:
+        dataset_generator = OpenAIDatasetGenerator(
+            api_key, 3, filter_duplicated_examples=False, cache_root=cache_dir
+        )
+        prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
+        expected_num_examples = 1
+        split = DatasetSplit.TRAIN
+        generated_dataset = dataset_generator.generate_dataset_split(
+            prompt_spec, expected_num_examples, split
+        )
+        assert mocked_generate_example.call_count == 3
+        expected_dataset = Dataset.from_dict({"input_col": [], "output_col": []})
+        assert are_datasets_identical(expected_dataset, generated_dataset)
     gc.collect()
 
 
@@ -268,22 +271,27 @@ def test_wrong_key_example(mocked_generate_example):
     side_effect=MOCK_INVALID_JSON,
 )
 def test_invalid_json_response(mocked_generate_example):
-    """Test OpenAIDatasetGenerator when the agent returns a wrong key dict.
+    """Test OpenAIDatasetGenerator when the agent returns invalid JSON responses.
 
     Args:
-        mocked_generate_example: The function represents the @patch function.
+        mocked_generate_example: The function representing the @patch function.
     """
     api_key = "fake_api_key"
     # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
-    dataset_generator = OpenAIDatasetGenerator(api_key, 3)
-    prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
-    expected_num_examples = 1
-    split = DatasetSplit.VAL
-    dataset = dataset_generator.generate_dataset_split(
-        prompt_spec, expected_num_examples, split
-    )
-    assert mocked_generate_example.call_count == 3
-    assert dataset["input_col"] == dataset["output_col"] and dataset["input_col"] == []
+    with tempfile.TemporaryDirectory() as cache_dir:
+        dataset_generator = OpenAIDatasetGenerator(
+            api_key, 3, filter_duplicated_examples=False, cache_root=cache_dir
+        )
+        prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
+        expected_num_examples = 1
+        split = DatasetSplit.VAL
+        dataset = dataset_generator.generate_dataset_split(
+            prompt_spec, expected_num_examples, split
+        )
+        assert mocked_generate_example.call_count == 3
+        assert (
+            dataset["input_col"] == dataset["output_col"] and dataset["input_col"] == []
+        )
     gc.collect()
 
 
@@ -292,15 +300,22 @@ def test_invalid_json_response(mocked_generate_example):
     side_effect=UNKNOWN_GPT3_EXCEPTION(),
 )
 def test_unexpected_examples_of_GPT(mocked_generate_example):
-    """Test OpenAIDatasetGenerator when the agent returns a wrong key dict.
+    """Test OpenAIDatasetGenerator when the agent returns unexpected examples.
+
+    This function tests the scenario when the agent raises an UNKNOWN_GPT3_EXCEPTION
+    during dataset generation. The test ensures that the exception is correctly raised.
 
     Args:
-        mocked_generate_example: The function represents the @patch function.
+        mocked_generate_example: The function representing the @patch function.
     """
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
-    with pytest.raises(UNKNOWN_GPT3_EXCEPTION):
-        dataset_generator = OpenAIDatasetGenerator(max_api_calls=3)
+    with pytest.raises(
+        UNKNOWN_GPT3_EXCEPTION
+    ), tempfile.TemporaryDirectory() as cache_dir:
+        dataset_generator = OpenAIDatasetGenerator(
+            max_api_calls=3, filter_duplicated_examples=False, cache_root=cache_dir
+        )
         prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
         expected_num_examples = 1
         split = DatasetSplit.TEST
@@ -312,21 +327,54 @@ def test_unexpected_examples_of_GPT(mocked_generate_example):
 
 
 def test_openai_key_init():
-    """Test openai key initialization."""
+    """Test OpenAI API key initialization.
+
+    This function tests the initialization of the OpenAI API key. It verifies that
+    the API key can be provided directly or through the environment variable
+    `OPENAI_API_KEY`, and the generator successfully uses the provided API key.
+
+    It tests three cases:
+    1. When the API key is not provided and the environment variable is empty, the
+       generator should raise an AssertionError.
+    2. When the API key is provided through the environment variable, the generator
+       should use the provided API key.
+    3. When the API key is provided directly, the generator should use the provided
+       API key.
+
+    The test uses the `OpenAIDatasetGenerator` with `filter_duplicated_examples=False`
+    for each case.
+
+    Note: For security reasons, it is recommended to set the API key through the
+    environment variable rather than hardcoding it in the code.
+
+    Raises:
+        AssertionError: If the API key is not provided, either directly or through the
+                        environment variable.
+    """
     api_key = None
     os.environ["OPENAI_API_KEY"] = ""
-    with pytest.raises(AssertionError) as exc_info:
-        _ = OpenAIDatasetGenerator()
+    with pytest.raises(
+        AssertionError
+    ) as exc_info, tempfile.TemporaryDirectory() as cache_dir:
+        _ = OpenAIDatasetGenerator(
+            filter_duplicated_examples=False, cache_root=cache_dir
+        )
         assert str(exc_info.value) == (
             "API key must be provided or set the environment variable"
             + " with `export OPENAI_API_KEY=<your key>`"
         )
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    environment_key_generator = OpenAIDatasetGenerator()
+    with tempfile.TemporaryDirectory() as cache_dir:
+        environment_key_generator = OpenAIDatasetGenerator(
+            filter_duplicated_examples=False, cache_root=cache_dir
+        )
     assert environment_key_generator.api_key == os.environ["OPENAI_API_KEY"]
     os.environ["OPENAI_API_KEY"] = ""
     api_key = "qwertwetyriutytwreytuyrgtwetrueytttr"
-    explicit_api_key_generator = OpenAIDatasetGenerator(api_key)
+    with tempfile.TemporaryDirectory() as cache_dir:
+        explicit_api_key_generator = OpenAIDatasetGenerator(
+            api_key, cache_root=cache_dir
+        )
     assert explicit_api_key_generator.api_key == api_key
     gc.collect()
 
