@@ -188,6 +188,126 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             else:
                 continue
 
+    def construct_input_output_map(self):
+        """Constructs a dictionary mapping inputs to `Counter` objects of outputs.
+
+        Ideally, each input should have a unique output (one-to-one mapping).
+        However, language models may occasionally generate different outputs
+        for identical inputs. For instance, given the input “What is the biggest
+        city in China?”, it might produce different but correct outputs such as
+        “Shanghai” and “The biggest city in China is Shanghai”. At other times,
+        it may produce incorrect variations. For the input “What is the Chemical
+        symbol of gold?”, the outputs might be “Au”, “Au”, and “AU”, where the
+        last one is wrong due to capital letters.
+
+        To address this, OpenAIDataSetGenerator uses a two-step multi-vote
+        filtering mechanism. This function represents the first step, creating a
+        dictionary to map inputs to a `Counter` of their outputs.
+
+        The function iterates over all the examples, building a dictionary where
+        inputs serve as keys and `Counter` objects as values. The `Counter`
+        tracks the frequency of each output for a specific input.
+
+        For example:
+        input: ["apple", "banana", "apple", "orange", "apple"]
+        output: ["A", "B", "A", "O", "D"]
+
+        Then self.input_output_map value is:
+        {
+            "apple": Counter({"A": 2, "D": 1}),
+            "banana": Counter({"B": 1}),
+            "orange": Counter({"O": 1})
+        }
+        """
+        # Whenever using the multi-vote filtering mechanism, refresh
+        # self.input_output_map to avoid duplicately countering.
+        self.input_output_map = defaultdict(Counter)
+
+        # Iterate through the examples and construct the mapping.
+        for example in self.generated_examples:
+            input_str = example.input_col
+            output_str = example.output_col
+
+            # Increment the count of the output for the specific input.
+            self.input_output_map[input_str][output_str] += 1
+
+        # Ensure that the generated_examples list is not empty
+        # and the map is constructed correctly.
+        if len(self.generated_examples) != 0:
+            assert self.input_output_map
+
+    def apply_multi_vote_to_construct_generated_dataset(self):
+        """Multi-vote to construct self.generated_dataset from self.input_output_map.
+
+        This method uses multi-vote filtering to create a unique mapping from inputs
+        to outputs. The input_col of self.generated_dataset contains unique inputs,
+        while the output_col holds the shortest, most frequent output for the
+        corresponding input.
+
+        The function asserts that self.filter_duplicated_examples is True and that
+        self.input_output_map is not None when self.generated_examples is not
+        empty. It then iterates over self.input_output_map, finding the most frequent
+        output for each input. If there are multiple outputs with the highest frequency,
+        it selects the shortest one. If there are multiple shortest outputs with the
+        highest frequency, it selects the one that comes first in lexicographical
+        (alphabetical) order.
+
+        Example:
+        Suppose self.input_output_map is:
+        {
+            "apple": Counter({"A": 2, "D": 2}),
+            "banana": Counter({"B": 2, "C": 1}),
+            "orange": Counter({"O": 1})
+        }
+
+        The function will produce self.generated_dataset:
+        {
+            "input_col": ["apple", "banana", "orange"],
+            "output_col": ["A", "B", "O"]
+        }
+
+        Note: When self.generated_examples is empty, both self.input_output_map
+        and self.generated_dataset will be empty.
+        """
+        # Ensure that multi-vote filtering is enabled.
+        assert self.filter_duplicated_examples
+
+        # Ensure `input_output_map` is not None when
+        # `generated_examples` is not empty.
+        if not (len(self.generated_examples) == 0):
+            assert self.input_output_map is not None
+
+        filtered_inputs = []
+        filtered_outputs = []
+
+        for input_str, output_counter in self.input_output_map.items():
+            # Find the most frequent output count.
+            most_common_count = output_counter.most_common(1)[0][1]
+
+            # Get all the outputs that have the most common count.
+            most_frequent_outputs = [
+                output
+                for output, count in output_counter.items()
+                if count == most_common_count
+            ]
+
+            # Sort the outputs based on their lengths and select
+            # the shortest ones. When several outputs have the
+            # same length with the highest frequency, they will
+            # be sorted in their lexicographical (alphabetical) order.
+            most_frequent_outputs.sort(key=len)
+            final_output = most_frequent_outputs[0]
+
+            filtered_inputs.append(input_str)
+            filtered_outputs.append(final_output)
+
+        # Note that when `generated_examples` is empty,
+        # `input_output_map` is None, and `generated_dataset`
+        # will also be empty.
+        self.generated_dataset = Dataset.from_dict(
+            {"input_col": filtered_inputs, "output_col": filtered_outputs}
+        )
+
     def extract_responses(self, completions: list[openai.Completion]) -> None:
         """Extracts the generated sample and annotation from an OpenAI API response.
 

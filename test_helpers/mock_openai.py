@@ -1,26 +1,33 @@
 """Tools for mocking OpenAI API responses (for testing purposes)."""
 
-
 from __future__ import annotations  # noqa FI58
 
 
 class MockCompletion:
     """Mock openai completion object."""
 
-    def __init__(self, content: str, responses_per_request: int = 1):
+    def __init__(self, content: str | None = None, responses_per_request: int = 1):
         """Initialize a new instance of `MockCompletion` class.
 
         Args:
             content: The mocked content to be returned, i.e.,
-            `json.dumps({"comment": "This is a great movie!",
-            "label": 1})`.
-            responses_per_request: Number of responses for each request.
+                `json.dumps({"comment": "This is a great movie!",
+                "label": 1})`.
+            responses_per_request: Number of responses
+                for each request.
         """
-        # We generate 5 responses for each API call.
-        self.choices = [{"message": {"content": content}}] * responses_per_request
+        # We generate 5 identical responses for each API call by default.
+        if content is not None:
+            # Mock an OpenAI ChatCompletion with identical responses.
+            self.choices = [{"message": {"content": content}}] * responses_per_request
+        else:
+            # Mock an OpenAI ChatCompletion with different responses.
+            # Only used in mock_batch_openai_response_with_different_completion.
+            # The choice will be replaced later in the function.
+            self.choices = []
 
     def __repr__(self):
-        """Return a string representation of the `MockCompletion` object.
+        """Return a string representation.
 
         Returns:
             _string: A string representation of the object, including its choices.
@@ -38,8 +45,8 @@ def mock_one_openai_response(
 ) -> MockCompletion:
     """Generate a mock completion object containing a choice with example content.
 
-    This function creates a `MockCompletion` object with a `content` attribute set to
-    an LLM completion string.
+    This function creates a `MockCompletion`
+    object with a `content` attribute set to an LLM completion string.
 
     Args:
         prompt: A mocked prompt that won't be used.
@@ -56,7 +63,7 @@ def mock_one_openai_response(
     return mock_completion
 
 
-def mock_batch_openai_response(
+def mock_batch_openai_response_with_identical_completions(
     prompts: list[str],
     content: str,
     temperature: float,
@@ -65,10 +72,10 @@ def mock_batch_openai_response(
     responses_per_request: int = 5,
     requests_per_minute: int = 80,
 ) -> list[MockCompletion]:
-    """Generate a batch of  mock completion objects.
+    """Generate a batch of mock completion objects.
 
-        This function creates a batch of `MockCompletion` object with a `content`
-        attribute set to an LLM completion string.
+        This function creates a batch of `MockCompletion`
+        object with a `content` attribute set to an LLM completion string.
 
     Args:
         prompts: A batch of mocked prompts that won't be used.
