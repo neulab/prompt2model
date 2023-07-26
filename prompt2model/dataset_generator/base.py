@@ -26,14 +26,14 @@ class DatasetGenerator(ABC):
     def generate_dataset_split(
         self,
         prompt_spec: PromptSpec,
-        num_examples: int,
+        expected_num_examples: int,
         split: DatasetSplit,
     ) -> datasets.Dataset:
         """Generate data for a single named split of data.
 
         Args:
             prompt_spec: A prompt spec (containing a system description).
-            num_examples: Number of examples in split.
+            expected_num_examples: Number of examples in split.
             split: Name of dataset split to generate.
 
         Returns:
@@ -43,14 +43,14 @@ class DatasetGenerator(ABC):
     def generate_dataset_dict(
         self,
         prompt_spec: PromptSpec,
-        num_examples: dict[DatasetSplit, int],
+        expected_num_examples: dict[DatasetSplit, int],
         output_dir: str | None = None,
     ) -> datasets.DatasetDict:
         """Generate full dataset splits (e.g. train/dev/test) from a prompt.
 
         Args:
             prompt_spec: A prompt specification.
-            num_examples: Number of examples per split (train/val/test/etc).
+            expected_num_examples: Number of examples per split (train/val/test/etc).
 
         Returns:
             A DatasetDict containing train, val, and test splits.
@@ -58,7 +58,7 @@ class DatasetGenerator(ABC):
         dataset_dict = datasets.DatasetDict(
             {
                 split.value: self.generate_dataset_split(prompt_spec, num, split=split)
-                for split, num in num_examples.items()
+                for split, num in expected_num_examples.items()
             }
         )
 
