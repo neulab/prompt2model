@@ -5,8 +5,10 @@ from test_helpers.dataset_tools import (
 )
 from test_helpers.mock_openai import (
     MockCompletion,
+    mock_batch_openai_response_with_different_completions,
     mock_batch_openai_response_with_identical_completions,
     mock_one_openai_response,
+    reset_mock_batch_openai_response_with_different_completions,
 )
 from test_helpers.model_and_tokenizer import (
     create_gpt2_model_and_tokenizer,
@@ -16,9 +18,11 @@ from test_helpers.model_and_tokenizer import (
 __all__ = (
     "MockCompletion",
     "create_gpt2_model_and_tokenizer",
+    "mock_batch_openai_response_with_different_completions",
     "create_t5_model_and_tokenizer",
     "mock_one_openai_response",
     "mock_batch_openai_response_with_identical_completions",
     "are_dataset_dicts_identical",
     "are_datasets_identical",
+    "reset_mock_batch_openai_response_with_different_completions",
 )
