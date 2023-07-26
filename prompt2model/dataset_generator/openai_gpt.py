@@ -221,84 +221,6 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     )
                 continue
 
-    def extract_responses(self, completions: list[openai.Completion]):
-        """Extracts and stores generated input and output from OpenAI API responses.
-
-        Args:
-            completions: A list of Completion objects returned by the OpenAI API.
-            Each API call returns a number of completion objects equivalent to
-            `responses_per_request`. The default `responses_per_request` = 5.
-
-        This function iterates through the provided completions, attempting to
-        extract and parse the content of each completion as a JSON object. It
-        then checks for the presence of `input` and `output` keys in the JSON
-        object. If either is missing, the completion is discarded.
-
-        For valid completions, the function creates a namedtuple `example`
-        with `input_col` and `output_col` fields, representing the generated
-        example and label strings respectively. The `example` is then added
-        to self.generated_examples.
-
-        Note: The function process `batch_size * responses_per_request`
-        responses at a time.
-
-        Example:
-        Given a list of two completion objects: [completion_1, completion_2],
-        where:
-        completion_1.choices = [
-            {"message": {"content": '{"input": "1", "output": "a"}'}},
-            {"message": {"content": '{"input": "1", "output": "b"}'}},
-            {"message": {"content": '{"input": "1", "output": "a"}'}},
-        ]
-        completion_2.choices = [
-            {"message": {"content": '{"input": "1", "output": "c"}'}},
-            {"message": {"content": '{"input": "2", "output": "a"}'}},
-            {"message": {"content": '{"input": "2", "output": "b"}'}},
-        ]
-
-        The function will create 'example' namedtuples:
-        Example(input_col="1", output_col="a")
-        Example(input_col="1", output_col="b")
-        Example(input_col="1", output_col="a")
-        Example(input_col="1", output_col="c")
-        Example(input_col="2", output_col="a")
-        Example(input_col="2", output_col="b")
-
-        And append them to self.generated_examples.
-        """
-        for completion in completions:
-            try:
-                for choice in completion.choices:
-                    try:
-                        response_json = json.loads(choice["message"]["content"])
-                    except Exception:
-                        logging.warning(f"Error happened parsing API choice: {choice}")
-                        continue
-                        # If the response is not a valid JSON object, discard it.
-                    required_keys = ["input", "output"]
-                    missing_keys = [
-                        key for key in required_keys if key not in response_json
-                    ]
-                    if len(missing_keys) != 0:
-                        logging.warning(
-                            f'API response must contain {", ".join(required_keys)} keys'
-                        )
-                        continue
-                        # If the response doesn't contain required keys, discard it.
-                    input = str(response_json["input"]).strip()
-                    output = str(response_json["output"]).strip()
-                    self.generated_examples.append(Example(input, output))
-                    # Add the validated example to the generated examples list.
-                    logging.info(f"input: \n\n{input}\n\n")  # noqa: E501
-                    logging.info(f"output: \n\n{output}\n\n")  # noqa: E501
-            except Exception:
-                logging.warning(
-                    f"Error happened when parsing API completion: {completion}"
-                )
-                continue
-                # If an error occurs during processing a
-                # completion, skip it and move to the next.
-
     def construct_input_output_map(self):
         """Constructs a dictionary mapping inputs to `Counter` objects of outputs.
 
@@ -515,6 +437,84 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         # Ensure that the batch_size is a positive value.
         assert batch_size > 0
         return batch_size
+
+    def extract_responses(self, completions: list[openai.Completion]):
+        """Extracts and stores generated input and output from OpenAI API responses.
+
+        Args:
+            completions: A list of Completion objects returned by the OpenAI API.
+            Each API call returns a number of completion objects equivalent to
+            `responses_per_request`. The default `responses_per_request` = 5.
+
+        This function iterates through the provided completions, attempting to
+        extract and parse the content of each completion as a JSON object. It
+        then checks for the presence of `input` and `output` keys in the JSON
+        object. If either is missing, the completion is discarded.
+
+        For valid completions, the function creates a namedtuple `example`
+        with `input_col` and `output_col` fields, representing the generated
+        example and label strings respectively. The `example` is then added
+        to self.generated_examples.
+
+        Note: The function process `batch_size * responses_per_request`
+        responses at a time.
+
+        Example:
+        Given a list of two completion objects: [completion_1, completion_2],
+        where:
+        completion_1.choices = [
+            {"message": {"content": '{"input": "1", "output": "a"}'}},
+            {"message": {"content": '{"input": "1", "output": "b"}'}},
+            {"message": {"content": '{"input": "1", "output": "a"}'}},
+        ]
+        completion_2.choices = [
+            {"message": {"content": '{"input": "1", "output": "c"}'}},
+            {"message": {"content": '{"input": "2", "output": "a"}'}},
+            {"message": {"content": '{"input": "2", "output": "b"}'}},
+        ]
+
+        The function will create 'example' namedtuples:
+        Example(input_col="1", output_col="a")
+        Example(input_col="1", output_col="b")
+        Example(input_col="1", output_col="a")
+        Example(input_col="1", output_col="c")
+        Example(input_col="2", output_col="a")
+        Example(input_col="2", output_col="b")
+
+        And append them to self.generated_examples.
+        """
+        for completion in completions:
+            try:
+                for choice in completion.choices:
+                    try:
+                        response_json = json.loads(choice["message"]["content"])
+                    except Exception:
+                        logging.warning(f"Error happened parsing API choice: {choice}")
+                        continue
+                        # If the response is not a valid JSON object, discard it.
+                    required_keys = ["input", "output"]
+                    missing_keys = [
+                        key for key in required_keys if key not in response_json
+                    ]
+                    if len(missing_keys) != 0:
+                        logging.warning(
+                            f'API response must contain {", ".join(required_keys)} keys'
+                        )
+                        continue
+                        # If the response doesn't contain required keys, discard it.
+                    input = str(response_json["input"]).strip()
+                    output = str(response_json["output"]).strip()
+                    self.generated_examples.append(Example(input, output))
+                    # Add the validated example to the generated examples list.
+                    logging.info(f"input: \n\n{input}\n\n")  # noqa: E501
+                    logging.info(f"output: \n\n{output}\n\n")  # noqa: E501
+            except Exception:
+                logging.warning(
+                    f"Error happened when parsing API completion: {completion}"
+                )
+                continue
+                # If an error occurs during processing a
+                # completion, skip it and move to the next.
 
     def generate_dataset_split(
         self,
