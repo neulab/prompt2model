@@ -11,12 +11,12 @@ from test_helpers import create_t5_model_and_tokenizer
 
 def test_make_prediction_t5():
     """Test the `make_prediction` method with a T5 model."""
-    # Create T5 model and tokenizer.
+    # Create a T5 model and tokenizer.
     t5_model_and_tokenizer = create_t5_model_and_tokenizer()
     t5_model = t5_model_and_tokenizer.model
     t5_tokenizer = t5_model_and_tokenizer.tokenizer
 
-    # Create test dataset.
+    # Create a test dataset.
     test_dataset = Dataset.from_dict(
         {
             "model_input": [
@@ -27,7 +27,7 @@ def test_make_prediction_t5():
         }
     )
 
-    # Create GenerationModelExecutor.
+    # Create a GenerationModelExecutor.
     model_executor = GenerationModelExecutor(t5_model, t5_tokenizer)
 
     # Test T5 model.
@@ -48,12 +48,12 @@ def test_make_prediction_t5():
 
 def test_make_single_prediction_t5():
     """Test the `make_single_prediction` method with a T5 model."""
-    # Create T5 model and tokenizer.
+    # Create a T5 model and tokenizer.
     t5_model_and_tokenizer = create_t5_model_and_tokenizer()
     t5_model = t5_model_and_tokenizer.model
     t5_tokenizer = t5_model_and_tokenizer.tokenizer
 
-    # Create GenerationModelExecutor.
+    # Create a GenerationModelExecutor.
     model_executor = GenerationModelExecutor(t5_model, t5_tokenizer)
 
     # Test T5 model single prediction.
@@ -71,12 +71,12 @@ def test_make_single_prediction_t5():
 
 def test_make_single_prediction_t5_without_length_constraints():
     """Test GenerationModelExecutor for a T5 model without length constraints."""
-    # Create T5 model and tokenizer.
+    # Create a T5 model and tokenizer.
     t5_model_and_tokenizer = create_t5_model_and_tokenizer()
     t5_model = t5_model_and_tokenizer.model
     t5_tokenizer = t5_model_and_tokenizer.tokenizer
 
-    # Create GenerationModelExecutor.
+    # Create a GenerationModelExecutor.
     model_executor = GenerationModelExecutor(
         t5_model, t5_tokenizer, tokenizer_max_length=None, sequence_max_length=None
     )
@@ -100,11 +100,11 @@ def test_make_single_prediction_t5_without_length_constraints():
 
 
 def test_sequence_max_length_init_for_t5():
-    """Test the sequence_max_length is correctly set for t5."""
+    """Test that the sequence_max_length is correctly set for t5."""
     t5_model_and_tokenizer = create_t5_model_and_tokenizer()
     t5_model = t5_model_and_tokenizer.model
     t5_tokenizer = t5_model_and_tokenizer.tokenizer
-    # Create test dataset.
+    # Create a test dataset.
     test_input = "translate English to Spanish: What's your name?"
 
     with patch("logging.warning") as mock_warning:
@@ -141,12 +141,12 @@ def test_truncation_warning_for_t5_executor():
 
 
 def test_beam_search_for_T5_executor():
-    """Test the beam search for T5 ModelExecutor."""
+    """Test beam search for the T5 ModelExecutor."""
     t5_model_and_tokenizer = create_t5_model_and_tokenizer()
     t5_model = t5_model_and_tokenizer.model
     t5_tokenizer = t5_model_and_tokenizer.tokenizer
 
-    # Create GenerationModelExecutor.
+    # Create a GenerationModelExecutor.
     model_executor = GenerationModelExecutor(t5_model, t5_tokenizer)
     hyperparameter_choices = {"generate_strategy": "beam", "num_beams": 4}
 
@@ -165,12 +165,12 @@ def test_beam_search_for_T5_executor():
 
 
 def test_greedy_search_for_T5_executor():
-    """Test the greedy search for T5 ModelExecutor."""
+    """Test greedy search for the T5 ModelExecutor."""
     t5_model_and_tokenizer = create_t5_model_and_tokenizer()
     t5_model = t5_model_and_tokenizer.model
     t5_tokenizer = t5_model_and_tokenizer.tokenizer
 
-    # Create GenerationModelExecutor.
+    # Create a GenerationModelExecutor.
     model_executor = GenerationModelExecutor(t5_model, t5_tokenizer)
     hyperparameter_choices = {
         "generate_strategy": "greedy",
@@ -191,12 +191,12 @@ def test_greedy_search_for_T5_executor():
 
 
 def test_top_k_sampling_for_T5_executor():
-    """Test the top_k sampling for T5 ModelExecutor."""
+    """Test top_k sampling for the T5 ModelExecutor."""
     t5_model_and_tokenizer = create_t5_model_and_tokenizer()
     t5_model = t5_model_and_tokenizer.model
     t5_tokenizer = t5_model_and_tokenizer.tokenizer
 
-    # Create GenerationModelExecutor.
+    # Create a GenerationModelExecutor.
     model_executor = GenerationModelExecutor(t5_model, t5_tokenizer)
     hyperparameter_choices = {
         "generate_strategy": "top_k",
@@ -217,12 +217,12 @@ def test_top_k_sampling_for_T5_executor():
 
 
 def test_top_p_sampling_for_T5_executor():
-    """Test the top_p sampling for T5 ModelExecutor."""
+    """Test top_p sampling for the T5 ModelExecutor."""
     T5_model_and_tokenizer = create_t5_model_and_tokenizer()
     T5_model = T5_model_and_tokenizer.model
     T5_tokenizer = T5_model_and_tokenizer.tokenizer
 
-    # Create GenerationModelExecutor.
+    # Create a GenerationModelExecutor.
     model_executor = GenerationModelExecutor(T5_model, T5_tokenizer)
     hyperparameter_choices = {
         "generate_strategy": "top_p",
@@ -249,7 +249,7 @@ def test_intersect_sampling_for_T5_executor():
     t5_model = t5_model_and_tokenizer.model
     t5_tokenizer = t5_model_and_tokenizer.tokenizer
 
-    # Create GenerationModelExecutor.
+    # Create a GenerationModelExecutor.
     model_executor = GenerationModelExecutor(t5_model, t5_tokenizer)
     hyperparameter_choices = {
         "generate_strategy": "intersect",

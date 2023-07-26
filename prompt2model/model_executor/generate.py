@@ -36,7 +36,7 @@ class GenerationModelExecutor(ModelExecutor):
             "top_p",  # top_p sampling.
             "greedy",  # greedy search.
             "intersect",  # If both top_k and top_p are set, the model will
-            # sample from the intersection of the top-k tokens and the top-p tokens.
+            # Sample from the intersection of the top-k tokens and the top-p tokens.
         ], "Only support top_k/top_p/intersect sampling and beam/greedy search for inference."  # noqa 501
         if generate_strategy == "greedy":
             output = self.model.generate(
@@ -175,7 +175,7 @@ class GenerationModelExecutor(ModelExecutor):
 
         Args:
             model_input: The input string to the model.
-            hyperparameter_choices: A dictionary of hyperparameter for inference.
+            hyperparameter_choices: A dictionary of hyperparameters for inference.
 
         Returns:
             A single model output, useful for exposing a model to a user interface.
