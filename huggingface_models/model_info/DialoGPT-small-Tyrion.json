@@ -1,1 +1,0 @@
-{"pretrained_model_name": "BenWitter/DialoGPT-small-Tyrion", "description": "\\ntags:\n\n-conversational\n\ninference: false\n\nconversational: true\n\n#First time chat bot using a guide, low epoch count due to limited resources.", "size_bytes": "510401385", "downloads": 0}

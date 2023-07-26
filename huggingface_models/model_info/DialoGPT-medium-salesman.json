@@ -1,1 +1,0 @@
-{"pretrained_model_name": "TheHappyDrone/DialoGPT-medium-salesman", "description": "---\nlanguage: \n- en\ntags:\n- conversational\n---\nLess powerful version of what is now /DialoGPT-medium-Nexus-Nova. Go there instead", "size_bytes": "1444564637", "downloads": 0}

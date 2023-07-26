@@ -24,6 +24,16 @@ to install the package using `pip`:
 pip install .
 ```
 
+There is more information for developers in the [CONTRIBUTING.md](CONTRIBUTING.md)
+file.
+
+To enable the model retriever, we need to untar the model_info.tgz file:
+
+```bash
+cd huggingface_models
+tar -xvf model_info.tgz
+```
+
 ## Configuration
 
 Before using `prompt2model`, there are a
