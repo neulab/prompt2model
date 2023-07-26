@@ -18,7 +18,7 @@ def test_initialize_model_retriever():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
         retriever = DescriptionModelRetriever(
             search_index_path=f.name,
-            search_depth=5,
+            search_depth=3,
             model_name=TINY_MODEL_NAME,
             model_descriptions_index="huggingface_models/model_info_tiny/",
         )
@@ -62,10 +62,10 @@ def test_retrieve_model_from_query_when_similarity_threshold_is_met(mock_encode_
     with tempfile.NamedTemporaryFile(mode="w", suffix=".pkl") as f:
         retriever = DescriptionModelRetriever(
             search_index_path=f.name,
-            search_depth=2,
+            search_depth=3,
             model_name=TINY_MODEL_NAME,
             model_descriptions_index="huggingface_models/model_info_tiny/",
-            use_hyde=False,
+            use_HyDE=False,
         )
         create_test_search_index(f.name)
 
@@ -85,10 +85,10 @@ def test_retrieve_model_from_query_when_similarity_threshold_not_met(mock_encode
     with tempfile.NamedTemporaryFile(mode="w", suffix=".pkl") as f:
         retriever = DescriptionModelRetriever(
             search_index_path=f.name,
-            search_depth=2,
+            search_depth=3,
             model_name=TINY_MODEL_NAME,
             model_descriptions_index="huggingface_models/model_info_tiny/",
-            use_hyde=False,
+            use_HyDE=False,
         )
         create_test_search_index(f.name)
 
@@ -133,10 +133,10 @@ def test_retrieve_model_with_hyde(mock_generate_hypothetical_doc, mock_encode_te
     with tempfile.NamedTemporaryFile(mode="w", suffix=".pkl") as f:
         retriever = DescriptionModelRetriever(
             search_index_path=f.name,
-            search_depth=2,
+            search_depth=3,
             model_name=TINY_MODEL_NAME,
             model_descriptions_index="huggingface_models/model_info_tiny/",
-            use_hyde=True,
+            use_HyDE=True,
         )
         create_test_search_index(f.name)
 
