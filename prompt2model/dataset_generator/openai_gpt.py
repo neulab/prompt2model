@@ -405,21 +405,50 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         assert batch_size > 0
         return batch_size
 
-    def extract_responses(self, completions: list[openai.Completion]) -> None:
-        """Extracts the generated sample and annotation from an OpenAI API response.
+    def extract_responses(self, completions: list[openai.Completion]):
+        """Extracts and stores generated input and output from OpenAI API responses.
 
         Args:
-            completions: The generated completion objects returned by OpenAI API.
+            completions: A list of Completion objects returned by the OpenAI API.
+            Each API call returns a number of completion objects equivalent to
+            `responses_per_request`. The default `responses_per_request` = 5.
 
-        Returns:
-                Each API call will return `responses_per_request` completion objects.
-                If the response is a valid JSON object, create a namedtuple called
-                `example` and append it to self.generated_examples. `example` consists
-                of `input_col` and`output_col`, where:
-                - input_col is the generated example string extracted from the response.
-                - output_col is the generated label string extracted from the response.
-                If the response is not a valid JSON object, discard it.
-            There is 5 * len(completions) responses at a time.
+        This function iterates through the provided completions, attempting to
+        extract and parse the content of each completion as a JSON object. It
+        then checks for the presence of `input` and `output` keys in the JSON
+        object. If either is missing, the completion is discarded.
+
+        For valid completions, the function creates a namedtuple `example`
+        with `input_col` and `output_col` fields, representing the generated
+        example and label strings respectively. The `example` is then added
+        to self.generated_examples.
+
+        Note: The function process `batch_size * responses_per_request`
+        responses at a time.
+
+        Example:
+        Given a list of two completion objects: [completion_1, completion_2],
+        where:
+        completion_1.choices = [
+            {"message": {"content": '{"input": "1", "output": "a"}'}},
+            {"message": {"content": '{"input": "1", "output": "b"}'}},
+            {"message": {"content": '{"input": "1", "output": "a"}'}},
+        ]
+        completion_2.choices = [
+            {"message": {"content": '{"input": "1", "output": "c"}'}},
+            {"message": {"content": '{"input": "2", "output": "a"}'}},
+            {"message": {"content": '{"input": "2", "output": "b"}'}},
+        ]
+
+        The function will create 'example' namedtuples:
+        Example(input_col="1", output_col="a")
+        Example(input_col="1", output_col="b")
+        Example(input_col="1", output_col="a")
+        Example(input_col="1", output_col="c")
+        Example(input_col="2", output_col="a")
+        Example(input_col="2", output_col="b")
+
+        And append them to self.generated_examples.
         """
         for completion in completions:
             try:
@@ -439,9 +468,11 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                             f'API response must contain {", ".join(required_keys)} keys'
                         )
                         continue
+                        # If the response doesn't contain required keys, discard it.
                     input = str(response_json["input"]).strip()
                     output = str(response_json["output"]).strip()
                     self.generated_examples.append(Example(input, output))
+                    # Add the validated example to the generated examples list.
                     logging.info(f"input: \n\n{input}\n\n")  # noqa: E501
                     logging.info(f"output: \n\n{output}\n\n")  # noqa: E501
             except Exception:
@@ -449,6 +480,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     f"Error happened when parsing API completion: {completion}"
                 )
                 continue
+                # If an error occurs during processing a
+                # completion, skip it and move to the next.
 
     def generate_dataset_split(
         self,
@@ -456,69 +489,75 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         expected_num_examples: int,
         split: DatasetSplit,
     ) -> Dataset:
-        """Generate a single dataset using GPT-3.5.
+        """Generates a dataset split using GPT-3.5.
+
+        This method iteratively makes API calls to GPT-3.5 to generate a dataset split.
+        Each API call yields a batch of responses. From these responses, new examples
+        are extracted and added to 'generated_examples'. The process continues
+        until the desired number of examples is reached, or the maximum limit on API
+        calls is reached. If an error occurs during an API call, the error is handled
+        appropriately, and the API call counter is adjusted.
 
         Args:
-            prompt_spec: A prompt specification.
-            expected_num_examples: Number of examples in split.
-                Each API call will return `responses_per_request` completion
-                objects. The upper bound of the length of generated dataset
-                is expected_num_examples + responses_per_request.
-            split: Name of dataset split to generate.
+            prompt_spec: PromptParser to be used for generating examples.
+            expected_num_examples: The number of examples expected to be
+                generated. If the maximum limit on API calls is not set, the actual
+                number of generated examples can be slightly higher due to each
+                API call returning `responses_per_request` examples.
+            split: The dataset split (e.g., train, validation, test) for which the
+                examples are being generated.
 
         Returns:
-            A single dataset.
+            The generated dataset split.
         """
-        _ = split  # suppress unused variable warnings
+        # Refresh the relevant data structures for the new split.
+        self.generating_split = split
+        dataset_cache_path = Path(self.cache_root / f"{self.generating_split.value}")
+
+        if dataset_cache_path.exists():
+            # If cache exists, load generated examples from disk.
+            logging.info(f"Loading cache from {str(dataset_cache_path)}.")
+            all_generated_examples_dataset = Dataset.load_from_disk(dataset_cache_path)
+            self.generated_examples = [
+                Example(input_col=ex["input_col"], output_col=ex["output_col"])
+                for ex in all_generated_examples_dataset
+            ]
+            # `generated_examples`` will be loaded from disk. `generated_dataset`
+            # will be initialized in the first loop. If `filter_duplicated_examples` is
+            # True, `input_output_map` will also be constructed in the first loop.
+
+        else:
+            # Initialize data structures for a new split.
+            self.generated_dataset = Dataset.from_dict({})
+            self.input_output_map = defaultdict(Counter)
+            self.generated_examples = []
+
         chat_api = ChatGPTAgent(self.api_key)
-        self.generated_examples = []
         pbar = tqdm(total=expected_num_examples, desc="Generating examples")
-        while len(self.generated_examples) < expected_num_examples:
+
+        while True:
+            # Each API call will return `responses_per_request` completion
+            # objects. The upper bound of the length of the generated dataset
+            # is expected_num_examples + responses_per_request.
             try:
+                # Convert the generated examples into a
+                # Dataset and update the progress bar.
+                self.convert_generated_examples_to_generated_dataset()
+                pbar.update(len(self.generated_dataset))
+
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
                     logging.warning("Maximum number of API calls reached.")
-                    return Dataset.from_dict(
-                        {
-                            "input_col": [
-                                example.input_col for example in self.generated_examples
-                            ],
-                            "output_col": [
-                                example.output_col
-                                for example in self.generated_examples
-                            ],
-                        }
-                    )
+                    return self.generated_dataset
+                elif len(self.generated_dataset) >= expected_num_examples:
+                    return self.generated_dataset
                 else:
-                    batch_size = (
-                        min(
-                            self.batch_size,
-                            math.ceil(
-                                (
-                                    (
-                                        expected_num_examples
-                                        - len(self.generated_examples)
-                                    )
-                                    / self.responses_per_request
-                                )
-                            ),
-                        )
-                        if self.max_api_calls is None
-                        else min(
-                            self.batch_size,
-                            math.ceil(
-                                (
-                                    (
-                                        expected_num_examples
-                                        - len(self.generated_examples)
-                                    )
-                                    / self.responses_per_request
-                                )
-                            ),
-                            self.max_api_calls - self.api_call_counter,
-                        )
+                    # Compute the batch size for the next API call.
+                    batch_size = self.compute_batch_size(
+                        expected_num_examples=expected_num_examples
                     )
-                    assert batch_size > 0
                     self.api_call_counter += batch_size
+
+                    # Generate prompts for the batch call.
                     prompts = [
                         self.construct_prompt(
                             instruction=prompt_spec.instruction,
@@ -528,6 +567,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     ]
 
                     async def generate_responses():
+                        # Make asynchronous API calls to GPT-3.5 to generate responses.
                         responses = (
                             await chat_api.generate_batch_openai_chat_completion(
                                 prompts,
@@ -540,22 +580,9 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
                     loop = asyncio.get_event_loop()
                     responses = loop.run_until_complete(generate_responses())
+
+                    # Extract the responses and add new examples to the dataset.
                     self.extract_responses(responses)
-                    pbar.update(len(self.generated_examples))
             except OPENAI_ERRORS as e:
+                # Handle OpenAI API errors and adjust the API call counter.
                 self.api_call_counter = handle_openai_error(e, self.api_call_counter)
-        # Each API call will return `responses_per_request` completion
-        # objects. The upper bound of the length of generated dataset
-        # is expected_num_examples + responses_per_request.
-        assert (
-            len(self.generated_examples)
-            < expected_num_examples + self.responses_per_request
-        )
-        return Dataset.from_dict(
-            {
-                "input_col": [example.input_col for example in self.generated_examples],
-                "output_col": [
-                    example.output_col for example in self.generated_examples
-                ],
-            }
-        )
