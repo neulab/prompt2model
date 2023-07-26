@@ -1,1 +1,0 @@
-{"pretrained_model_name": "jinwseong/polyglot-ko-1.3b-finetuned-kor-summarization", "description": "---\nlicense: apache-2.0\n---\nprompt: \"\uc6d0\ubb38: {text}\\n\uc694\uc57d:\"", "size_bytes": "5428037271", "downloads": 11}
