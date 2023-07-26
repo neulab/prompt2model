@@ -9,6 +9,7 @@ from typing import Any
 
 import datasets
 import torch
+import torch.nn as nn
 import transformers
 from datasets import concatenate_datasets
 from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
@@ -121,6 +122,12 @@ class GenerationModelTrainer(BaseTrainer):
                     [-100, 0, ..., config.vocab_size - 1]. All labels set to -100 are
                     ignored (masked), the loss is only computed for labels in
                     [0, ..., config.vocab_size - 1].
+
+                Note that -100 is the default ignore index for labels when computing
+                    loss. You can check it by:
+                    from torch import nn
+                    loss_function = nn.CrossEntropyLoss()
+                    IGNORE_INDEX = loss_function.ignore_index
         """
         if shuffle:
             dataset = dataset.shuffle(seed=seed_generator.get_seed())
@@ -153,6 +160,8 @@ class GenerationModelTrainer(BaseTrainer):
         )
 
         labels = []
+        loss_function = nn.CrossEntropyLoss()
+        IGNORE_INDEX = loss_function.ignore_index
         if not self.has_encoder:
             length_of_input_encoding_ids_with_padding = len(
                 input_encodings["input_ids"][0]
@@ -165,8 +174,8 @@ class GenerationModelTrainer(BaseTrainer):
                 length_of_padding_in_output_encoding_id = self.get_left_padding_length(
                     output_encoding_id, self.model.config.pad_token_id
                 )
-                # We are using teaching force in training decoder-only model.
-                # The index -100 is ignored for loss compute in Autoregressive model.
+                # We are using teaching forcing for training the decoder-only model.
+                # The IGNORE_INDEX is ignored for loss compute in Autoregressive model.
                 # Reference: https://huggingface.co/docs/transformers/model_doc/gpt2#transformers.GPT2DoubleHeadsModel.forward.labels # noqa E501
                 length_of_output_encoding_id_without_padding = (
                     length_of_output_encoding_ids_with_padding
@@ -175,7 +184,7 @@ class GenerationModelTrainer(BaseTrainer):
                 assert (
                     length_of_output_encoding_id_without_padding != 0
                 ), "One of the model_output is empty."
-                label = [-100] * (
+                label = [IGNORE_INDEX] * (
                     length_of_input_encoding_ids_with_padding
                     - length_of_output_encoding_id_without_padding
                 ) + input_id[-length_of_output_encoding_id_without_padding:]
@@ -186,10 +195,10 @@ class GenerationModelTrainer(BaseTrainer):
                 )
                 labels.append(label)
         else:
-            # For T5 model, right padding token id should not be taken into
-            # account by the loss function. In PyTorch and Tensorflow, this can
-            # be done by replacing them with -100, which is the ignore_index
-            # of the CrossEntropyLoss.
+            # For T5 model, right padding token id should ignored by the loss
+            # function. In PyTorch and Tensorflow, this can be done by replacing
+            # them with IGNORE_INDEX, which is the ignore_index of the
+            # CrossEntropyLoss as demonstrated before.
             # Reference: https://huggingface.co/docs/transformers/v4.30.0/en/model_doc/t5#training # noqa E501
             for output_encoding_id in output_encodings["input_ids"]:
                 length_of_right_padding_in_output_encoding_id = (
@@ -202,7 +211,7 @@ class GenerationModelTrainer(BaseTrainer):
                         output_encoding_id[
                             :-length_of_right_padding_in_output_encoding_id
                         ]
-                        + [-100] * length_of_right_padding_in_output_encoding_id
+                        + [IGNORE_INDEX] * length_of_right_padding_in_output_encoding_id
                     )
                     if length_of_right_padding_in_output_encoding_id != 0
                     else output_encoding_id
@@ -270,7 +279,7 @@ class GenerationModelTrainer(BaseTrainer):
             evaluate_after_epoch = True
         elif evaluation_strategy == "no":
             logging.info(
-                "The traning doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
+                "The training doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
             evaluate_after_epoch = False
         else:
@@ -301,31 +310,27 @@ class GenerationModelTrainer(BaseTrainer):
                     val_dataset = None
                     evaluate_after_epoch = False
                 else:
-                    # The validation dataset for encoder-decoder model is missed.
+                    # The validation dataset for encoder-decoder model is missing.
                     logging.warning(
                         (
-                            "The validation split for encoder-decoder model is missed."  # noqa E501
+                            "The validation split for encoder-decoder model is missing."  # noqa E501
                             + " The training dataset will be split to create the validation dataset."  # noqa E501
                         )
                     )
                     test_size = hyperparameter_choices.get("test_size", 0.15)
                     assert (
                         len(concatenated_training_dataset) > 1
-                    ), "Training dataset should be larger than 1 for train_test_split."
-                    splited_dataset = concatenated_training_dataset.train_test_split(
+                    ), "Dataset should be larger than 1 to make train/test split."
+                    splitted_dataset = concatenated_training_dataset.train_test_split(
                         test_size=test_size, seed=self.training_seed
                     )
-                    train_dataset = self.tokenize_dataset(splited_dataset["train"])
-                    # the training dataset will be tokenized to train the model.
-                    # But we evaluate the model on the validation dataset in the
-                    # call back with the model executor and model evaluator,
-                    # the validation dataset should not be tokenized.
-                    val_dataset = splited_dataset["test"]
+                    train_dataset = self.tokenize_dataset(splitted_dataset["train"])
+                    # The training dataset will be tokenized to train the model.
+                    # We evaluate the model on the validation dataset in the
+                    # callback with the model executor and model evaluator,
+                    # so the validation dataset should not be pre-tokenized here.
+                    val_dataset = splitted_dataset["test"]
             else:
-                # the training dataset will be tokenized to train the model.
-                # But we evaluate the model on the validation dataset in the
-                # call back with the model executor and model evaluator,
-                # the validation dataset should not be tokenized.
                 train_dataset = self.tokenize_dataset(concatenated_training_dataset)
                 val_dataset = concatenate_datasets(validation_datasets)
         else:
