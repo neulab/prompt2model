@@ -90,6 +90,7 @@ def mock_encode_text_for_hyde(
     device: torch.device = torch.device("cpu"),
 ):
     """Mock encode_text to support the mocked hypothetical document generated."""
+    _ = model_name_or_path, device  # suppress unused variable warnings
     if text_to_encode == MOCK_HYPOTHETICAL_DOCUMENT:
         return np.array([[0, 1, 0]])
     else:
