@@ -4,7 +4,6 @@ import json
 import os
 
 import numpy as np
-import retriv
 import torch
 from tqdm import tqdm
 
