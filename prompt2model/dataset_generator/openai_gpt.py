@@ -112,6 +112,11 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         # generated. After each loop, `generated_examples` will be
         # stored as a Dataset at the path `{cache_root}/{generating_split}`.
 
+        self.dataset_cache_path = Path()
+        self.examples_cache_path = Path()
+        # `genrated_examples` and `generated_dataset` are stored at
+        # path `examples_cache_path` and `dataset_cache_path` respectively.
+
     def construct_prompt(
         self,
         instruction: str,
@@ -388,14 +393,12 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
         # Save all the generated examples to disk as
         # a Dataset, regardless of the filtering option.
-        examples_cache_path = Path(
-            self.cache_root / f"cached_examples_{self.generating_split.value}"
-        )
-        all_generated_examples_dataset.save_to_disk(examples_cache_path)
-        dataset_cache_path = Path(
-            self.cache_root / f"cached_examples_{self.generating_split.value}"
-        )
-        self.generated_dataset.save_to_disk(dataset_cache_path)
+
+        assert self.examples_cache_path != Path()
+        assert self.dataset_cache_path != Path()
+        assert self.dataset_cache_path != self.examples_cache_path
+        all_generated_examples_dataset.save_to_disk(self.examples_cache_path)
+        self.generated_dataset.save_to_disk(self.dataset_cache_path)
 
     def compute_batch_size(self, expected_num_examples: int) -> int:
         """Computes the batch size for OpenAI API calls in a batch.
@@ -551,12 +554,19 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         """
         # Refresh the relevant data structures for the new split.
         self.generating_split = split
-        dataset_cache_path = Path(self.cache_root / f"{self.generating_split.value}")
+        self.examples_cache_path = Path(
+            self.cache_root / f"generated_examples_{self.generating_split.value}"
+        )
+        self.dataset_cache_path = Path(
+            self.cache_root / f"generated_dataset_{self.generating_split.value}"
+        )
 
-        if dataset_cache_path.exists():
+        if self.examples_cache_path.exists():
             # If cache exists, load generated examples from disk.
-            logging.info(f"Loading cache from {str(dataset_cache_path)}.")
-            all_generated_examples_dataset = Dataset.load_from_disk(dataset_cache_path)
+            logging.info(f"Loading cache from {str(self.examples_cache_path)}.")
+            all_generated_examples_dataset = Dataset.load_from_disk(
+                self.examples_cache_path
+            )
             self.generated_examples = [
                 Example(input_col=ex["input_col"], output_col=ex["output_col"])
                 for ex in all_generated_examples_dataset
