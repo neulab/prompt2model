@@ -5,6 +5,7 @@ import os
 
 import numpy as np
 import torch
+from tqdm import tqdm
 
 from prompt2model.model_retriever.base import ModelRetriever
 from prompt2model.model_retriever.generate_hypothetical_document import (
@@ -23,7 +24,7 @@ class DescriptionModelRetriever(ModelRetriever):
         search_depth: int = 5,
         model_name: str = "OpenMatch/cocodr-base-msmarco",
         model_descriptions_index="huggingface_models/model_info/",
-        use_hyde: bool = False,
+        use_HyDE: bool = False,
         openai_api_key: str | None = None,
     ):
         """Initialize a dual-encoder retriever against a search index."""
@@ -31,21 +32,42 @@ class DescriptionModelRetriever(ModelRetriever):
         self.search_depth = search_depth
         self.model_name = model_name
         self.model_descriptions_index = model_descriptions_index
-        description_files = os.listdir(self.model_descriptions_index)
-        self.model_names = []
-        self.model_descriptions = []
-        for f in description_files:
-            if len(open(os.path.join(self.model_descriptions_index, f)).read()) == 0:
-                continue
-            model_dict = json.load(open(os.path.join(self.model_descriptions_index, f)))
-            self.model_names.append(model_dict["pretrained_model_name"])
-            self.model_descriptions.append(model_dict["description"])
+        self.use_HyDE = use_HyDE
+
+        self.model_blocklist_organizations = ["huggingtweets"]
+        self.load_model_info()
+
         assert not os.path.isdir(search_index_path), (
             "Search index must either be a valid file or not exist yet; "
             + f"{search_index_path} provided."
         )
-        self.use_hyde = use_hyde
         self.openai_api_key = openai_api_key
+
+    def load_model_info(self):
+        """Load metadata (e.g. downloads, publication date) about various models."""
+        self.model_side_info = {}
+        description_files = os.listdir(self.model_descriptions_index)
+        self.model_names = []
+        self.model_descriptions = []
+        self.model_metadata = {}
+        for f in tqdm(description_files):
+            if (
+                f.startswith(".")
+                or len(open(os.path.join(self.model_descriptions_index, f)).read()) == 0
+            ):
+                continue
+            block = False
+            for org in self.model_blocklist_organizations:
+                if f.startswith(org + "/"):
+                    block = True
+                    break
+            if block:
+                continue
+            model_dict = json.load(open(os.path.join(self.model_descriptions_index, f)))
+            self.model_descriptions.append(model_dict["description"])
+            model_name = model_dict["pretrained_model_name"]
+            self.model_names.append(model_name)
+            self.model_metadata[model_name] = model_dict
 
     def encode_model_descriptions(self, prompt: PromptSpec) -> np.ndarray:
         """Encode model descriptions into a vector for indexing."""
@@ -61,26 +83,22 @@ class DescriptionModelRetriever(ModelRetriever):
         self,
         prompt: PromptSpec,
         similarity_threshold: float = 0.5,
-        default_model: str = "t5-base",
-    ) -> str:
+    ) -> list[str]:
         """Select a model from a prompt using a dual-encoder retriever.
 
         Args:
             prompt: A prompt to use to select relevant models.
             similarity_threshold: The minimum similarity score for retrieving a model.
-            default_model: The default model to use if no model meets the similarity
-                           threshold.
-
 
         Return:
-            A relevant model's HuggingFace name.
+            A list of relevant models' HuggingFace names.
         """
         if not os.path.exists(self.search_index_path):
             raise ValueError(
                 "Search index does not exist; encode model descriptions first."
             )
 
-        if self.use_hyde:
+        if self.use_HyDE:
             query_text = generate_hypothetical_model_description(
                 prompt, self.openai_api_key
             )
@@ -101,9 +119,4 @@ class DescriptionModelRetriever(ModelRetriever):
         ]
         ranked_model_list = sorted(ranked_model_list, key=lambda x: x[1], reverse=True)
         assert len(ranked_model_list) > 0, "No models retrieved from search index."
-        top_model_similarity = ranked_model_list[0][1]
-        if top_model_similarity >= similarity_threshold:
-            top_model_name = ranked_model_list[0][0]
-            return top_model_name
-        else:
-            return default_model
+        return [model_tuple[0] for model_tuple in ranked_model_list]

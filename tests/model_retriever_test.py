@@ -18,7 +18,7 @@ def test_initialize_model_retriever():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
         retriever = DescriptionModelRetriever(
             search_index_path=f.name,
-            search_depth=5,
+            search_depth=3,
             model_name=TINY_MODEL_NAME,
             model_descriptions_index="huggingface_models/model_info_tiny/",
         )
@@ -62,46 +62,23 @@ def test_retrieve_model_from_query_when_similarity_threshold_is_met(mock_encode_
     with tempfile.NamedTemporaryFile(mode="w", suffix=".pkl") as f:
         retriever = DescriptionModelRetriever(
             search_index_path=f.name,
-            search_depth=2,
+            search_depth=3,
             model_name=TINY_MODEL_NAME,
             model_descriptions_index="huggingface_models/model_info_tiny/",
-            use_hyde=False,
+            use_HyDE=False,
         )
+        indexed_models = retriever.model_names
         create_test_search_index(f.name)
 
         mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
-        top_model_name = retriever.retrieve(mock_prompt, similarity_threshold=0.5)
+        top_model_names = retriever.retrieve(mock_prompt, similarity_threshold=0.5)
         assert mock_encode_text.call_count == 1
         # The 3rd item in the index is the closest to the query.
-        assert top_model_name == retriever.model_names[2]
-
-
-@patch(
-    "prompt2model.model_retriever.description_based_retriever.encode_text",
-    return_value=np.array([[0, 0, 1]]),
-)
-def test_retrieve_model_from_query_when_similarity_threshold_not_met(mock_encode_text):
-    """Test loading a small Tevatron model."""
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".pkl") as f:
-        retriever = DescriptionModelRetriever(
-            search_index_path=f.name,
-            search_depth=2,
-            model_name=TINY_MODEL_NAME,
-            model_descriptions_index="huggingface_models/model_info_tiny/",
-            use_hyde=False,
-        )
-        create_test_search_index(f.name)
-
-        mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
-        DEFAULT_MODEL_NAME = "default_model"
-        top_model_name = retriever.retrieve(
-            mock_prompt, similarity_threshold=0.95, default_model=DEFAULT_MODEL_NAME
-        )
-        assert mock_encode_text.call_count == 1
-        # The most-relevant dataset has a relevance score of only 0.9, which is
-        # below the threshold of 0.95. Therefore, the default model name should
-        # be returned.
-        assert top_model_name == DEFAULT_MODEL_NAME
+        assert top_model_names[0] == indexed_models[2]
+        # The other two models should be returned later in the search results, but in
+        # no particular order.}")
+        assert indexed_models[0] in top_model_names[1:]
+        assert indexed_models[1] in top_model_names[1:]
 
 
 MOCK_HYPOTHETICAL_DOCUMENT = "This is a hypothetical model description."
@@ -114,7 +91,7 @@ def mock_encode_text_for_hyde(
 ):
     """Mock encode_text to support the mocked hypothetical document generated."""
     if text_to_encode == MOCK_HYPOTHETICAL_DOCUMENT:
-        return np.array([[0, 0, 1]])
+        return np.array([[0, 1, 0]])
     else:
         return np.array([[0, 0, 0.1]])
 
@@ -133,21 +110,23 @@ def test_retrieve_model_with_hyde(mock_generate_hypothetical_doc, mock_encode_te
     with tempfile.NamedTemporaryFile(mode="w", suffix=".pkl") as f:
         retriever = DescriptionModelRetriever(
             search_index_path=f.name,
-            search_depth=2,
+            search_depth=3,
             model_name=TINY_MODEL_NAME,
             model_descriptions_index="huggingface_models/model_info_tiny/",
-            use_hyde=True,
+            use_HyDE=True,
         )
+        indexed_models = retriever.model_names
         create_test_search_index(f.name)
 
         mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
-        DEFAULT_MODEL_NAME = "default_model"
-        top_model_name = retriever.retrieve(
-            mock_prompt, similarity_threshold=0.5, default_model=DEFAULT_MODEL_NAME
-        )
+        top_model_names = retriever.retrieve(mock_prompt, similarity_threshold=0.5)
         assert mock_generate_hypothetical_doc.call_count == 1
         assert mock_encode_text.call_count == 1
-        # With HyDE, the hypothetical document encoding should match the 3rd document
-        # in our index. Without HyDE, the mocked query encoding would not meet
-        # the threshold of 0.5 and would have returned the default model name.
-        assert top_model_name == retriever.model_names[2]
+        # With HyDE, the hypothetical document encoding should match the 2rd document
+        # in our index. Without HyDE, the mocked query encoding would actually be
+        # closest to the 3rd document in our index.
+        assert top_model_names[0] == indexed_models[1]
+        # The other two models should be returned later in the search results, but in
+        # no particular order.
+        assert indexed_models[0] in top_model_names[1:]
+        assert indexed_models[2] in top_model_names[1:]
