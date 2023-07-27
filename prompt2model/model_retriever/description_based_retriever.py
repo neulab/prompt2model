@@ -4,6 +4,7 @@ import json
 import os
 
 import numpy as np
+import retriv
 import torch
 from tqdm import tqdm
 
@@ -26,6 +27,7 @@ class DescriptionModelRetriever(ModelRetriever):
         model_name: str = "OpenMatch/cocodr-base-msmarco",
         model_descriptions_index="huggingface_models/model_info/",
         model_size_limit_bytes=3e9,
+        use_bm25: bool = False,
         use_HyDE: bool = False,
         openai_api_key: str | None = None,
     ):
@@ -36,6 +38,7 @@ class DescriptionModelRetriever(ModelRetriever):
         self.model_name = model_name
         self.model_descriptions_index = model_descriptions_index
         self.model_size_limit_bytes = model_size_limit_bytes
+        self.use_bm25 = use_bm25
         self.use_HyDE = use_HyDE
 
         self.model_blocklist_organizations = ["huggingtweets"]
@@ -94,6 +97,14 @@ class DescriptionModelRetriever(ModelRetriever):
             return -np.inf
         return similarity_score * log_num_downloads
 
+    def construct_bm25_index(self):
+        """Construct a retriv BM25 index for model descriptions."""
+        collection = []
+        for name, document in zip(self.model_names, self.model_descriptions):
+            collection.append({"id": name, "text": document})
+        search_engine = retriv.SearchEngine("new-index").index(collection)
+        return search_engine
+
     def retrieve(
         self,
         prompt: PromptSpec,
@@ -120,18 +131,23 @@ class DescriptionModelRetriever(ModelRetriever):
         else:
             query_text = prompt.instruction
 
-        query_vector = encode_text(
-            self.model_name,
-            text_to_encode=query_text,
-            device=torch.device("cpu"),
-        )
-        ranked_list = retrieve_objects(
-            query_vector, self.search_index_path, self.first_stage_depth
-        )
-        ranked_model_list = [
-            (self.model_names[int(model_idx_str)], float(model_score))
-            for (model_idx_str, model_score) in ranked_list
-        ]
+        if self.use_bm25:
+            search_engine = self.construct_bm25_index()
+            results = search_engine.search(query_text, cutoff=self.first_stage_depth)
+            ranked_model_list = [(result["id"], result["score"]) for result in results]
+        else:
+            query_vector = encode_text(
+                self.model_name,
+                text_to_encode=query_text,
+                device=torch.device("cpu"),
+            )
+            ranked_list = retrieve_objects(
+                query_vector, self.search_index_path, self.first_stage_depth
+            )
+            ranked_model_list = [
+                (self.model_names[int(model_idx_str)], float(model_score))
+                for (model_idx_str, model_score) in ranked_list
+            ]
 
         ranked_model_list_scores_scaled = [
             (name, self.scaled_similarity_score(score, name))
