@@ -647,8 +647,15 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_u
             filter_duplicated_examples=True, cache_root=cache_dir
         )
 
-        # Set the generating_split attribute to DatasetSplit.TEST.
         data_generator.generating_split = DatasetSplit.TEST
+        data_generator.examples_cache_path = (
+            Path(cache_dir)
+            / f"generated_examples_{data_generator.generating_split.value}"
+        )
+        data_generator.dataset_cache_path = (
+            Path(cache_dir)
+            / f"generated_dataset_{data_generator.generating_split.value}"
+        )
 
         # Provide generated examples with duplicate inputs but unique outputs.
         data_generator.generated_examples = [
@@ -693,8 +700,15 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_d
             filter_duplicated_examples=True, cache_root=cache_dir
         )
 
-        # Set the generating_split attribute to DatasetSplit.TEST.
         data_generator.generating_split = DatasetSplit.TEST
+        data_generator.examples_cache_path = (
+            Path(cache_dir)
+            / f"generated_examples_{data_generator.generating_split.value}"
+        )
+        data_generator.dataset_cache_path = (
+            Path(cache_dir)
+            / f"generated_dataset_{data_generator.generating_split.value}"
+        )
 
         # Provide generated examples with duplicate inputs and duplicate outputs.
         data_generator.generated_examples = [
@@ -744,8 +758,15 @@ def test_convert_generated_examples_to_generated_dataset_with_unique_inputs_outp
             filter_duplicated_examples=True, cache_root=cache_dir
         )
 
-        # Set the generating_split attribute to DatasetSplit.TEST.
         data_generator.generating_split = DatasetSplit.TEST
+        data_generator.examples_cache_path = (
+            Path(cache_dir)
+            / f"generated_examples_{data_generator.generating_split.value}"
+        )
+        data_generator.dataset_cache_path = (
+            Path(cache_dir)
+            / f"generated_dataset_{data_generator.generating_split.value}"
+        )
 
         # Provide generated examples with unique inputs and outputs.
         data_generator.generated_examples = [
@@ -788,8 +809,15 @@ def test_convert_generated_examples_to_generated_dataset_with_empty_examples_lis
             filter_duplicated_examples=True, cache_root=cache_dir
         )
 
-        # Set the generating_split attribute to DatasetSplit.TEST.
         data_generator.generating_split = DatasetSplit.TEST
+        data_generator.examples_cache_path = (
+            Path(cache_dir)
+            / f"generated_examples_{data_generator.generating_split.value}"
+        )
+        data_generator.dataset_cache_path = (
+            Path(cache_dir)
+            / f"generated_dataset_{data_generator.generating_split.value}"
+        )
 
         # Provide an empty list of generated examples.
         data_generator.generated_examples = []
@@ -827,20 +855,20 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
             cache_root=cache_dir, filter_duplicated_examples=True
         )
 
-        # Create a cached dataset and save it to the disk.
-        dataset_cache_path = Path(
-            data_generator.cache_root / f"{DatasetSplit.TEST.value}"
+        # Create cached examples and save them to the disk.
+        examples_cache_path = (
+            Path(cache_dir) / f"generated_examples_{DatasetSplit.TEST.value}"
         )
-        cached_dataset = Dataset.from_dict(
+        cached_examples = Dataset.from_dict(
             {
                 "input_col": ["1", "1", "1", "1", "2", "3"],
                 "output_col": ["a", "a", "b", "c", "a", "d"],
             }
         )
-        cached_dataset.save_to_disk(dataset_cache_path)
+        cached_examples.save_to_disk(examples_cache_path)
 
-        # The generate_dataset_split would first load the cached dataset into
-        # self.generated_examples. Then, in the while loop,
+        # The generate_dataset_split would first load the cached examples
+        # into self.generated_examples. Then, in the while loop,
         # convert_generated_examples_to_generated_dataset would be called to
         # construct the self.generated_dataset. Note that filter_duplicated_examples
         # is True, so the self.generated_examples will be filtered to 3 examples
@@ -858,7 +886,7 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
 
             # Verify that logging.info was called with the correct message.
             mock_info.assert_called_once_with(
-                f"Loading cache from {str(dataset_cache_path)}."
+                f"Loading cache from {str(examples_cache_path)}."
             )
             mock_warning.assert_not_called()
 
@@ -904,7 +932,7 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
                 ],
             }
         )
-        assert are_datasets_identical(directly_constructed_dataset, cached_dataset)
+        assert are_datasets_identical(directly_constructed_dataset, cached_examples)
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
@@ -934,20 +962,20 @@ def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generat
             cache_root=cache_dir, filter_duplicated_examples=True
         )
 
-        # Create a cached dataset and save it to the disk.
-        dataset_cache_path = Path(
-            data_generator.cache_root / f"{DatasetSplit.TEST.value}"
+        # Create cached examples and save them to the disk.
+        examples_cache_path = (
+            Path(cache_dir) / f"generated_examples_{DatasetSplit.TEST.value}"
         )
-        cached_dataset = Dataset.from_dict(
+        cached_examples = Dataset.from_dict(
             {
                 "input_col": ["1", "1", "1", "1", "2", "3"],
                 "output_col": ["a", "a", "b", "c", "a", "d"],
             }
         )
-        cached_dataset.save_to_disk(dataset_cache_path)
+        cached_examples.save_to_disk(examples_cache_path)
 
-        # The generate_dataset_split would first load the cached dataset into
-        # self.generated_examples. Then, in the while loop,
+        # The generate_dataset_split would first load the cached examples
+        # into self.generated_examples. Then, in the while loop,
         # convert_generated_examples_to_generated_dataset would be called to
         # construct the self.generated_dataset. Note that filter_duplicated_examples
         # is True, so the self.generated_examples will be filtered to 3 examples
@@ -966,7 +994,7 @@ def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generat
             # Verify that logging.info was called with
             # the correct message for loading cache.
             info_list = [each.args[0] for each in mock_info.call_args_list]
-            assert info_list[0] == f"Loading cache from {str(dataset_cache_path)}."
+            assert info_list[0] == f"Loading cache from {str(examples_cache_path)}."
             # The first logging.info is for loading cache, and there are
             # 5 * 2 additional logging.info messages in extract_responses.
             assert len(info_list) == 1 + 5 * 2

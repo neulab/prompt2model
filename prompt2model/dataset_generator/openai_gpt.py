@@ -571,7 +571,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 Example(input_col=ex["input_col"], output_col=ex["output_col"])
                 for ex in all_generated_examples_dataset
             ]
-            # `generated_examples`` will be loaded from disk. `generated_dataset`
+            # `generated_examples` will be loaded from disk. `generated_dataset`
             # will be initialized in the first loop. If `filter_duplicated_examples` is
             # True, `input_output_map` will also be constructed in the first loop.
 
