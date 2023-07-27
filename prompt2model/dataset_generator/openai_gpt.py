@@ -388,8 +388,14 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
         # Save all the generated examples to disk as
         # a Dataset, regardless of the filtering option.
-        dataset_cache_path = Path(self.cache_root / f"{self.generating_split.value}")
-        all_generated_examples_dataset.save_to_disk(dataset_cache_path)
+        examples_cache_path = Path(
+            self.cache_root / f"cached_examples_{self.generating_split.value}"
+        )
+        all_generated_examples_dataset.save_to_disk(examples_cache_path)
+        dataset_cache_path = Path(
+            self.cache_root / f"cached_examples_{self.generating_split.value}"
+        )
+        self.generated_dataset.save_to_disk(dataset_cache_path)
 
     def compute_batch_size(self, expected_num_examples: int) -> int:
         """Computes the batch size for OpenAI API calls in a batch.
@@ -565,8 +571,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             self.input_output_map = defaultdict(Counter)
             self.generated_examples = []
 
-        chat_api = ChatGPTAgent(self.api_key)
         pbar = tqdm(total=expected_num_examples, desc="Generating examples")
+        chat_api = ChatGPTAgent(self.api_key)
 
         while True:
             # Each API call will return `responses_per_request` completion
@@ -576,7 +582,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 # Convert the generated examples into a
                 # Dataset and update the progress bar.
                 self.convert_generated_examples_to_generated_dataset()
-                pbar.update(len(self.generated_dataset))
+                pbar.update(len(self.generated_dataset) - pbar.n)
 
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
                     logging.warning("Maximum number of API calls reached.")
