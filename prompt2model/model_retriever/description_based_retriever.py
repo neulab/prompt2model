@@ -27,7 +27,7 @@ class DescriptionModelRetriever(ModelRetriever):
         model_name: str = "OpenMatch/cocodr-base-msmarco",
         model_descriptions_index="huggingface_models/model_info/",
         model_size_limit_bytes=3e9,
-        use_bm25: bool = False,
+        use_bm25: bool = True,
         use_HyDE: bool = False,
         openai_api_key: str | None = None,
     ):
@@ -38,6 +38,8 @@ class DescriptionModelRetriever(ModelRetriever):
         self.model_name = model_name
         self.model_descriptions_index = model_descriptions_index
         self.model_size_limit_bytes = model_size_limit_bytes
+        # If use_bm25 is True, then we use BM25 to retrieve the top-k models.
+        # Otherwise, we use a dual-encoder retriever.
         self.use_bm25 = use_bm25
         self.use_HyDE = use_HyDE
 

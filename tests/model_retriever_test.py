@@ -35,6 +35,7 @@ def test_encode_model_retriever():
             search_depth=5,
             model_name=TINY_MODEL_NAME,
             model_descriptions_index="huggingface_models/model_info_tiny/",
+            use_bm25=False,
         )
         mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
         model_vectors = retriever.encode_model_descriptions(mock_prompt)
@@ -57,7 +58,7 @@ def create_test_search_index(index_file_name):
     "prompt2model.model_retriever.description_based_retriever.encode_text",
     return_value=np.array([[0, 0, 1]]),
 )
-def test_retrieve_model_from_query_when_similarity_threshold_is_met(mock_encode_text):
+def test_retrieve_model_from_query_dual_encoder(mock_encode_text):
     """Test loading a small Tevatron model."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".pkl") as f:
         retriever = DescriptionModelRetriever(
@@ -65,6 +66,7 @@ def test_retrieve_model_from_query_when_similarity_threshold_is_met(mock_encode_
             search_depth=3,
             model_name=TINY_MODEL_NAME,
             model_descriptions_index="huggingface_models/model_info_tiny/",
+            use_bm25=False,
             use_HyDE=False,
         )
         indexed_models = retriever.model_names
@@ -106,7 +108,7 @@ def mock_encode_text_for_hyde(
     + ".generate_hypothetical_model_description",
     return_value=MOCK_HYPOTHETICAL_DOCUMENT,
 )
-def test_retrieve_model_with_hyde(mock_generate_hypothetical_doc, mock_encode_text):
+def test_retrieve_model_with_hyde_dual_encoder(mock_generate_hypothetical_doc, mock_encode_text):
     """Test loading a small Tevatron model."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".pkl") as f:
         retriever = DescriptionModelRetriever(
@@ -114,6 +116,7 @@ def test_retrieve_model_with_hyde(mock_generate_hypothetical_doc, mock_encode_te
             search_depth=3,
             model_name=TINY_MODEL_NAME,
             model_descriptions_index="huggingface_models/model_info_tiny/",
+            use_bm25=False,
             use_HyDE=True,
         )
         indexed_models = retriever.model_names
