@@ -1,34 +1,110 @@
+"""Tools for generating hypothetical documents from prompts."""
+
 from prompt2model.prompt_parser import PromptSpec
-from prompt2model.utils import OPENAI_ERRORS, ChatGPTAgent, handle_openai_error
+from prompt2model.utils import ChatGPTAgent
 
 PROMPT_PREFIX = '''HuggingFace contains models, which are each given a user-generated description. The first section of the description, delimited with two "---" lines, consists of a YAML description of the model. This may contain fields like "language" (supported by model), "datasets" (used to train the model), "tags" (e.g. tasks relevant to the model), and "metrics" (used to evaluate the model). Create a hypothetical HuggingFace model description that would satisfy a given user instruction. Here are some examples:
 
-Instruction: "Give me some translation from Arabic to English. Input Arabic and output English."
+Instruction: "Give me some translation from English to Vietnamese. Input English and output Vietnamese."
 Hypothetical model description:
 ---
+language:
+- en
+- vi
+
 tags:
 - translation
+
 license: apache-2.0
 ---
 
-### opus-mt-ar-en
+### eng-vie
 
-* source languages: ar
-* target languages: en
-*  OPUS readme: [ar-en](https://github.com/Helsinki-NLP/OPUS-MT-train/blob/master/models/ar-en/README.md)
+* source group: English
+* target group: Vietnamese
+*  OPUS readme: [eng-vie](https://github.com/Helsinki-NLP/Tatoeba-Challenge/tree/master/models/eng-vie/README.md)
 
-*  dataset: opus
+*  model: transformer-align
+* source language(s): eng
+* target language(s): vie vie_Hani
 * model: transformer-align
-* pre-processing: normalization + SentencePiece
-* download original weights: [opus-2019-12-18.zip](https://object.pouta.csc.fi/OPUS-MT-models/ar-en/opus-2019-12-18.zip)
-* test set translations: [opus-2019-12-18.test.txt](https://object.pouta.csc.fi/OPUS-MT-models/ar-en/opus-2019-12-18.test.txt)
-* test set scores: [opus-2019-12-18.eval.txt](https://object.pouta.csc.fi/OPUS-MT-models/ar-en/opus-2019-12-18.eval.txt)
+* pre-processing: normalization + SentencePiece (spm32k,spm32k)
+* a sentence initial language token is required in the form of `>>id<<` (id = valid target language ID)
+* download original weights: [opus-2020-06-17.zip](https://object.pouta.csc.fi/Tatoeba-MT-models/eng-vie/opus-2020-06-17.zip)
+* test set translations: [opus-2020-06-17.test.txt](https://object.pouta.csc.fi/Tatoeba-MT-models/eng-vie/opus-2020-06-17.test.txt)
+* test set scores: [opus-2020-06-17.eval.txt](https://object.pouta.csc.fi/Tatoeba-MT-models/eng-vie/opus-2020-06-17.eval.txt)
 
 ## Benchmarks
 
 | testset               | BLEU  | chr-F |
 |-----------------------|-------|-------|
-| Tatoeba.ar.en 	| 49.4 	| 0.661 |
+| Tatoeba-test.eng.vie 	| 37.2 	| 0.542 |
+
+
+### System Info:
+- hf_name: eng-vie
+
+- source_languages: eng
+
+- target_languages: vie
+
+- opus_readme_url: https://github.com/Helsinki-NLP/Tatoeba-Challenge/tree/master/models/eng-vie/README.md
+
+- original_repo: Tatoeba-Challenge
+
+- tags: ['translation']
+
+- languages: ['en', 'vi']
+
+- src_constituents: {'eng'}
+
+- tgt_constituents: {'vie', 'vie_Hani'}
+
+- src_multilingual: False
+
+- tgt_multilingual: False
+
+- prepro:  normalization + SentencePiece (spm32k,spm32k)
+
+- url_model: https://object.pouta.csc.fi/Tatoeba-MT-models/eng-vie/opus-2020-06-17.zip
+
+- url_test_set: https://object.pouta.csc.fi/Tatoeba-MT-models/eng-vie/opus-2020-06-17.test.txt
+
+- src_alpha3: eng
+
+- tgt_alpha3: vie
+
+- short_pair: en-vi
+
+- chrF2_score: 0.542
+
+- bleu: 37.2
+
+- brevity_penalty: 0.973
+
+- ref_len: 24427.0
+
+- src_name: English
+
+- tgt_name: Vietnamese
+
+- train_date: 2020-06-17
+
+- src_alpha2: en
+
+- tgt_alpha2: vi
+
+- prefer_old: False
+
+- long_pair: eng-vie
+
+- helsinki_git_sha: 480fcbe0ee1bf4774bcbe6226ad9f58e63f6c535
+
+- transformers_git_sha: 2207e5d8cb224e954a7cba69fa4ac2309e9ff30b
+
+- port_machine: brutasse
+
+- port_time: 2020-08-21-14:41
 
 
 Instruction: "I want to summarize things like news articles."
@@ -101,7 +177,7 @@ def get_response(input_text):
   output_text = tokenizer.batch_decode(gen_out, skip_special_tokens=True)
   return output_text
 ```
-#### Example: 
+#### Example:
 context = """"
 India wicket-keeper batsman Rishabh Pant has said someone from the crowd threw a ball on pacer Mohammed Siraj while he was fielding in the ongoing third Test against England on Wednesday. Pant revealed the incident made India skipper Virat Kohli "upset". "I think, somebody threw a ball inside, at Siraj, so he [Kohli] was upset," said Pant in a virtual press conference after the close of the first day\'s play."You can say whatever you want to chant, but don\'t throw things at the fielders and all those things. It is not good for cricket, I guess," he added.In the third session of the opening day of the third Test, a section of spectators seemed to have asked Siraj the score of the match to tease the pacer. The India pacer however came with a brilliant reply as he gestured 1-0 (India leading the Test series) towards the crowd.Earlier this month, during the second Test match, there was some bad crowd behaviour on a show as some unruly fans threw champagne corks at India batsman KL Rahul.Kohli also intervened and he was seen gesturing towards the opening batsman to know more about the incident. An over later, the TV visuals showed that many champagne corks were thrown inside the playing field, and the Indian players were visibly left frustrated.Coming back to the game, after bundling out India for 78, openers Rory Burns and Haseeb Hameed ensured that England took the honours on the opening day of the ongoing third Test.At stumps, England\'s score reads 120/0 and the hosts have extended their lead to 42 runs. For the Three Lions, Burns (52*) and Hameed (60*) are currently unbeaten at the crease.Talking about the pitch on opening day, Pant said, "They took the heavy roller, the wicket was much more settled down, and they batted nicely also," he said. "But when we batted, the wicket was slightly soft, and they bowled in good areas, but we could have applied [ourselves] much better."Both England batsmen managed to see off the final session and the hosts concluded the opening day with all ten wickets intact, extending the lead to 42.(ANI)
 """
@@ -326,11 +402,32 @@ The authors use the following Stanford Sentiment Treebank([sst2](https://hugging
 - max_seq_length = 128
 - num_train_epochs = 3.0
 ```
-:'''
+:'''  # noqa: E501
 
-def generate_hypothetical_model_description(prompt: PromptSpec, openai_api_key: str | None = None) -> str:
+
+def generate_hypothetical_model_description(
+    prompt: PromptSpec, openai_api_key: str | None = None
+) -> str:
+    """Generate a hypothetical model description for the user's instruction.
+
+    This method is based on HyDE by Gao et al 2022 (https://arxiv.org/abs/2212.10496).
+
+    Args:
+        prompt: PromptSpec object containing the user's instruction.
+        openai_api_key: OpenAI API key. If None, use the OPENAI_API_KEY environment
+                        variable.
+
+    Returns:
+        a hypothetical model description for the user's instruction.
+    """
     instruction = prompt.instruction
     openai_api_agent = ChatGPTAgent(openai_api_key, "gpt-3.5-turbo-16k")
-    chatgpt_prompt = PROMPT_PREFIX + "\n" + f'Instruction: "{instruction}"\nHypothetical model description:\n'
-    chatgpt_completion = openai_api_agent.generate_openai_chat_completion(chatgpt_prompt)
+    chatgpt_prompt = (
+        PROMPT_PREFIX
+        + "\n"
+        + f'Instruction: "{instruction}"\nHypothetical model description:\n'
+    )
+    chatgpt_completion = openai_api_agent.generate_openai_chat_completion(
+        chatgpt_prompt
+    )
     return chatgpt_completion.choices[0]["message"]["content"]
