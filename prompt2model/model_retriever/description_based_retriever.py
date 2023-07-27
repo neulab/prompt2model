@@ -8,9 +8,6 @@ import torch
 from tqdm import tqdm
 
 from prompt2model.model_retriever.base import ModelRetriever
-from prompt2model.model_retriever.generate_hypothetical_document import (
-    generate_hypothetical_model_description,
-)
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import encode_text, retrieve_objects
 

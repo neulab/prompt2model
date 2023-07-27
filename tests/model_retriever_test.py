@@ -5,7 +5,6 @@ import tempfile
 from unittest.mock import patch
 
 import numpy as np
-import torch
 
 from prompt2model.model_retriever import DescriptionModelRetriever
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
