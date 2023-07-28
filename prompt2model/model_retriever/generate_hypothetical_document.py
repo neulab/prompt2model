@@ -1,5 +1,7 @@
 """Tools for generating hypothetical documents from prompts."""
 
+from __future__ import annotations  # noqa FI58
+
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import ChatGPTAgent
 
@@ -415,7 +417,7 @@ def generate_hypothetical_model_description(
     Args:
         prompt: PromptSpec object containing the user's instruction.
         openai_api_key: OpenAI API key. If None, use the OPENAI_API_KEY environment
-                        variable.
+            variable.
 
     Returns:
         a hypothetical model description for the user's instruction.
