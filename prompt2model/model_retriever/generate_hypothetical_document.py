@@ -415,7 +415,7 @@ def generate_hypothetical_model_description(
     Args:
         prompt: PromptSpec object containing the user's instruction.
         openai_api_key: OpenAI API key. If None, use the OPENAI_API_KEY environment
-                        variable.
+            variable.
 
     Returns:
         a hypothetical model description for the user's instruction.
