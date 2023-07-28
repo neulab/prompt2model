@@ -27,7 +27,7 @@ class TextualizeProcessor(BaseProcessor):
         if has_encoder and eos_token is not None:
             logging.info(
                 (
-                    "The T5 tokenizer automatically adds eos token in the end of sequence in when tokenizing."  # noqa E501
+                    "The T5 tokenizer automatically adds eos token in the end of sequence when tokenizing."  # noqa E501
                     " So the eos_token of encoder-decoder model tokenizer is unnecessary."  # noqa E501
                 )
             )
