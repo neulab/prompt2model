@@ -1,5 +1,7 @@
 """Testing description-based model retriever."""
 
+from __future__ import annotations  # noqa FI58
+
 import os
 import pickle
 import tempfile
