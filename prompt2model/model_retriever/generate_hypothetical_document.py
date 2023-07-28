@@ -1,5 +1,7 @@
 """Tools for generating hypothetical documents from prompts."""
 
+from __future__ import annotations  # noqa FI58
+
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import ChatGPTAgent
 
