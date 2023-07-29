@@ -33,7 +33,7 @@ class ModelInfo:
         Args:
             name: The name of the model.
             description: The description of the model.
-            score: The score of the model.
+            score: The similarity of the model to a given prompt from a user.
             size_in_bytes: The size of the model on disk, in bytes.
             num_downloads: The number of downoads for this model on HuggingFace.
         """
