@@ -4,7 +4,6 @@ from __future__ import annotations  # noqa FI58
 
 import json
 import os
-from collections import namedtuple
 
 import numpy as np
 import retriv
@@ -18,8 +17,32 @@ from prompt2model.model_retriever.generate_hypothetical_document import (
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import encode_text, retrieve_objects
 
-ModelInfo = namedtuple("ModelInfo", ["name", "description"])
-ModelScorePair = namedtuple("ModelScorePair", ["model", "score"])
+
+class ModelInfo:
+    """Store the model name, description, and query-model score for each model."""
+
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        score: float,
+        size_in_bytes: int,
+        num_downloads: int,
+    ):
+        """Initialize a ModelInfo object.
+
+        Args:
+            name: The name of the model.
+            description: The description of the model.
+            score: The similarity of the model to a given prompt from a user.
+            size_in_bytes: The size of the model on disk, in bytes.
+            num_downloads: The number of downoads for this model on HuggingFace.
+        """
+        self.name = name
+        self.description = description
+        self.score = score
+        self.size_in_bytes = size_in_bytes
+        self.num_downloads = num_downloads
 
 
 class DescriptionModelRetriever(ModelRetriever):
@@ -32,7 +55,9 @@ class DescriptionModelRetriever(ModelRetriever):
         first_stage_depth: int = 1000,
         encoder_model_name: str = "OpenMatch/cocodr-base-msmarco",
         model_descriptions_index_path="huggingface_models/model_info/",
-        device: torch.device = torch.device("cuda:0"),
+        device: torch.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu"
+        ),
         model_size_limit_bytes=3e9,
         use_bm25: bool = True,
         use_HyDE: bool = False,
@@ -69,6 +94,9 @@ class DescriptionModelRetriever(ModelRetriever):
         self.use_HyDE = use_HyDE
         self.openai_api_key = openai_api_key
 
+        # Blocklist certain models' organizations to exclude from model retrieval
+        # search results; certain organizations programmatically create models which
+        # are unlikely to be useful for task-specific finetuning.
         self.model_blocklist_organizations = ["huggingtweets"]
         self.load_model_info()
 
@@ -77,11 +105,15 @@ class DescriptionModelRetriever(ModelRetriever):
         ), f"Search index must either be a valid file or not exist yet. But {search_index_path} is provided."  # noqa 501
 
     def load_model_info(self):
-        """Load metadata (e.g. downloads, publication date) about various models."""
-        self.model_side_info = {}
+        """Load metadata (e.g. downloads, publication date) about various models.
+
+        We load metadata from json files in the model_descriptions_index_path
+        directory, filter out models from certain organizations, and initialize a list
+        of ModelInfo objects corresponding to the models we want to search against.
+        """
         description_files = os.listdir(self.model_descriptions_index_path)
-        self.models = []
-        self.model_metadata = {}
+        # We store model names and descriptions in a list of ModelInfo objects.
+        self.model_infos: list[ModelInfo] = []
         for f in tqdm(description_files):
             if (
                 f.startswith(".")
@@ -100,13 +132,18 @@ class DescriptionModelRetriever(ModelRetriever):
                 open(os.path.join(self.model_descriptions_index_path, f))
             )
             model_name = model_dict["pretrained_model_name"]
-            model_info = ModelInfo(model_name, model_dict["description"])
-            self.models.append(model_info)
-            self.model_metadata[model_name] = model_dict
+            model_info = ModelInfo(
+                name=model_name,
+                description=model_dict["description"],
+                score=None,
+                size_in_bytes=model_dict["size_bytes"],
+                num_downloads=model_dict["downloads"],
+            )
+            self.model_infos.append(model_info)
 
     def encode_model_descriptions(self, search_index_path) -> np.ndarray:
         """Encode model descriptions into a vector for indexing."""
-        model_descriptions = [model.description for model in self.models]
+        model_descriptions = [model.description for model in self.model_infos]
         model_vectors = encode_text(
             self.encoder_model_name,
             text_to_encode=model_descriptions,
@@ -115,15 +152,21 @@ class DescriptionModelRetriever(ModelRetriever):
         )
         return model_vectors
 
-    def scaled_similarity_score(self, model_score_pair: ModelScorePair) -> float:
-        """Adjust the search score using the model size and number of downloads."""
-        model_name = model_score_pair.model.name
-        num_downloads = int(self.model_metadata[model_name]["downloads"])
+    def scaled_similarity_score(
+        self, model_info: ModelInfo, model_score: float
+    ) -> float:
+        """Adjust the search score using the model size and number of downloads.
+
+        Args:
+            model_info: The name of the model we are scoring.
+            model_score: The similarity score of this model for this particular query.
+        """
+        num_downloads = int(model_info.num_downloads)
         log_num_downloads = np.log10(num_downloads + 1)
-        model_size_bytes = int(self.model_metadata[model_name]["size_bytes"])
+        model_size_bytes = int(model_info.size_in_bytes)
         if model_size_bytes > self.model_size_limit_bytes or model_size_bytes == 0:
             return -np.inf
-        return model_score_pair.score * log_num_downloads
+        return model_score * log_num_downloads
 
     def construct_bm25_index(self):
         """Construct a retriv BM25 index for model descriptions."""
@@ -158,40 +201,34 @@ class DescriptionModelRetriever(ModelRetriever):
         if self.use_bm25:
             search_engine = self.construct_bm25_index()
             results = search_engine.search(query_text, cutoff=self.first_stage_depth)
-            ranked_model_list = []
+            ranked_list: list[tuple[str, float]] = []
             for result in results:
-                model_description = self.model_metadata[result["id"]]["description"]
-                model_info = ModelInfo(result["id"], model_description)
-                ranked_model_list.append(ModelScorePair(model_info, result["score"]))
+                ranked_list.append((result["id"], result["score"]))
         else:
             query_vector = encode_text(
                 self.encoder_model_name,
                 text_to_encode=query_text,
                 device=self.device,
             )
+            model_names = [model.name for model in self.model_infos]
             ranked_list = retrieve_objects(
-                query_vector, self.search_index_path, self.first_stage_depth
+                query_vector,
+                self.search_index_path,
+                model_names,
+                self.first_stage_depth,
             )
-            ranked_model_list = [
-                ModelScorePair(self.models[int(model_idx_str)], float(model_score))
-                for (model_idx_str, model_score) in ranked_list
-            ]
 
-        ranked_model_list_scores_scaled = [
-            ModelScorePair(
-                model_score_pair.model,
-                self.scaled_similarity_score(model_score_pair),
-            )
-            for model_score_pair in ranked_model_list
-        ]
-        ranked_model_list_scores_scaled = sorted(
-            ranked_model_list_scores_scaled, key=lambda x: x.score, reverse=True
-        )
+        model_name_to_model_info = {}
+        for model_info in self.model_infos:
+            model_name_to_model_info[model_info.name] = model_info
 
-        assert (
-            len(ranked_model_list_scores_scaled) > 0
-        ), "No models retrieved from search index."
-        return [
-            model_tuple.model.name
-            for model_tuple in ranked_model_list_scores_scaled[: self.search_depth]
-        ]
+        top_models_list = []
+        for model_name, model_score in ranked_list:
+            model_info = model_name_to_model_info[model_name]
+            scaled_model_score = self.scaled_similarity_score(model_info, model_score)
+            model_info.score = scaled_model_score
+            top_models_list.append(model_info)
+
+        top_models_list = sorted(top_models_list, key=lambda x: x.score, reverse=True)
+        assert len(top_models_list) > 0, "No models retrieved from search index."
+        return [model_info.name for model_info in top_models_list]
