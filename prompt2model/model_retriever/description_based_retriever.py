@@ -31,7 +31,7 @@ class ModelInfo:
         Args:
             name: The name of the model.
             description: The description of the model.
-            score: The score of the model.
+            score: The similarity of the model to a given prompt from a user.
         """
         self.name = name
         self.description = description
