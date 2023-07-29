@@ -4,7 +4,6 @@ from __future__ import annotations  # noqa FI58
 
 import json
 import os
-from collections import namedtuple
 
 import numpy as np
 import torch
@@ -17,8 +16,26 @@ from prompt2model.model_retriever.generate_hypothetical_document import (
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import encode_text, retrieve_objects
 
-ModelInfo = namedtuple("ModelInfo", ["name", "description"])
-ModelScorePair = namedtuple("ModelScorePair", ["model", "score"])
+
+class ModelInfo:
+    """Store the model name, description, and query-model score for each model."""
+
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        score: float,
+    ):
+        """Initialize a ModelInfo object.
+
+        Args:
+            name: The name of the model.
+            description: The description of the model.
+            score: The score of the model.
+        """
+        self.name = name
+        self.description = description
+        self.score = score
 
 
 class DescriptionModelRetriever(ModelRetriever):
@@ -31,7 +48,9 @@ class DescriptionModelRetriever(ModelRetriever):
         first_stage_depth: int = 1000,
         encoder_model_name: str = "OpenMatch/cocodr-base-msmarco",
         model_descriptions_index_path="huggingface_models/model_info/",
-        device: torch.device = torch.device("cuda:0"),
+        device: torch.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu"
+        ),
         model_size_limit_bytes=3e9,
         use_HyDE: bool = False,
         openai_api_key: str | None = None,
@@ -62,6 +81,9 @@ class DescriptionModelRetriever(ModelRetriever):
         self.use_HyDE = use_HyDE
         self.openai_api_key = openai_api_key
 
+        # Blocklist certain models' organizations to exclude from model retrieval
+        # search results; certain organizations programmatically create models which
+        # are unlikely to be useful for task-specific finetuning.
         self.model_blocklist_organizations = ["huggingtweets"]
         self.load_model_info()
 
@@ -70,11 +92,15 @@ class DescriptionModelRetriever(ModelRetriever):
         ), f"Search index must either be a valid file or not exist yet. But {search_index_path} is provided."  # noqa 501
 
     def load_model_info(self):
-        """Load metadata (e.g. downloads, publication date) about various models."""
-        self.model_side_info = {}
+        """Load metadata (e.g. downloads, publication date) about various models.
+
+        We load metadata from json files in the model_descriptions_index_path
+        directory, filter out models from certain organizations, and initialize a list
+        of ModelInfo objects corresponding to the models we want to search against.
+        """
         description_files = os.listdir(self.model_descriptions_index_path)
-        self.models = []
-        self.model_metadata = {}
+        # We store model names and descriptions in a list of ModelInfo objects.
+        self.model_infos: list[ModelInfo] = []
         for f in tqdm(description_files):
             if (
                 f.startswith(".")
@@ -93,13 +119,14 @@ class DescriptionModelRetriever(ModelRetriever):
                 open(os.path.join(self.model_descriptions_index_path, f))
             )
             model_name = model_dict["pretrained_model_name"]
-            model_info = ModelInfo(model_name, model_dict["description"])
-            self.models.append(model_info)
-            self.model_metadata[model_name] = model_dict
+            model_info = ModelInfo(
+                name=model_name, description=model_dict["description"], score=None
+            )
+            self.model_infos.append(model_info)
 
     def encode_model_descriptions(self, search_index_path) -> np.ndarray:
         """Encode model descriptions into a vector for indexing."""
-        model_descriptions = [model.description for model in self.models]
+        model_descriptions = [model.description for model in self.model_infos]
         model_vectors = encode_text(
             self.encoder_model_name,
             text_to_encode=model_descriptions,
@@ -108,15 +135,19 @@ class DescriptionModelRetriever(ModelRetriever):
         )
         return model_vectors
 
-    def scaled_similarity_score(self, model_score_pair: ModelScorePair) -> float:
-        """Adjust the search score using the model size and number of downloads."""
-        model_name = model_score_pair.model.name
+    def scaled_similarity_score(self, model_name: str, score: float) -> float:
+        """Adjust the search score using the model size and number of downloads.
+
+        Args:
+            model_name: The name of the model we are scoring.
+            score: The similarity score of this model for this particular query.
+        """
         num_downloads = int(self.model_metadata[model_name]["downloads"])
         log_num_downloads = np.log10(num_downloads + 1)
         model_size_bytes = int(self.model_metadata[model_name]["size_bytes"])
         if model_size_bytes > self.model_size_limit_bytes or model_size_bytes == 0:
             return -np.inf
-        return model_score_pair.score * log_num_downloads
+        return score * log_num_downloads
 
     def retrieve(
         self,
@@ -148,26 +179,13 @@ class DescriptionModelRetriever(ModelRetriever):
         ranked_list = retrieve_objects(
             query_vector, self.search_index_path, self.first_stage_depth
         )
-        ranked_model_list = [
-            ModelScorePair(self.models[int(model_idx_str)], float(model_score))
-            for (model_idx_str, model_score) in ranked_list
-        ]
 
-        ranked_model_list_scores_scaled = [
-            ModelScorePair(
-                model_score_pair.model,
-                self.scaled_similarity_score(model_score_pair),
-            )
-            for model_score_pair in ranked_model_list
-        ]
-        ranked_model_list_scores_scaled = sorted(
-            ranked_model_list_scores_scaled, key=lambda x: x.score, reverse=True
-        )
+        for model_idx_str, model_score in ranked_list:
+            model_idx = int(model_idx_str)
+            model_name = self.model_infos[model_idx].name
+            scaled_model_score = self.scaled_similarity_score(model_name, model_score)
+            self.model_infos[model_idx].score = scaled_model_score
 
-        assert (
-            len(ranked_model_list_scores_scaled) > 0
-        ), "No models retrieved from search index."
-        return [
-            model_tuple.model.name
-            for model_tuple in ranked_model_list_scores_scaled[: self.search_depth]
-        ]
+        ranked_list = sorted(self.model_infos, key=lambda x: x.score, reverse=True)
+        assert len(ranked_list) > 0, "No models retrieved from search index."
+        return [model_tuple.name for model_tuple in ranked_list]
