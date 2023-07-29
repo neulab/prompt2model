@@ -24,7 +24,7 @@ def test_initialize_model_retriever():
             model_descriptions_index_path="test_helpers/model_info_tiny/",
         )
         # This tiny directory of HuggingFace models contains 3 models.
-        assert len(retriever.models) == 3
+        assert len(retriever.model_infos) == 3
 
 
 def test_encode_model_retriever():
@@ -66,7 +66,7 @@ def test_retrieve_model_from_query(mock_encode_text):
             encoder_model_name=TINY_MODEL_NAME,
             model_descriptions_index_path="test_helpers/model_info_tiny/",
         )
-        indexed_models = retriever.models
+        indexed_models = retriever.model_infos
         create_test_search_index(f.name)
 
         mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
@@ -105,7 +105,7 @@ def test_retrieve_model_when_no_search_index_is_found(mock_encode_text):
             encoder_model_name=TINY_MODEL_NAME,
             model_descriptions_index_path="test_helpers/model_info_tiny/",
         )
-        indexed_models = retriever.models
+        indexed_models = retriever.model_infos
 
         mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
         top_model_names = retriever.retrieve(mock_prompt)
