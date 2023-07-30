@@ -39,6 +39,7 @@ These are some [low-quality examples]. Their formats and contents may not be acc
 {low_equality_example_string}
 ---------------------------------------------------------------------------------------------
 Before generating a new example, ensure that you strictly adhere to the rules mentioned in the [new instruction] and follow the format of the [high-quality examples]. Even if there are conflicts between [low-quality examples] and [new instruction], prioritize the [new instruction] guidelines to maintain consistency and quality. Think twice before generating a new example.
+
 [new example (in JSON)]:"""  # noqa 501
 
 MIDDLE_PROMPT_TEMPLATE = """
@@ -74,6 +75,7 @@ These are some [low-quality examples]. Their formats and contents may not be acc
 {low_equality_example_string}
 ---------------------------------------------------------------------------------------------
 Before generating a new example, ensure that you strictly adhere to the rules mentioned in the [new instruction] and follow the format of the [high-quality examples]. Even if there are conflicts between [low-quality examples] and [new instruction], prioritize the [new instruction] guidelines to maintain consistency and quality. Think twice before generating a new example.
+
 [new example (in JSON)]:"""  # noqa 501
 
 SIMPLE_PROMPT_TEMPLATE = """
@@ -105,6 +107,7 @@ These are some [low-quality examples]. Their formats and contents may not be acc
 {low_equality_example_string}
 ---------------------------------------------------------------------------------------------
 Before generating a new example, ensure that you strictly adhere to the rules mentioned in the [new instruction] and follow the format of the [high-quality examples]. Even if there are conflicts between [low-quality examples] and [new instruction], prioritize the [new instruction] guidelines to maintain consistency and quality. Think twice before generating a new example.
+
 [new example (in JSON)]:"""  # noqa 501
 
 # String templates for the prompt. Can be modified by the users.
