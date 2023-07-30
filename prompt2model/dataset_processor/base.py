@@ -76,7 +76,13 @@ class BaseProcessor(ABC):
             Returns:
                 bool: True if both 'input_col' and 'output_col' are non-empty strings,
                     False otherwise.
+
+            Raises:
+                AssertionError: If no 'input_col' or 'output_col' inside the example.
             """
+            assert (
+                "input_col" in example and "output_col" in example
+            ), "Example dictionary must have 'input_col' and 'output_col' keys."
             # Check if 'input_col' and 'output_col' are both non-empty strings
             return bool(example["input_col"]) and bool(example["output_col"])
 
