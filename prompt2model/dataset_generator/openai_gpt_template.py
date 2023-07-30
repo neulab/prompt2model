@@ -38,7 +38,8 @@ These are some [low-quality examples]. Their formats and contents may not be acc
 [low-quality examples]:
 {low_equality_example_string}
 ---------------------------------------------------------------------------------------------
-[new example (in JSON)]:"""  # noqa: E501
+Before generating a new example, ensure that you strictly adhere to the rules mentioned in the [new instruction] and follow the format of the [high-quality examples]. Even if there are conflicts between [low-quality examples] and [new instruction], prioritize the [new instruction] guidelines to maintain consistency and quality. Think twice before generating a new example.
+[new example (in JSON)]:"""  # noqa 501
 
 MIDDLE_PROMPT_TEMPLATE = """
 {META_PROMPT}
@@ -72,7 +73,8 @@ These are some [low-quality examples]. Their formats and contents may not be acc
 [low-quality examples]:
 {low_equality_example_string}
 ---------------------------------------------------------------------------------------------
-[new example (in JSON)]:"""  # noqa: E501
+Before generating a new example, ensure that you strictly adhere to the rules mentioned in the [new instruction] and follow the format of the [high-quality examples]. Even if there are conflicts between [low-quality examples] and [new instruction], prioritize the [new instruction] guidelines to maintain consistency and quality. Think twice before generating a new example.
+[new example (in JSON)]:"""  # noqa 501
 
 SIMPLE_PROMPT_TEMPLATE = """
 {META_PROMPT}
@@ -102,7 +104,8 @@ These are some [low-quality examples]. Their formats and contents may not be acc
 [low-quality examples]:
 {low_equality_example_string}
 ---------------------------------------------------------------------------------------------
-[new example (in JSON)]:"""  # noqa: E501
+Before generating a new example, ensure that you strictly adhere to the rules mentioned in the [new instruction] and follow the format of the [high-quality examples]. Even if there are conflicts between [low-quality examples] and [new instruction], prioritize the [new instruction] guidelines to maintain consistency and quality. Think twice before generating a new example.
+[new example (in JSON)]:"""  # noqa 501
 
 # String templates for the prompt. Can be modified by the users.
 # Prompt_template must contains `instruction` and `examples` fields.
