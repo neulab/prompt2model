@@ -906,7 +906,7 @@ def test_extract_responses():
     mock_completion_2 = MockCompletion()
     mock_completion_2.choices = [
         {"message": {"content": '{"input": "3", "output": "a"}'}},
-        # Note that the following choice miss the right quote of JSON.
+        # Note that the following choice misses the right quote of JSON.
         # So it should be discarded. And will log a warning.
         {"message": {"content": '{"input": "3", "output": "a}'}},
         {"message": {"content": '{"input": "3", "output": "b"}'}},
@@ -935,7 +935,8 @@ def test_extract_responses():
             mock_warning.assert_called_once_with(
                 'Error happened parsing API choice: {\'message\': {\'content\': \'{"input": "3", "output": "a}\'}}'  # noqa E501
             )
-            # There are 5 valid examples. Each input
+            # There are 5 valid examples in [mock_completion_1,
+            # mock_completion_2] Each input
             # and output will be logged once as info.
             assert mock_info.call_count == 5 * 2
 
@@ -972,6 +973,92 @@ def test_extract_responses():
                 Example(input_col="1", output_col="a"),
                 Example(input_col="1", output_col="b"),
                 Example(input_col="1", output_col="a"),
+                Example(input_col="3", output_col="a"),
+                Example(input_col="3", output_col="b"),
+                Example(input_col="4", output_col="c"),
+                Example(input_col="4", output_col="c"),
+                Example(input_col="5", output_col="a"),
+            ]
+    gc.collect()
+
+
+def test_extract_some_empty_responses():
+    """Test the extract_responses function correctly handle empty responses."""
+    mock_completion_1 = MockCompletion()
+    mock_completion_1.choices = [
+        # Note that this choice's input is empty. So it should be discarded.
+        {"message": {"content": '{"input": "", "output": "a"}'}},
+        {"message": {"content": '{"input": "5", "output": "b"}'}},
+        # Note that this choice's output is empty. So it should be discarded.
+        {"message": {"content": '{"input": "1", "output": ""}'}},
+    ]
+    mock_completion_2 = MockCompletion()
+    mock_completion_2.choices = [
+        {"message": {"content": '{"input": "3", "output": "a"}'}},
+        # Note that the following choice misses the right quote of JSON.
+        # So it should be discarded. And will log a warning.
+        {"message": {"content": '{"input": "3", "output": "a}'}},
+        {"message": {"content": '{"input": "3", "output": "b"}'}},
+    ]
+    mock_completion_3 = MockCompletion()
+    mock_completion_3.choices = [
+        {"message": {"content": '{"input": "4", "output": "c"}'}},
+        {"message": {"content": '{"input": "4", "output": "c"}'}},
+        {"message": {"content": '{"input": "5", "output": "a"}'}},
+    ]
+    # choices should be list of dicts. So mock_completion_4
+    # is invalid. Which will be discarded and log a warning.
+    mock_completion_4 = MockCompletion()
+    mock_completion_4.choices = None
+
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        data_generator = OpenAIDatasetGenerator(
+            cache_root=cache_dir, filter_duplicated_examples=True
+        )
+        assert data_generator.generated_examples == []
+        with patch("logging.info") as mock_info, patch(
+            "logging.warning"
+        ) as mock_warning:
+            data_generator.extract_responses([mock_completion_1, mock_completion_2])
+            mock_warning.assert_called_once_with(
+                'Error happened parsing API choice: {\'message\': {\'content\': \'{"input": "3", "output": "a}\'}}'  # noqa E501
+            )
+            # There are 3 valid examples in [mock_completion_1,
+            # mock_completion_2] Each input
+            # and output will be logged once as info.
+            # And there are 2 exmaples with empty
+            # input or output, which should be discarded
+            # and be logged as info.
+            assert mock_info.call_count == 3 * 2 + 2
+
+        # The second choice in mock_completion_2
+        # is invalid. So it should be discarded.
+        assert data_generator.generated_examples == [
+            Example(input_col="5", output_col="b"),
+            Example(input_col="3", output_col="a"),
+            Example(input_col="3", output_col="b"),
+        ]
+        data_generator.extract_responses([mock_completion_3])
+        assert data_generator.generated_examples == [
+            Example(input_col="5", output_col="b"),
+            Example(input_col="3", output_col="a"),
+            Example(input_col="3", output_col="b"),
+            Example(input_col="4", output_col="c"),
+            Example(input_col="4", output_col="c"),
+            Example(input_col="5", output_col="a"),
+        ]
+        with patch("logging.info") as mock_info, patch(
+            "logging.warning"
+        ) as mock_warning:
+            data_generator.extract_responses([mock_completion_4])
+            mock_warning.assert_called_once_with(
+                "Error happened when parsing API completion: <MockObject choices=None>"
+            )
+            mock_info.assert_not_called()
+            # The generated_examples should be the same.
+            assert data_generator.generated_examples == [
+                Example(input_col="5", output_col="b"),
                 Example(input_col="3", output_col="a"),
                 Example(input_col="3", output_col="b"),
                 Example(input_col="4", output_col="c"),

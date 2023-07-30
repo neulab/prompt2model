@@ -60,10 +60,26 @@ class BaseProcessor(ABC):
 
         Returns:
             A list of DatasetDicts, all examples are converted into text2text fashion.
+            Note that if any example contain empty `input_col` or `output_col`,
+            it will be discarded.
         """
         modified_dataset_dicts = []
         raw_dataset_dicts = deepcopy(dataset_dicts)
         # Use deepcopy to avoid modifying the original dataset_dicts
+
+        def filter_empty_strings(example: dict) -> bool:
+            """Filter to exclude examples with empty 'input_col' or 'output_col'.
+
+            Args:
+                example: A dictionary representing a single example in the dataset.
+
+            Returns:
+                bool: True if both 'input_col' and 'output_col' are non-empty strings,
+                    False otherwise.
+            """
+            # Check if 'input_col' and 'output_col' are both non-empty strings
+            return bool(example["input_col"]) and bool(example["output_col"])
+
         for task_id, dataset_dict in enumerate(raw_dataset_dicts):
             for dataset_split in list(dataset_dict.keys()):
                 mapping_function = partial(
@@ -74,8 +90,10 @@ class BaseProcessor(ABC):
                     dataset_split=dataset_split,
                     eos_token=self.eos_token,
                 )
-                dataset_dict[dataset_split] = dataset_dict[dataset_split].map(
-                    mapping_function
+                dataset_dict[dataset_split] = (
+                    dataset_dict[dataset_split]
+                    .filter(filter_empty_strings)
+                    .map(mapping_function)
                 )
             modified_dataset_dicts.append(dataset_dict)
         return modified_dataset_dicts
