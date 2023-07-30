@@ -87,6 +87,46 @@ def test_retrieve_model_from_query_dual_encoder(mock_encode_text):
         assert indexed_models[1].name in top_model_names[1:]
 
 
+def create_test_search_index_class_method(self, index_file_name):
+    """Utility function to create a test search index as a simulated class method."""
+    _ = self
+    create_test_search_index(index_file_name)
+
+
+@patch.object(
+    DescriptionModelRetriever,
+    "encode_model_descriptions",
+    new=create_test_search_index_class_method,
+)
+@patch(
+    "prompt2model.model_retriever.description_based_retriever.encode_text",
+    return_value=np.array([[0, 0, 1]]),
+)
+def test_retrieve_model_when_no_search_index_is_found(mock_encode_text):
+    """Test model retrieval when there's no search index found."""
+    with tempfile.TemporaryDirectory() as tempdir:
+        temporary_file = os.path.join(tempdir, "search_index.pkl")
+        retriever = DescriptionModelRetriever(
+            search_index_path=temporary_file,
+            first_stage_depth=3,
+            search_depth=3,
+            encoder_model_name=TINY_MODEL_NAME,
+            model_descriptions_index_path="test_helpers/model_info_tiny/",
+            use_bm25=False,
+        )
+        indexed_models = retriever.model_infos
+
+        mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
+        top_model_names = retriever.retrieve(mock_prompt)
+        assert mock_encode_text.call_count == 1
+        # The 3rd item in the index is the closest to the query.
+        assert top_model_names[0] == indexed_models[2].name
+        # The other two models should be returned later in the search results, but in
+        # no particular order.}")
+        assert indexed_models[0].name in top_model_names[1:]
+        assert indexed_models[1].name in top_model_names[1:]
+
+
 MOCK_HYPOTHETICAL_DOCUMENT = "This is a hypothetical model description."
 
 
@@ -141,43 +181,3 @@ def test_retrieve_model_with_hyde_dual_encoder(
         # no particular order.
         assert indexed_models[0].name in top_model_names[1:]
         assert indexed_models[2].name in top_model_names[1:]
-
-
-def create_test_search_index_class_method(self, index_file_name):
-    """Utility function to create a test search index as a simulated class method."""
-    _ = self
-    create_test_search_index(index_file_name)
-
-
-@patch.object(
-    DescriptionModelRetriever,
-    "encode_model_descriptions",
-    new=create_test_search_index_class_method,
-)
-@patch(
-    "prompt2model.model_retriever.description_based_retriever.encode_text",
-    return_value=np.array([[0, 0, 1]]),
-)
-def test_retrieve_model_when_no_search_index_is_found(mock_encode_text):
-    """Test model retrieval when there's no search index found."""
-    with tempfile.TemporaryDirectory() as tempdir:
-        temporary_file = os.path.join(tempdir, "search_index.pkl")
-        retriever = DescriptionModelRetriever(
-            search_index_path=temporary_file,
-            first_stage_depth=3,
-            search_depth=3,
-            encoder_model_name=TINY_MODEL_NAME,
-            model_descriptions_index_path="test_helpers/model_info_tiny/",
-            use_bm25=False,
-        )
-        indexed_models = retriever.model_infos
-
-        mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
-        top_model_names = retriever.retrieve(mock_prompt)
-        assert mock_encode_text.call_count == 1
-        # The 3rd item in the index is the closest to the query.
-        assert top_model_names[0] == indexed_models[2].name
-        # The other two models should be returned later in the search results, but in
-        # no particular order.}")
-        assert indexed_models[0].name in top_model_names[1:]
-        assert indexed_models[1].name in top_model_names[1:]
