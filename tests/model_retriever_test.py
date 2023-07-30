@@ -119,6 +119,7 @@ def test_retrieve_model_when_no_search_index_is_found(mock_encode_text):
         assert indexed_models[0].name in top_model_names[1:]
         assert indexed_models[1].name in top_model_names[1:]
 
+
 MOCK_HYPOTHETICAL_DOCUMENT = "This is a hypothetical model description."
 
 
@@ -169,4 +170,3 @@ def test_retrieve_model_with_hyde(mock_generate_hypothetical_doc, mock_encode_te
         # no particular order.
         assert indexed_models[0].name in top_model_names[1:]
         assert indexed_models[2].name in top_model_names[1:]
-
