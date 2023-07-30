@@ -33,7 +33,7 @@ Here are some [high-quality examples] for the [new instruction]. These examples 
 [high-equality examples]:
 {high_equality_example_string}
 ---------------------------------------------------------------------------------------------
-These are some [low-quality examples]Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
+These are some [low-quality examples]. Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
 
 [low-quality examples]:
 {low_equality_example_string}
@@ -67,7 +67,7 @@ Here are some [high-quality examples] for the [new instruction]. These examples 
 [high-equality examples]:
 {high_equality_example_string}
 ---------------------------------------------------------------------------------------------
-These are some [low-quality examples]Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
+These are some [low-quality examples]. Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
 
 [low-quality examples]:
 {low_equality_example_string}
@@ -97,7 +97,7 @@ Here are some [high-quality examples] for the [new instruction]. These examples 
 [high-equality examples]:
 {high_equality_example_string}
 ---------------------------------------------------------------------------------------------
-These are some [low-quality examples]Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
+These are some [low-quality examples]. Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
 
 [low-quality examples]:
 {low_equality_example_string}
