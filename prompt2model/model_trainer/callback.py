@@ -16,7 +16,7 @@ class ValidationCallback(TrainerCallback):
         trainer,
         tokenizer,
         val_dataset,
-        batch_size=10,
+        executor_batch_size=10,
         tokenizer_max_length=256,
         sequence_max_length=512,
     ) -> None:
@@ -27,7 +27,8 @@ class ValidationCallback(TrainerCallback):
                 After each epoch of Training, this callback will be called.
             tokenizer: Tokenizer to initialize model executor.
             val_dataset: Validation dataset to be evaluated on.
-            batch_size: The batch size for model executor to make predictions.
+            executor_batch_size: The batch size for model executor to
+                make predictions.
             tokenizer_max_length: The maximum number of tokens that
                 tokenizer is allowed to generate.
             sequence_max_length: The maximum number of tokens to generate.
@@ -39,6 +40,9 @@ class ValidationCallback(TrainerCallback):
         self.val_dataset = val_dataset
         self.epoch_count = 0
         self.val_dataset_size = len(self.val_dataset)
+        self.executor_batch_size = executor_batch_size
+        self.tokenizer_max_length = tokenizer_max_length
+        self.sequence_max_length = sequence_max_length
 
     def on_epoch_end(self, args, state, control, **kwargs):
         """After each  evaluation, this function will be called."""
@@ -54,6 +58,9 @@ class ValidationCallback(TrainerCallback):
         model_executor = GenerationModelExecutor(
             self.trainer.model,
             self.tokenizer,
+            self.executor_batch_size,
+            self.tokenizer_max_length,
+            self.sequence_max_length,
         )
         model_outputs = model_executor.make_prediction(
             self.val_dataset,

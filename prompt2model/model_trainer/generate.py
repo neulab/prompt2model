@@ -29,6 +29,7 @@ class GenerationModelTrainer(BaseTrainer):
         self,
         pretrained_model_name: str,
         has_encoder: bool,
+        executor_batch_size: int = 10,
         tokenizer_max_length: int = 512,
         sequence_max_length: int = 1024,
     ):
@@ -40,6 +41,8 @@ class GenerationModelTrainer(BaseTrainer):
             has_encoder: Whether the model has an encoder.
                 If True, it's a T5-type model (encoder-decoder transformer).
                 If fasle, it's a GPT-type model (atuoregressive transformer).
+            executor_batch_size: The batch size for model executor to
+                make predictions.
             tokenizer_max_length: The maximum sentence length the tokenizer
                 is allowed to generate.
             sequence_max_length: The maximum number of tokens the model is
@@ -50,6 +53,7 @@ class GenerationModelTrainer(BaseTrainer):
         self.has_encoder = has_encoder
         self.tokenizer_max_length = tokenizer_max_length
         self.sequence_max_length = sequence_max_length
+        self.executor_batch_size = executor_batch_size
         if self.tokenizer_max_length is None:
             logging.warning(
                 (
@@ -368,6 +372,7 @@ class GenerationModelTrainer(BaseTrainer):
                 trainer,
                 self.tokenizer,
                 val_dataset,
+                executor_batch_size=self.executor_batch_size,
                 tokenizer_max_length=self.tokenizer_max_length,
                 sequence_max_length=self.sequence_max_length,
             )
