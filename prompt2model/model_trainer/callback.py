@@ -11,7 +11,15 @@ from prompt2model.model_executor import GenerationModelExecutor
 class ValidationCallback(TrainerCallback):
     """The real evaluation will be conduted after each mock evaluation of Trainer."""
 
-    def __init__(self, trainer, tokenizer, val_dataset) -> None:
+    def __init__(
+        self,
+        trainer,
+        tokenizer,
+        val_dataset,
+        batch_size=10,
+        tokenizer_max_length=256,
+        sequence_max_length=512,
+    ) -> None:
         """Initializes a new instance of Model Trainer Callback.
 
         Args:
@@ -19,6 +27,11 @@ class ValidationCallback(TrainerCallback):
                 After each epoch of Training, this callback will be called.
             tokenizer: Tokenizer to initialize model executor.
             val_dataset: Validation dataset to be evaluated on.
+            batch_size: The batch size for model executor to make predictions.
+            tokenizer_max_length: The maximum number of tokens that
+                tokenizer is allowed to generate.
+            sequence_max_length: The maximum number of tokens to generate.
+                This includes the input and output tokens.
         """
         super().__init__()
         self.trainer = trainer

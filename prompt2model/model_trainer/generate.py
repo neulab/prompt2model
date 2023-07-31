@@ -29,7 +29,8 @@ class GenerationModelTrainer(BaseTrainer):
         self,
         pretrained_model_name: str,
         has_encoder: bool,
-        tokenizer_max_length: int | None = 512,
+        tokenizer_max_length: int = 512,
+        sequence_max_length: int = 1024,
     ):
         """Initializes a new instance of GenerationModelTrainer.
 
@@ -39,11 +40,16 @@ class GenerationModelTrainer(BaseTrainer):
             has_encoder: Whether the model has an encoder.
                 If True, it's a T5-type model (encoder-decoder transformer).
                 If fasle, it's a GPT-type model (atuoregressive transformer).
-            tokenizer_max_length: this sets the maximum sentence length the tokenizer
-                is allowed to generate. This can be customized for your specific use case. # noqa E501
+            tokenizer_max_length: The maximum sentence length the tokenizer
+                is allowed to generate.
+            sequence_max_length: The maximum number of tokens the model is
+                allowed to generate when being evaluated on validation dataset.
+                Note that sequence_max_length might be scaled in the ModelExecutor
+                if it exceeds the model's max_embedding.
         """
         self.has_encoder = has_encoder
         self.tokenizer_max_length = tokenizer_max_length
+        self.sequence_max_length = sequence_max_length
         if self.tokenizer_max_length is None:
             logging.warning(
                 (
@@ -359,7 +365,11 @@ class GenerationModelTrainer(BaseTrainer):
         if evaluate_after_epoch:
             assert val_dataset is not None, "Validation dataset is None"
             self.validation_callback = ValidationCallback(
-                trainer, self.tokenizer, val_dataset
+                trainer,
+                self.tokenizer,
+                val_dataset,
+                tokenizer_max_length=self.tokenizer_max_length,
+                sequence_max_length=self.sequence_max_length,
             )
             trainer.add_callback(self.validation_callback)
 
