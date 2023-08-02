@@ -625,18 +625,32 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     ]
 
                     async def generate_responses():
-                        # Make asynchronous API calls to GPT-3.5 to generate responses.
+                        """Asynchronously generates responses using the GPT-3.5 API.
+
+                        The temperature for generating responses dynamically adjusts
+                        based on the size of the generated dataset. As the dataset
+                        grows, the dynamic temperature gradually increases,
+                        approaching a maximum of 2.0. To prevent potential round-off
+                        errors in Python, the dynamic temperature is rounded within
+                        the range [0, 2.0].
+                        """
+                        # Calculate the dynamic temperature based
+                        # on the size of the generated dataset
+                        dynamic_temperature = (2 - self.initial_temperature) * len(
+                            self.generated_dataset
+                        ) / expected_num_examples + self.initial_temperature
+
+                        # Ensure the dynamic temperature is within the range [0, 2.0]
+                        clipped_temperature = max(0.0, min(2.0, dynamic_temperature))
                         responses = (
                             await chat_api.generate_batch_openai_chat_completion(
                                 prompts,
-                                temperature=(2 - self.initial_temperature)
-                                * len(self.generated_dataset)
-                                / expected_num_examples
-                                + self.initial_temperature,
+                                temperature=clipped_temperature,
                                 responses_per_request=self.responses_per_request,
                                 requests_per_minute=self.requests_per_minute,
                             )
                         )
+                        print("clipped_temperature", clipped_temperature)
                         return responses
 
                     loop = asyncio.get_event_loop()
