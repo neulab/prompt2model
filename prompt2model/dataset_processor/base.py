@@ -99,5 +99,6 @@ class BaseProcessor(ABC):
                     .filter(filter_empty_strings)
                     .map(mapping_function)
                 )
+            modified_dataset_dict = datasets.DatasetDict(modified_dataset_dict)
             modified_dataset_dicts.append(modified_dataset_dict)
         return modified_dataset_dicts
