@@ -35,7 +35,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self,
         api_key: str | None = None,
         max_api_calls: int = None,
-        temperature: float = 2.0,
+        initial_temperature: float = 0.5,
         presence_penalty: float = 0,
         frequency_penalty: float = 0,
         batch_size: int = 5,
@@ -51,9 +51,12 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 variable OPENAI_API_KEY is used.
             max_api_calls: The maximum number of API calls allowed,
                 or None for unlimited.
-            temperature: The sampling temperature to use, ranging from 0 to 2.
-                Higher values yield more random outputs, while lower values produce
-                more deterministic outputs.
+            initial_temperature: The sampling temperature to use when initializing
+                the generation. For the OpenAI GPT-3.5 API, Temperature ranges from
+                0 to 2. Higher values yield more random/diverse outputs with lower
+                quality, while lower values produce more deterministic outputs with
+                higher quality. We use an strategy to gradually increase the temperature
+                to 2.0 when generating new examples.
             presence_penalty: Value between -2.0 and 2.0 to penalize new tokens
                 based on their presence in the text so far. Positive values increase
                 the model's likelihood to discuss new topics in generated examples.
@@ -80,7 +83,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             assert max_api_calls > 0, "max_api_calls must be > 0"
         self.max_api_calls = max_api_calls
         self.api_call_counter = 0
-        self.temperature = temperature
+        self.initial_temperature = initial_temperature
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
         self.batch_size = batch_size
@@ -626,7 +629,10 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         responses = (
                             await chat_api.generate_batch_openai_chat_completion(
                                 prompts,
-                                temperature=self.temperature,
+                                temperature=(2 - self.initial_temperature)
+                                * len(self.generated_dataset)
+                                / expected_num_examples
+                                + self.initial_temperature,
                                 responses_per_request=self.responses_per_request,
                                 requests_per_minute=self.requests_per_minute,
                             )
