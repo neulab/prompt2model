@@ -56,11 +56,11 @@ class ValidationCallback(TrainerCallback):
         # into multi-threads with data paralyzation, so the validation dataset
         # used in the callback is also segmented.
         model_executor = GenerationModelExecutor(
-            self.trainer.model,
-            self.tokenizer,
-            self.executor_batch_size,
-            self.tokenizer_max_length,
-            self.sequence_max_length,
+            model=self.trainer.model,
+            tokenizer=self.tokenizer,
+            batch_size=self.executor_batch_size,
+            tokenizer_max_length=self.tokenizer_max_length,
+            sequence_max_length=self.sequence_max_length,
         )
         model_outputs = model_executor.make_prediction(
             self.val_dataset,
