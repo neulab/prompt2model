@@ -650,7 +650,6 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                                 requests_per_minute=self.requests_per_minute,
                             )
                         )
-                        print("clipped_temperature", clipped_temperature)
                         return responses
 
                     loop = asyncio.get_event_loop()
