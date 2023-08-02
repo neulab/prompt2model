@@ -36,6 +36,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         api_key: str | None = None,
         max_api_calls: int = None,
         initial_temperature: float = 0.5,
+        max_temperature: float = 1.7,
         presence_penalty: float = 0,
         frequency_penalty: float = 0,
         batch_size: int = 5,
@@ -52,11 +53,9 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             max_api_calls: The maximum number of API calls allowed,
                 or None for unlimited.
             initial_temperature: The sampling temperature to use when initializing
-                the generation. For the OpenAI GPT-3.5 API, Temperature ranges from
-                0 to 2. Higher values yield more random/diverse outputs with lower
-                quality, while lower values produce more deterministic outputs with
-                higher quality. We use an strategy to gradually increase the temperature
-                to 2.0 when generating new examples.
+                the generation.
+            max_temperature: The sampling temperature to use when the generation
+                is about to terminate.
             presence_penalty: Value between -2.0 and 2.0 to penalize new tokens
                 based on their presence in the text so far. Positive values increase
                 the model's likelihood to discuss new topics in generated examples.
@@ -73,6 +72,20 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         Raises:
             AssertionError: If an API key is not provided and set as an environment
             variable, or if the 'max_api_calls' value is not greater than 0.
+
+        Note:
+            For the OpenAI GPT-3.5 API, Temperature ranges from 0 to 2. Higher
+            values yield more random/diverse outputs with lower quality, while
+            lower values produce more deterministic outputs with higher quality.
+            We use a strategy to dynamically adjust the temperature from
+            initial_temperature to max_temperature during generation.
+
+            We incorporate random few-shot generated examples into the prompt
+            to the OpenAI GPT-3.5 API. The initial temperature is set lower to obtain
+            high-quality, low-diversity examples. As the number of generated examples
+            increases, we gradually have more high-quality examples for in-context
+            learning during generation. This allows us to achieve high-quality,
+            high-diversity examples later on by using a higher temperature.
         """
         self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
         assert self.api_key is not None and self.api_key != "", (
@@ -84,6 +97,25 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.max_api_calls = max_api_calls
         self.api_call_counter = 0
         self.initial_temperature = initial_temperature
+        self.max_temperature = max_temperature
+        if self.initial_temperature < 0:
+            logging.warning(
+                "The lowest temperature for GPT-3.5 API is 0. So the initial_temperature is set to 0."  # noqa E501
+            )
+            self.initial_temperature = 0
+        if self.max_temperature > 2.0:
+            logging.warning(
+                "The highest temperature for GPT-3.5 API is 2. So the max_temperature is set to 2."  # noqa E501
+            )
+            self.max_temperature = 2
+        if self.initial_temperature >= self.max_temperature:
+            logging.warning(
+                "The generator gradually increases the temperature from a lower value to a higher value. So the initial_temperature and the max_temperature are switched."  # noqa E501
+            )
+            self.initial_temperature, self.max_temperature = (
+                self.max_temperature,
+                self.initial_temperature,
+            )
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
         self.batch_size = batch_size
@@ -630,13 +662,16 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         The temperature for generating responses dynamically adjusts
                         based on the size of the generated dataset. As the dataset
                         grows, the dynamic temperature gradually increases,
-                        approaching a maximum of 2.0. To prevent potential round-off
-                        errors in Python, the dynamic temperature is rounded within
-                        the range [0, 2.0].
+                        approaching the max_temperature.
+
+                        To prevent potential round-off errors in Python, the dynamic
+                        temperature is rounded within the range [0, 2.0].
                         """
                         # Calculate the dynamic temperature based
                         # on the size of the generated dataset
-                        dynamic_temperature = (2 - self.initial_temperature) * len(
+                        dynamic_temperature = (
+                            self.max_temperature - self.initial_temperature
+                        ) * len(
                             self.generated_dataset
                         ) / expected_num_examples + self.initial_temperature
 
