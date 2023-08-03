@@ -1,6 +1,7 @@
 """Testing T5 (encoder-decoder) ModelTrainer with different configurations."""
 
 import gc
+import logging
 import os
 import tempfile
 from unittest.mock import patch
@@ -16,6 +17,7 @@ from prompt2model.model_trainer.generate import GenerationModelTrainer
 os.environ["WANDB_MODE"] = "dryrun"
 loss_function = nn.CrossEntropyLoss()
 IGNORE_INDEX = loss_function.ignore_index
+logger = logging.getLogger("ModelTrainer")
 
 
 def test_t5_trainer_with_get_right_padding_length():
@@ -144,8 +146,8 @@ def test_t5_trainer_with_tokenizer_max_length():
             ),
         ]
 
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             trainer = GenerationModelTrainer(
                 "patrickvonplaten/t5-tiny-random",
@@ -198,8 +200,8 @@ def test_t5_trainer_without_tokenizer_max_length():
             ),
         ]
 
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             trainer = GenerationModelTrainer(
                 "patrickvonplaten/t5-tiny-random",
@@ -252,10 +254,11 @@ def test_t5_trainer_with_epoch_evaluation():
                 }
             ),
         ]
-
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
-        ) as mock_warning:
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
+        ) as mock_warning, patch.object(
+            logging.getLogger("ModelEvaluator"), "info"
+        ) as mock_evaluator_info:
             trainer = GenerationModelTrainer(
                 "patrickvonplaten/t5-tiny-random",
                 has_encoder=True,
@@ -274,8 +277,9 @@ def test_t5_trainer_with_epoch_evaluation():
             # Check if logging.info was called correctly.
             # Eech epoch will log 3 times, twice in `on_epoch_end`
             # and once in `evaluate_model`.
-            assert mock_info.call_count == 3 * num_train_epochs
-            info_list = [each.args[0] for each in mock_info.call_args_list]
+            assert mock_info.call_count == 2 * num_train_epochs
+            assert mock_evaluator_info.call_count == 1 * num_train_epochs
+            info_list = [each.args[0] for each in mock_evaluator_info.call_args_list]
             assert (
                 info_list.count(
                     "Using default metrics of chrf, exact_match and bert_score."
@@ -318,9 +322,11 @@ def test_t5_trainer_without_validation_datasets():
             ),
         ]
 
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
-        ) as mock_warning:
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
+        ) as mock_warning, patch.object(
+            logging.getLogger("ModelEvaluator"), "info"
+        ) as mock_evaluator_info:
             trainer = GenerationModelTrainer(
                 "patrickvonplaten/t5-tiny-random",
                 has_encoder=True,
@@ -339,8 +345,9 @@ def test_t5_trainer_without_validation_datasets():
             # Check if logging.info was called correctly.
             # Eech epoch will log 3 times, twice in `on_epoch_end`
             # and once in `evaluate_model`.
-            assert mock_info.call_count == 3 * num_train_epochs
-            info_list = [each.args[0] for each in mock_info.call_args_list]
+            assert mock_info.call_count == 2 * num_train_epochs
+            assert mock_evaluator_info.call_count == 1 * num_train_epochs
+            info_list = [each.args[0] for each in mock_evaluator_info.call_args_list]
             assert (
                 info_list.count(
                     "Using default metrics of chrf, exact_match and bert_score."
@@ -414,9 +421,11 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
             ),
         ]
 
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
-        ) as mock_warning:
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
+        ) as mock_warning, patch.object(
+            logging.getLogger("ModelEvaluator"), "info"
+        ) as mock_evaluator_info:
             num_train_epochs = 1
             trainer.train_model(
                 {
@@ -431,8 +440,9 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
 
             # Check if logging.info was called correctly.
             # Eech epoch will log 3 times, in `on_epoch_end`, `evaluate_model`
-            assert mock_info.call_count == 3 * num_train_epochs
-            info_list = [each.args[0] for each in mock_info.call_args_list]
+            assert mock_info.call_count == 2 * num_train_epochs
+            assert mock_evaluator_info.call_count == 1 * num_train_epochs
+            info_list = [each.args[0] for each in mock_evaluator_info.call_args_list]
             assert (
                 info_list.count(
                     "Using default metrics of chrf, exact_match and bert_score."
@@ -516,7 +526,9 @@ def test_t5_trainer_with_truncation_warning():
             "model_output": ["pomme"] * 2,
         }
     )
-    with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
         trainer.tokenize_dataset(training_dataset)
         # logging.warning was called for truncation.
         mock_warning.assert_called_once_with(

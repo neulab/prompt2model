@@ -1,6 +1,7 @@
 """Testing TextualizeProcessor."""
 
 import gc
+import logging
 from copy import deepcopy
 from unittest.mock import patch
 
@@ -10,6 +11,8 @@ from transformers import AutoTokenizer
 
 from prompt2model.dataset_processor.textualize import TextualizeProcessor
 from test_helpers import are_dataset_dicts_identical, create_gpt2_model_and_tokenizer
+
+logger = logging.getLogger("DatasetProcessor")
 
 DATASET_DICTS = [
     datasets.DatasetDict(
@@ -90,7 +93,9 @@ def test_the_logging_for_provide_unnecessary_eos_token_for_t5():
     """Test the logging.info for unnecessary eos token for T5 model is logged."""
     t5_tokenizer = AutoTokenizer.from_pretrained("t5-small")
 
-    with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
         _ = TextualizeProcessor(has_encoder=True, eos_token=t5_tokenizer.eos_token)
         mock_info.assert_called_once_with(
             "The T5 tokenizer automatically adds eos token in the end of sequence when tokenizing. So the eos_token of encoder-decoder model tokenizer is unnecessary."  # noqa E501
@@ -101,7 +106,9 @@ def test_the_logging_for_provide_unnecessary_eos_token_for_t5():
 
 def test_the_logging_for_eos_token_required_for_gpt():
     """Test the logging.warning for requiring eos token for GPT model is logged."""
-    with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
         _ = TextualizeProcessor(has_encoder=False)
         mock_info.assert_not_called()
         mock_warning.assert_called_once_with(
@@ -118,7 +125,7 @@ def test_dataset_processor_t5_style():
         INSTRUCTION, DATASET_DICTS
     )
     # Ensure the dataset_dicts themselves are the same after processing.
-    for idx, each in enumerate(raw_dataset_dicts):
+    for idx, _ in enumerate(raw_dataset_dicts):
         assert are_dataset_dicts_identical(raw_dataset_dicts[idx], DATASET_DICTS[idx])
     t5_expected_dataset_dicts = [
         datasets.DatasetDict(

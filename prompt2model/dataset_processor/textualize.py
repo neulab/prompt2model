@@ -6,6 +6,12 @@ import logging
 
 from prompt2model.dataset_processor.base import BaseProcessor
 
+logger = logging.getLogger("DatasetProcessor")
+ch = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
 
 class TextualizeProcessor(BaseProcessor):
     """A class for post-processing datasets, convert them into Text2Text fashion."""
@@ -25,14 +31,14 @@ class TextualizeProcessor(BaseProcessor):
         """
         super().__init__(has_encoder, eos_token)
         if has_encoder and eos_token is not None:
-            logging.info(
+            logger.info(
                 (
                     "The T5 tokenizer automatically adds eos token in the end of sequence when tokenizing."  # noqa E501
                     " So the eos_token of encoder-decoder model tokenizer is unnecessary."  # noqa E501
                 )
             )
         elif not has_encoder and eos_token is None:
-            logging.warning(
+            logger.warning(
                 (
                     "The autoregressive model tokenizer does not automatically add eos token in the end of the sequence."  # noqa E501
                     " So the `eos_token` of the autoregressive model is required."  # noqa E501

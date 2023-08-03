@@ -12,6 +12,12 @@ import numpy as np
 from prompt2model.model_evaluator.base import ModelEvaluator
 from prompt2model.model_executor import ModelOutput
 
+logger = logging.getLogger("ModelEvaluator")
+ch = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
 
 class Seq2SeqEvaluator(ModelEvaluator):
     """An evaluator computing `ChrF++`, `Exact Match` and `Embedding Distance`."""
@@ -47,9 +53,9 @@ class Seq2SeqEvaluator(ModelEvaluator):
                 "exact_match",
                 "bert_score",
             }, "Metrics must be within chr_f, exact_match, and bert_score."
-            logging.info(f"Using selected metrics: {', '.join(metric_names)}.")
+            logger.info(f"Using selected metrics: {', '.join(metric_names)}.")
         else:
-            logging.info("Using default metrics of chrf, exact_match and bert_score.")
+            logger.info("Using default metrics of chrf, exact_match and bert_score.")
             metrics = [
                 evaluate.load("chrf"),
                 evaluate.load("exact_match"),
@@ -69,7 +75,7 @@ class Seq2SeqEvaluator(ModelEvaluator):
             # Some of the autoregregistered models' output always contains
             # the input. So we need to delete the model input if it's in the
             # predictions when necessary.
-            logging.info(
+            logger.info(
                 "The model_input_column is not None. The model input will be detached from predictions if necessary."  # noqa 501
             )
             model_inputs = dataset[model_input_column]

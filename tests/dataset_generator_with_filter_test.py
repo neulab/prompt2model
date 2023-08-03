@@ -1,6 +1,7 @@
 """Testing DatasetGenerator through OpenAIDatasetGenerator."""
 
 import gc
+import logging
 import os
 import tempfile
 from collections import Counter, namedtuple
@@ -22,6 +23,8 @@ from test_helpers import (
     mock_batch_openai_response_with_identical_completions,
     reset_mock_batch_openai_response_with_different_completions,
 )
+
+logger = logging.getLogger("DatasetGenerator")
 
 # Create partial functions to simulate different API responses.
 # MOCK_EXAMPLE: Represents a mock example with identical completions.
@@ -876,8 +879,8 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
         # in self.generated_dataset. Since expected_num_examples is 3, the while loop
         # would exit immediately. So the self.generated_dataset would be the filtered
         # cached dataset.
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             data_generator.generate_dataset_split(
                 expected_num_examples=3,
@@ -983,8 +986,8 @@ def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generat
         # in self.generated_dataset. Since expected_num_examples is 4, the generation
         # would continue, and the batch_size = 1. After one batch of API calls,
         # self.generated_dataset meets the requirement and stop generation.
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             data_generator.generate_dataset_split(
                 expected_num_examples=4,

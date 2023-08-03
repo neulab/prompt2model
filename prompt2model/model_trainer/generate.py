@@ -18,8 +18,12 @@ from prompt2model.model_trainer.base import BaseTrainer
 from prompt2model.model_trainer.callback import ValidationCallback
 from prompt2model.utils import seed_generator
 
+logger = logging.getLogger("ModelTrainer")
+ch = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+ch.setFormatter(formatter)
+logger.addHandler(ch)
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-logging.basicConfig(level=logging.INFO)
 
 
 class GenerationModelTrainer(BaseTrainer):
@@ -55,7 +59,7 @@ class GenerationModelTrainer(BaseTrainer):
         self.sequence_max_length = sequence_max_length
         self.executor_batch_size = executor_batch_size
         if self.tokenizer_max_length is None:
-            logging.warning(
+            logger.warning(
                 (
                     "Set the tokenizer_max_length is preferable for finetuning model,"
                     " which saves the cost of training."
@@ -149,7 +153,7 @@ class GenerationModelTrainer(BaseTrainer):
             len(self.tokenizer.tokenize(longest_input)) > self.tokenizer_max_length
             or len(self.tokenizer.tokenize(longest_output)) > self.tokenizer_max_length
         ):
-            logging.warning(
+            logger.warning(
                 (
                     "Truncation happened when tokenizing dataset."
                     " You should consider increasing the tokenizer_max_length."
@@ -288,12 +292,12 @@ class GenerationModelTrainer(BaseTrainer):
         if evaluation_strategy == "epoch":
             evaluate_after_epoch = True
         elif evaluation_strategy == "no":
-            logging.info(
+            logger.info(
                 "The training doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
             evaluate_after_epoch = False
         else:
-            logging.warning(
+            logger.warning(
                 (
                     "Only `epoch` evaluation strategy is supported"
                     + ", the evaluation strategy will be set to evaluate_after_epoch."
@@ -307,7 +311,7 @@ class GenerationModelTrainer(BaseTrainer):
             if validation_datasets is None:
                 if not self.has_encoder:
                     # The validation dataset for autoregressive model is missed.
-                    logging.warning(
+                    logger.warning(
                         (
                             (
                                 "The validation split for autoregressive model is missed"  # noqa E501
@@ -321,7 +325,7 @@ class GenerationModelTrainer(BaseTrainer):
                     evaluate_after_epoch = False
                 else:
                     # The validation dataset for encoder-decoder model is missing.
-                    logging.warning(
+                    logger.warning(
                         (
                             "The validation split for encoder-decoder model is missing."  # noqa E501
                             + " The training dataset will be split to create the validation dataset."  # noqa E501
@@ -345,7 +349,7 @@ class GenerationModelTrainer(BaseTrainer):
                 val_dataset = concatenate_datasets(validation_datasets)
         else:
             if validation_datasets:
-                logging.warning(
+                logger.warning(
                     "The validation dataset is provided, but the evaluation is skipped."  # noqa E501
                 )
             train_dataset = self.tokenize_dataset(concatenated_training_dataset)

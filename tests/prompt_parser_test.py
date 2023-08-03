@@ -1,6 +1,7 @@
 """Testing integration of components locally."""
 
 import gc
+import logging
 import os
 from functools import partial
 from unittest.mock import patch
@@ -11,6 +12,7 @@ import pytest
 from prompt2model.prompt_parser import OpenAIInstructionParser, TaskType
 from test_helpers import mock_one_openai_response
 
+logger = logging.getLogger("PromptParser")
 GPT3_RESPONSE_WITH_DEMONSTRATIONS = (
     '{"Instruction": "Convert each date from an informal description into a'
     ' MM/DD/YYYY format.", "Demonstrations": "Fifth of November 2024 ->'
@@ -131,7 +133,9 @@ def test_instruction_parser_with_invalid_json(mocked_parsing_method):
     prompt_spec = OpenAIInstructionParser(
         task_type=TaskType.TEXT_GENERATION, max_api_calls=3
     )
-    with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
         prompt_spec.parse_from_prompt(prompt)
         mock_info.assert_not_called()
         warning_list = [each.args[0] for each in mock_warning.call_args_list]

@@ -1,6 +1,7 @@
 """Testing DatasetGenerator through OpenAIDatasetGenerator."""
 
 import gc
+import logging
 import os
 import tempfile
 from collections import Counter, defaultdict, namedtuple
@@ -19,6 +20,8 @@ from test_helpers import (
     are_datasets_identical,
     mock_batch_openai_response_with_identical_completions,
 )
+
+logger = logging.getLogger("DatasetGenerator")
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
     mock_batch_openai_response_with_identical_completions,
@@ -784,8 +787,8 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
         # expected_num_examples is 110, the while loop would exit
         # immediately. So the self.generated_dataset would be the
         # same as the cached dataset.
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             data_generator.generate_dataset_split(
                 expected_num_examples=110,
@@ -864,8 +867,8 @@ def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_gene
         # continue and the batch_size = 2. After one batch of API
         # calls, self.generated_dataset meets the requirement and
         # stop generation.
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             data_generator.generate_dataset_split(
                 expected_num_examples=117,
@@ -928,8 +931,8 @@ def test_extract_responses():
             cache_root=cache_dir, filter_duplicated_examples=True
         )
         assert data_generator.generated_examples == []
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             data_generator.extract_responses([mock_completion_1, mock_completion_2])
             mock_warning.assert_called_once_with(
@@ -960,8 +963,8 @@ def test_extract_responses():
             Example(input_col="4", output_col="c"),
             Example(input_col="5", output_col="a"),
         ]
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             data_generator.extract_responses([mock_completion_4])
             mock_warning.assert_called_once_with(
@@ -1017,8 +1020,8 @@ def test_extract_some_empty_responses():
             cache_root=cache_dir, filter_duplicated_examples=True
         )
         assert data_generator.generated_examples == []
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             data_generator.extract_responses([mock_completion_1, mock_completion_2])
             mock_warning.assert_called_once_with(
@@ -1048,8 +1051,8 @@ def test_extract_some_empty_responses():
             Example(input_col="4", output_col="c"),
             Example(input_col="5", output_col="a"),
         ]
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             data_generator.extract_responses([mock_completion_4])
             mock_warning.assert_called_once_with(
@@ -1072,8 +1075,8 @@ def test_initialize_dataset_generator_with_dynamic_temperature():
     """Test the correct initialization of the dynamic temperature strategy."""
     with tempfile.TemporaryDirectory() as cache_dir:
         os.environ["OPENAI_API_KEY"] = "fake_api_key"
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             data_generator = OpenAIDatasetGenerator(
                 cache_root=cache_dir, initial_temperature=-0.2
@@ -1084,8 +1087,8 @@ def test_initialize_dataset_generator_with_dynamic_temperature():
             )
             assert data_generator.initial_temperature == 0
 
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             data_generator = OpenAIDatasetGenerator(
                 cache_root=cache_dir, max_temperature=2.3
@@ -1096,8 +1099,8 @@ def test_initialize_dataset_generator_with_dynamic_temperature():
             )
             assert data_generator.max_temperature == 2
 
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             data_generator = OpenAIDatasetGenerator(
                 cache_root=cache_dir, max_temperature=1.2, initial_temperature=1.5

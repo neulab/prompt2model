@@ -10,6 +10,12 @@ from typing import Any
 import datasets
 import transformers
 
+logger = logging.getLogger("ModelExecutor")
+ch = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
 
 @dataclass(frozen=False)
 class ModelOutput:
@@ -50,7 +56,7 @@ class ModelExecutor(ABC):
         self.tokenizer = tokenizer
         self.batch_size = batch_size
         if self.tokenizer.pad_token is None:
-            logging.warning(
+            logger.warning(
                 "Trying to init an ModelExecutor's tokenizer without pad_token."
             )
             self.tokenizer.pad_token = self.tokenizer.eos_token
@@ -58,7 +64,7 @@ class ModelExecutor(ABC):
         self.tokenizer_max_length = tokenizer_max_length
         self.sequence_max_length = sequence_max_length
         if self.sequence_max_length is None:
-            logging.warning(
+            logger.warning(
                 (
                     "The `max_length` in `self.model.generate` will default to "
                     f"`self.model.config.max_length` ({self.model.config.max_length})"
@@ -68,7 +74,7 @@ class ModelExecutor(ABC):
         if hasattr(self.model.config, "max_position_embeddings"):
             max_embeddings = self.model.config.max_position_embeddings
             if sequence_max_length is not None and max_embeddings < sequence_max_length:
-                logging.warning(
+                logger.warning(
                     (
                         f"The sequence_max_length ({sequence_max_length})"
                         f" is larger than the max_position_embeddings ({max_embeddings})."  # noqa: E501

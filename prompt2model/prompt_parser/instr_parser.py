@@ -15,6 +15,13 @@ from prompt2model.prompt_parser.instr_parser_prompt import (  # isort: split
 )
 from prompt2model.utils import OPENAI_ERRORS, ChatGPTAgent, handle_openai_error
 
+logger = logging.getLogger("PromptParser")
+ch = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 
 class OpenAIInstructionParser(PromptSpec):
     """Parse the prompt to separate instructions from task demonstrations."""
@@ -65,15 +72,13 @@ class OpenAIInstructionParser(PromptSpec):
         try:
             response_json = json.loads(response_text, strict=False)
         except json.decoder.JSONDecodeError:
-            logging.warning("API response was not a valid JSON")
+            logger.warning("API response was not a valid JSON")
             return None
 
         required_keys = ["Instruction", "Demonstrations"]
         missing_keys = [key for key in required_keys if key not in response_json]
         if len(missing_keys) != 0:
-            logging.warning(
-                f'API response must contain {", ".join(required_keys)} keys'
-            )
+            logger.warning(f'API response must contain {", ".join(required_keys)} keys')
             return None
         instruction_string = response_json["Instruction"].strip()
         demonstration_string = response_json["Demonstrations"].strip()
@@ -110,12 +115,12 @@ class OpenAIInstructionParser(PromptSpec):
                         self.max_api_calls
                         and self.api_call_counter == self.max_api_calls
                     ):
-                        logging.warning(
+                        logger.warning(
                             "Maximum number of API calls reached for PromptParser."
                         )
                         return None
             except OPENAI_ERRORS as e:
                 self.api_call_counter = handle_openai_error(e, self.api_call_counter)
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
-                    logging.error("Maximum number of API calls reached.")
+                    logger.error("Maximum number of API calls reached.")
                     raise ValueError("Maximum number of API calls reached.") from e

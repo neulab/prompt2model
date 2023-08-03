@@ -7,6 +7,12 @@ from transformers import TrainerCallback
 from prompt2model.model_evaluator import Seq2SeqEvaluator
 from prompt2model.model_executor import GenerationModelExecutor
 
+logger = logging.getLogger("ModelTrainer")
+ch = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
 
 class ValidationCallback(TrainerCallback):
     """The real evaluation will be conduted after each mock evaluation of Trainer."""
@@ -49,7 +55,7 @@ class ValidationCallback(TrainerCallback):
         _ = (args, state, control, kwargs)
         # Supress the unused parameters warning.
         self.epoch_count += 1
-        logging.info(
+        logger.info(
             f"Epoch: {self.epoch_count}. Evaluate on { self.val_dataset_size} examples."
         )
         # For multi-GPU training, the training processor will be segmented
@@ -73,4 +79,4 @@ class ValidationCallback(TrainerCallback):
             model_outputs,
             encoder_model_name="xlm-roberta-base",
         )
-        logging.info(metric_values)
+        logger.info(metric_values)

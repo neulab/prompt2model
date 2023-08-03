@@ -1,6 +1,7 @@
 """Testing Seq2SeqEvaluator."""
 
 import gc
+import logging
 from unittest.mock import patch
 
 import evaluate
@@ -10,6 +11,7 @@ from datasets import Dataset
 from prompt2model.model_evaluator import Seq2SeqEvaluator
 from prompt2model.model_executor import ModelOutput
 
+logger = logging.getLogger("ModelEvaluator")
 # These following variables are initialized following the output of
 # DatasetProcessor. The outputs of T5 do not contain the inputs,
 # but the outputs of GPT2 do.
@@ -43,7 +45,9 @@ VALIDATION_DATASET = Dataset.from_dict(
 def test_t5_evaluator_with_default_metrics():
     """Test the Seq2SeqEvaluator with the output of T5."""
     evaluator = Seq2SeqEvaluator()
-    with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
         metric_values = evaluator.evaluate_model(
             dataset=VALIDATION_DATASET,
             gt_column="model_ouput",
@@ -66,7 +70,9 @@ def test_t5_evaluator_with_default_metrics():
 def test_gpt_evaluator_with_default_metrics():
     """Test the Seq2SeqEvaluator with the output of GPT."""
     evaluator = Seq2SeqEvaluator()
-    with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
         metric_values = evaluator.evaluate_model(
             dataset=VALIDATION_DATASET,
             gt_column="model_ouput",
@@ -96,7 +102,9 @@ def test_t5_evaluator_with_selected_metrics():
         evaluate.load("chrf"),
         evaluate.load("exact_match"),
     ]
-    with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
         metric_values = evaluator.evaluate_model(
             dataset=VALIDATION_DATASET,
             gt_column="model_ouput",
@@ -126,7 +134,9 @@ def test_gpt_evaluator_with_selected_metrics():
         evaluate.load("chrf"),
         evaluate.load("exact_match"),
     ]
-    with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
         metric_values = evaluator.evaluate_model(
             dataset=VALIDATION_DATASET,
             gt_column="model_ouput",
@@ -198,7 +208,9 @@ def test_evaluator_handle_deficient_predictions():
 def test_gpt_evaluator_without_model_input_column():
     """Test Evaluator with the output of GPT but does specify model_input_column."""
     evaluator = Seq2SeqEvaluator()
-    with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
         metric_values = evaluator.evaluate_model(
             dataset=VALIDATION_DATASET,
             gt_column="model_ouput",

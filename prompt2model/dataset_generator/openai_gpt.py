@@ -26,6 +26,11 @@ from prompt2model.utils import (
 )
 
 Example = namedtuple("Example", ["input_col", "output_col"])
+logger = logging.getLogger("DatasetGenerator")
+ch = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+ch.setFormatter(formatter)
+logger.addHandler(ch)
 
 
 class OpenAIDatasetGenerator(DatasetGenerator):
@@ -99,17 +104,17 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.initial_temperature = initial_temperature
         self.max_temperature = max_temperature
         if self.initial_temperature < 0:
-            logging.warning(
+            logger.warning(
                 "The lowest temperature for GPT-3.5 API is 0. So the initial_temperature is set to 0."  # noqa E501
             )
             self.initial_temperature = 0
         if self.max_temperature > 2.0:
-            logging.warning(
+            logger.warning(
                 "The highest temperature for GPT-3.5 API is 2. So the max_temperature is set to 2."  # noqa E501
             )
             self.max_temperature = 2
         if self.initial_temperature >= self.max_temperature:
-            logging.warning(
+            logger.warning(
                 "The generator gradually increases the temperature from a lower value to a higher value. So the initial_temperature and the max_temperature are switched."  # noqa E501
             )
             self.initial_temperature, self.max_temperature = (
@@ -256,7 +261,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     else instruction
                 )
                 if count_tokens_from_string(orginal_input_string) > 3500:
-                    logging.warning(
+                    logger.warning(
                         "The original input prompt is too long. Consider writing a shorter prompt."  # noqa 501
                     )
                 continue
@@ -533,7 +538,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     try:
                         response_json = json.loads(choice["message"]["content"])
                     except Exception:
-                        logging.warning(f"Error happened parsing API choice: {choice}")
+                        logger.warning(f"Error happened parsing API choice: {choice}")
                         continue
                         # If the response is not a valid JSON object, discard it.
                     required_keys = ["input", "output"]
@@ -541,7 +546,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         key for key in required_keys if key not in response_json
                     ]
                     if len(missing_keys) != 0:
-                        logging.warning(
+                        logger.warning(
                             f'API response must contain {", ".join(required_keys)} keys'
                         )
                         continue
@@ -551,15 +556,15 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     if input != "" and output != "":
                         self.generated_examples.append(Example(input, output))
                     else:
-                        logging.info(
+                        logger.info(
                             "Empty input or output ditected. Discard this example."
                         )
                         continue
                     # Add the validated example to the generated examples list.
-                    logging.info(f"input: \n\n{input}\n\n")  # noqa: E501
-                    logging.info(f"output: \n\n{output}\n\n")  # noqa: E501
+                    logger.info(f"input: \n\n{input}\n\n")  # noqa: E501
+                    logger.info(f"output: \n\n{output}\n\n")  # noqa: E501
             except Exception:
-                logging.warning(
+                logger.warning(
                     f"Error happened when parsing API completion: {completion}"
                 )
                 continue
@@ -604,7 +609,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
         if self.examples_cache_path.exists():
             # If cache exists, load generated examples from disk.
-            logging.info(f"Loading cache from {str(self.examples_cache_path)}.")
+            logger.info(f"Loading cache from {str(self.examples_cache_path)}.")
             all_generated_examples_dataset = Dataset.load_from_disk(
                 self.examples_cache_path
             )
@@ -636,7 +641,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 pbar.update(len(self.generated_dataset) - pbar.n)
 
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
-                    logging.warning("Maximum number of API calls reached.")
+                    logger.warning("Maximum number of API calls reached.")
                     return self.generated_dataset
                 elif len(self.generated_dataset) >= expected_num_examples:
                     return self.generated_dataset
