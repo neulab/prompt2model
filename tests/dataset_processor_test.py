@@ -90,7 +90,7 @@ UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS = [
 
 
 def test_the_logging_for_provide_unnecessary_eos_token_for_t5():
-    """Test the logging.info for unnecessary eos token for T5 model is logged."""
+    """Test the logger.info for unnecessary eos token for T5 model is logged."""
     t5_tokenizer = AutoTokenizer.from_pretrained("t5-small")
 
     with patch.object(logger, "info") as mock_info, patch.object(
@@ -105,7 +105,7 @@ def test_the_logging_for_provide_unnecessary_eos_token_for_t5():
 
 
 def test_the_logging_for_eos_token_required_for_gpt():
-    """Test the logging.warning for requiring eos token for GPT model is logged."""
+    """Test the logger.warning for requiring eos token for GPT model is logged."""
     with patch.object(logger, "info") as mock_info, patch.object(
         logger, "warning"
     ) as mock_warning:

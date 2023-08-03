@@ -888,7 +888,7 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
                 split=DatasetSplit.TEST,
             )
 
-            # Verify that logging.info was called with the correct message.
+            # Verify that logger.info was called with the correct message.
             mock_info.assert_called_once_with(
                 f"Loading cache from {str(examples_cache_path)}."
             )
@@ -995,12 +995,12 @@ def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generat
                 split=DatasetSplit.TEST,
             )
 
-            # Verify that logging.info was called with
+            # Verify that logger.info was called with
             # the correct message for loading cache.
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert info_list[0] == f"Loading cache from {str(examples_cache_path)}."
-            # The first logging.info is for loading cache, and there are
-            # 5 * 2 additional logging.info messages in extract_responses.
+            # The first logger.info is for loading cache, and there are
+            # 5 * 2 additional logger.info messages in extract_responses.
             assert len(info_list) == 1 + 5 * 2
             mock_warning.assert_not_called()
 

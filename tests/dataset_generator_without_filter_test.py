@@ -877,8 +877,8 @@ def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_gene
             )
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert info_list[0] == f"Loading cache from {str(examples_cache_path)}."
-            # The first logging.info is loaded cache, and there is
-            # another 2 * 5 * 2 logging.info in extract_responses.
+            # The first logger.info is loaded cache, and there is
+            # another 2 * 5 * 2 logger.info in extract_responses.
             assert len(info_list) == 1 + 2 * 5 * 2
             mock_warning.assert_not_called()
         excepted_generated_dataset = Dataset.from_dict(

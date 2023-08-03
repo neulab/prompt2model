@@ -169,13 +169,13 @@ def test_gpt_trainer_with_tokenizer_max_length():
                 training_datasets,
             )
             # Though we did not pass in validation dataset, we set
-            # evaluation_strategy to `no`. Check if logging.info was
+            # evaluation_strategy to `no`. Check if logger.info was
             # called once for not setting the evaluation strategy.
             mock_info.assert_called_once_with(
                 "The training doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
 
-            # Check if logging.warning wasn't called.
+            # Check if logger.warning wasn't called.
             mock_warning.assert_not_called()
 
         trained_model.save_pretrained(cache_dir)
@@ -226,13 +226,13 @@ def test_gpt_trainer_without_tokenizer_max_length():
             )
 
             # Though we did not pass in validation dataset, we set
-            # evaluation_strategy to `no`. Check if logging.info was
+            # evaluation_strategy to `no`. Check if logger.info was
             # called once for not setting the evaluation strategy.
             mock_info.assert_called_once_with(
                 "The training doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
 
-            # Check if logging.warning was called once for
+            # Check if logger.warning was called once for
             # not setting the tokenizer_max_length.
             mock_warning.assert_called_once_with(
                 "Set the tokenizer_max_length is preferable for finetuning model, which saves the cost of training."  # noqa 501
@@ -290,7 +290,7 @@ def test_gpt_trainer_with_epoch_evaluation():
                 training_datasets,
                 validation_datasets,
             )
-            # Check if logging.info was called correctly.
+            # Check if logger.info was called correctly.
             # Eech epoch will log 3 times, twice in `on_epoch_end`
             # and once in `evaluate_model`.
             assert mock_info.call_count == 2 * num_train_epochs
@@ -302,7 +302,7 @@ def test_gpt_trainer_with_epoch_evaluation():
                 )
                 == num_train_epochs
             )
-            # The other two kind of logging.info in `on_epoch_end` of
+            # The other two kind of logger.info in `on_epoch_end` of
             # `ValidationCallback`are logging the epoch num wtih the
             # val_dataset_size and logging the `metric_values`.
 
@@ -312,7 +312,7 @@ def test_gpt_trainer_with_epoch_evaluation():
                 and len(validation_datasets) != 0
             )
 
-            # Check if logging.warning was not called.
+            # Check if logger.warning was not called.
             mock_warning.assert_not_called()
 
         trained_model.save_pretrained(cache_dir)
@@ -352,10 +352,10 @@ def test_gpt_trainer_without_validation_datasets():
             )
             # We set hte evaluation strategy to epoch but don't pass
             # in the validation dataset. So the evaluation will be skipped.
-            # Check if logging.info wasn't called.
+            # Check if logger.info wasn't called.
             mock_info.assert_not_called()
 
-            # Check if logging.warning was called once
+            # Check if logger.warning was called once
             mock_warning.assert_called_once_with(
                 "The validation split for autoregressive model is missed, which should not contain labels as the training spilt. Thus this evaluation will be skipped."  # noqa 501
             )
@@ -414,7 +414,7 @@ def test_gpt_trainer_with_unsupported_evaluation_strategy():
                 validation_datasets,
             )
 
-            # Check if logging.info was called correctly.
+            # Check if logger.info was called correctly.
             # Eech epoch will log 3 times, twice in `on_epoch_end`
             # and once in `evaluate_model`.
             assert mock_info.call_count == 2 * num_train_epochs
@@ -426,7 +426,7 @@ def test_gpt_trainer_with_unsupported_evaluation_strategy():
                 )
                 == num_train_epochs
             )
-            # The other two kind of logging.info in `on_epoch_end` of
+            # The other two kind of logger.info in `on_epoch_end` of
             # `ValidationCallback`are logging the epoch num wtih the
             # val_dataset_size and logging the `metric_values`.
 
@@ -436,7 +436,7 @@ def test_gpt_trainer_with_unsupported_evaluation_strategy():
                 and len(validation_datasets) != 0
             )
 
-            # Check if logging.warning was called once.
+            # Check if logger.warning was called once.
             # Since we don't support step evaluation_strategy,
             # so the evaluation  will be changed to epoch.
             mock_warning.assert_called_once_with(
@@ -513,7 +513,7 @@ def test_gpt_trainer_with_truncation_warning():
         logger, "warning"
     ) as mock_warning:
         trainer.tokenize_dataset(training_dataset)
-        # logging.warning was called for truncation.
+        # logger.warning was called for truncation.
         mock_warning.assert_called_once_with(
             "Truncation happened when tokenizing dataset. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
         )
