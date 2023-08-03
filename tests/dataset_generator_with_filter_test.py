@@ -16,8 +16,8 @@ from prompt2model.dataset_generator.base import DatasetSplit
 from prompt2model.dataset_generator.openai_gpt import OpenAIDatasetGenerator
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from test_helpers import (
-    are_datasets_identical,
     are_dataset_dicts_identical,
+    are_datasets_identical,
     mock_batch_openai_response_with_different_completions,
     mock_batch_openai_response_with_identical_completions,
     reset_mock_batch_openai_response_with_different_completions,
@@ -1600,7 +1600,9 @@ def test_generator_with_filter_to_generate_datasetdict(mocked_generate_example):
         )
 
         # Verify the generated DatasetDict matches the expected DatasetDict.
-        assert are_dataset_dicts_identical(generated_dataset_dict, expected_dataset_dict)
+        assert are_dataset_dicts_identical(
+            generated_dataset_dict, expected_dataset_dict
+        )
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
