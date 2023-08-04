@@ -5,6 +5,7 @@ from __future__ import annotations  # noqa FI58
 import json
 import os
 
+import datasets
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -89,23 +90,31 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         )
         return dataset_vectors
 
-    def retrieve(
+    def choose_dataset(self, top_datasets: list[str]) -> str:
+        """Have the user choose an appropriate dataset from a list of top datasets."""
+        raise NotImplementedError
+
+    def canonicalize_dataset(self, dataset_name: str) -> datasets.DatasetDict:
+        """Canonicalize a dataset into a suitable text-to-text format."""
+        return datasets.load_dataset(dataset_name)
+
+    def retrieve_dataset_dict(
         self,
-        prompt: PromptSpec,
+        prompt_spec: PromptSpec,
         similarity_threshold: float = 0.0,
-    ) -> list[str]:
+    ) -> list[datasets.DatasetDict]:
         """Select a dataset from a prompt using a dual-encoder retriever.
 
         Args:
             prompt: A prompt whose instruction field we use to select relevant datasets.
 
         Return:
-            A list of relevant datasets' HuggingFace names.
+            A list of relevant datasets dictionaries.
         """
         if not os.path.exists(self.search_index_path):
             self.encode_model_descriptions(self.search_index_path)
 
-        query_text = prompt.instruction
+        query_text = prompt_spec.instruction
 
         query_vector = encode_text(
             self.encoder_model_name,
@@ -123,6 +132,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         assert len(ranked_list) > 0, "No datasets retrieved from search index."
         top_dataset_similarity = ranked_list[0].score
         if top_dataset_similarity < similarity_threshold:
-            return [NO_DATASET_FOUND]
-        else:
-            return [dataset_info.name for dataset_info in ranked_list]
+            return [datasets.DatasetDict()]
+        top_datasets = [dataset_info.name for dataset_info in ranked_list]
+        chosen_dataset = self.choose_dataset(top_datasets)
+        return self.canonicalize_dataset(chosen_dataset)
