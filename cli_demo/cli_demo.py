@@ -337,7 +337,7 @@ def main():
         trainer = GenerationModelTrainer(
             "google/flan-t5-base",
             has_encoder=True,
-            executor_batch_size=num_epochs,
+            executor_batch_size=2,
             tokenizer_max_length=1024,
             sequence_max_length=1280,
         )
@@ -350,7 +350,7 @@ def main():
             hyperparameter_choices={
                 "output_dir": str(args_output_root),
                 "num_train_epochs": num_epochs,
-                "per_device_train_batch_size": 8,
+                "per_device_train_batch_size": 2,
                 "evaluation_strategy": "epoch",
             },
             training_datasets=training_datasets,
