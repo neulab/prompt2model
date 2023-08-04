@@ -39,6 +39,7 @@ dependencies = [
     "tiktoken==0.4.0",
     "zeno_build==0.0.5",
     "pyfiglet==0.8.post1",
+    "termcolor==2.3.0",
 ]
 
 dynamic = ["version"]
