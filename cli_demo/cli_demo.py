@@ -341,8 +341,11 @@ def main():
             tokenizer_max_length=1024,
             sequence_max_length=1280,
         )
-        args_output_root = Path("/result/training_output")
+        args_output_root = Path("result/training_output")
         args_output_root.mkdir(parents=True, exist_ok=True)
+        print(
+            "\n-------------------------------------------------\nStart training.\n-------------------------------------------------\n"  # noqa 501
+        )
         trained_model, trained_tokenizer = trainer.train_model(
             hyperparameter_choices={
                 "output_dir": str(args_output_root),
