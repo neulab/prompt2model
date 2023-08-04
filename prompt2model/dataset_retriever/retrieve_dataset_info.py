@@ -1,48 +1,30 @@
 """Tools for retrieving dataset metadata from HuggingFace."""
 
-import aiohttp
-import errno
-import functools
+import argparse
 import importlib
 import json
 import os
 import pickle
+
 import requests
-import signal
 from tqdm import tqdm
-from multiprocessing import Pool
-import zipfile
-import huggingface_hub
-
-from prompt2model.dataset_retriever.temp_utils import store_dataset_metadata
-
-
-from datasets import get_dataset_config_names, load_dataset_builder
+from huggingface_hub import list_datasets
 
 hf_eval_utils = importlib.import_module("model-evaluator.utils")
 
-def get_dataset_names():
+parser = argparse.ArgumentParser()
+parser.add_argument("--dataset-index-file", type=str, default="../../huggingface_data/huggingface_datasets/dataset_index.json")
+
+
+def get_fully_supported_dataset_names():    
     API_URL = "https://datasets-server.huggingface.co/valid"
     response = requests.get(API_URL)
     datasets_list = response.json()
     fully_supported_datasets = datasets_list["viewer"]
     return fully_supported_datasets
 
-
-
-
 def get_dataset_columns(dataset):
     dataset_metadata = hf_eval_utils.get_metadata(dataset, "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")
-    # 
-    '''
-    hf_eval_utils.get_metadata("acronym_identification", "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")
-    
-    [{  'config': 'default',
-        'task': 'token-classification',
-        'task_id': 'entity_extraction',
-        'splits': {'eval_split': 'test'},
-        'col_mapping': {'tokens': 'tokens', 'labels': 'tags'}}]
-    '''
     if dataset_metadata == None:
         return None
     else:
@@ -77,34 +59,40 @@ def load_dataset_metadata(dataset_names, dataset_metadata_cache_file = "/tmp/dat
     pickle.dump(dataset_metadata_cache, open(dataset_metadata_cache_file, "wb"))
     return all_dataset_metadata
 
+def construct_search_documents(all_dataset_names, all_dataset_descriptions, fully_supported_dataset_names, minimum_description_length = 4):
+    filtered_dataset_names = []
+    nonempty_descriptions = []
+    for dataset_name, description in zip(all_dataset_names, all_dataset_descriptions):
+        if dataset_name not in fully_supported_dataset_names:
+            continue
+        if description is not None and len(description.split()) > minimum_description_length:
+            filtered_dataset_names.append(dataset_name)
+            nonempty_descriptions.append(description)
+    return filtered_dataset_names, nonempty_descriptions
+
+    
+
 if __name__ == "__main__":
-    dataset_names = get_dataset_names()
-    squad_idx = [i for i, x in enumerate(dataset_names) if x == "squad"][0]
-    dataset_names = ["squad"] + dataset_names[:squad_idx] + dataset_names[squad_idx+1:]
+    args = parser.parse_args()
+
+    fully_supported_dataset_names = get_fully_supported_dataset_names()
+    all_datasets = list(list_datasets())
+    dataset_names = [dataset.id for dataset in all_datasets]
+    dataset_descriptions = [dataset.description for dataset in all_datasets]
     all_dataset_metadata = load_dataset_metadata(dataset_names)
 
-    dataset_configs_directory = "/tmp/dataset_configs"
-    os.makedirs(dataset_configs_directory, exist_ok=True)
-    dataset_config_descriptions = {}
-
-    with Pool(6) as p:
-        p.map(store_dataset_metadata, dataset_names)
-
-    '''
-    for dataset in tqdm(dataset_names):
-        dataset_name_sanitized = dataset.replace("/", "_")
-        dataset_info_file = os.path.join(dataset_configs_directory, dataset_name_sanitized + ".pkl")
-        if os.path.exists(dataset_info_file):
-            single_dataset_infos = pickle.load(open(dataset_info_file, "rb"))
+    filtered_dataset_names, filtered_descriptions = construct_search_documents(dataset_names, dataset_descriptions, fully_supported_dataset_names)
+    dataset_info = {}
+    for name, description in zip(filtered_dataset_names, filtered_descriptions):
+        if name in all_dataset_metadata:
+            evaluation_metadata = all_dataset_metadata[name]
         else:
-            try:
-                single_dataset_infos = get_dataset_info(dataset)
-            except (FileNotFoundError, TypeError, ImportError, aiohttp.client_exceptions.ClientOSError) as e:
-                print(f"Skipping {dataset} due to error: {e}")
-                single_dataset_infos = {}
-            pickle.dump(single_dataset_infos, open(dataset_info_file, "wb"))
-        for config, dataset_info in single_dataset_infos.items():
-            dataset_config_descriptions[(dataset, config)] = dataset_info
-    '''
-            
-    breakpoint()
+            evaluation_metadata = {}
+        
+        dataset_info[name] = {
+            "name": name,
+            "description": description,
+            "evaluation_metadata": evaluation_metadata
+        }
+
+    json.dump(dataset_info, open(args.dataset_index_file, "w"))
