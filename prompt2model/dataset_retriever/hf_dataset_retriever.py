@@ -61,14 +61,14 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         self.search_index_path = search_index_path
         self.search_depth = search_depth
         self.encoder_model_name = encoder_model_name
-        self.dataset_info = json.load(open(dataset_info_file, 'r'))
         self.dataset_names = list(self.dataset_info.keys())
         self.dataset_infos: list[DatasetInfo] = []
-        for dataset_name in self.dataset_info:
+        dataset_info_json = json.load(open(dataset_info_file, 'r'))
+        for dataset_name in sorted(dataset_info_json.keys()):
             self.dataset_infos.append(
                 DatasetInfo(
                     name=dataset_name,
-                    description=self.dataset_info[dataset_name]["description"],
+                    description=dataset_info_json[dataset_name]["description"],
                     score=0.0,
                 )
             )
@@ -81,7 +81,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
     def encode_dataset_descriptions(self, search_index_path) -> np.ndarray:
         """Encode dataset descriptions into a vector for indexing."""
-        dataset_descriptions = [self.dataset_info[dataset_name] for dataset_name in self.dataset_names]
+        dataset_descriptions = [dataset_info.description for dataset_info in self.dataset_infos]
         dataset_vectors = encode_text(
             self.encoder_model_name,
             text_to_encode=dataset_descriptions,
