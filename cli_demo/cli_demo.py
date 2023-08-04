@@ -315,14 +315,40 @@ def main():
         t5_modified_dataset_dicts[0].save_to_disk("preprocessed_dataset")
         training_datasets = [t5_modified_dataset_dicts[0]["train"]]
         validation_datasets = [t5_modified_dataset_dicts[0]["val"]]
-        logger = logging.getLogger("ModelTrainer")
-        logger.setLevel(logging.INFO)
-        for handler in logger.handlers[:]:
-            logger.removeHandler(handler)
-        ch = logging.StreamHandler()
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        # Set up logger for "ModelTrainer"
+        trainer_logger = logging.getLogger("ModelTrainer")
+        trainer_logger.setLevel(logging.INFO)
+        for handler in trainer_logger.handlers[:]:
+            trainer_logger.removeHandler(handler)
+        trainer_handler = logging.StreamHandler()
+        trainer_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        trainer_handler.setFormatter(trainer_formatter)
+        trainer_logger.addHandler(trainer_handler)
+
+        # Set up logger for "ModelEvaluator"
+        evaluator_logger = logging.getLogger("ModelEvaluator")
+        evaluator_logger.setLevel(logging.INFO)
+        for handler in evaluator_logger.handlers[:]:
+            evaluator_logger.removeHandler(handler)
+        evaluator_handler = logging.StreamHandler()
+        evaluator_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        evaluator_handler.setFormatter(evaluator_formatter)
+        evaluator_logger.addHandler(evaluator_handler)
+
+        while True:
+            line = input(
+                "\n-------------------------------------------------\nEnter the training batch size:\n-------------------------------------------------\n"  # noqa 501
+            )
+            try:
+                train_batch_size = int(line)
+                assert 0 < train_batch_size
+                break
+            except Exception:
+                print(
+                    "\n-------------------------------------------------\nThe training batch size must be greater than 0.\n-------------------------------------------------\n"  # noqa 501
+                )
+        time.sleep(1)
+
         while True:
             line = input(
                 "\n-------------------------------------------------\nEnter the number of your training epochs:\n-------------------------------------------------\n"  # noqa 501
@@ -334,10 +360,12 @@ def main():
                 print(
                     "\n-------------------------------------------------\nInvalid input. Please enter a number.\n-------------------------------------------------\n"  # noqa 501
                 )
+        time.sleep(1)
+
         trainer = GenerationModelTrainer(
-            "google/t5-efficient-tiny",
+            "google/flan-t5-base",
             has_encoder=True,
-            executor_batch_size=2,
+            executor_batch_size=train_batch_size,
             tokenizer_max_length=1024,
             sequence_max_length=1280,
         )
@@ -346,33 +374,33 @@ def main():
         print(
             "\n-------------------------------------------------\nStart training.\n-------------------------------------------------\n"  # noqa 501
         )
-        # trained_model, trained_tokenizer = trainer.train_model(
-        #     hyperparameter_choices={
-        #         "output_dir": str(args_output_root),
-        #         "num_train_epochs": num_epochs,
-        #         "per_device_train_batch_size": 2,
-        #         "evaluation_strategy": "epoch",
-        #     },
-        #     training_datasets=training_datasets,
-        #     validation_datasets=validation_datasets,
-        # )
-        # trained_model.save_pretrained(trained_model_root)
-        # trained_tokenizer.save_pretrained(trained_tokenizer_root)
+        trained_model, trained_tokenizer = trainer.train_model(
+            hyperparameter_choices={
+                "output_dir": str(args_output_root),
+                "num_train_epochs": num_epochs,
+                "per_device_train_batch_size": train_batch_size,
+                "evaluation_strategy": "epoch",
+            },
+            training_datasets=training_datasets,
+            validation_datasets=validation_datasets,
+        )
+        trained_model.save_pretrained(trained_model_root)
+        trained_tokenizer.save_pretrained(trained_tokenizer_root)
         print(
             "\n-------------------------------------------------\nFinish training. Evaluate on the test set.\n-------------------------------------------------\n"  # noqa 501
         )
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        trained_model = transformers.AutoModelForSeq2SeqLM.from_pretrained(
-            trained_model_root
-        ).to(device)
-        trained_tokenizer = transformers.AutoTokenizer.from_pretrained(
-            trained_tokenizer_root
-        )
+        # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # trained_model = transformers.AutoModelForSeq2SeqLM.from_pretrained(
+        #     trained_model_root
+        # ).to(device)
+        # trained_tokenizer = transformers.AutoTokenizer.from_pretrained(
+        #     trained_tokenizer_root
+        # )
         test_dataset = t5_modified_dataset_dicts[0]["test"]
         model_executor = GenerationModelExecutor(
             trained_model,
             trained_tokenizer,
-            4,
+            train_batch_size,
             tokenizer_max_length=1024,
             sequence_max_length=1280,
         )
