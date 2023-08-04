@@ -335,7 +335,7 @@ def main():
                     "\n-------------------------------------------------\nInvalid input. Please enter a number.\n-------------------------------------------------\n"  # noqa 501
                 )
         trainer = GenerationModelTrainer(
-            "google/flan-t5-base",
+            "google/t5-efficient-tiny",
             has_encoder=True,
             executor_batch_size=2,
             tokenizer_max_length=1024,
@@ -346,23 +346,33 @@ def main():
         print(
             "\n-------------------------------------------------\nStart training.\n-------------------------------------------------\n"  # noqa 501
         )
-        trained_model, trained_tokenizer = trainer.train_model(
-            hyperparameter_choices={
-                "output_dir": str(args_output_root),
-                "num_train_epochs": num_epochs,
-                "per_device_train_batch_size": 2,
-                "evaluation_strategy": "epoch",
-            },
-            training_datasets=training_datasets,
-            validation_datasets=validation_datasets,
+        # trained_model, trained_tokenizer = trainer.train_model(
+        #     hyperparameter_choices={
+        #         "output_dir": str(args_output_root),
+        #         "num_train_epochs": num_epochs,
+        #         "per_device_train_batch_size": 2,
+        #         "evaluation_strategy": "epoch",
+        #     },
+        #     training_datasets=training_datasets,
+        #     validation_datasets=validation_datasets,
+        # )
+        # trained_model.save_pretrained(trained_model_root)
+        # trained_tokenizer.save_pretrained(trained_tokenizer_root)
+        print(
+            "\n-------------------------------------------------\nFinish training. Evaluate on the test set.\n-------------------------------------------------\n"  # noqa 501
         )
-        trained_model.save_pretrained(trained_model_root)
-        trained_tokenizer.save_pretrained(trained_tokenizer_root)
-        test_dataset = dataset_dict["test"]
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        trained_model = transformers.AutoModelForSeq2SeqLM.from_pretrained(
+            trained_model_root
+        ).to(device)
+        trained_tokenizer = transformers.AutoTokenizer.from_pretrained(
+            trained_tokenizer_root
+        )
+        test_dataset = t5_modified_dataset_dicts[0]["test"]
         model_executor = GenerationModelExecutor(
             trained_model,
             trained_tokenizer,
-            8,
+            4,
             tokenizer_max_length=1024,
             sequence_max_length=1280,
         )
@@ -389,10 +399,9 @@ def main():
             "\n-------------------------------------------------\nModel has been trained and evaluated.\n-------------------------------------------------\n"  # noqa 501
         )
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     t5_model = transformers.AutoModelForSeq2SeqLM.from_pretrained(
         status["trained_model_root"]
-    ).to(device)
+    ).to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
     t5_tokenizer = transformers.AutoTokenizer.from_pretrained(
         status["trained_tokenizer_root"]
     )
@@ -401,13 +410,14 @@ def main():
     )
 
     while True:
+        prompt = ""
         while True:
             line = input(
                 '\n-------------------------------------------------\nEnter your input giving to the model: ("done" to finish entering and "exit" to exit the demo.)\n-------------------------------------------------\n'  # noqa 501
             )
             if line == "done":
                 break
-            if line == "done":
+            if line == "exit":
                 return
             prompt += line + "\n"
         t5_prediction = model_executor.make_single_prediction(prompt)
