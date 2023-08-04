@@ -69,7 +69,6 @@ def construct_search_documents(all_dataset_names, all_dataset_descriptions, full
             filtered_dataset_names.append(dataset_name)
             nonempty_descriptions.append(description)
     return filtered_dataset_names, nonempty_descriptions
-
     
 
 if __name__ == "__main__":
