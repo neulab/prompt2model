@@ -349,7 +349,7 @@ def main():
         trained_model, trained_tokenizer = trainer.train_model(
             hyperparameter_choices={
                 "output_dir": str(args_output_root),
-                "num_train_epochs": 10,
+                "num_train_epochs": num_epochs,
                 "per_device_train_batch_size": 8,
                 "evaluation_strategy": "epoch",
             },
