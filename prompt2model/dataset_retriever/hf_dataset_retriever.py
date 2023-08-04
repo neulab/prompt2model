@@ -61,7 +61,6 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         self.search_index_path = search_index_path
         self.search_depth = search_depth
         self.encoder_model_name = encoder_model_name
-        self.dataset_names = list(self.dataset_info.keys())
         self.dataset_infos: list[DatasetInfo] = []
         dataset_info_json = json.load(open(dataset_info_file, 'r'))
         for dataset_name in sorted(dataset_info_json.keys()):
