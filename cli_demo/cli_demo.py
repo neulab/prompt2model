@@ -321,7 +321,9 @@ def main():
         for handler in trainer_logger.handlers[:]:
             trainer_logger.removeHandler(handler)
         trainer_handler = logging.StreamHandler()
-        trainer_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        trainer_formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
         trainer_handler.setFormatter(trainer_formatter)
         trainer_logger.addHandler(trainer_handler)
 
@@ -331,7 +333,9 @@ def main():
         for handler in evaluator_logger.handlers[:]:
             evaluator_logger.removeHandler(handler)
         evaluator_handler = logging.StreamHandler()
-        evaluator_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        evaluator_formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
         evaluator_handler.setFormatter(evaluator_formatter)
         evaluator_logger.addHandler(evaluator_handler)
 

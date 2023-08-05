@@ -538,6 +538,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     try:
                         response_json = json.loads(choice["message"]["content"])
                     except Exception:
+                        logger.warning(f"Error happened parsing API choice: {choice}")
                         continue
                         # If the response is not a valid JSON object, discard it.
                     required_keys = ["input", "output"]
@@ -560,13 +561,12 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         )
                         continue
                     # Add the validated example to the generated examples list.
-                    logger.info(
-                        f"input\n-------------------------------------------------\n{input}\n-------------------------------------------------"  # noqa: E501
-                    )
-                    logger.info(
-                        f"output\n-------------------------------------------------\n{output}\n-------------------------------------------------"  # noqa: E501
-                    )
+                    logger.info(f"input: \n\n{input}\n\n")  # noqa: E501
+                    logger.info(f"output: \n\n{output}\n\n")  # noqa: E501
             except Exception:
+                logger.warning(
+                    f"Error happened when parsing API completion: {completion}"
+                )
                 continue
                 # If an error occurs during processing a
                 # completion, skip it and move to the next.
