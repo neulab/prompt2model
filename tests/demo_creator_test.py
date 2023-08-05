@@ -1,29 +1,26 @@
 """Test the create_gradio function with two configurations."""
 
+import gc
+
 import gradio as gr
-from transformers import T5ForConditionalGeneration
 
 from prompt2model.demo_creator import create_gradio
 from prompt2model.model_executor import GenerationModelExecutor
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
-from test_helpers import create_gpt2_model_and_tokenizer
-
-from transformers import T5Tokenizer  # isort:skip
+from test_helpers import create_gpt2_model_and_tokenizer, create_t5_model_and_tokenizer
 
 
 def test_create_gradio_with_gpt2():
     """Test the `create_gradio` method with a GPT2 model."""
-    # Create GPT-2 model and tokenizer.
+    # Create a GPT-2 model and tokenizer.
     gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
     gpt2_model = gpt2_model_and_tokenizer.model
     gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
 
-    # Create GenerationModelExecutor.
+    # Create a GenerationModelExecutor.
     gpt2_executor = GenerationModelExecutor(
         model=gpt2_model,
         tokenizer=gpt2_tokenizer,
-        test_set=None,
-        input_column="model_input",
         batch_size=1,
     )
 
@@ -35,20 +32,20 @@ def test_create_gradio_with_gpt2():
 
     # Perform assertions.
     assert isinstance(interface_gpt2, gr.Blocks)
+    gc.collect()
 
 
 def test_create_gradio_with_t5():
     """Test the `create_gradio` method with a T5 model."""
     # Create T5 model and tokenizer
-    t5_model = T5ForConditionalGeneration.from_pretrained("google/t5-efficient-tiny")
-    t5_tokenizer = T5Tokenizer.from_pretrained("google/t5-efficient-tiny")
+    t5_model_and_tokenizer = create_t5_model_and_tokenizer()
+    t5_model = t5_model_and_tokenizer.model
+    t5_tokenizer = t5_model_and_tokenizer.tokenizer
 
-    # Create GenerationModelExecutor.
+    # Create a GenerationModelExecutor.
     t5_executor = GenerationModelExecutor(
         model=t5_model,
         tokenizer=t5_tokenizer,
-        test_set=None,
-        input_column="model_input",
         batch_size=1,
     )
 
@@ -60,3 +57,4 @@ def test_create_gradio_with_t5():
 
     # Perform assertions.
     assert isinstance(interface_t5, gr.Blocks)
+    gc.collect()
