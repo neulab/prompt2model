@@ -10,7 +10,6 @@ if __name__ == "__main__":
 
 
     retriever = DescriptionModelRetriever(
-        search_index_path="/tmp",
         model_descriptions_index_path="huggingface_data/huggingface_models/model_info/",
         use_bm25=True,
         use_HyDE=True
