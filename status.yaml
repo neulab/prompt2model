@@ -1,3 +1,4 @@
+dataset_has_been_generated: true
 dataset_has_been_retrieved: true
 examples: "input=\"Question: What city did Super Bowl 50 take place in? Context: Super\
   \ Bowl 50 was an American football game to determine the champion of the National\
@@ -35,3 +36,4 @@ instruction: Your task is to generate an answer to a natural question. In this t
   Sports, Technology, Science, and so on.
 model_has_been_retrieved: true
 prompt_has_been_parsed: true
+retrieved_dataset_dict_root: retrieved_dataset_dict

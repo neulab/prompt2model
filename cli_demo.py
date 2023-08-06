@@ -142,7 +142,9 @@ def main():
         retrieved_dataset_dict = dataset_dict
         print(retrieved_dataset_dict["train"][1])
         dataset_has_been_retrieved = True
+        retrieved_dataset_dict.save_to_disk("retrieved_dataset_dict")
         status["dataset_has_been_retrieved"] = True
+        status["retrieved_dataset_dict_root"] = "retrieved_dataset_dict"
         with open("status.yaml", "w") as f:
             yaml.safe_dump(status, f)
 
@@ -236,8 +238,6 @@ def main():
         generated_dataset = unlimited_dataset_generator.generate_dataset_split(
             prompt_spec, num_expected, split=DatasetSplit.TRAIN
         )
-        from IPython import embed
-        embed()
         generated_dataset.save_to_disk("generated_dataset")
         dataset_has_been_generated = True
         status["dataset_has_been_generated"] = True
@@ -279,16 +279,18 @@ def main():
         dataset_dict = datasets.DatasetDict(
             {"train": train_dataset, "val": val_dataset, "test": test_dataset}
         )
+        cached_retrieved_dataset_dict = datasets.load_from_disk(status["retrieved_dataset_dict_root"])
+        validation_key = "validation" if "validation" in cached_retrieved_dataset_dict else "val"
         retrieved_dataset_dict = datasets.DatasetDict(
             {
-                "train": datasets.Dataset.from_dicts(
-                    retrieved_dataset_dict["train"][:3000]
+                "train": datasets.Dataset.from_dict(
+                    cached_retrieved_dataset_dict["train"][:3000]
                 ),
-                "val": datasets.Dataset.from_dicts(
-                    retrieved_dataset_dict["val"][:1000]
+                "val": datasets.Dataset.from_dict(
+                    cached_retrieved_dataset_dict["validation"][:1000]
                 ),
-                "test": datasets.Dataset.from_dicts(
-                    retrieved_dataset_dict["test"][:1000]
+                "test": datasets.Dataset.from_dict(
+                    cached_retrieved_dataset_dict["test"][:1000]
                 ),
             }
         )
