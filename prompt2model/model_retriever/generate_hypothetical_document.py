@@ -422,7 +422,7 @@ def generate_hypothetical_model_description(
     Returns:
         a hypothetical model description for the user's instruction.
     """
-    instruction = prompt.instruction
+    instruction = prompt.instruction_english
     openai_api_agent = ChatGPTAgent(openai_api_key, "gpt-3.5-turbo-16k")
     chatgpt_prompt = (
         PROMPT_PREFIX

@@ -249,7 +249,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         if not os.path.exists(self.search_index_path):
             self.encode_dataset_descriptions(self.search_index_path)
 
-        query_text = prompt_spec.instruction
+        query_text = prompt_spec.instruction_english
 
         query_vector = encode_text(
             self.encoder_model_name,
