@@ -1,5 +1,7 @@
 """A mock dataset retriever for testing purposes."""
 
+from __future__ import annotations  # noqa FI58
+
 import datasets
 
 from prompt2model.dataset_retriever.base import DatasetRetriever
@@ -14,7 +16,7 @@ class MockRetriever(DatasetRetriever):
 
     def retrieve_dataset_dict(
         self, prompt_spec: PromptSpec
-    ) -> list[datasets.DatasetDict]:
+    ) -> datasets.DatasetDict | None:
         """Return a single empty DatasetDict for testing purposes."""
         _ = prompt_spec  # suppress unused vaiable warning
         mock_dataset = datasets.Dataset.from_dict(
