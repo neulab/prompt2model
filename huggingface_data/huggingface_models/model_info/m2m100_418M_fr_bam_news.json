@@ -1,0 +1,1 @@
+{"pretrained_model_name": "masakhane/m2m100_418M_fr_bam_news", "description": "---\nlanguage:\n- fr\n- bam\nlicense: afl-3.0\n---\n", "size_bytes": "1935804116", "downloads": 2}

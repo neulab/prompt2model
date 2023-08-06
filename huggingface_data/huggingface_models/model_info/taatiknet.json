@@ -1,0 +1,1 @@
+{"pretrained_model_name": "malper/taatiknet", "description": "---\nlanguage:\n- he\n---\nPlease see [this model's GitHub repo](https://github.com/morrisalp/taatiknet) for more information.", "size_bytes": "1198609653", "downloads": 185}

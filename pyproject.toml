@@ -22,8 +22,8 @@ classifiers = [
 dependencies = [
     "transformers==4.24.0",
     "datasets==2.11.0",
-    "pandas==2.0.3",
-    "fastapi==0.100.0",
+    "pandas==1.5.3",
+    "fastapi==0.95.2",
     "gradio==3.38.0",
     "torch==2.0.0",
     "pytest==7.3.1",
@@ -44,6 +44,7 @@ dependencies = [
     "streamlit==1.25.0",
     "retriv==0.2.1",
     "psutil==5.9.5",
+    "autofaiss==2.15.8",
 ]
 
 dynamic = ["version"]

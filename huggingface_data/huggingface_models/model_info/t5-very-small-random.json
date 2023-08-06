@@ -1,0 +1,1 @@
+{"pretrained_model_name": "stas/t5-very-small-random", "description": "This is a tiny random t5 model used for testing\n\nSee `t5-make-very-small-model.py` for how it was created.", "size_bytes": "5639876", "downloads": 80}

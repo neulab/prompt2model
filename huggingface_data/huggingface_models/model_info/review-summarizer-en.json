@@ -1,0 +1,1 @@
+{"pretrained_model_name": "MurkatG/review-summarizer-en", "description": "---\ndatasets:\n- amazon_reviews_multi\nlanguage:\n- en\nmetrics:\n- rouge\npipeline_tag: summarization\n---\n# Model Card for Model ID\n\nModel that trained to summarize product reviews.\n\n", "size_bytes": "1200770757", "downloads": 37}

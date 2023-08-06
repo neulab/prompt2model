@@ -1,0 +1,1 @@
+{"pretrained_model_name": "hsuvaskakoty/bart_def_gen_40k", "description": "This is a fine-tuned BART model for Definition Generation. It is still in the prototype stage, fine-tuned only with 40k Training Instances of (definition, context) pairs for 3 epochs. The eval_loss is still in 2.30. The beam Size is 4.", "size_bytes": "1625537793", "downloads": 4}

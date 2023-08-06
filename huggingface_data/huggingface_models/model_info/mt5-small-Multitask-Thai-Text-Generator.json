@@ -1,0 +1,1 @@
+{"pretrained_model_name": "c-tawayip/mt5-small-Multitask-Thai-Text-Generator", "description": "\nText Clasification: {text}\n\nTitle Summarization: {text}\n\nAbstract Summarization: {text}\n\nTags Suggestion: {text}\n\n\n", "size_bytes": "1200770757", "downloads": 4}

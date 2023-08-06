@@ -1,0 +1,1 @@
+{"pretrained_model_name": "jieshenai/zh_en_translation", "description": "---\ndatasets:\n- kde4\n---\n\ntranslation zh to en.\n\nexample: https://github.com/JieShenAI/torch/blob/main/huggingface/example/translation/%E8%8B%B1%E6%B1%89%E4%BA%92%E8%AF%91.ipynb\n\nYou can post issues at https://github.com/JieShenAI/torch", "size_bytes": "310022533", "downloads": 68}

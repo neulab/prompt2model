@@ -1,0 +1,1 @@
+{"pretrained_model_name": "user336/t5-sum-checkpoint-2200", "description": "T5-base , finetuned on ~ 150k medium articles\n\nlanguage: \n  - English\n  \n\ntags:\n- t5\n\ndatasets:\n- 190k+ Medium articles with text content, title, publication date, and tags\n\nmetrics:\n- rouge1\n- rouge2\n- rougeL\n- rougeLsum", "size_bytes": "891699345", "downloads": 9}

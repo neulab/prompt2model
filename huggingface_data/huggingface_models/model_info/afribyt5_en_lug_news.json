@@ -1,0 +1,1 @@
+{"pretrained_model_name": "masakhane/afribyt5_en_lug_news", "description": "---\nlanguage:\n- en\n- lug\nlicense: afl-3.0\n---\n", "size_bytes": "2326733259", "downloads": 2}

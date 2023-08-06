@@ -1,0 +1,1 @@
+{"pretrained_model_name": "FlightBlaze/name-to-ingr", "description": "---\nlicense: openrail\n---\n\nThis model generates ingredients by dish name.\n", "size_bytes": "891614783", "downloads": 2}

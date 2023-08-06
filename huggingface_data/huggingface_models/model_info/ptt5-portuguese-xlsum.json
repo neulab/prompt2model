@@ -1,0 +1,1 @@
+{"pretrained_model_name": "arubenruben/ptt5-portuguese-xlsum", "description": "---\ndatasets:\n- arubenruben/portuguese_xlsum\nlanguage:\n- pt\npipeline_tag: summarization\n---", "size_bytes": "242068411", "downloads": 13}

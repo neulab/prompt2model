@@ -1,0 +1,1 @@
+{"pretrained_model_name": "zirui3/pix2struct-cord-v2", "description": "---\nlicense: cc-by-4.0\ndatasets:\n- naver-clova-ix/cord-v2\n---\n\n# summary\n\nKIE(Key Information Extraction) from doc images without OCR based on `pix2struct`", "size_bytes": "1129235783", "downloads": 12}

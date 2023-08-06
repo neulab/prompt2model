@@ -1,0 +1,1 @@
+{"pretrained_model_name": "microsoft/ssr-base", "description": "---\nlanguage: \n- en\ndatasets:\n- c4\ntags:\n- summarization\n- text2text-generation\n---\n\n# SSR-base\n\nSSR-base model as in EMNLP 2021 paper [Improving Sequence-to-Sequence Pre-training via Sequence Span Rewriting](https://arxiv.org/abs/2101.00416).\n", "size_bytes": "891695056", "downloads": 25}

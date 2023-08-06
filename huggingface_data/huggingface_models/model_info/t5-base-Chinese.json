@@ -1,0 +1,1 @@
+{"pretrained_model_name": "lemon234071/t5-base-Chinese", "description": "A mt5-base model that the vocab and word embedding are truncated, only Chinese and English characters are retained.\nhttps://github.com/lemon234071/TransformerBaselines", "size_bytes": "1010295641", "downloads": 682}

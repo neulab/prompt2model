@@ -1,0 +1,1 @@
+{"pretrained_model_name": "ahadda5/bart_wikikp_kp20k", "description": "bart trained on wikikp then midas/kp20k", "size_bytes": "1625537793", "downloads": 2}

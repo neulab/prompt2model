@@ -1,0 +1,1 @@
+{"pretrained_model_name": "azabdus/t5-base-ft-test", "description": "---\nlicense: mit\nlanguage:\n- en\nmetrics:\n- accuracy\n- code_eval\n---\n\nA T5 Model fine-tuned on a NEWS dataset using SimpleT5 library. This model summarizes any given paragraph to a couple of lines.  ", "size_bytes": "891733009", "downloads": 2}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Kelum/Flan_T5_small_section_32_QnA", "description": "Flan-T5 model was trined with section 32 documents to build an extractive QA system", "size_bytes": "307910149", "downloads": 2}

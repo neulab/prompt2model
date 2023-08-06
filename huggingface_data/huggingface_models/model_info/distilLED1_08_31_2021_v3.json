@@ -1,0 +1,1 @@
+{"pretrained_model_name": "xhyi/distilLED1_08_31_2021_v3", "description": "Step \tTraining Loss \tValidation Loss \tRouge2 Precision \tRouge2 Recall \tRouge2 Fmeasure\n\n240 \t2.513600 \t3.049892 \t0.082800 \t0.102600 \t0.085700\n\n\n240 steps", "size_bytes": "1436440169", "downloads": 2}

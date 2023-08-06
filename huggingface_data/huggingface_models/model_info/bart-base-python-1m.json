@@ -1,0 +1,1 @@
+{"pretrained_model_name": "formermagic/bart-base-python-1m", "description": "---\nlicense: mit\nlanguage: py\nthumbnail: https://avatars.githubusercontent.com/u/70610668?s=400&u=f0699303289113c125e8686338739d9a63d5826c&v=4\ntags:\n- bart\n- pytorch\n---\n\n# bart-base-python-1m", "size_bytes": "594118687", "downloads": 5}

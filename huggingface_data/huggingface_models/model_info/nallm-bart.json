@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Nara-Lab/nallm-bart", "description": "---\nlicense: apache-2.0\nlanguage:\n- ko\n---\nNA-LLM(\ub098\ub984)\uc740 \ub098\ub77c\uc9c0\uc2dd\uc815\ubcf4\uac00 \uac1c\ubc1c\ud55c \ud55c\uad6d\uc5b4 Large Language Model (LLM) \uc785\ub2c8\ub2e4.\nhttps://github.com/Nara-Information/NA-LLM", "size_bytes": "495648413", "downloads": 3}

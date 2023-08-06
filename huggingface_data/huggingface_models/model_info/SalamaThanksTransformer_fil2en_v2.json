@@ -1,0 +1,1 @@
+{"pretrained_model_name": "SalamaThanks/SalamaThanksTransformer_fil2en_v2", "description": "---\nlicense: afl-3.0\n---\nSalamaThanks Transformer for Filipino-to-English Text Translation version 2.\n\nA finetuned model based on the Helsinki-NLP/opus-mt-en-tl transformer model.", "size_bytes": "294005125", "downloads": 2}

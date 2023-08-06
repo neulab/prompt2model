@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Crushtoe/GODEL-v1_1-base-seq2seq-vangluss", "description": "---\ntags:\n- conversational\n---\n\n# Vangluss: Bot Edition\n\nTrying (and failing) to use GODEL in place of DialoGPT.", "size_bytes": "891617279", "downloads": 10}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "dslack/t5-flan-small", "description": "T5 FLAN small model from Google t5x release, compatible with hugging face for ease of use.", "size_bytes": "307928197", "downloads": 2}

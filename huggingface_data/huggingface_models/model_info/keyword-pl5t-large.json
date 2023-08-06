@@ -1,0 +1,1 @@
+{"pretrained_model_name": "kwojtasik/keyword-pl5t-large", "description": "---\nlicense: cc-by-4.0\n---\n\nlanguage: \n- pl\ntags:\n- keywords-generation\n\n# Finetuned model for keyword generation\n", "size_bytes": "3279209285", "downloads": 9}

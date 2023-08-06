@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Blaise-g/longt5_tglobal_large_sumpubmed", "description": "---\nlanguage: en\ntags:\n- summarization\n- biomedical papers\nwidget:\n- text: \"Biomedical paper of choice \\U0001F917\"\ndatasets:\n- Blaise-g/SumPubmed\n---", "size_bytes": "3132671411", "downloads": 46}

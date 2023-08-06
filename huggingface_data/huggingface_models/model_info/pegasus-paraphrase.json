@@ -1,0 +1,1 @@
+{"pretrained_model_name": "harouzie/pegasus-paraphrase", "description": "---\nlicense: mit\ndatasets:\n- paws\n- snli\n- multi_nli\n- glue\n- SetFit/qqp\nlanguage:\n- en\nmetrics:\n- rouge\nlibrary_name: transformers\npipeline_tag: text2text-generation\n---", "size_bytes": "2279610349", "downloads": 7}

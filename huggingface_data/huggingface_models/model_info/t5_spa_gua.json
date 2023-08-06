@@ -1,0 +1,1 @@
+{"pretrained_model_name": "rafanegrette/t5_spa_gua", "description": "## Translator of Spanish/Wayuunaiki with T5 model ##\n\nThis is a finetuned model based on T5 using a corpus of spanish-wayuunaiki. \nWayuunaiki is the native language of the Wayuus, the major indigenous people in the north of Colombia.\n\n", "size_bytes": "1200792197", "downloads": 2}

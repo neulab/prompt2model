@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Neupane9Sujal/Text_Summarization", "description": "---\nlanguage:\n- en\nmetrics:\n- rouge\ntags:\n- code\n---", "size_bytes": "242071641", "downloads": 9}

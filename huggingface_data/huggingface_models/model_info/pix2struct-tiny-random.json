@@ -1,0 +1,1 @@
+{"pretrained_model_name": "fxmarty/pix2struct-tiny-random", "description": "---\nlicense: mit\npipeline_tag: image-to-text\n---\n", "size_bytes": "14094545", "downloads": 34133}

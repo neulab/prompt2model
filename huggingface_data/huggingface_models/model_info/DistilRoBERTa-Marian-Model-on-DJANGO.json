@@ -1,0 +1,1 @@
+{"pretrained_model_name": "AhmedSSoliman/DistilRoBERTa-Marian-Model-on-DJANGO", "description": "---\nlicense: mit\ndatasets:\n- AhmedSSoliman/DJANGO\nlanguage:\n- en\nmetrics:\n- bleu\n- accuracy\npipeline_tag: translation\ntags:\n- Machine Translation\n- Code Generation\n- Text Generation\n---", "size_bytes": "569360689", "downloads": 4}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "andersonbcdefg/my-silly-t5", "description": "Training Details:\n* 200,000 steps on the Pile\n* Denoising (span corruption) objective\n* Batch size 256, 512 sequence length\n* 25B tokens total\n* Modified GPT NeoX Tokenizer", "size_bytes": "160014725", "downloads": 3}

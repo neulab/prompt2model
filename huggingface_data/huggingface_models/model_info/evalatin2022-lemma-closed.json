@@ -1,0 +1,1 @@
+{"pretrained_model_name": "enelpol/evalatin2022-lemma-closed", "description": "Input have to be constructed with prefix \": \", a word form, the colon and a POS, e.g.: `: effugere:VERB`.", "size_bytes": "1198815917", "downloads": 3}

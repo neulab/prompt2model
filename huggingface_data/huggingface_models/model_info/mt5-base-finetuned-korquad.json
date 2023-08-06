@@ -1,0 +1,1 @@
+{"pretrained_model_name": "mingu/mt5-base-finetuned-korquad", "description": "---\ntags:\n- question answering\n---\n\nThis is the t5 model, fine-tuned using the KorQuAD dataset. It's been trained on question-answer pairs for the task of Question Answering.\n\n# KorQuAD MT5 Model", "size_bytes": "2329732045", "downloads": 2}

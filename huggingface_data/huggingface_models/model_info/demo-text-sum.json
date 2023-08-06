@@ -1,0 +1,1 @@
+{"pretrained_model_name": "c-tawayip/demo-text-sum", "description": "---\nlicense: cc-by-2.0\n---\nPrefix\n--\nTitle Summarization: {text}\n\nAbstract Summarization: {text}\n\nTags Suggestion: {text}", "size_bytes": "1200768069", "downloads": 2}

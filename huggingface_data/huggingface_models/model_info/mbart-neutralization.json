@@ -1,0 +1,1 @@
+{"pretrained_model_name": "joheras/mbart-neutralization", "description": "---\ndatasets:\n- hackathon-pln-es/neutral-es\nmetrics:\n- bleu\n---", "size_bytes": "2444694045", "downloads": 2}

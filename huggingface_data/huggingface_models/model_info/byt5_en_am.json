@@ -1,0 +1,1 @@
+{"pretrained_model_name": "israel/byt5_en_am", "description": "---\nlanguage: \n- am\ndatasets:\n- sample\nlicense: cc-by-4.0\n---\n", "size_bytes": "2326697929", "downloads": 2}

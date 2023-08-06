@@ -1,0 +1,1 @@
+{"pretrained_model_name": "masakhane/mbart50_pcm_en_news", "description": "---\nlanguage:\n- pcm\n- en\nlicense: afl-3.0\n---\n", "size_bytes": "2444722195", "downloads": 2}

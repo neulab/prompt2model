@@ -1,0 +1,1 @@
+{"pretrained_model_name": "seduerr/pai_paraph", "description": "input_ = paraphrase: + str(input_) + ' </s>'\n", "size_bytes": "891739457", "downloads": 2}

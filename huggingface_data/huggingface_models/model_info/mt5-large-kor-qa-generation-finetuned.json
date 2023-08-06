@@ -1,0 +1,1 @@
+{"pretrained_model_name": "traintogpb/mt5-large-kor-qa-generation-finetuned", "description": "---\ndatasets:\n- squad_kor_v1\n- klue\nlanguage:\n- ko\nmetrics:\n- bleu\n---", "size_bytes": "4918519065", "downloads": 300}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "traintogpb/pko-t5-large-kor-for-colloquial-summarization-finetuned", "description": "---\ndatasets:\n- AI-Hub_broadcast_contents_script_summarization_dataset\nlanguage:\n- ko\nmetrics:\n- rouge\npipeline_tag: summarization\n---", "size_bytes": "3282133829", "downloads": 69}

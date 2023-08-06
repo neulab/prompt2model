@@ -1,0 +1,1 @@
+{"pretrained_model_name": "bangnbx/t5-small-512", "description": "# Info\nCheckpoint 512\n\nWandb details: https://wandb.ai/bangnbx/text-to-sql-2/runs/b8ce44g0\n\nExact Match: 40.81% (max 45.84%)\n\nQuite stable from step 768 (44.87%)\n\n", "size_bytes": "242032379", "downloads": 2}

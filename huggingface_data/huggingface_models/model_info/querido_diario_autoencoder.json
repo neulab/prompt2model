@@ -1,0 +1,1 @@
+{"pretrained_model_name": "jvanz/querido_diario_autoencoder", "description": "---\nlanguage: \n- pt\ndatasets:\n- jvanz/querido_diario\n---\n\n# Querido Diario Autoencoder\n\nAutoencoder based on portuguese BERT using the Querido Diario dataset", "size_bytes": "985165419", "downloads": 15}

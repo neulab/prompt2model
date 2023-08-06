@@ -1,0 +1,1 @@
+{"pretrained_model_name": "AliiaR/sum-aliia-model", "description": "---\ndatasets:\n- reddit\nlanguage:\n- en\nmetrics:\n- rouge\npipeline_tag: summarization\n---", "size_bytes": "242071641", "downloads": 6}

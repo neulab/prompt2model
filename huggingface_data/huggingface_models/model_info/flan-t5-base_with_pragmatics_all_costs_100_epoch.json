@@ -1,0 +1,1 @@
+{"pretrained_model_name": "KrijnD/flan-t5-base_with_pragmatics_all_costs_100_epoch", "description": "learning_rate=1.41e-5\nbatch_size=8\nepochs = 100\n\nhttps://wandb.ai/krijnd/trl/runs/njt1yycg?workspace=user-krijndignum", "size_bytes": "242074337", "downloads": 3}

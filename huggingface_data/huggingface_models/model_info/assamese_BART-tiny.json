@@ -1,0 +1,1 @@
+{"pretrained_model_name": "yash-srivastava19/assamese_BART-tiny", "description": "---\nlicense: mit\nlanguage:\n- as\nlibrary_name: transformers\n---\nOne step closer to the actual thing. Started with RoBERTa, now BART. Finally we'll move to MBart. ", "size_bytes": "1616328461", "downloads": 2}

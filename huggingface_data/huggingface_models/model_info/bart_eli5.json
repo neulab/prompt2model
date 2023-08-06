@@ -1,0 +1,1 @@
+{"pretrained_model_name": "yjernite/bart_eli5", "description": "---\nlanguage: en\nlicense: apache-2.0\ndatasets:\n- eli5\n---\n\n## BART ELI5\n\nRead the article at https://yjernite.github.io/lfqa.html and try the demo at https://huggingface.co/qa/\n", "size_bytes": "1625482232", "downloads": 725}

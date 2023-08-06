@@ -1,0 +1,1 @@
+{"pretrained_model_name": "mrm8488/t5-small-spanish-finetuned-squadv1", "description": "---\nlanguage: es\ndatasets:\n- squad_es\nwidget:\n- text: \"pregunta: \u00bfCu\u00e1l es el mayor placer de la vida? contexto: El mayor placer de la vida es dormir\"\n---\n# T5 small (Spanish) fine-tuned on SQUAD (ES) for Q&A", "size_bytes": "242034427", "downloads": 14}

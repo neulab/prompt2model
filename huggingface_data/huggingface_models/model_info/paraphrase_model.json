@@ -1,0 +1,1 @@
+{"pretrained_model_name": "vishalz/paraphrase_model", "description": "pegasus paraphraser model\nusing <a href=\"https://huggingface.co/tuner007/pegasus_paraphrase\" target=\"_blank\">tuner007/pegasus_paraphrase</a>", "size_bytes": "2275919217", "downloads": 2}

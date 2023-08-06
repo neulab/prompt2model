@@ -1,0 +1,1 @@
+{"pretrained_model_name": "usakha/Pegasus_arxiv_model", "description": "---\ndatasets:\n- ccdv/arxiv-summarization\nmetrics:\n- bleu\n- rouge\npipeline_tag: summarization\n---", "size_bytes": "2283804653", "downloads": 14}
