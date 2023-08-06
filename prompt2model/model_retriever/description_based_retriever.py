@@ -229,6 +229,6 @@ class DescriptionModelRetriever(ModelRetriever):
             model_info.score = scaled_model_score
             top_models_list.append(model_info)
 
-        top_models_list = sorted(top_models_list, key=lambda x: x.score, reverse=True)
+        top_models_list = sorted(top_models_list, key=lambda x: x.score, reverse=True)[:self.search_depth]
         assert len(top_models_list) > 0, "No models retrieved from search index."
         return [model_info.name for model_info in top_models_list]
