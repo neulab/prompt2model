@@ -4,7 +4,6 @@ from __future__ import annotations  # noqa FI58
 
 import json
 import os
-import time
 
 import datasets
 import numpy as np
@@ -47,6 +46,7 @@ def input_string():
 def input_y_n() -> bool:
     """Get a yes/no answer from the user via stdin."""
     y_n = str(input())
+    print(y_n)
     return not (y_n.strip() == "" or y_n.strip().lower() == "n")
 
 
@@ -58,7 +58,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         search_index_path: str = "huggingface_data/huggingface_datasets/"
         + "huggingface_datasets_datafinder_index",
         first_stage_search_depth: int = 1000,
-        max_search_depth: int = 10,
+        max_search_depth: int = 25,
         encoder_model_name: str = "viswavi/datafinder-huggingface-prompt-queries",
         dataset_info_file: str = "huggingface_data/huggingface_datasets/"
         + "dataset_index.json",
@@ -113,15 +113,12 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         """Have the user choose an appropriate dataset from a list of top datasets."""
         print("\n-------------------------------------------------\n")
         print("Here are the datasets I've retrieved for you:")
-        print("\n-------------------------------------------------\n")
+        print("#\tName\tDescription")
         for i, d in enumerate(top_datasets):
             description_no_spaces = d.description.replace("\n", " ")
-            print(
-                f"# {i+1})\nName: {d.name}\n Configs: {configs_to_display}\n Description: {d.description}"
-            )
-            print("\n-------------------------------------------------\n")
-            time.sleep(2)
+            print(f"{i+1}):\t{d.name}\t{description_no_spaces}")
 
+        print("\n-------------------------------------------------\n")
         print(
             "If none of these are relevant to your prompt, we'll only use "
             + "generated data. Are any of these datasets relevant? (y/N)"
@@ -268,13 +265,20 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             self.dataset_infos[dataset_idx].score = dataset_score
             blocklisted = False
             for blocklist_string in blocklist:
-                if blocklist_string.lower() in self.dataset_infos[dataset_idx].name.lower():
+                if (
+                    blocklist_string.lower()
+                    in self.dataset_infos[dataset_idx].name.lower()
+                    or blocklist_string.lower()
+                    in self.dataset_infos[dataset_idx].description.lower()
+                ):
                     blocklisted = True
                     break
             if not blocklisted:
                 top_dataset_infos.append(self.dataset_infos[dataset_idx])
 
-        ranked_list = sorted(top_dataset_infos, key=lambda x: x.score, reverse=True)[:self.max_search_depth]
+        ranked_list = sorted(top_dataset_infos, key=lambda x: x.score, reverse=True)[
+            : self.max_search_depth
+        ]
         assert len(ranked_list) > 0, "No datasets retrieved from search index."
         top_dataset_name = self.choose_dataset(ranked_list)
         if top_dataset_name is None:
