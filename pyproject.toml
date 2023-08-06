@@ -37,7 +37,6 @@ dependencies = [
     "mdtex2html==1.2.0",
     "scikit-learn==1.2.2",
     "tiktoken==0.4.0",
-    "zeno_build==0.0.5",
     "pyfiglet==0.8.post1",
     "termcolor==2.3.0",
     "jsonlines==3.1.0",
@@ -45,6 +44,7 @@ dependencies = [
     "retriv==0.2.1",
     "psutil==5.9.5",
     "autofaiss==2.15.8",
+    "asyncio==3.4.3",
 ]
 
 dynamic = ["version"]
