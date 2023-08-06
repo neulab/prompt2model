@@ -78,6 +78,7 @@ def main():
             "\n-------------------------------------------------\nDo you want to start again? (y/n) \n-------------------------------------------------\n"  # noqa 501
         )
         if answer.lower() == "n":
+            print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
             if os.path.isfile("status.yaml"):
                 with open("status.yaml", "r") as f:
                     status = yaml.safe_load(f)
@@ -459,11 +460,12 @@ def main():
     )
 
     while True:
+        print(
+                '\n-------------------------------------------------\nEnter your input giving to the model: ("done" to finish entering and "exit" to exit the demo.)\n-------------------------------------------------\n'  # noqa 501
+        )
         prompt = ""
         while True:
-            line = input(
-                '\n-------------------------------------------------\nEnter your input giving to the model: ("done" to finish entering and "exit" to exit the demo.)\n-------------------------------------------------\n'  # noqa 501
-            )
+            line = input()
             if line == "done":
                 break
             if line == "exit":
