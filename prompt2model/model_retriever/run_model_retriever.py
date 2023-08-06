@@ -5,7 +5,7 @@ from prompt2model.model_retriever import DescriptionModelRetriever
 if __name__ == "__main__":
     prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
     # prompt_spec._instruction = """Verify scientific claims automatically as fact or fiction. Provide supporting evidence with your decision.."""
-    prompt = """Your task is to generate an answer to a natural question. In this task, the input is a string that consists of both a question and a context passage. The context is a descriptive passage related to the question and contains the answer. And the question can range from Math, Cultural, Social, Geometry, Biology, History, Sports, Technology, Science, and so on."""
+    prompt = 'Generate one line of code in Python to solve a Japanese question on StackOverflow. Do not include comments or expressions. No import statements are required.\n\nFor this task, the input is text in Japanese, describing variable names and operations. The output is a single line of Python code to accomplish the task. Do not include comments or expressions. Import statements are also not required.\n'
     prompt_spec._instruction = prompt
 
 

@@ -6,6 +6,7 @@ import json
 import logging
 import os
 
+import deepl
 import openai
 
 from prompt2model.prompt_parser.base import PromptSpec, TaskType
@@ -20,7 +21,7 @@ class OpenAIInstructionParser(PromptSpec):
     """Parse the prompt to separate instructions from task demonstrations."""
 
     def __init__(
-        self, task_type: TaskType, api_key: str | None = None, max_api_calls: int = None
+        self, task_type: TaskType, api_key: str | None = None, max_api_calls: int = None, translate_instruction_to_English=True,
     ):
         """Initialize the prompt spec with empty parsed fields.
 
@@ -46,6 +47,7 @@ class OpenAIInstructionParser(PromptSpec):
             assert max_api_calls > 0, "max_api_calls must be > 0"
         self.max_api_calls = max_api_calls
         self.api_call_counter = 0
+        self.translate_instruction_to_English = translate_instruction_to_English
 
     def extract_response(self, response: openai.Completion) -> tuple[str, str]:
         """Parse stuctured fields from the OpenAI API response.
@@ -101,4 +103,13 @@ class OpenAIInstructionParser(PromptSpec):
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
                     logging.error("Maximum number of API calls reached.")
                     raise ValueError("Maximum number of API calls reached.") from e
+
+        if self.translate_instruction_to_English:
+            pass
+        else:
+            assert "DEEPL_KEY" in os.environ
+            translator = deepl.Translator(os.environ["DEEPL_KEY"]) 
+            result = translator.translate_text(self._instruction, target_lang="EN-US") 
+            self._instruction_english = result.text
+
         return None
