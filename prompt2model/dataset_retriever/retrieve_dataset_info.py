@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--dataset-index-file",
     type=str,
-    default="../../huggingface_data/huggingface_datasets/dataset_index.json",
+    default="huggingface_data/huggingface_datasets/dataset_index.json",
 )
 
 
@@ -25,7 +25,7 @@ def get_fully_supported_dataset_names():
     API_URL = "https://datasets-server.huggingface.co/valid"
     response = requests.get(API_URL)
     datasets_list = response.json()
-    fully_supported_datasets = datasets_list["viewer"]
+    fully_supported_datasets = datasets_list["viewer"] + datasets_list["preview"]
     return fully_supported_datasets
 
 

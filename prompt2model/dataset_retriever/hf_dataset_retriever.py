@@ -4,6 +4,7 @@ from __future__ import annotations  # noqa FI58
 
 import json
 import os
+import time
 
 import datasets
 import numpy as np
@@ -46,7 +47,6 @@ def input_string():
 def input_y_n() -> bool:
     """Get a yes/no answer from the user via stdin."""
     y_n = str(input())
-    print(y_n)
     return not (y_n.strip() == "" or y_n.strip().lower() == "n")
 
 
@@ -57,6 +57,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         self,
         search_index_path: str = "huggingface_data/huggingface_datasets/"
         + "huggingface_datasets_datafinder_index",
+        first_stage_search_depth: int = 1000,
         max_search_depth: int = 10,
         encoder_model_name: str = "viswavi/datafinder-huggingface-prompt-queries",
         dataset_info_file: str = "huggingface_data/huggingface_datasets/"
@@ -69,12 +70,14 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
         Args:
             search_index_path: Where to store the search index (e.g. encoded vectors).
+            first_stage_search_depth: The number of datasets to retrieve before filtering.
             max_search_depth: The number of most-relevant datasets to retrieve.
             encoder_model_name: The name of the model to use for the dual-encoder.
             dataset_info_file: The file containing dataset names and descriptions.
             device: The device to use for encoding text for our dual-encoder model.
         """
         self.search_index_path = search_index_path
+        self.first_stage_search_depth = first_stage_search_depth
         self.max_search_depth = max_search_depth
         self.encoder_model_name = encoder_model_name
         self.dataset_infos: list[DatasetInfo] = []
@@ -110,17 +113,15 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         """Have the user choose an appropriate dataset from a list of top datasets."""
         print("\n-------------------------------------------------\n")
         print("Here are the datasets I've retrieved for you:")
-        print("#\tName\tConfigs\tDescription")
-        for i, d in enumerate(top_datasets):
-            try:
-                configs = datasets.get_dataset_config_names(d.name)
-            except FileNotFoundError:
-                configs = ["FAULTY DATASET"]
-            configs_to_display = None if len(configs) == 1 else str(tuple(configs))
-            description_no_spaces = d.description.replace("\n", " ")
-            print(f"{i+1}):\t{d.name}\t{configs_to_display}\t{description_no_spaces}")
-
         print("\n-------------------------------------------------\n")
+        for i, d in enumerate(top_datasets):
+            description_no_spaces = d.description.replace("\n", " ")
+            print(
+                f"# {i+1})\nName: {d.name}\n Configs: {configs_to_display}\n Description: {d.description}"
+            )
+            print("\n-------------------------------------------------\n")
+            time.sleep(2)
+
         print(
             "If none of these are relevant to your prompt, we'll only use "
             + "generated data. Are any of these datasets relevant? (y/N)"
@@ -198,8 +199,8 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         train_columns = dataset["train"].column_names
         train_columns_formatted = ", ".join(train_columns)
 
-        assert len(dataset["train"]) > 3
-        example_rows = "\n".join([str(dataset["train"][i]) for i in range(3)])
+        assert len(dataset["train"]) > 0
+        example_rows = json.dumps(dataset["train"][0], indent=4)
 
         print("\n-------------------------------------------------\n")
         print(f"Loaded dataset. Example row:\n{example_rows}\n")
@@ -237,17 +238,19 @@ class DescriptionDatasetRetriever(DatasetRetriever):
     def retrieve_dataset_dict(
         self,
         prompt_spec: PromptSpec,
+        blocklist: list[str] = [],
     ) -> datasets.DatasetDict | None:
         """Select a dataset from a prompt using a dual-encoder retriever.
 
         Args:
             prompt_spec: A prompt whose instruction field we use to retrieve datasets.
+            blocklist: A list of dataset names to exclude from the search.
 
         Return:
             A list of relevant datasets dictionaries.
         """
         if not os.path.exists(self.search_index_path):
-            self.encode_model_descriptions(self.search_index_path)
+            self.encode_dataset_descriptions(self.search_index_path)
 
         query_text = prompt_spec.instruction
 
@@ -257,15 +260,21 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             device=self.device,
         )
         ranked_list = retrieve_objects(
-            query_vector, self.search_index_path, self.max_search_depth
+            query_vector, self.search_index_path, self.first_stage_search_depth
         )
         top_dataset_infos = []
         for dataset_idx_str, dataset_score in ranked_list:
             dataset_idx = int(dataset_idx_str)
             self.dataset_infos[dataset_idx].score = dataset_score
-            top_dataset_infos.append(self.dataset_infos[dataset_idx])
+            blocklisted = False
+            for blocklist_string in blocklist:
+                if blocklist_string.lower() in self.dataset_infos[dataset_idx].name.lower():
+                    blocklisted = True
+                    break
+            if not blocklisted:
+                top_dataset_infos.append(self.dataset_infos[dataset_idx])
 
-        ranked_list = sorted(top_dataset_infos, key=lambda x: x.score, reverse=True)
+        ranked_list = sorted(top_dataset_infos, key=lambda x: x.score, reverse=True)[:self.max_search_depth]
         assert len(ranked_list) > 0, "No datasets retrieved from search index."
         top_dataset_name = self.choose_dataset(ranked_list)
         if top_dataset_name is None:

@@ -40,6 +40,8 @@ dependencies = [
     "zeno_build==0.0.5",
     "pyfiglet==0.8.post1",
     "termcolor==2.3.0",
+    "jsonlines==3.1.0",
+    "streamlit==1.25.0",
 ]
 
 dynamic = ["version"]
