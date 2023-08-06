@@ -393,23 +393,31 @@ def main():
         print(
             "\n-------------------------------------------------\nStart training.\n-------------------------------------------------\n"  # noqa 501
         )
-        trained_model, trained_tokenizer = trainer.train_model(
-            hyperparameter_choices={
-                "output_dir": str(args_output_root),
-                "save_strategy": "epoch",
-                "num_train_epochs": num_epochs,
-                "per_device_train_batch_size": train_batch_size,
-                "evaluation_strategy": "epoch",
-            },
-            training_datasets=training_datasets,
-            validation_datasets=validation_datasets,
+        # trained_model, trained_tokenizer = trainer.train_model(
+        #     hyperparameter_choices={
+        #         "output_dir": str(args_output_root),
+        #         "save_strategy": "epoch",
+        #         "num_train_epochs": num_epochs,
+        #         "per_device_train_batch_size": train_batch_size,
+        #         "evaluation_strategy": "epoch",
+        #     },
+        #     training_datasets=training_datasets,
+        #     validation_datasets=validation_datasets,
+        # )
+        # trained_model.save_pretrained(trained_model_root)
+        # trained_tokenizer.save_pretrained(trained_tokenizer_root)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        trained_model = transformers.AutoModelForSeq2SeqLM.from_pretrained(
+            trained_model_root
+        ).to(device)
+        trained_tokenizer = transformers.AutoTokenizer.from_pretrained(
+            trained_tokenizer_root
         )
-        trained_model.save_pretrained(trained_model_root)
-        trained_tokenizer.save_pretrained(trained_tokenizer_root)
         print(
             "\n-------------------------------------------------\nFinish training. Evaluate on the test set.\n-------------------------------------------------\n"  # noqa 501
         )
         test_dataset = concatenate_datasets(test_datasets)
+
         model_executor = GenerationModelExecutor(
             trained_model,
             trained_tokenizer,
