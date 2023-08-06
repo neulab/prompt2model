@@ -7,7 +7,10 @@ from tevatron.faiss_retriever import BaseFaissIPRetriever
 
 
 def retrieve_objects(
-    query_vector: np.ndarray, encoded_datasets_path: str, depth: int
+    query_vector: np.ndarray,
+    encoded_datasets_path: str,
+    document_names: list[str],
+    depth: int,
 ) -> list[tuple[str, float]]:
     """Return a ranked list of object indices and their scores.
 
@@ -33,6 +36,6 @@ def retrieve_objects(
     ), "Only one query's ranking should be returned."
 
     psg_scores = all_scores[0]
-    psg_indices = [str(passage_lookup[x]) for x in all_indices[0]]
-    score_tuples = list(zip(psg_indices, psg_scores))
+    ranked_document_names = [document_names[passage_lookup[x]] for x in all_indices[0]]
+    score_tuples = list(zip(ranked_document_names, psg_scores))
     return score_tuples
