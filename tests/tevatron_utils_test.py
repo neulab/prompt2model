@@ -98,6 +98,7 @@ def test_retrieve_objects():
             [0.0, 0.0, 0.0, 1.0],
         ]
     )
+    document_names = ["a", "b", "c", "d"]
     mock_vector_indices = [0, 1, 2, 3]
     with tempfile.TemporaryDirectory() as tmpdir:
         search_index_pickle = os.path.join(tmpdir, "search_index.pkl")
@@ -105,7 +106,9 @@ def test_retrieve_objects():
             (mock_search_collection, mock_vector_indices),
             open(search_index_pickle, "wb"),
         )
-        results = retrieve_objects(mock_query_vector, search_index_pickle, depth=3)
+        results = retrieve_objects(
+            mock_query_vector, search_index_pickle, document_names, depth=3
+        )
         assert (
             len(results) == 3
         ), "The number of results should match the provided depth."
@@ -113,7 +116,7 @@ def test_retrieve_objects():
         # Verify that the index of the first retrieved document matches the document
         # that we known matches the query vector.
         first_retrieved_document, _ = results[0]
-        assert first_retrieved_document == "2"
+        assert first_retrieved_document == "c"
 
         # Verify that the first retrieved document has the greatest retrieval score.
         sorted_results = sorted(results, key=lambda x: x[1], reverse=True)
