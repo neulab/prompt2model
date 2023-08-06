@@ -53,7 +53,7 @@ def encode_text(
     text_to_encode: list[str] | str | None = None,
     encode_query: bool = False,
     encoding_file: str | None = None,
-    max_len: int = 128,
+    max_len: int = 400,
     device: torch.device = torch.device("cpu"),
     dataloader_num_workers: int = 0,
     model_cache_dir: str | None = None,
