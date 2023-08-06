@@ -429,7 +429,7 @@ def generate_hypothetical_model_description(
         + "\n"
         + f'Instruction: "{instruction}"\nHypothetical model description:\n'
     )
-    chatgpt_completion = openai_api_agent.generate_openai_chat_completion(
+    chatgpt_completion = openai_api_agent.generate_one_openai_chat_completion(
         chatgpt_prompt
     )
     return chatgpt_completion.choices[0]["message"]["content"]
