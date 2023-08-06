@@ -11,12 +11,13 @@ import pyfiglet
 import torch
 import transformers
 import yaml
-from datasets import load_from_disk
+from datasets import concatenate_datasets, load_from_disk
 from termcolor import colored
 
 from prompt2model.dataset_generator.base import DatasetSplit
 from prompt2model.dataset_generator.openai_gpt import OpenAIDatasetGenerator
 from prompt2model.dataset_processor.textualize import TextualizeProcessor
+from prompt2model.dataset_retriever import DescriptionDatasetRetriever
 from prompt2model.model_evaluator import Seq2SeqEvaluator
 from prompt2model.model_executor import GenerationModelExecutor
 from prompt2model.model_trainer.generate import GenerationModelTrainer
@@ -127,7 +128,19 @@ def main():
         )
 
     if propmt_has_been_parsed and not dataset_has_been_retrieved:
-        pass
+        prompt_spec = MockPromptSpec(
+            TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
+        )
+        print(
+            "\n-------------------------------------------------\nRetreive dataset.\n-------------------------------------------------\n"  # noqa 501
+        )
+        retriever = DescriptionDatasetRetriever()
+        # retriever.encode_dataset_descriptions(retriever.search_index_path)
+        dataset_dict = retriever.retrieve_dataset_dict(
+            prompt_spec, blocklist=["squad", "stanford question answering"]
+        )
+        retrieved_dataset_dict = dataset_dict
+        print(retrieved_dataset_dict["train"][1])
         dataset_has_been_retrieved = True
         status["dataset_has_been_retrieved"] = True
         with open("status.yaml", "w") as f:
@@ -223,6 +236,8 @@ def main():
         generated_dataset = unlimited_dataset_generator.generate_dataset_split(
             prompt_spec, num_expected, split=DatasetSplit.TRAIN
         )
+        from IPython import embed
+        embed()
         generated_dataset.save_to_disk("generated_dataset")
         dataset_has_been_generated = True
         status["dataset_has_been_generated"] = True
@@ -253,33 +268,9 @@ def main():
         trained_tokenizer_root.mkdir(parents=True, exist_ok=True)
         RESULT_PATH.mkdir(parents=True, exist_ok=True)
         dataset = load_from_disk(dataset_root)
-        while True:
-            line = input(
-                "\n-------------------------------------------------\nEnter the portion of the dataset you want to train:\n-------------------------------------------------\n"  # noqa 501
-            )
-            try:
-                train_portion = float(line)
-                assert 0 <= train_portion <= 1.0
-                break
-            except Exception:
-                print(
-                    "\n-------------------------------------------------\nThe training portion must be between 0 and 1.\n-------------------------------------------------\n"  # noqa 501
-                )
-        while True:
-            line = input(
-                "\n-------------------------------------------------\nEnter the portion of the dataset you want to validate:\n-------------------------------------------------\n"  # noqa 501
-            )
-            try:
-                val_portion = float(line)
-                assert 0 <= val_portion <= 1.0
-                break
-            except Exception:
-                print(
-                    "\n-------------------------------------------------\nThe validation portion must be between 0 and 1.\n-------------------------------------------------\n"  # noqa 501
-                )
         num_examples = len(dataset)
-        num_train = int(num_examples * train_portion)
-        num_valid = int(num_examples * val_portion)
+        num_train = min(int(num_examples * 0.6), 3000)
+        num_valid = min(int(num_examples * 0.2), 3000)
         train_dataset = datasets.Dataset.from_dict(dataset[:num_train])
         val_dataset = datasets.Dataset.from_dict(
             dataset[num_train : num_train + num_valid]
@@ -288,7 +279,21 @@ def main():
         dataset_dict = datasets.DatasetDict(
             {"train": train_dataset, "val": val_dataset, "test": test_dataset}
         )
-        DATASET_DICTS = [dataset_dict]
+        retrieved_dataset_dict = datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dicts(
+                    retrieved_dataset_dict["train"][:3000]
+                ),
+                "val": datasets.Dataset.from_dicts(
+                    retrieved_dataset_dict["val"][:1000]
+                ),
+                "test": datasets.Dataset.from_dicts(
+                    retrieved_dataset_dict["test"][:1000]
+                ),
+            }
+        )
+        print("Processing datasets.")
+        DATASET_DICTS = [dataset_dict, retrieved_dataset_dict]
         instruction = status["instruction"]
         logger = logging.getLogger("DatasetProcessor")
         logger.setLevel(logging.INFO)
@@ -312,10 +317,14 @@ def main():
         formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
-        t5_modified_dataset_dicts[0].save_to_disk("preprocessed_dataset")
-        training_datasets = [t5_modified_dataset_dicts[0]["train"]]
-        validation_datasets = [t5_modified_dataset_dicts[0]["val"]]
-        # Set up logger for "ModelTrainer"
+        training_datasets = []
+        validation_datasets = []
+        test_datasets = []
+        for idx, modified_dataaset_dict in enumerate(t5_modified_dataset_dicts):
+            modified_dataaset_dict.save_to_disk(f"./preprocessed/dataset_{idx}")
+            training_datasets.append(modified_dataaset_dict["train"])
+            validation_datasets.append(modified_dataaset_dict["val"])
+            test_datasets.append(modified_dataaset_dict["test"])
         trainer_logger = logging.getLogger("ModelTrainer")
         trainer_logger.setLevel(logging.INFO)
         for handler in trainer_logger.handlers[:]:
@@ -393,14 +402,7 @@ def main():
         print(
             "\n-------------------------------------------------\nFinish training. Evaluate on the test set.\n-------------------------------------------------\n"  # noqa 501
         )
-        # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        # trained_model = transformers.AutoModelForSeq2SeqLM.from_pretrained(
-        #     trained_model_root
-        # ).to(device)
-        # trained_tokenizer = transformers.AutoTokenizer.from_pretrained(
-        #     trained_tokenizer_root
-        # )
-        test_dataset = t5_modified_dataset_dicts[0]["test"]
+        test_dataset = concatenate_datasets(test_datasets)
         model_executor = GenerationModelExecutor(
             trained_model,
             trained_tokenizer,
