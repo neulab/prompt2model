@@ -1,0 +1,1 @@
+{"pretrained_model_name": "lucadiliello/bart-small", "description": "`bart-small` is a lighter version of `bart-base` with less attention heads, smaller FFT and smaller hidden-size.\n\nMore details can be found [here](https://github.com/lucadiliello/bart-small).\n", "size_bytes": "281896093", "downloads": 319}

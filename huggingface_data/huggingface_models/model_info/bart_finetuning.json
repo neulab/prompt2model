@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Jason8117/bart_finetuning", "description": "---\nlanguage:\n  - ko\nwidget:\n- text: \"[BOS]\ubb50 \ud574?[SEP][MASK]\ud558\ub2e4\uac00 \uc774\uc81c [MASK]\ub824\uace0[EOS]\"\ninference:\n  parameters:\n    max_length: 64\n---\n\n# BART Pretrained", "size_bytes": "186971961", "downloads": 2}

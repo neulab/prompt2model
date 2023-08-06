@@ -1,0 +1,1 @@
+{"pretrained_model_name": "masakhane/mbart50_mos_fr_news", "description": "---\nlanguage:\n- mos\n- fr\nlicense: afl-3.0\n---\n", "size_bytes": "2444722195", "downloads": 2}

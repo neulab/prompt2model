@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Rallio67/byt5-xxl-sharded", "description": "# The same as google/byt5-xxl except sharded for easier loading.\n\nSee: https://huggingface.co/google/byt5-xxl\n\nSee: https://github.com/google-research/t5x/blob/main/docs/models.md#byt5-checkpoints", "size_bytes": 25820974848, "downloads": 12}

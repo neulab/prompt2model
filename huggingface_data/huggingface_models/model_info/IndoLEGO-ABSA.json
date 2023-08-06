@@ -1,0 +1,1 @@
+{"pretrained_model_name": "rdyzakya/IndoLEGO-ABSA", "description": "---\nlanguage:\n- id\nmetrics:\n- f1\npipeline_tag: text2text-generation\n---", "size_bytes": "2329698485", "downloads": 272}

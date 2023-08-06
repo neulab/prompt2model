@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Ranjan22/TextToTagGenerator_large", "description": "---\nlicense: mit\ndatasets:\n- Ranjan22/Medium_Articles\nlanguage:\n- en\nmetrics:\n- rouge\nlibrary_name: transformers\npipeline_tag: text2text-generation\ntags:\n- Text2Tag\n- TextToTag\n---", "size_bytes": "242071641", "downloads": 5}

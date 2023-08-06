@@ -23,7 +23,8 @@ dependencies = [
     "transformers==4.24.0",
     "datasets==2.11.0",
     "pandas==1.5.3",
-    "gradio==3.28.3",
+    "fastapi==0.95.2",
+    "gradio==3.38.0",
     "torch==2.0.0",
     "pytest==7.3.1",
     "openai==0.27.2",
@@ -35,6 +36,15 @@ dependencies = [
     "faiss-cpu==1.7.4",
     "mdtex2html==1.2.0",
     "scikit-learn==1.2.2",
+    "tiktoken==0.4.0",
+    "pyfiglet==0.8.post1",
+    "termcolor==2.3.0",
+    "jsonlines==3.1.0",
+    "streamlit==1.25.0",
+    "retriv==0.2.1",
+    "psutil==5.9.5",
+    "autofaiss==2.15.8",
+    "asyncio==3.4.3",
 ]
 
 dynamic = ["version"]

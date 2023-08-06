@@ -1,0 +1,1 @@
+{"pretrained_model_name": "osunlp/attrscore-flan-t5-large", "description": "---\nlicense: apache-2.0\ndatasets:\n- osunlp/AttrScore\nlanguage:\n- en\n---\n\nAttributionScore model fine-tuned from FLAN-t5-large on the combined repurposed data from https://huggingface.co/datasets/osunlp/AttrScore", "size_bytes": "3132793669", "downloads": 78}

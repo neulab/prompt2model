@@ -1,0 +1,1 @@
+{"pretrained_model_name": "PSW/bart-base-dialogsumgen-xsum-conv-dialogsum", "description": "# **PSW/bart-base-dialogsumgen-xsum-conv-dialogsum**\n\n1. reverse trained on dialogsum\n2. generate from xsum\n3. train on synthetic data\n4. fine-tune on dialogsum\n", "size_bytes": "557975635", "downloads": 2}

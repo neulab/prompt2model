@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Roy029/codefix_e20", "description": "---\nlicense: openrail\n---\n# Model Card for mpyt5_e5\n\n<!-- Provide a quick summary of what the model is/does. [Optional] -->\nRoy029/mpyt5_e20\u306b\u3001evalfix\u3092\u30d5\u30a1\u30a4\u30f3\u30c1\u30e5\u30fc\u30cb\u30f3\u30b0\u3057\u305f\u30e2\u30c7\u30eb", "size_bytes": "1200768197", "downloads": 7}

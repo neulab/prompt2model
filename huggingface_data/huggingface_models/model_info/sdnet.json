@@ -1,0 +1,1 @@
+{"pretrained_model_name": "snorkelai/sdnet", "description": "---\nlicense: cc-by-4.0\n---\n\nThis model is an adaptation of Self-describing Networks introduced by _Jiawei Chen, Qing Liu, Hongyu Lin, Xianpei Han, Le Sun_ in _Few-shot Named Entity Recognition with Self-describing Networks 2022_.\nhttps://arxiv.org/pdf/2203.12252.pdf", "size_bytes": "891701100", "downloads": 592}

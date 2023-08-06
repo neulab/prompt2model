@@ -1,0 +1,1 @@
+{"pretrained_model_name": "mrm8488/mbart-large-finetuned-opus-it-en-translation", "description": "---\ntags:\n- translation\n\nlanguage:\n- it\n- en\n\ndatasets:\n- opus100\n---\n### mbart-large-it-en\nThis is mbart-large-cc25, finetuned on opus100 for Italian to English translation.\n\n\nIt scores BLEU **25.82** on test set.", "size_bytes": "2444606272", "downloads": 44}

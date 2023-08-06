@@ -1,0 +1,1 @@
+{"pretrained_model_name": "MrBananaHuman/kobart-base-v2-summarization", "description": "---\nlicense: apache-2.0\n---\n\nPLM: KoBART-base-v2 (https://huggingface.co/gogamza/kobart-base-v2)    \nFine-tuning training data: https://aihub.or.kr/aihubdata/data/view.do?currMenu=115&topMenu=100&aihubDataSe=realm&dataSetSn=93    \n", "size_bytes": "495657017", "downloads": 3}

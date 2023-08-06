@@ -1,0 +1,1 @@
+{"pretrained_model_name": "JorgeSarry/est5-summarize", "description": "---\nlanguage: es\n---\nThis is a smaller version of the google/mt5-base model with only Spanish and some English embeddings trained on 60k Spanish MLSum for summarization.\n\nYou can use it with the command \"summarize:\"\n", "size_bytes": "977332173", "downloads": 10}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "prasanthsagirala/text-to-social-media-captions", "description": "https://github.com/prasanthsagirala/image_to_captions\n\nThis model takes a text input and gives a caption as output.\n\nWhile providing input, use trigger word 'captionize: '\n\nEg: 'captionize: a boy sitting under a tree'", "size_bytes": "891699345", "downloads": 16}

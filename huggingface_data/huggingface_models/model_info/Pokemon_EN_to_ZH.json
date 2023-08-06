@@ -1,0 +1,1 @@
+{"pretrained_model_name": "nkuAlexLee/Pokemon_EN_to_ZH", "description": "---\nlanguage:\n- en\n- zh\npipeline_tag: text2text-generation\ntags:\n- Pokemon\n---\n\u672c\u9879\u76ee\u57fa\u4e8eDDDSSS/en-zh-dataset\u5bf9\u5b9d\u53ef\u68a6\u6587\u672c\u7ffb\u8bd1(EN_to_ZH)\u8fdb\u884c\u5fae\u8c03", "size_bytes": "310022533", "downloads": 16}

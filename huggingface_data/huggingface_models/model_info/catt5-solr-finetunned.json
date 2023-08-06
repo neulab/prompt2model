@@ -1,0 +1,1 @@
+{"pretrained_model_name": "oooriii/catt5-solr-finetunned", "description": "---\nlicense: cc\ndatasets:\n- oooriii/solr_fine_tunning_ca\nlanguage:\n- ca\n- en\n---", "size_bytes": "977330485", "downloads": 5}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "jammygrams/bart-qa", "description": "---\nlicense: openrail\n---\nSee https://github.com/jammygrams/Pea-QA for details on model training (with narrativeqa dataset)", "size_bytes": "1651044481", "downloads": 2}

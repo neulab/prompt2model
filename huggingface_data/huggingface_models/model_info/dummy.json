@@ -1,0 +1,1 @@
+{"pretrained_model_name": "DTorregrosa/dummy", "description": "---\nlanguage: es\n---\n\n\nFirst model made by the user to understand how the Hub repositories work.\n\nlanguage:\n- source group: Spanish\n- target group: English\n\nmodel used:\n- Helsinki-NLP/opus-mt-es-en", "size_bytes": "310018949", "downloads": 2}

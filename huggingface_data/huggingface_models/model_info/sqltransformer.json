@@ -1,0 +1,1 @@
+{"pretrained_model_name": "neuesql/sqltransformer", "description": "---\nlicense: creativeml-openrail-m\nlanguage:\n- en\npipeline_tag: text2text-generation\n---", "size_bytes": "891699345", "downloads": 3}

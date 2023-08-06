@@ -1,0 +1,1 @@
+{"pretrained_model_name": "mbarnig/marianNMT-tatoeba-en-lb", "description": "---\nlicense: cc-by-nc-sa-4.0\n\nlanguage:\n- lb\n- en\n\nlanguage_details: \"ltz_Latn, eng_Latn\"\n\ntags:\n- Translation\n- MarianNMT\n\ndatasets:\n- mbarnig/Tatoeba-en-lb\n\n---\n\n# MarianNMT-Tatoeba-en-lb", "size_bytes": "162473731", "downloads": 5}

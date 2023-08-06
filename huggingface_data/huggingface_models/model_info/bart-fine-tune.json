@@ -1,0 +1,1 @@
+{"pretrained_model_name": "MohamedZaitoon/bart-fine-tune", "description": "---\ntags:\n- summarization\ndatasets:\n- CNN/Daily-mail\nmetrics:\n- ROUGE\n---\n", "size_bytes": "1625569391", "downloads": 18}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "llmf/ptt5-base-portuguese-finetuned-Summ-RulingBR-V2", "description": "---\nlicense: apache-2.0\nlanguage:\n- pt\n---", "size_bytes": "891702929", "downloads": 7}

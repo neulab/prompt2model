@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Aviv/Moran_Aviv_Bart", "description": "Moran and Aviv project for solving Summarization task.\nWe choose 2 architectures: TextRank and BART (facebook). \nIn Streamlit' application, you can enter your article as an input, and the output is a summary. \nInspired by HIT studies. ", "size_bytes": "1625533697", "downloads": 2}

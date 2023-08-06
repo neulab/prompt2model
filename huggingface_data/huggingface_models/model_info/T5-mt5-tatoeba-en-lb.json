@@ -1,0 +1,1 @@
+{"pretrained_model_name": "mbarnig/T5-mt5-tatoeba-en-lb", "description": "---\nlicense: cc-by-nc-sa-4.0\n\nlanguage:\n- lb\n- en\n\nlanguage_details: \"ltz_Latn, eng_Latn\"\ntags:\n- Translation\n- T5\n- mt5\ndatasets:\n- mbarnig/Tatoeba-en-lb\n---\n# T5-mt5-Tatoeba-en-lb\n", "size_bytes": "1200770757", "downloads": 12}

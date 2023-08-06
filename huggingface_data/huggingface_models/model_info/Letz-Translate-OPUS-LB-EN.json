@@ -1,0 +1,1 @@
+{"pretrained_model_name": "etamin/Letz-Translate-OPUS-LB-EN", "description": "---\nlicense: mit\nlanguage:\n- lb\n- en\nmetrics:\n- bleu\n---\nLuxembourgish to English model, using knowledge distillation\n\n", "size_bytes": "295858117", "downloads": 6}

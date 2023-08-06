@@ -1,0 +1,1 @@
+{"pretrained_model_name": "dslack/GSM8K-Flan-T5-Large", "description": "A Flan-T5 large model fine-tuned on Grade School Math.\n\nGenerating from the model without sampling, this model scored 82.2% on the test split.\n\nHere is the training and eval code: https://github.com/dylan-slack/Math", "size_bytes": "3132785797", "downloads": 17}

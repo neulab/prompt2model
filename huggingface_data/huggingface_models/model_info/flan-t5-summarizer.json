@@ -1,0 +1,1 @@
+{"pretrained_model_name": "currentlyexhausted/flan-t5-summarizer", "description": "---\nlicense: mit\ndatasets:\n- multi_news\nlanguage:\n- en\nmetrics:\n- code_eval\nlibrary_name: transformers\npipeline_tag: summarization\n---", "size_bytes": "307907461", "downloads": 14}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "masakhane/m2m100_418M_en_kin_rel", "description": "---\nlanguage:\n- en\n- kin\nlicense: cc-by-nc-4.0\n---\n", "size_bytes": "1935792071", "downloads": 2}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Shamima/Blip-finetuned-sd-1k", "description": "---\ndatasets:\n- poloclub/diffusiondb\nlanguage:\n- en\npipeline_tag: image-to-text\n---\nBlip base finetuned on diffusiondb 1k dataset, for image to text tasks", "size_bytes": "989827505", "downloads": 32}

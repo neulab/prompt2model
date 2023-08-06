@@ -1,0 +1,1 @@
+{"pretrained_model_name": "edharepe/T5_generacion_titulos", "description": "Este modelo ha sido creado a partir de T5 Fine tuning with PyTorch.ipynb de Shivanand Roy y entrenado con un dataset de noticias de un diario uruguayo, en el repositorio se encuentra todos los archivos resultante del procesos de entrenamiento", "size_bytes": "891700799", "downloads": 4}

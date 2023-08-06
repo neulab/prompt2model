@@ -1,0 +1,1 @@
+{"pretrained_model_name": "YuTingHu/results-mt5-finetuned-squad-accelerate_M3", "description": " model = AutoModelForSeq2SeqLM.from_pretrained(\"fabiochiu/t5-small-medium-title-generation\")# M3 MODEL\n\n \n tokenizer = AutoTokenizer.from_pretrained(\"fabiochiu/t5-small-medium-title-generation\")# M3 MODEL", "size_bytes": "242069785", "downloads": 2}

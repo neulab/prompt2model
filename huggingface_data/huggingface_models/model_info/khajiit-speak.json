@@ -1,0 +1,1 @@
+{"pretrained_model_name": "trawzified/khajiit-speak", "description": "---\nlicense: gpl-3.0\ndatasets:\n- trawzified/khajiitspeak\nlanguage:\n- en\npipeline_tag: text2text-generation\n---", "size_bytes": "891733454", "downloads": 4}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "v-mk-s/neuronews_mbart_ru_sum_gazeta", "description": "---\nlicense: apache-2.0\n---\n\n# Neuronews\nProject | TECHNOPARK\n\n**Abstractive summarization model based on BART and gazeta dataset**", "size_bytes": "3468710848", "downloads": 7}

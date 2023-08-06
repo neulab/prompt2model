@@ -1,0 +1,1 @@
+{"pretrained_model_name": "toughdata/flan-t5-base-eli5-question-generation-54500", "description": "---\ndatasets:\n- eli5\nlanguage:\n- en\n---\nThis model generates short questions based on long answers. \nTo use, prend \"rephrase this as a question: \" to your input text.", "size_bytes": "990404917", "downloads": 3}

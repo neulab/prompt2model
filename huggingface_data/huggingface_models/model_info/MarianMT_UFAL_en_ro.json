@@ -1,0 +1,1 @@
+{"pretrained_model_name": "irenelizihui/MarianMT_UFAL_en_ro", "description": "---\nlicense: wtfpl\n---\nUFAL English to Romainian Machine Translation Model based on MarianMT model.", "size_bytes": "298830597", "downloads": 8}

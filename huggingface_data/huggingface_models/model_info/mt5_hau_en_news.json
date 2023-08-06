@@ -1,0 +1,1 @@
+{"pretrained_model_name": "masakhane/mt5_hau_en_news", "description": "---\nlanguage:\n- hau\n- en\nlicense: afl-3.0\n---\n", "size_bytes": "2329626573", "downloads": 2}

@@ -53,7 +53,7 @@ def encode_text(
     text_to_encode: list[str] | str | None = None,
     encode_query: bool = False,
     encoding_file: str | None = None,
-    max_len: int = 128,
+    max_len: int = 400,
     device: torch.device = torch.device("cpu"),
     dataloader_num_workers: int = 0,
     model_cache_dir: str | None = None,
@@ -81,7 +81,7 @@ def encode_text(
         fp16: Whether or not to run inference in fp16 for more-efficient encoding.
 
     Returns:
-        A numpy array of shape `(num_examples, embedding_dim)` containing text
+        A numpy array of shape `(expected_num_examples, embedding_dim)` containing text
         encoded by the specified model.
     """
     model, tokenizer = load_tevatron_model(model_name_or_path, model_cache_dir)

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "clarin-knext/plt5-base-msmarco", "description": "---\nlicense: cc-by-sa-4.0\nlanguage:\n- pl\n---\n\nPart of **BEIR-PL: Zero Shot Information Retrieval Benchmark for the Polish Language**.\n\nLink to arxiv: https://arxiv.org/pdf/2305.19840.pdf\n\nContact: konrad.wojtasik@pwr.edu.pl", "size_bytes": "1100243917", "downloads": 23}

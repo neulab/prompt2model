@@ -1,0 +1,1 @@
+{"pretrained_model_name": "SamuelAllen1234/testing", "description": "---\nlanguage:\n- en\nlicense: mit\ntags:\n- summarization\ndatasets:\n- cnn_dailymail  \nmetrics:\n- ROUGE-1\n- ROUGE-2\n- ROUGE-L\n- ROUGE-LSUM\n- loss\n- gen_len\n---", "size_bytes": "4360452147", "downloads": 4}

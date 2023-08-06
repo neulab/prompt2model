@@ -1,0 +1,1 @@
+{"pretrained_model_name": "EchoShao8899/t5_event_relation_extractor", "description": "---\nlicense: cc\n---\n\nThis is the event-relation extraction model in ACCENT (An Automatic Event Commonsense Evaluation Metric for Open-Domain Dialogue Systems).", "size_bytes": "891614783", "downloads": 92}

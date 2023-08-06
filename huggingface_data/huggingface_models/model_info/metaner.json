@@ -1,0 +1,1 @@
+{"pretrained_model_name": "jiawei1998/metaner", "description": "---\nlanguage:\n- en\npipeline_tag: text2text-generation\n---\n\nRelated to https://github.com/chen700564/metaner-icl", "size_bytes": "3134165989", "downloads": 4}

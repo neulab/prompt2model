@@ -1,0 +1,1 @@
+{"pretrained_model_name": "north/fine_North_large_8bit", "description": "---\nlanguage: \n- en\n- no\ntags:\n- text2text-generation\nlicense: apache-2.0\n---", "size_bytes": "1742126053", "downloads": 2}

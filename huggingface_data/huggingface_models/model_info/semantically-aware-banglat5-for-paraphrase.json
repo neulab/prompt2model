@@ -1,0 +1,1 @@
+{"pretrained_model_name": "fuadalhasib/semantically-aware-banglat5-for-paraphrase", "description": "---\nlicense: apache-2.0\nlanguage:\n- bn\nTags:\n- paraphrase\ntags:\n- bangla\n- semantics\n- paraphrase\n---", "size_bytes": "990406605", "downloads": 18}

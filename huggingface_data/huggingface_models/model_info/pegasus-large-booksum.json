@@ -1,0 +1,1 @@
+{"pretrained_model_name": "cnicu/pegasus-large-booksum", "description": "---\nlicense: mit\ntags:\n- summarization\ndatasets:\n- kmfoda/booksum\n\n---\n", "size_bytes": "2283825905", "downloads": 17}

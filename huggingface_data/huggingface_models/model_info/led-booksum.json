@@ -1,0 +1,1 @@
+{"pretrained_model_name": "cnicu/led-booksum", "description": "---\nlicense: mit\ntags:\n- summarization\ndatasets:\n- kmfoda/booksum\n\n---\n", "size_bytes": "647690609", "downloads": 17}

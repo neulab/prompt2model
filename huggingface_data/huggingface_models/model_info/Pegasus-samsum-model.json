@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Somesh140/Pegasus-samsum-model", "description": "---\nInfo:\n- The pegasus model is trained on samsum dataset.\nlicense: apache-2.0\ndatasets:\n- samsum\nlanguage:\n- en\nmetrics:\n- rouge\nlibrary_name: transformers\npipeline_tag: summarization\ntags:\n- knowledge\n- english\n- summary\n- beginners\n---", "size_bytes": "2283804653", "downloads": 16}

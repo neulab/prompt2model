@@ -1,0 +1,1 @@
+{"pretrained_model_name": "madatnlp/nllb-moe-54b-8bit", "description": "nothing changed.\n\nthe model just pushed after load model in 8bit", "size_bytes": 57216464896, "downloads": 4}

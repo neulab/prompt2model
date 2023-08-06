@@ -1,0 +1,1 @@
+{"pretrained_model_name": "nikolajking/Low_resource_translator_en_vt", "description": "---\nlanguage:\n- en\n- vi\nmetrics:\n- bleu\npipeline_tag: translation\n---", "size_bytes": "2468874377", "downloads": 4}

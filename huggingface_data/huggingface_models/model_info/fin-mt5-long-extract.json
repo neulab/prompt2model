@@ -1,0 +1,1 @@
+{"pretrained_model_name": "dzadvornov/fin-mt5-long-extract", "description": "---\nlicense: mit\n---\nmT5-small model fine-tuned for extractive summarization on long financial reports in english, spanish, greek.", "size_bytes": "1200772485", "downloads": 2}

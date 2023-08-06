@@ -1,0 +1,1 @@
+{"pretrained_model_name": "lvwerra/t5-imdb", "description": "# T5 fine-tuned on IMDb\n\nThis model is a fine-tuned version of `t5-small`. The fine-tuning script can be found [here](https://colab.research.google.com/drive/17c9KHusZsKnzMVBWDEdQ5POsNLfR8ETR)", "size_bytes": "242071641", "downloads": 141}
