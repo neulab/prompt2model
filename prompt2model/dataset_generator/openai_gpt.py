@@ -154,7 +154,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
         self.dataset_cache_path = Path()
         self.examples_cache_path = Path()
-        # `genrated_examples` and `generated_dataset` are stored at
+        # `generated_examples` and `generated_dataset` are stored at
         # path `examples_cache_path` and `dataset_cache_path` respectively.
 
     def construct_prompt(
@@ -638,6 +638,9 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 # Convert the generated examples into a
                 # Dataset and update the progress bar.
                 self.convert_generated_examples_to_generated_dataset()
+                from IPython import embed
+
+                embed()
                 pbar.update(len(self.generated_dataset) - pbar.n)
 
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
