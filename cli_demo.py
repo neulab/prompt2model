@@ -291,7 +291,7 @@ def main():
                     cached_retrieved_dataset_dict["train"][:3000]
                 ),
                 "val": datasets.Dataset.from_dict(
-                    cached_retrieved_dataset_dict["validation"][:1000]
+                    cached_retrieved_dataset_dict[validation_key][:1000]
                 ),
                 "test": datasets.Dataset.from_dict(
                     cached_retrieved_dataset_dict["test"][:1000]

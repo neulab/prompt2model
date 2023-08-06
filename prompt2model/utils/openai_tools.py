@@ -28,18 +28,20 @@ OPENAI_ERRORS = (
 class ChatGPTAgent:
     """A class for accessing OpenAI's ChatCompletion API."""
 
-    def __init__(self, api_key: str | None = None):
+    def __init__(self, api_key: str | None, model_name: str = "gpt-3.5-turbo"):
         """Initialize ChatGPTAgent with an API key.
 
         Args:
             api_key: A valid OpenAI API key. Alternatively, set as None and set
                      the environment variable with `export OPENAI_API_KEY=<your key>`.
+            model_name: Name fo the OpenAI model to use (by default, gpt-3.5-turbo).
         """
         openai.api_key = api_key if api_key else os.environ["OPENAI_API_KEY"]
         assert openai.api_key is not None and openai.api_key != "", (
             "API key must be provided"
             + " or set the environment variable with `export OPENAI_API_KEY=<your key>`"
         )
+        self.model_name = model_name
 
     def generate_one_openai_chat_completion(
         self,
@@ -66,7 +68,7 @@ class ChatGPTAgent:
             A response object.
         """
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model=self.model_name,
             messages=[
                 {"role": "user", "content": f"{prompt}"},
             ],
@@ -119,6 +121,24 @@ class ChatGPTAgent:
         # Note: will never be none because it's set, but mypy doesn't know that.
         await openai.aiosession.get().close()
         return responses
+
+
+def generate_batch_completion(self, prompt: str) -> openai.Completion:
+    """Generate a chat completion using OpenAI's gpt-3.5-turbo.
+
+    Args:
+        prompt: A prompt asking for a response.
+
+    Returns:
+        A response object.
+    """
+    response = openai.ChatCompletion.create(
+        model=self.model_name,
+        messages=[
+            {"role": "user", "content": f"{prompt}"},
+        ],
+    )
+    return response
 
 
 def handle_openai_error(e, api_call_counter):
