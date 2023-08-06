@@ -13,6 +13,10 @@ class MockPromptSpec(PromptSpec):
             "Give me some translation from Chinese to English."
             " Input Chinese and output English."
         )
+        self._instruction_english = (
+            "Give me some translation from Chinese to English."
+            " Input Chinese and output English."
+        )
         self._examples = (
             "input: '人生苦短，我用 Python', output: 'Life is short, I use Python. '"
             "input: '明天是周末', output: 'Tomorrow is weekend.'"

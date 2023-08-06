@@ -105,12 +105,14 @@ class OpenAIInstructionParser(PromptSpec):
                     raise ValueError("Maximum number of API calls reached.") from e
 
         if self.translate_instruction_to_English:
-            pass
-        else:
             assert "DEEPL_KEY" in os.environ, "A DeepL API key must be set as the environment variable DEEPL_KEY"
             translator = deepl.Translator(os.environ["DEEPL_KEY"])
             result = translator.translate_text(self._instruction, target_lang="EN-US")
             if not result.detected_source_lang.startswith("EN"):
                 self._instruction_english = result.text
+            else:
+                self._instruction_english = self._instruction
+        else:
+            self._instruction_english = self._instruction
 
         return None
