@@ -1,0 +1,1 @@
+{"pretrained_model_name": "SotirisLegkas/Socratic-GODEL-instruct", "description": "---\npipeline_tag: text2text-generation\n---\nInstruction: given a context, reply as in a Socratic dialogue.", "size_bytes": "2950746113", "downloads": 24}

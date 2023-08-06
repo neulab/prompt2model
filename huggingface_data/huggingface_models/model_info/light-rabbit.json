@@ -1,0 +1,1 @@
+{"pretrained_model_name": "co-writerX/light-rabbit", "description": "---\nlicense: apache-2.0\ndatasets:\n- jfleg\n- c4\nlanguage:\n- en\nmetrics:\n- glue\n---", "size_bytes": "891702929", "downloads": 3}

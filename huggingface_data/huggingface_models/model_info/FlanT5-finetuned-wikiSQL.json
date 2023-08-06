@@ -1,0 +1,1 @@
+{"pretrained_model_name": "MattBoraske/FlanT5-finetuned-wikiSQL", "description": "---\ndatasets:\n- wikisql\nlanguage:\n- en\npipeline_tag: translation\ntags:\n- sql\n- translation\n---\nA FLAN T5 model fine-tuned on English-to-SQL translation.", "size_bytes": "307932549", "downloads": 7}

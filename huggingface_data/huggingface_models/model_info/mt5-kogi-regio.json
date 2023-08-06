@@ -1,0 +1,1 @@
+{"pretrained_model_name": "kkuramitsu/mt5-kogi-regio", "description": "---\nlanguage: ja\ntags:\n- t5\n- text2text-generation\n- seq2seq\nlicense: cc-by-sa-4.0\ndatasets:\n- mc4\n---\n# Kogi Python-Code Generation Model", "size_bytes": "1200790661", "downloads": 10}

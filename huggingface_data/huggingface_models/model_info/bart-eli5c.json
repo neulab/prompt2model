@@ -1,0 +1,1 @@
+{"pretrained_model_name": "jsgao/bart-eli5c", "description": "---\nlanguage: en\nlicense: mit\ndatasets:\n- eli5_category\n---\n\nAnswer generator model of [ELI5-Category Dataset](https://celeritasml.netlify.app/posts/2021-12-01-eli5c/)", "size_bytes": "1625550145", "downloads": 8}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "navjordj/t5-large-snl-not-evaluated", "description": "inference:\n  parameters:\n    max_length: 160\n", "size_bytes": "4918519193", "downloads": 2}

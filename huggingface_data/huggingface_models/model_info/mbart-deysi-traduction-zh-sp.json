@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Deysi/mbart-deysi-traduction-zh-sp", "description": "---\nlicense: apache-2.0\ndatasets:\n- Deysi/spanish-chinese\nlanguage:\n- es\n- zh\n---", "size_bytes": "1755970004", "downloads": 2}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Samir001/ResumeSummary-t5-Wang-Arora", "description": "---\nlicense: other\ndatasets:\n- Samir001/Resume_Summary\nlanguage:\n- en\nmetrics:\n- rouge\npipeline_tag: summarization\n---", "size_bytes": "990452905", "downloads": 61}

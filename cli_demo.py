@@ -396,6 +396,7 @@ def main():
         trained_model, trained_tokenizer = trainer.train_model(
             hyperparameter_choices={
                 "output_dir": str(args_output_root),
+                "save_strategy": "epoch",
                 "num_train_epochs": num_epochs,
                 "per_device_train_batch_size": train_batch_size,
                 "evaluation_strategy": "epoch",

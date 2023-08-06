@@ -1,0 +1,1 @@
+{"pretrained_model_name": "allenai/unifiedqa-v2-t5-11b-1251000", "description": "---\nlanguage: en\n---\n# Further details: https://github.com/allenai/unifiedqa\n\n", "size_bytes": "45229529377", "downloads": 28}

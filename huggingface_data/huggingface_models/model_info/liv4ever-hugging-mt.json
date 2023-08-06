@@ -1,0 +1,1 @@
+{"pretrained_model_name": "tartuNLP/liv4ever-hugging-mt", "description": "---\nlicense: apache-2.0\n\ntags:\n  - translation\n\nwidget:\n  - text: \"<2li> Let us generate some Livonian text!\"\n\n---", "size_bytes": "373127941", "downloads": 4}

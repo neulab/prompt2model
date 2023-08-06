@@ -1,0 +1,1 @@
+{"pretrained_model_name": "binwang/faceval_bart_large_samsum", "description": "# This is the BART-large mdoel trained on SAMSum dataset\n", "size_bytes": "1625557313", "downloads": 2}

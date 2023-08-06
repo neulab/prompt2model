@@ -1,0 +1,1 @@
+{"pretrained_model_name": "yair/HeadlineGeneration-sagemaker", "description": "\n---\nlanguage: en\ntags:\n- sagemaker\n- bart\n- summarization\nlicense: apache-2.0\n", "size_bytes": "1625565295", "downloads": 56}

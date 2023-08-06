@@ -1,0 +1,1 @@
+{"pretrained_model_name": "arubenruben/ptt5-portuguese-cnn-daily-mail-google", "description": "---\ndatasets:\n- arubenruben/cnn_dailymail_google_translator\nlanguage:\n  - pt\npipeline_tag: summarization\n---", "size_bytes": "242068411", "downloads": 12}

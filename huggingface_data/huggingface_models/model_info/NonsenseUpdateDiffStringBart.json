@@ -1,0 +1,1 @@
+{"pretrained_model_name": "hyesunyun/NonsenseUpdateDiffStringBart", "description": "---\nlanguage: \n  - en\ntags:\n- summarization\n- diff generation\ndatasets:\n- nonsense corpus\nmetrics:\n- rouge\n---\n\nhello! this is the pretrained BART. The dataset used for pretraining is nonsense summary corpus with output as diff.\n", "size_bytes": "1439982895", "downloads": 8}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Kithogue/T5_Question_Generation", "description": "T5-base fine-tuned on SQuAD and CoQA datasets for question generation\n\nlanguage:\n- en-us\n\ntags:\n- question-generation\n\nlicense: \n- MIT\n\ndatasets:\n- SQuAD 2.0\n- CoQA", "size_bytes": "891647423", "downloads": 16}

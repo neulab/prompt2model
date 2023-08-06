@@ -1,0 +1,1 @@
+{"pretrained_model_name": "leadawon/jeju-ko-nmt-v5", "description": "overfitting\n\n----------------\n\t    \n\n| Training Loss | Validation Loss |\n|:-------------:|:---------------:|\n| 0.237800      | 0.400924        |", "size_bytes": "750621677", "downloads": 3}

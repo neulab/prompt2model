@@ -1,0 +1,1 @@
+{"pretrained_model_name": "abhijitgayen/cogo-flan-t5", "description": "\n# Cogo Flan-t5 Model\n\n\nThis is a Fine-tune **FLAN-T5 model**, train with user-admin message\n\n\n[DataSet](https://huggingface.co/datasets/abhijitgayen/cogo_chat)\n", "size_bytes": "990404917", "downloads": 2}

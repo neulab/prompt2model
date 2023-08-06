@@ -1,0 +1,1 @@
+{"pretrained_model_name": "gFulvio/moralstories-bart-norm.actions-context-consequences_gen", "description": "---\ndatasets:\n- demelin/moral_stories\n---", "size_bytes": "1625578317", "downloads": 2}

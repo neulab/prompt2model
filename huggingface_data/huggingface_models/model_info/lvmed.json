@@ -1,0 +1,1 @@
+{"pretrained_model_name": "AiLab-IMCS-UL/lvmed", "description": "---\nlicense: apache-2.0\nlanguage:\n- lv\ntags:\n- medical\n---", "size_bytes": "4918519065", "downloads": 2}

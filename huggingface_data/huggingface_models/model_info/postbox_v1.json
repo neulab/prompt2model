@@ -1,0 +1,1 @@
+{"pretrained_model_name": "nashtur/postbox_v1", "description": "---\nlanguage: en\nlicense: apache-2.0\ntags:\n- paraphrasing\n- seq2seq\n---\n\n\n\n", "size_bytes": "2275437102", "downloads": 2}

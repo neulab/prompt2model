@@ -1,0 +1,1 @@
+{"pretrained_model_name": "openmachinetranslation/en-fr-0.2", "description": "---\nlicense: cc-by-2.0\n---\n\nThis is an alpha release. Quality will be extremely poor.\n\n[View Attribution](https://huggingface.co/datasets/openmachinetranslation/tatoeba-en-fr)", "size_bytes": "891699345", "downloads": 5}

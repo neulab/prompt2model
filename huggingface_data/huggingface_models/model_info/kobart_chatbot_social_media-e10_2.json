@@ -1,0 +1,1 @@
+{"pretrained_model_name": "nlpotato/kobart_chatbot_social_media-e10_2", "description": "---\nlicense: mit\ndatasets:\n- nlpotato/chatbot_social_media\nlanguage:\n- ko\ntags:\n- datacollator\n- hyunwoongko/kobart\n---", "size_bytes": "495648413", "downloads": 6}

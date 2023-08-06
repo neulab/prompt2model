@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Binaryy/blender-bot-distill-finetuned", "description": "---\nlicense: apache-2.0\nlanguage:\n- en\npipeline_tag: conversational\ntags:\n- code\n---", "size_bytes": "1459362445", "downloads": 18}

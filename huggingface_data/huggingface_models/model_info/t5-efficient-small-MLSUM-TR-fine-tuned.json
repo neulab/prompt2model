@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Turkish-NLP/t5-efficient-small-MLSUM-TR-fine-tuned", "description": "---\nlicense: mit\ndatasets:\n- mlsum\nlanguage:\n- tr\npipeline_tag: summarization\n---\n\n\nloss=2.16, v_num=1, train_loss_step=1.980, val_loss_step=1.050, val_loss_epoch=1.820, train_loss_epoch=2.060]", "size_bytes": "569447001", "downloads": 28}

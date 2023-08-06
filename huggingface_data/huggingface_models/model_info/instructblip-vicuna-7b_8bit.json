@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Mediocreatmybest/instructblip-vicuna-7b_8bit", "description": "---\nlibrary_name: transformers\npipeline_tag: image-to-text\n---\n8-Bit saved version from: Salesforce/instructblip-vicuna-7b", "size_bytes": 15826425344, "downloads": 36}

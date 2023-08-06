@@ -1,0 +1,1 @@
+{"pretrained_model_name": "ashercn97/awesome-prompts-merged", "description": "---\npipeline_tag: text2text-generation\n---\n\nThis is a merged version of my previous chatgpt prompt generator model, but this time it isnt in LoRA form so you can use it easier (and so i can make a space for it)", "size_bytes": "6853027945", "downloads": 26}

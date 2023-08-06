@@ -1,0 +1,1 @@
+{"pretrained_model_name": "mrm8488/mbart-large-finetuned-bible-es-en-translation", "description": "---\ntags:\n- translation\n\nlanguage:\n- es\n- en\n\ndatasets:\n- bible_para\n---\n### mbart-large-es-en\nThis is mbart-large-cc25, finetuned on bible_para for Spanish to English translation.\n\nIt scores BLEU **29.34**", "size_bytes": "2444606405", "downloads": 29}

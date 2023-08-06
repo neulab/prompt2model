@@ -1,0 +1,1 @@
+{"pretrained_model_name": "MurkatG/bart-reviews", "description": "---\ndatasets:\n- amazon_reviews_multi\nlanguage:\n- en\nmetrics:\n- rouge\npipeline_tag: summarization\n---\n# Model Card for Model ID\n\nModel that trained to summarize product reviews.\n\n{'rouge1': 18.1988, 'rouge2': 9.8264, 'rougeL': 17.9054, 'rougeLsum': 17.8739}", "size_bytes": "557969145", "downloads": 163}

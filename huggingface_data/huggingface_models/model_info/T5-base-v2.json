@@ -1,0 +1,1 @@
+{"pretrained_model_name": "AkashKhamkar/T5-base-v2", "description": "The T5-base model was trained on cnn dailymail dataset and then fine tuned on dataset containing 11k articles.\nThe data fields were:\n\n- Headlines\n- ArticleBody\n", "size_bytes": "891614783", "downloads": 2}

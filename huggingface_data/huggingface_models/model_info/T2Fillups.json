@@ -1,0 +1,1 @@
+{"pretrained_model_name": "DhaneshV/T2Fillups", "description": "---\ndatasets:\n- domenicrosati/QA2D\nmetrics:\n- bleu\ntokenizer:\n- T-5 base tokenizer\n---", "size_bytes": "891699345", "downloads": 8}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Splend1dchan/wav2vecu2-t5lephone-small-NMSQA", "description": "wav2vecu2 -> phoneme\nfrom answer timespan, get answer phoneme\ntrain NMSQA tasks with context phoneme as input and answer phoneme as output\n\nResults\nAvg AOS: 0.6586811819639634\nAvg FF1: 0.697483897268189\nExact Match: 0.2042313923568093", "size_bytes": "1198608045", "downloads": 3}

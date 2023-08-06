@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Splend1dchan/byt5small-squad-5000", "description": "Byt5 trained on squad, input = 512, output = 256, 5000 steps\nTokenizer is Byt5", "size_bytes": "1198626221", "downloads": 3}

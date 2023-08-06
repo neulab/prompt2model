@@ -1,0 +1,1 @@
+{"pretrained_model_name": "el-profesor/code_t5", "description": "---\nlicense: apache-2.0\ndatasets:\n- code_search_net\ntags:\n- code\n---\nThe model has been trained on the code_search_net dataset.\n", "size_bytes": "891611135", "downloads": 32}

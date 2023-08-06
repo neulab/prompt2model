@@ -1,0 +1,1 @@
+{"pretrained_model_name": "captioner/caption-gen", "description": "---\nlicense: mit\npipeline_tag: image-to-text\ntags:\n- image-captioning\nlanguages:\n- en\n---\n", "size_bytes": "989820849", "downloads": 41}

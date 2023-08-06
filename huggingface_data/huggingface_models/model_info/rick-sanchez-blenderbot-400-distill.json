@@ -1,0 +1,1 @@
+{"pretrained_model_name": "sergunow/rick-sanchez-blenderbot-400-distill", "description": "---\nlanguage: \n- en\nthumbnail:\ntags:\n- conversational\nlicense: apache-2.0\ndatasets:\n- rick_and_morty\nmetrics:\n- perplexity\n---\n\n## Model description\nFine-tuning facebook/blenderbot-400M-distill on subtitles rick and morty ", "size_bytes": "1459382095", "downloads": 2}

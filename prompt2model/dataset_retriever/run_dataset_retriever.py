@@ -4,11 +4,12 @@ from prompt2model.prompt_parser import MockPromptSpec, TaskType
 if __name__ == "__main__":
     prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
     # prompt_spec._instruction = """Verify scientific claims automatically as fact or fiction. Provide supporting evidence with your decision.."""
-    prompt = """Your task is to generate an answer to a natural question. In this task, the input is a string that consists of both a question and a context passage. The context is a descriptive passage related to the question and contains the answer. And the question can range from Math, Cultural, Social, Geometry, Biology, History, Sports, Technology, Science, and so on."""
+    prompt = """Please generate code that satisfies a Japanese StackOverflow question. Please generate only code - no supporting text or explanations. For most queries, the correct code will be a single line of Python code. Do not import any libraries. Do not return any variables or store the answer to a variable; just having a line that evaluates to the correct answer is sufficient."""
     prompt_spec._instruction = prompt
 
     retriever = DescriptionDatasetRetriever()
     # retriever.encode_dataset_descriptions(retriever.search_index_path)
-    retriever.retrieve_dataset_dict(
+    retrieved_dataset_dict = retriever.retrieve_dataset_dict(
         prompt_spec, blocklist=["squad", "stanford question answering"]
     )
+    retrieved_dataset_dict.save_to_disk("retrived_dataset_dict")

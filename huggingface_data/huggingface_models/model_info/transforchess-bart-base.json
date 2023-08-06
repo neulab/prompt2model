@@ -1,0 +1,1 @@
+{"pretrained_model_name": "carbon225/transforchess-bart-base", "description": "---\nlicense: cc0-1.0\nwidget:\n- text: \" White pawn to d4. Black knight to f6.\"\n---\n", "size_bytes": "557969145", "downloads": 2}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Parth/mT5-question-generator", "description": "from transformers import MT5ForConditionalGeneration, AutoTokenizer\nmodel = MT5ForConditionalGeneration.from_pretrained(\"Parth/mT5-question-generator\")\ntokenizer = AutoTokenizer.from_pretrained(\"google/mt5-base\")\n", "size_bytes": "2329707353", "downloads": 19}

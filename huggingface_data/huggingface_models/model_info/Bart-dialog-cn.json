@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Memomind/Bart-dialog-cn", "description": "---\nlanguage:\n- zh\n---\n\n- Bart-base-cn 12 epochs: c42cd82cfdb2e7495c3ddc8610ac61a72ac55d8b", "size_bytes": "561071837", "downloads": 5}

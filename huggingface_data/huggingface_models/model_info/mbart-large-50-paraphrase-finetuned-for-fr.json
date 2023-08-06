@@ -1,0 +1,1 @@
+{"pretrained_model_name": "enimai/mbart-large-50-paraphrase-finetuned-for-fr", "description": "---\nlicense: apache-2.0\nlanguage:\n- fr\n---\n", "size_bytes": "2444697407", "downloads": 34}

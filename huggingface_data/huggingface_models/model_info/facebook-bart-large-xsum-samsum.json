@@ -1,0 +1,1 @@
+{"pretrained_model_name": "kireall/facebook-bart-large-xsum-samsum", "description": "---\ndatasets:\n- samsum\nlanguage:\n- en\n---\n\nhttps://medium.com/@ferlatti.aldo/fine-tuning-a-chat-summarizer-c18625bc817d\n\nModel based on pre-trained model facebook/bart-large-xsum. Was fine-tuned with dataset Samsum.", "size_bytes": "1625537293", "downloads": 5}

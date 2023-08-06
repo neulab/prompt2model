@@ -1,0 +1,1 @@
+{"pretrained_model_name": "currentlyexhausted/mobile-llm", "description": "---\nlicense: mit\ndatasets:\n- yahma/alpaca-cleaned\nlanguage:\n- en\nmetrics:\n- bertscore\nlibrary_name: transformers\npipeline_tag: text2text-generation\ntags:\n- t5\n- pocket\n- llm\n- mobile\n- alpaca\n- flan-t5\n---", "size_bytes": "990404917", "downloads": 16}

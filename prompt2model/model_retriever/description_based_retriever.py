@@ -50,7 +50,7 @@ class DescriptionModelRetriever(ModelRetriever):
 
     def __init__(
         self,
-        search_index_path: str,
+        search_index_path: str | None = None,
         search_depth: int = 5,
         first_stage_depth: int = 1000,
         encoder_model_name: str = "OpenMatch/cocodr-base-msmarco",
@@ -100,9 +100,10 @@ class DescriptionModelRetriever(ModelRetriever):
         self.model_blocklist_organizations = ["huggingtweets"]
         self.load_model_info()
 
-        assert not os.path.isdir(
-            search_index_path
-        ), f"Search index must either be a valid file or not exist yet. But {search_index_path} is provided."  # noqa 501
+        if not self.use_bm25:
+            assert not os.path.isdir(
+                search_index_path
+            ), f"Search index must either be a valid file or not exist yet. But {search_index_path} is provided."  # noqa 501
 
     def load_model_info(self):
         """Load metadata (e.g. downloads, publication date) about various models.
@@ -188,7 +189,7 @@ class DescriptionModelRetriever(ModelRetriever):
         Return:
             A list of relevant models' HuggingFace names.
         """
-        if not os.path.exists(self.search_index_path):
+        if not self.use_bm25 and not os.path.exists(self.search_index_path):
             self.encode_model_descriptions(self.search_index_path)
 
         if self.use_HyDE:
@@ -229,6 +230,6 @@ class DescriptionModelRetriever(ModelRetriever):
             model_info.score = scaled_model_score
             top_models_list.append(model_info)
 
-        top_models_list = sorted(top_models_list, key=lambda x: x.score, reverse=True)
+        top_models_list = sorted(top_models_list, key=lambda x: x.score, reverse=True)[:self.search_depth]
         assert len(top_models_list) > 0, "No models retrieved from search index."
         return [model_info.name for model_info in top_models_list]

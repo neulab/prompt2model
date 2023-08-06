@@ -1,0 +1,1 @@
+{"pretrained_model_name": "irenelizihui/MarianMT_UFAL", "description": "---\nlicense: wtfpl\n---\n\n[MarianMT](https://huggingface.co/docs/transformers/model_doc/marian) model trained on the [UFAL](https://ufal.mff.cuni.cz/ufal_medical_corpus) dataset, from `en` to `cs, de, es, fr, pl, ro, hu, sv`. \n", "size_bytes": "308202053", "downloads": 2}

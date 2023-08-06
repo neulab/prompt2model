@@ -1,0 +1,1 @@
+{"pretrained_model_name": "BlackKakapo/flan-t5-large-paraphrase-v2", "description": "---\ntags:\n  - translation\nlicense: apache-2.0\n---\n", "size_bytes": "3132552485", "downloads": 34}

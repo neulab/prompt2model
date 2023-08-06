@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Splend1dchan/byt5small-glue-mnli", "description": "byt5 finetuned on MNLI dataset for 3 epochs, with lr=1e-4 \n\nvalid matched acc = 0.80\n\n", "size_bytes": "1198632041", "downloads": 2}

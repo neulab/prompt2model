@@ -1,0 +1,1 @@
+{"pretrained_model_name": "c-tawayip/mt5-small-Simple-Thai-Keyword-2-Text-Generator", "description": "---\nlicense: mit\n---\n\nGenerate Sentence: {text}", "size_bytes": "1200792197", "downloads": 17}

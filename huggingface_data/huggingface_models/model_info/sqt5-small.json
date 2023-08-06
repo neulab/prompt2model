@@ -1,0 +1,1 @@
+{"pretrained_model_name": "niv-al/sqt5-small", "description": "---\nlicense: openrail\nlanguage:\n- sq\n- en\n---", "size_bytes": "299212485", "downloads": 15}

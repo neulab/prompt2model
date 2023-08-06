@@ -1,0 +1,1 @@
+{"pretrained_model_name": "psyche/KoT5-paraphrase-generation", "description": "---\nlanguages:\n- ko\n\nlicense: apache-2.0\n---\nMore Information of [KoT5](https://bit.ly/3SrHq36)", "size_bytes": "1187793846", "downloads": 6}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "masakhane/byt5_mos_fr_news", "description": "---\nlanguage:\n- mos\n- fr\nlicense: afl-3.0\n---\n", "size_bytes": "2326733259", "downloads": 2}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "cnicu/t5-small-booksum", "description": "---\nlicense: mit\ntags:\n- summarization\n- summary\ndatasets:\n- kmfoda/booksum\n\n---\n", "size_bytes": "242085627", "downloads": 31}

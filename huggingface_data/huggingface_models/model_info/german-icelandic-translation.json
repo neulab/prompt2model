@@ -1,0 +1,1 @@
+{"pretrained_model_name": "vesteinn/german-icelandic-translation", "description": "---\nlanguage:\n- de\n- is\n- multilingual\ntags:\n- translation\n---\n\n# Student project - temporary upload", "size_bytes": "298362757", "downloads": 4}

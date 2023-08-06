@@ -1,0 +1,1 @@
+{"pretrained_model_name": "rvora/PartByt5", "description": "---\nlicense: openrail\nModel: to predict byt5\n---\n", "size_bytes": "1198627501", "downloads": 2}

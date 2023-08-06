@@ -1,0 +1,1 @@
+{"pretrained_model_name": "a9i/scarlett-7b", "description": "---\nlicense: cc-by-nc-nd-4.0\nlanguage:\n- en\npipeline_tag: text2text-generation\n---", "size_bytes": "26953778121", "downloads": 0}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "ireneli1024/bart-large-elife-finetuned", "description": "---\nlicense: other\n---\n\nThis is the finetuned model based on the [facebook/bart-large](https://huggingface.co/facebook/bart-large) model. \nThe data is from BioLaySumm 2023 [shared task 1](https://biolaysumm.org/#data). ", "size_bytes": "1625541389", "downloads": 20}

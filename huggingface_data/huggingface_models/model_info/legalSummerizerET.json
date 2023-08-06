@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Quake24/legalSummerizerET", "description": "---\ndatasets:\n- Quake24/paraphrasedTwitter\n- Quake24/paraphrasedPayPal\nlanguage:\n- en\nlibrary_name: transformers\ntags:\n- Terms of service\npipeline_tag: summarization\n---", "size_bytes": "1222363741", "downloads": 14}

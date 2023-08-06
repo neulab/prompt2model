@@ -1,0 +1,1 @@
+{"pretrained_model_name": "MaxSulkowski/flan-T5-lex-de", "description": "Main model was flan-T5-base it was trained on the german dataset dennlinger/eur-lex-sum\n---\nlicense: unknown\n---\n", "size_bytes": "990408885", "downloads": 2}

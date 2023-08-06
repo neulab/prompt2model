@@ -1,0 +1,1 @@
+{"pretrained_model_name": "gauravkoradiya/T5-Fintuned-on-cnn_daily_mail", "description": "---\nlicense: apache-2.0\ndatasets:\n- ccdv/cnn_dailymail\nlanguage:\n- en\nmetrics:\n- bleu\n- rouge\npipeline_tag: summarization\n---", "size_bytes": "242069785", "downloads": 9}

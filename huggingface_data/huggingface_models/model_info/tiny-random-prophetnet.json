@@ -1,0 +1,1 @@
+{"pretrained_model_name": "hirotasoshu/tiny-random-prophetnet", "description": "Same as `hf-internal-testing/tiny-random-prophetnet`, but with higher max_length and max_position_embedding", "size_bytes": "2147309", "downloads": 28445}

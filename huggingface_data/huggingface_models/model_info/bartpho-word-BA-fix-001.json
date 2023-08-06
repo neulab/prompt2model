@@ -1,0 +1,1 @@
+{"pretrained_model_name": "ThaiKami/bartpho-word-BA-fix-001", "description": "---\nlanguage:\n- vi\nmetrics:\n- rouge\nlibrary_name: transformers\npipeline_tag: text2text-generation\ntags:\n- legal\n---", "size_bytes": "1681869469", "downloads": 6}

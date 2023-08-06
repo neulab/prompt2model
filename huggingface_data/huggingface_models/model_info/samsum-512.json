@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Bogula/samsum-512", "description": "smaller version of Samsum fine-tuning on CNN/DailyMail-Pegasus\n512 token input / 64 token output \n(reduced due to memory shortage on Colab)", "size_bytes": "2283800049", "downloads": 2}
