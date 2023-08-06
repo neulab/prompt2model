@@ -75,9 +75,10 @@ def main():
 
     while True:
         answer = input(
-            "\n-------------------------------------------------\nDo you want to start again? (y/n) \n-------------------------------------------------\n"  # noqa 501
+            "\n-------------------------------------------------\nReady to start? (y/n) \n-------------------------------------------------\n"  # noqa 501
         )
         if answer.lower() == "n":
+            print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
             if os.path.isfile("status.yaml"):
                 with open("status.yaml", "r") as f:
                     status = yaml.safe_load(f)
@@ -108,10 +109,6 @@ def main():
                 break
             prompt += line + "\n"
         print(
-            f"\n-------------------------------------------------\nYour prompt is:  \n-------------------------------------------------\n{prompt} \n-------------------------------------------------\n"  # noqa 501
-        )
-        time.sleep(2)
-        print(
             "\n-------------------------------------------------\nParsing prompt...\n-------------------------------------------------\n"  # noqa 501
         )
         prompt_spec = OpenAIInstructionParser(task_type=TaskType.TEXT_GENERATION)
@@ -132,7 +129,7 @@ def main():
             TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
         )
         print(
-            "\n-------------------------------------------------\nRetreive dataset.\n-------------------------------------------------\n"  # noqa 501
+            "\n-------------------------------------------------\nRetrieve dataset.\n-------------------------------------------------\n"  # noqa 501
         )
         retriever = DescriptionDatasetRetriever()
         # retriever.encode_dataset_descriptions(retriever.search_index_path)
@@ -183,7 +180,7 @@ def main():
         )
         time.sleep(2)
         print(
-            f"\n-------------------------------------------------\nYour input Instruction: \n-------------------------------------------------\n{prompt_spec.instruction}\n-------------------------------------------------\n"  # noqa 501
+            f"\n-------------------------------------------------\nYour input instruction: \n-------------------------------------------------\n{prompt_spec.instruction}\n-------------------------------------------------\n"  # noqa 501
         )
         time.sleep(2)
         print(
@@ -192,7 +189,7 @@ def main():
         time.sleep(2)
         while True:
             line = input(
-                "\n-------------------------------------------------\nEnter the number of your expected generated examples:\n-------------------------------------------------\n"  # noqa 501
+                "\n-------------------------------------------------\nEnter the number of examples you wish to generate:\n-------------------------------------------------\n"  # noqa 501
             )
             try:
                 num_expected = int(line)
@@ -211,11 +208,11 @@ def main():
                 break
             except Exception:
                 print(
-                    "\n-------------------------------------------------\nInvalid initial temperature. Please enter a float between 0 and 2.\n-------------------------------------------------\n"  # noqa 501
+                    "\n-------------------------------------------------\nInvalid initial temperature. Please enter a number (float) between 0 and 2.\n-------------------------------------------------\n"  # noqa 501
                 )
         while True:
             line = input(
-                "\n-------------------------------------------------\nEnter the max temperature:\n-------------------------------------------------\n"  # noqa 501
+                "\n-------------------------------------------------\nEnter the max temperature (we suggest 1.4):\n-------------------------------------------------\n"  # noqa 501
             )
             try:
                 max_temperature = float(line)
@@ -226,7 +223,7 @@ def main():
                     "\n-------------------------------------------------\nInvalid max temperature. Please enter a float between 0 and 2.\n-------------------------------------------------\n"  # noqa 501
                 )
         print(
-            "\n-------------------------------------------------\nStart to generated dataset. This may take a while...\n-------------------------------------------------\n"  # noqa 501
+            "\n-------------------------------------------------\nStarting to generate dataset. This may take a while...\n-------------------------------------------------\n"  # noqa 501
         )
         time.sleep(2)
         unlimited_dataset_generator = OpenAIDatasetGenerator(
@@ -370,7 +367,7 @@ def main():
 
         while True:
             line = input(
-                "\n-------------------------------------------------\nEnter the number of your training epochs:\n-------------------------------------------------\n"  # noqa 501
+                "\n-------------------------------------------------\nEnter the number of epochs to train for:\n-------------------------------------------------\n"  # noqa 501
             )
             try:
                 num_epochs = int(line)
@@ -391,7 +388,7 @@ def main():
         args_output_root = Path("result/training_output")
         args_output_root.mkdir(parents=True, exist_ok=True)
         print(
-            "\n-------------------------------------------------\nStart training.\n-------------------------------------------------\n"  # noqa 501
+            "\n-------------------------------------------------\nStarting training.\n-------------------------------------------------\n"  # noqa 501
         )
         # trained_model, trained_tokenizer = trainer.train_model(
         #     hyperparameter_choices={
@@ -414,7 +411,7 @@ def main():
             trained_tokenizer_root
         )
         print(
-            "\n-------------------------------------------------\nFinish training. Evaluate on the test set.\n-------------------------------------------------\n"  # noqa 501
+            "\n-------------------------------------------------\nFinished training. Now evaluating on the test set.\n-------------------------------------------------\n"  # noqa 501
         )
         test_dataset = concatenate_datasets(test_datasets)
 
@@ -459,11 +456,12 @@ def main():
     )
 
     while True:
+        print(
+                '\n-------------------------------------------------\nEnter your input for the model: ("done" to finish entering and "exit" to exit the demo.)\n-------------------------------------------------\n'  # noqa 501
+        )
         prompt = ""
         while True:
-            line = input(
-                '\n-------------------------------------------------\nEnter your input giving to the model: ("done" to finish entering and "exit" to exit the demo.)\n-------------------------------------------------\n'  # noqa 501
-            )
+            line = input()
             if line == "done":
                 break
             if line == "exit":
