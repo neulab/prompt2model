@@ -48,7 +48,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         responses_per_request: int = 5,
         requests_per_minute: int = 80,
         filter_duplicated_examples: bool = True,
-        cache_root: str = "cached_genrated_dataset",
+        cache_root: str = "cached_generated_dataset",
     ):
         """Initializes an instance of the OpenAI DatasetGenerator.
 
