@@ -279,8 +279,12 @@ def main():
         dataset_dict = datasets.DatasetDict(
             {"train": train_dataset, "val": val_dataset, "test": test_dataset}
         )
-        cached_retrieved_dataset_dict = datasets.load_from_disk(status["retrieved_dataset_dict_root"])
-        validation_key = "validation" if "validation" in cached_retrieved_dataset_dict else "val"
+        cached_retrieved_dataset_dict = datasets.load_from_disk(
+            status["retrieved_dataset_dict_root"]
+        )
+        validation_key = (
+            "validation" if "validation" in cached_retrieved_dataset_dict else "val"
+        )
         retrieved_dataset_dict = datasets.DatasetDict(
             {
                 "train": datasets.Dataset.from_dict(

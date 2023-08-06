@@ -639,6 +639,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 # Dataset and update the progress bar.
                 self.convert_generated_examples_to_generated_dataset()
                 from IPython import embed
+
                 embed()
                 pbar.update(len(self.generated_dataset) - pbar.n)
 
