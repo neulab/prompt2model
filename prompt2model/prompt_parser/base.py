@@ -20,7 +20,6 @@ class PromptSpec(ABC):
 
     task_type: TaskType
     _instruction: str | None
-    _instruction_english: str | None
     _examples: str | None
 
     @abstractmethod
@@ -32,12 +31,6 @@ class PromptSpec(ABC):
         """Return the natural language instruction parsed from the prompt."""
         assert self._instruction is not None
         return self._instruction
-
-    @property
-    def instruction_english(self) -> str:
-        """Return the instruction, translated to English if not originally English."""
-        assert self._instruction_english is not None
-        return self._instruction_english
 
     @property
     def examples(self) -> str:

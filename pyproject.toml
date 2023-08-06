@@ -36,7 +36,6 @@ dependencies = [
     "mdtex2html==1.2.0",
     "scikit-learn==1.2.2",
     "retriv==0.2.1",
-    "deepl==1.15.0"
 ]
 
 dynamic = ["version"]
