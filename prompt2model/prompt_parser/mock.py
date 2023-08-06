@@ -21,4 +21,5 @@ class MockPromptSpec(PromptSpec):
     def parse_from_prompt(self, prompt: str) -> None:
         """Don't parse anything."""
         self._instruction = prompt
+        self._instruction_english = prompt
         return None
