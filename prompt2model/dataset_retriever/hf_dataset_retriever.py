@@ -4,6 +4,7 @@ from __future__ import annotations  # noqa FI58
 
 import json
 import os
+import time
 
 import datasets
 import numpy as np
@@ -46,7 +47,6 @@ def input_string():
 def input_y_n() -> bool:
     """Get a yes/no answer from the user via stdin."""
     y_n = str(input())
-    print(y_n)
     return not (y_n.strip() == "" or y_n.strip().lower() == "n")
 
 
@@ -113,12 +113,15 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         """Have the user choose an appropriate dataset from a list of top datasets."""
         print("\n-------------------------------------------------\n")
         print("Here are the datasets I've retrieved for you:")
-        print("#\tName\tDescription")
+        print("\n-------------------------------------------------\n")
         for i, d in enumerate(top_datasets):
             description_no_spaces = d.description.replace("\n", " ")
-            print(f"{i+1}):\t{d.name}\t{description_no_spaces}")
+            print(
+                f"# {i+1})\nName: {d.name}\n Configs: {configs_to_display}\n Description: {d.description}"
+            )
+            print("\n-------------------------------------------------\n")
+            time.sleep(2)
 
-        print("\n-------------------------------------------------\n")
         print(
             "If none of these are relevant to your prompt, we'll only use "
             + "generated data. Are any of these datasets relevant? (y/N)"
