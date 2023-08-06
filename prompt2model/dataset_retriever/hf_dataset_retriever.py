@@ -58,7 +58,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         search_index_path: str = "huggingface_data/huggingface_datasets/"
         + "huggingface_datasets_datafinder_index",
         first_stage_search_depth: int = 1000,
-        max_search_depth: int = 10,
+        max_search_depth: int = 25,
         encoder_model_name: str = "viswavi/datafinder-huggingface-prompt-queries",
         dataset_info_file: str = "huggingface_data/huggingface_datasets/"
         + "dataset_index.json",
@@ -265,12 +265,13 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             self.dataset_infos[dataset_idx].score = dataset_score
             blocklisted = False
             for blocklist_string in blocklist:
-                if blocklist_string.lower() in self.dataset_infos[dataset_idx].name.lower():
+                if blocklist_string.lower() in self.dataset_infos[dataset_idx].name.lower() or blocklist_string.lower() in self.dataset_infos[dataset_idx].description.lower():
                     blocklisted = True
                     break
             if not blocklisted:
                 top_dataset_infos.append(self.dataset_infos[dataset_idx])
 
+        breakpoint()
         ranked_list = sorted(top_dataset_infos, key=lambda x: x.score, reverse=True)[:self.max_search_depth]
         assert len(ranked_list) > 0, "No datasets retrieved from search index."
         top_dataset_name = self.choose_dataset(ranked_list)
