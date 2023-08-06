@@ -1,0 +1,1 @@
+{"pretrained_model_name": "bangnbx/t5.1.1.lm100k.large-864", "description": "acc: 67.6%\nhttps://wandb.ai/bangnbx/t5.1.1.lm100k.large-relax/runs/3d15uut5?workspace=user-bangnbx\n", "size_bytes": "3132643365", "downloads": 32}

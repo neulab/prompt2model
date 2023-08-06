@@ -1,0 +1,1 @@
+{"pretrained_model_name": "masakhane/afrimbart_bam_fr_news", "description": "---\nlicense: afl-3.0\nlanguage:\n- bam\n- fr\n---\n", "size_bytes": "2444723641", "downloads": 2}

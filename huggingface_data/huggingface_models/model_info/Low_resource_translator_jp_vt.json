@@ -1,0 +1,1 @@
+{"pretrained_model_name": "nikolajking/Low_resource_translator_jp_vt", "description": "---\ndatasets:\n- tatoeba\npipeline_tag: translation\nlanguage:\n- ja\n- vi\nmetrics:\n- bleu\n---", "size_bytes": "2468874377", "downloads": 8}

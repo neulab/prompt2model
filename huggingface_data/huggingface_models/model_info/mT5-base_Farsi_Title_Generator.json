@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Erfan/mT5-base_Farsi_Title_Generator", "description": "---\nlanguage:\n- fa\ntags:\n- Title-Generation\nmetrics:\n- ROUGH\n\n---\n", "size_bytes": "2329728077", "downloads": 7}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "catlove007/Med-ChatGLM-6B", "description": "---\nlicense: apache-2.0\nlanguage:\n- zh\npipeline_tag: text2text-generation\ntags:\n- medical\n---\n\nfinetune ChatGLM-6B on medical QA dataset by LoRA\n\n![training loss]('./loss.png')", "size_bytes": 13415859968, "downloads": 7}

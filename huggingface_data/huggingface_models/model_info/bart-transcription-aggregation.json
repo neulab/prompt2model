@@ -1,0 +1,1 @@
+{"pretrained_model_name": "orzhan/bart-transcription-aggregation", "description": "---\nlanguage: ru\n---\n\nBART model fine-tuned to aggregate crowd-sourced transcriptions.\nRepository: [GitHub](https://github.com/orzhan/bart-transcription-aggregation)", "size_bytes": "1625550145", "downloads": 2}

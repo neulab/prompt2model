@@ -1,0 +1,1 @@
+{"pretrained_model_name": "hafeezmhk6/mt5-base-ver6.15", "description": "---\nmetrics:\n- bleu\n- character\n- chrf\npipeline_tag: text-classification\n---", "size_bytes": "2329702453", "downloads": 12}

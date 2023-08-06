@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Roy029/sno_empty", "description": "---\nlanguage:\n- ja\n- pyt\ntags:\n- code\nrelation:\n- sno_empty\n- sno_py500\n- sno_py2500\n- sno_py5000\n---", "size_bytes": "990402637", "downloads": 2}

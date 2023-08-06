@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Tiezheng/bart-wikisum", "description": "---\nlicense: cc\n---\n\nThis model comes from the paper \"Exploring Neural Models for Query-Focused Summarization\".\nThis is the original release https://github.com/salesforce/query-focused-sum\n", "size_bytes": "1625558127", "downloads": 3}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "daniyal214/finetuned-blip-chest-xrays", "description": "---\nlanguage:\n- en\npipeline_tag: image-to-text\nlicense: bsd-3-clause\ntags:\n- image-captioning\n---", "size_bytes": "1879148141", "downloads": 20}

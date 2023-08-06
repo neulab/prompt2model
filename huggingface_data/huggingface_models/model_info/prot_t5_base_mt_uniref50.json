@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Rostlab/prot_t5_base_mt_uniref50", "description": "---\ntags:\n- summarization\nwidget:\n- text: \"predict protein ms : Met Gly Leu Pro Val Ser Trp Ala Pro Pro Ala Leu\"\n\n---\n\n", "size_bytes": "794619865", "downloads": 1211}

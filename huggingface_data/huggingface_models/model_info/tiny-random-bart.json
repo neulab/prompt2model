@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Narsil/tiny-random-bart", "description": "---\npipeline_tag: \"text2text-generation\"\n---\n", "size_bytes": "278151", "downloads": 2}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "naman632/t5-paraphraser-paranmt", "description": "This model is trained by NLP_team for the Advanced NLP course, 2022.\nThe model was trained for the paper [Text Detoxification using Large Pre-trained Neural Models](https://arxiv.org/abs/1911.00536). \n\n", "size_bytes": "134", "downloads": 2}

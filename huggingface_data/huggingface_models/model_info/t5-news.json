@@ -1,0 +1,1 @@
+{"pretrained_model_name": "AndreLiu1225/t5-news", "description": "This is a pretrained model that was loaded from t5-base. It has been adapted and changed by changing the max_length and summary_length.", "size_bytes": "891695056", "downloads": 6}

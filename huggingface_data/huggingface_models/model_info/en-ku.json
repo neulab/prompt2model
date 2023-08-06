@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Karzan/en-ku", "description": "---\nlicense: apache-2.0\ndatasets:\n- Karzan/en-ku-12k\nlanguage:\n- en\n- ku\ntags:\n- ckb\n---", "size_bytes": "242071641", "downloads": 0}

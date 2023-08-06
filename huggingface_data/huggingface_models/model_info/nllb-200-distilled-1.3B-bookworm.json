@@ -1,0 +1,1 @@
+{"pretrained_model_name": "thefrigidliquidation/nllb-200-distilled-1.3B-bookworm", "description": "---\nlanguage:\n- en\n- ja\ntags:\n- nllb\nlicense: cc-by-nc-4.0\n---\n\n# NLLB-200 1.3B fine-tuned on Ascendance of a Bookworm\n\nThis model was fine-tuned on Ascendance of a Bookworm to translate the web novel in Japanese to English.", "size_bytes": "5482896444", "downloads": 55}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "FlightBlaze/ingr-to-steps", "description": "---\nlicense: openrail\n---\n\nThe model generates cooking directions by the list of ingredients.", "size_bytes": "891700799", "downloads": 2}

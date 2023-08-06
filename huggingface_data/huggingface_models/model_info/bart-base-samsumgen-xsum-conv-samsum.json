@@ -1,0 +1,1 @@
+{"pretrained_model_name": "PSW/bart-base-samsumgen-xsum-conv-samsum", "description": "# **PSW/bart-base-samsumgen-xsum-conv-samsum**\n\n1. reverse trained on samsum\n2. generate from xsum\n3. train on synthetic data\n4. fine-tune on samsum\n", "size_bytes": "557975635", "downloads": 2}

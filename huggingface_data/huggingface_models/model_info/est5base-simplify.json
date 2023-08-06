@@ -1,0 +1,1 @@
+{"pretrained_model_name": "JorgeSarry/est5base-simplify", "description": "---\nlanguage: es\n---\nThis is a smaller version of the google/mt5-base model with only Spanish and some English embeddings trained on 60k Spanish WikiEdits for sentence simplification.\n\nYou can use it with the command \"simplify:\"\n", "size_bytes": "977339225", "downloads": 10}

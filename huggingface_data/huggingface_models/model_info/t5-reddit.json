@@ -1,0 +1,1 @@
+{"pretrained_model_name": "vionwinnie/t5-reddit", "description": "This T5 small model finetuned on Reddit data. \n\nIt has two subtasks:\n1. title generation\n2. tag classification\n", "size_bytes": "242085627", "downloads": 11}

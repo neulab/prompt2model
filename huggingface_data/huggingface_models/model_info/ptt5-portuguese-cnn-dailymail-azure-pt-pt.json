@@ -1,0 +1,1 @@
+{"pretrained_model_name": "arubenruben/ptt5-portuguese-cnn-dailymail-azure-pt-pt", "description": "---\ndatasets:\n- arubenruben/cnn_dailymail_azure_pt_pt\nlanguage:\n- pt\npipeline_tag: summarization\n---", "size_bytes": "242068411", "downloads": 97}

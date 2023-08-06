@@ -1,0 +1,1 @@
+{"pretrained_model_name": "gobbledegook/t5-small-lm-adapt-quotes", "description": "* Must prefix prompts with `\"write: \"`, as in `\"write: Today is a great day\"`.\n* Finetuned from t5-small-lm-adapt.", "size_bytes": "307905733", "downloads": 2}

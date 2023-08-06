@@ -1,0 +1,1 @@
+{"pretrained_model_name": "eyalmazuz/HebArbT5", "description": "---\nlicense: mit\n---\n\nTranslates from Hebrew to Arabic\nT5-base model that was trained on TED talks (around 347k sentences) Using a 37k unigram wordpiece shared vocabulary ", "size_bytes": "252048123", "downloads": 2}

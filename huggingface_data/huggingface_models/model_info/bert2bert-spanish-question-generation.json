@@ -1,0 +1,1 @@
+{"pretrained_model_name": "mrm8488/bert2bert-spanish-question-generation", "description": "\n---\nlanguage: es\ntags:\n- spanish\n- question\n- generation\n\nwidget:\n- text: \"Manuel vive en Murcia, Espa\u00f1a\"\n---\n# Spanish Bert2Bert fine-tuned on SQuaD (es) for question generation", "size_bytes": "992637147", "downloads": 85}

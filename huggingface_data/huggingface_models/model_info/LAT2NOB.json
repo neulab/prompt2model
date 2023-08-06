@@ -1,0 +1,1 @@
+{"pretrained_model_name": "andrek/LAT2NOB", "description": "---\nlanguage: no\n\nlicense: cc-by-4.0\n\ntags:\n\n- translation\n\nwidget:\n\n- text: Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor\n    incididunt ut labore et dolore magna aliqua.\n---\n\n", "size_bytes": "2329728077", "downloads": 11}

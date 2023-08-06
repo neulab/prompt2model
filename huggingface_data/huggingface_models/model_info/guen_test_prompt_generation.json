@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Guen/guen_test_prompt_generation", "description": "A small language generation head to generate text from a prompt. \nFine-tuned on the t5-base model with the aeslc dataset.", "size_bytes": "891727295", "downloads": 4}

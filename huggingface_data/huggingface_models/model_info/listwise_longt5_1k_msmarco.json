@@ -1,0 +1,1 @@
+{"pretrained_model_name": "pedrogengo/listwise_longt5_1k_msmarco", "description": "---\nlanguage:\n- en\nlibrary_name: transformers\n---", "size_bytes": "990452905", "downloads": 3}

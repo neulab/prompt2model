@@ -1,0 +1,1 @@
+{"pretrained_model_name": "peterdamn/flat-t5-1200", "description": "use a different base model and trained a bit longer, using 1200 checkpoint.", "size_bytes": "990404917", "downloads": 2}

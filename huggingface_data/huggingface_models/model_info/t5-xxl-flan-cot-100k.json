@@ -1,0 +1,1 @@
+{"pretrained_model_name": "openaccess-ai-collective/t5-xxl-flan-cot-100k", "description": "# openaccess-ai-collective/t5-xxl-flan-cot-100k\n\nbase model: https://huggingface.co/google/t5-v1_1-xxl\ndataset: 100k flan CoT Orca augmented\ntraining: 3 epochs\nwandb: https://wandb.ai/wing-lian/t5-xxl-flan-cot/runs/t8x22rwz\n", "size_bytes": "22797385557", "downloads": 20}

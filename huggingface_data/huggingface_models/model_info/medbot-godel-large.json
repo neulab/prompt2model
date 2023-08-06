@@ -1,0 +1,1 @@
+{"pretrained_model_name": "shanover/medbot-godel-large", "description": "---\nlicense: mit\n---\n\nImportant note: It is not properly trained, neither is usable. Still experimenting it.\nFine tuned: microsoft/GODEL-v1_1-large-seq2seq\nAuthor: ArXiv paper: https://arxiv.org/abs/2206.11309", "size_bytes": "2950742017", "downloads": 5}

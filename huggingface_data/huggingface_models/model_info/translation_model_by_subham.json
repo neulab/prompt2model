@@ -1,0 +1,1 @@
+{"pretrained_model_name": "subham92/translation_model_by_subham", "description": "---\nlanguage: \n- fi\n- en\n\ntags:\n- translation\n\nlicense: apache-2.0\n---\n", "size_bytes": "301125225", "downloads": 8}

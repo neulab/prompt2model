@@ -1,0 +1,1 @@
+{"pretrained_model_name": "gFulvio/moralstories-t5-norm.actions-context-consequences_gen", "description": "---\ndatasets:\n- demelin/moral_stories\npipeline_tag: text-generation\n---", "size_bytes": "891644561", "downloads": 2}

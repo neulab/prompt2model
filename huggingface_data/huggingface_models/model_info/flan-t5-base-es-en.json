@@ -1,0 +1,1 @@
+{"pretrained_model_name": "dandrade/flan-t5-base-es-en", "description": "---\nlanguage:\n- es\n- en\n---", "size_bytes": "990404917", "downloads": 7}

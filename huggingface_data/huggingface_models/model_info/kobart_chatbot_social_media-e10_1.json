@@ -1,0 +1,1 @@
+{"pretrained_model_name": "nlpotato/kobart_chatbot_social_media-e10_1", "description": "---\ndatasets:\n- nlpotato/chatbot_social_media\nlanguage:\n- ko\ntags:\n- 10epoch\n- fp16\n- about 9hours\n- gogamza/kobart-base-v2\n---", "size_bytes": "495648413", "downloads": 31}

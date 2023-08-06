@@ -1,0 +1,1 @@
+{"pretrained_model_name": "masakhane/afrimt5_fr_bbj_news", "description": "---\nlanguage:\n- fr\n- bbj\nlicense: afl-3.0\n---\n", "size_bytes": "2329626573", "downloads": 2}

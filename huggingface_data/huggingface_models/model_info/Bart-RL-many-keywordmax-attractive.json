@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Evan-Lin/Bart-RL-many-keywordmax-attractive", "description": "yelp - 20000\neach word cos sim and keyword 1/4\nattractive 1 \nentailment 0", "size_bytes": "557974885", "downloads": 3}

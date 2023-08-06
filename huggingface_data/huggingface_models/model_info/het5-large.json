@@ -1,0 +1,1 @@
+{"pretrained_model_name": "imvladikon/het5-large", "description": "---\nlanguage:\n- he\n---\n\nAn experimental model for Hebrew with pruned embeddings of the mT5-large model", "size_bytes": "3505915013", "downloads": 9}

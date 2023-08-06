@@ -1,0 +1,1 @@
+{"pretrained_model_name": "IDEA-CCNL/Taiyi-BLIP-750M-Chinese", "description": "---\npipeline_tag: image-to-text\ntags:\n- image-to-text\n\nlicense: apache-2.0\n\nlanguage: zh\n\ninference: false\n---\n", "size_bytes": "3007050943", "downloads": 273}

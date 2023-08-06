@@ -1,0 +1,1 @@
+{"pretrained_model_name": "irenelizihui/MarianMT_UFAL_en_es", "description": "---\nlicense: wtfpl\n---\nMarianMT trained on the UFAL dataset: English to Spanish Machine Translation model.", "size_bytes": "310030405", "downloads": 2}

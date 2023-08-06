@@ -1,0 +1,1 @@
+{"pretrained_model_name": "lizhuang144/flan-t5-base-VG-factual-sg", "description": "This is a flan-t5-based model pre-trained on VG scene graph parsing dataset first and then fine-tuned on FACTUAL scene graph parsing dataset.\nSee model details from 'https://github.com/zhuang-li/FACTUAL/tree/main'.", "size_bytes": "990404917", "downloads": 60}

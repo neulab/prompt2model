@@ -1,0 +1,1 @@
+{"pretrained_model_name": "mariopeng/phoneT5", "description": "# Description\nTransfer learning on T5 to translate English graphemes to IPA (International Phonetic Alphabet).\n- Include \"translate to IPA: \" as  prefix for prompting.", "size_bytes": "242187195", "downloads": 3}

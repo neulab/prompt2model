@@ -1,0 +1,1 @@
+{"pretrained_model_name": "IlyaGusev/rut5_tox", "description": "---\nlanguage:\n- ru\ntags:\n- t5\nlicense:\n- apache-2.0\ninference:\n  parameters:\n    num_beams: 5\n    no_repeat_ngram_size: 4\nwidget:\n- text: \"\u0427\u0442\u043e \u044d\u0442\u043e \u0437\u0430 \u0435\u0440\u0443\u043d\u0434\u0430?\"\n---\n\n# RuT5Tox", "size_bytes": "977363917", "downloads": 8}

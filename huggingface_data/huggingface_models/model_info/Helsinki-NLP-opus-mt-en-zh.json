@@ -1,0 +1,1 @@
+{"pretrained_model_name": "KennStack01/Helsinki-NLP-opus-mt-en-zh", "description": "---\npipeline_tag: translation\nlicense: apache-2.0\n---", "size_bytes": "310018949", "downloads": 15}

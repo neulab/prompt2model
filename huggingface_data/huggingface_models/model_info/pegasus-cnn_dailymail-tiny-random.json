@@ -1,0 +1,1 @@
+{"pretrained_model_name": "stas/pegasus-cnn_dailymail-tiny-random", "description": "This is a tiny random  pegasus-cnn_dailymail model used for testing.\n\nSee `make-pegasus-cnn_dailymail-tiny-random.py` for how it was created.\n\n", "size_bytes": "1227089", "downloads": 1016}

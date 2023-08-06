@@ -1,0 +1,1 @@
+{"pretrained_model_name": "ychenNLP/nllb-200-distilled-1.3B-easyproject", "description": "Please use the transformers==4.29.2 library as Huggingface recently fixed a [bug in NLLB tokenizer](https://github.com/huggingface/transformers/pull/22313)", "size_bytes": "5491302146", "downloads": 35}

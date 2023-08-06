@@ -1,0 +1,1 @@
+{"pretrained_model_name": "student-shriman/BART_QA", "description": "---\nlicense: unknown\npipeline_tag: question-answering\n---", "size_bytes": "1625541389", "downloads": 6}

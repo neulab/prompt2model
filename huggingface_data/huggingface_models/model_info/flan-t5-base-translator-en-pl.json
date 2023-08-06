@@ -1,0 +1,1 @@
+{"pretrained_model_name": "sdadas/flan-t5-base-translator-en-pl", "description": "---\nlicense: lgpl\nlanguage:\n- pl\n- en\npipeline_tag: translation\n---", "size_bytes": "990343477", "downloads": 119}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "neuesql/translate-de-en", "description": "---\nlicense: apache-2.0\ndatasets:\n- wmt19\nlanguage:\n- de\n- en\nmetrics:\n- bleu\npipeline_tag: translation\n---", "size_bytes": "295863749", "downloads": 11}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Pedrambbk/flan-t5-small-poll-generation", "description": "---\nlanguage:\n- en\nlibrary_name: transformers\ntags:\n- Question Generation\n- Poll Generation\n---\n\n\njhjjhhjjhjhjhhjjhjh", "size_bytes": "307803653", "downloads": 3}

@@ -1,0 +1,1 @@
+{"pretrained_model_name": "pitehu/T5_NER_CONLL_LIST", "description": "---\nlanguage:\n- en\ntags:\n- Named Entity Recognition\nlicense: apache-2.0\ndatasets:\n- wmt19\nmetrics:\n- bleu\n- sacrebleu\n\ninference:\n  parameters:\n    max_length: 1024\n    \n    \n---\n\n", "size_bytes": "242083771", "downloads": 2}

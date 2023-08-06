@@ -1,0 +1,1 @@
+{"pretrained_model_name": "ybelkada/tiny-random-T5ForConditionalGeneration-calibrated", "description": "A \"better calibrated\" tiny T5 model for testing purposes", "size_bytes": "4488837", "downloads": 219090}

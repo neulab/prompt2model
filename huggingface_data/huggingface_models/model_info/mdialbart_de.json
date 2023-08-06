@@ -1,0 +1,1 @@
+{"pretrained_model_name": "Krystalan/mdialbart_de", "description": "---\nlicense: cc-by-nc-sa-4.0\n---\n## mDialBART: A Cross-Lingual Dialogue Summarization Model\nThis model is introduced by [*ClidSum: A Benchmark Dataset for Cross-Lingual Dialogue Summarization*](https://arxiv.org/abs/2202.05599).", "size_bytes": "2444706873", "downloads": 6}
