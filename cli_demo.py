@@ -13,7 +13,7 @@ import transformers
 import yaml
 from datasets import concatenate_datasets, load_from_disk
 from termcolor import colored
-
+from prompt2model.demo_creator import create_gradio
 from prompt2model.dataset_generator.base import DatasetSplit
 from prompt2model.dataset_generator.openai_gpt import OpenAIDatasetGenerator
 from prompt2model.dataset_processor.textualize import TextualizeProcessor
@@ -454,23 +454,11 @@ def main():
     model_executor = GenerationModelExecutor(
         t5_model, t5_tokenizer, 1, tokenizer_max_length=1024, sequence_max_length=1280
     )
-
-    while True:
-        print(
-                '\n-------------------------------------------------\nEnter your input for the model: ("done" to finish entering and "exit" to exit the demo.)\n-------------------------------------------------\n'  # noqa 501
+    prompt_spec = MockPromptSpec(
+            TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
         )
-        prompt = ""
-        while True:
-            line = input()
-            if line == "done":
-                break
-            if line == "exit":
-                return
-            prompt += line + "\n"
-        t5_prediction = model_executor.make_single_prediction(prompt)
-        print(
-            f"\n-------------------------------------------------\n{t5_prediction.prediction}\n-------------------------------------------------\n"  # noqa 501
-        )
+    interface_t5 = create_gradio(model_executor, prompt_spec)
+    interface_t5.launch(share=True)
 
 
 if __name__ == "__main__":
