@@ -4,6 +4,7 @@ from __future__ import annotations  # noqa FI58
 
 import json
 import os
+import time
 
 import datasets
 import numpy as np
@@ -117,6 +118,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         for i, d in enumerate(top_datasets):
             description_no_spaces = d.description.replace("\n", " ")
             print(f"{i+1}):\t{d.name}\t{description_no_spaces}")
+            time.sleep(1)
 
         print("\n-------------------------------------------------\n")
         print(
