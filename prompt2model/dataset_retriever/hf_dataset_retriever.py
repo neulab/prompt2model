@@ -256,12 +256,14 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             text_to_encode=query_text,
             device=self.device,
         )
+        dataset_names = [dataset_info.name for dataset_info in self.dataset_infos]
         ranked_list = retrieve_objects(
-            query_vector, self.search_index_path, self.first_stage_search_depth
+            query_vector, self.search_index_path, dataset_names, self.first_stage_search_depth
         )
         top_dataset_infos = []
-        for dataset_idx_str, dataset_score in ranked_list:
-            dataset_idx = int(dataset_idx_str)
+        dataset_name_to_dataset_idx = {d.name: i for i, d in enumerate(self.dataset_infos)}
+        for dataset_name, dataset_score in ranked_list:
+            dataset_idx = dataset_name_to_dataset_idx[dataset_name]
             self.dataset_infos[dataset_idx].score = dataset_score
             blocklisted = False
             for blocklist_string in blocklist:
