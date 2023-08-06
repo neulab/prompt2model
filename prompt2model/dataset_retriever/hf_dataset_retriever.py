@@ -271,7 +271,6 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             if not blocklisted:
                 top_dataset_infos.append(self.dataset_infos[dataset_idx])
 
-        breakpoint()
         ranked_list = sorted(top_dataset_infos, key=lambda x: x.score, reverse=True)[:self.max_search_depth]
         assert len(ranked_list) > 0, "No datasets retrieved from search index."
         top_dataset_name = self.choose_dataset(ranked_list)
