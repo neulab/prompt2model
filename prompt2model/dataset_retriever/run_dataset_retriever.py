@@ -9,6 +9,7 @@ if __name__ == "__main__":
 For this task, the input is text in Japanese, describing variable names and operations. The output is a single line of Python code to accomplish the task. Do not include comments or expressions. Import statements are also not required.
 """
     prompt_spec._instruction = prompt
+    prompt_spec._instruction_english = prompt
 
     retriever = DescriptionDatasetRetriever()
     # retriever.encode_dataset_descriptions(retriever.search_index_path)
