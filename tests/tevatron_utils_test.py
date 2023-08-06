@@ -1,5 +1,6 @@
 """Testing DatasetGenerator through OpenAIDatasetGenerator."""
 
+import gc
 import json
 import os
 import pickle
@@ -21,6 +22,7 @@ def test_load_tevatron_model():
     model, tokenizer = load_tevatron_model(TINY_MODEL_NAME)
     assert isinstance(model, DenseModelForInference)
     assert isinstance(tokenizer, PreTrainedTokenizerBase)
+    gc.collect()
 
 
 def test_encode_text_from_string():
@@ -28,6 +30,7 @@ def test_encode_text_from_string():
     text = "This is an example sentence"
     encoded = encode_text(TINY_MODEL_NAME, text_to_encode=text)
     assert encoded.shape == (1, 128)
+    gc.collect()
 
 
 def test_encode_text_from_file():
@@ -41,6 +44,7 @@ def test_encode_text_from_file():
         f.seek(0)
         encoded = encode_text(TINY_MODEL_NAME, file_to_encode=f.name)
         assert encoded.shape == (2, 128)
+    gc.collect()
 
 
 def test_encode_text_from_file_store_to_file():
@@ -63,12 +67,14 @@ def test_encode_text_from_file_store_to_file():
             )
             assert (encoded == encoded_vectors).all()
             assert encoded_indices == [0, 1]
+    gc.collect()
 
 
 def test_encode_text_error_from_no_string_or_file():
     """Test that either a string or a file must be passed to encode."""
     with pytest.raises(ValueError):
         _ = encode_text(TINY_MODEL_NAME)
+    gc.collect()
 
 
 def test_encode_text_error_from_both_string_and_file():
@@ -77,6 +83,7 @@ def test_encode_text_error_from_both_string_and_file():
     file = "/tmp/test.txt"
     with pytest.raises(ValueError):
         _ = encode_text(TINY_MODEL_NAME, file_to_encode=file, text_to_encode=text)
+    gc.collect()
 
 
 def test_retrieve_objects():
@@ -91,6 +98,7 @@ def test_retrieve_objects():
             [0.0, 0.0, 0.0, 1.0],
         ]
     )
+    document_names = ["a", "b", "c", "d"]
     mock_vector_indices = [0, 1, 2, 3]
     with tempfile.TemporaryDirectory() as tmpdir:
         search_index_pickle = os.path.join(tmpdir, "search_index.pkl")
@@ -98,7 +106,9 @@ def test_retrieve_objects():
             (mock_search_collection, mock_vector_indices),
             open(search_index_pickle, "wb"),
         )
-        results = retrieve_objects(mock_query_vector, search_index_pickle, depth=3)
+        results = retrieve_objects(
+            mock_query_vector, search_index_pickle, document_names, depth=3
+        )
         assert (
             len(results) == 3
         ), "The number of results should match the provided depth."
@@ -106,8 +116,9 @@ def test_retrieve_objects():
         # Verify that the index of the first retrieved document matches the document
         # that we known matches the query vector.
         first_retrieved_document, _ = results[0]
-        assert first_retrieved_document == "2"
+        assert first_retrieved_document == "c"
 
         # Verify that the first retrieved document has the greatest retrieval score.
         sorted_results = sorted(results, key=lambda x: x[1], reverse=True)
         assert sorted_results[0][0] == first_retrieved_document
+    gc.collect()

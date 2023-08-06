@@ -1,5 +1,5 @@
-from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from prompt2model.dataset_retriever import DescriptionDatasetRetriever
+from prompt2model.prompt_parser import MockPromptSpec, TaskType
 
 if __name__ == "__main__":
     prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
@@ -9,4 +9,6 @@ if __name__ == "__main__":
 
     retriever = DescriptionDatasetRetriever()
     # retriever.encode_dataset_descriptions(retriever.search_index_path)
-    retriever.retrieve_dataset_dict(prompt_spec, blocklist=["squad", "stanford question answering"])
+    retriever.retrieve_dataset_dict(
+        prompt_spec, blocklist=["squad", "stanford question answering"]
+    )
