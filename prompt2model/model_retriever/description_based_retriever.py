@@ -171,7 +171,7 @@ class DescriptionModelRetriever(ModelRetriever):
     def construct_bm25_index(self):
         """Construct a retriv BM25 index for model descriptions."""
         collection = []
-        for model in self.models:
+        for model in self.model_infos:
             collection.append({"id": model.name, "text": model.description})
         search_engine = retriv.SearchEngine("new-index").index(collection)
         return search_engine
