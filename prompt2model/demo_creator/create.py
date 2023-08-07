@@ -55,11 +55,12 @@ def create_gradio(
         return [], []
 
     with gr.Blocks() as demo:
-        description = description.replace("\n", "&#10;")
-        examples = examples.replace("\n", "&#10;")
+        display_description = description.replace("\n", "<br>")
+        display_examples = examples.replace("\n", "<br>")
         gr.HTML("""<h1 align="center">Prompt2Model</h1>""")
-        gr.HTML(f"""<h2 align="center">Task Description: {description}</h2>""")
-        gr.HTML(f"""<h2 align="center">Few-shot Examples: {examples}</h2>""")
+        gr.HTML(f"""<h2 align="left">Task Description: {display_description}</h2>""")
+        gr.HTML(f"""<h3 align="left">Few-shot Examples: {display_examples}</h3>""")
+
 
         chatbot = gr.Chatbot()
         with gr.Row():
