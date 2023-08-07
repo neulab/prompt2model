@@ -22,6 +22,7 @@ from prompt2model.model_evaluator import Seq2SeqEvaluator
 from prompt2model.model_executor import GenerationModelExecutor
 from prompt2model.model_trainer.generate import GenerationModelTrainer
 from prompt2model.prompt_parser import MockPromptSpec, OpenAIInstructionParser, TaskType
+from prompt2model.model_retriever import DescriptionModelRetriever
 
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
@@ -150,9 +151,36 @@ def main():
         and dataset_has_been_retrieved
         and not model_has_been_retrieved
     ):
-        pass
+        print(
+            "\n-------------------------------------------------\nRetrieve model.\n-------------------------------------------------\n"  # noqa 501
+        )
+        prompt_spec = MockPromptSpec(
+            TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
+        )
+        retriever = DescriptionModelRetriever(
+            model_descriptions_index_path="huggingface_data/huggingface_models/model_info/",
+            use_bm25=True,
+            use_HyDE=True,
+        )
+        top_model_name = retriever.retrieve(prompt_spec)
+        print("\n-------------------------------------------------\nHere are the models we retrieved.\n-------------------------------------------------\n")
+        for idx, each in enumerate(top_model_name):
+            print(f"# {idx + 1}: {each}")
+        while True:
+            line = input(
+                "\n-------------------------------------------------\nEnter the model you want to use. Range from 1 to 5.\n-------------------------------------------------\n"  # noqa 501
+            )
+            try:
+                rank = int(line)
+                assert 1<= rank <= 5
+                break
+            except Exception:
+                print(
+                    "\n-------------------------------------------------\nInvalid input. Please enter a number.\n-------------------------------------------------\n"  # noqa 501
+                )
         model_has_been_retrieved = True
         status["model_has_been_retrieved"] = True
+        status["model_name"] = top_model_name[rank - 1]
         with open("status.yaml", "w") as f:
             yaml.safe_dump(status, f)
 
@@ -379,7 +407,7 @@ def main():
         time.sleep(1)
 
         trainer = GenerationModelTrainer(
-            "google/flan-t5-base",
+             status["model_name"],
             has_encoder=True,
             executor_batch_size=train_batch_size,
             tokenizer_max_length=1024,
@@ -390,19 +418,19 @@ def main():
         print(
             "\n-------------------------------------------------\nStarting training.\n-------------------------------------------------\n"  # noqa 501
         )
-        # trained_model, trained_tokenizer = trainer.train_model(
-        #     hyperparameter_choices={
-        #         "output_dir": str(args_output_root),
-        #         "save_strategy": "epoch",
-        #         "num_train_epochs": num_epochs,
-        #         "per_device_train_batch_size": train_batch_size,
-        #         "evaluation_strategy": "epoch",
-        #     },
-        #     training_datasets=training_datasets,
-        #     validation_datasets=validation_datasets,
-        # )
-        # trained_model.save_pretrained(trained_model_root)
-        # trained_tokenizer.save_pretrained(trained_tokenizer_root)
+        trained_model, trained_tokenizer = trainer.train_model(
+            hyperparameter_choices={
+                "output_dir": str(args_output_root),
+                "save_strategy": "epoch",
+                "num_train_epochs": num_epochs,
+                "per_device_train_batch_size": train_batch_size,
+                "evaluation_strategy": "epoch",
+            },
+            training_datasets=training_datasets,
+            validation_datasets=validation_datasets,
+        )
+        trained_model.save_pretrained(trained_model_root)
+        trained_tokenizer.save_pretrained(trained_tokenizer_root)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         trained_model = transformers.AutoModelForSeq2SeqLM.from_pretrained(
             trained_model_root
