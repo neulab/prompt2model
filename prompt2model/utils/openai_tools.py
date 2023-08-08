@@ -2,6 +2,7 @@
 
 from __future__ import annotations  # noqa FI58
 
+import json
 import logging
 import os
 import time
@@ -22,6 +23,8 @@ OPENAI_ERRORS = (
     openai.error.RateLimitError,
     openai.error.ServiceUnavailableError,
     openai.error.InvalidRequestError,
+    json.decoder.JSONDecodeError,
+    AssertionError,
 )
 
 
