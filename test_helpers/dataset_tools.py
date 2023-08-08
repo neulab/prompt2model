@@ -13,11 +13,7 @@ def are_datasets_identical(
     if len(dataset1) != len(dataset2):
         return False
 
-    for instance1, instance2 in zip(dataset1, dataset2):
-        if instance1 != instance2:
-            return False
-
-    return True
+    return all(instance1 == instance2 for instance1, instance2 in zip(dataset1, dataset2))
 
 
 def are_dataset_dicts_identical(
