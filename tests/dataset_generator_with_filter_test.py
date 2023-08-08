@@ -7,7 +7,6 @@ from collections import Counter
 
 from datasets import Dataset
 
-from prompt2model.dataset_generator.base import DatasetSplit
 from prompt2model.dataset_generator.openai_gpt import Example, OpenAIDatasetGenerator
 from test_helpers import are_datasets_identical
 
@@ -374,7 +373,7 @@ def test_multi_vote_with_empty_examples_list():
     gc.collect()
 
 
-def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_unique_outputs():  # noqa 501
+def test_creat_all_exmaples_dataset_and_generated_dataset_with_duplicate_inputs_unique_outputs():  # noqa 501
     """Test constructing generated dataset with duplicate inputs but unique outputs.
 
     This test case verifies the construction of the generated dataset with duplicate
@@ -391,11 +390,8 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_u
             filter_duplicated_examples=True, cache_root=cache_dir
         )
 
-        # Set the generating_split attribute to DatasetSplit.TEST.
-        data_generator.generating_split = DatasetSplit.TEST
-
         # Provide generated examples with duplicate inputs but unique outputs.
-        data_generator.generated_examples = [
+        generated_examples = [
             Example(input_col="apple", output_col="A"),
             Example(input_col="banana", output_col="B"),
             Example(input_col="apple", output_col="E"),
@@ -404,23 +400,36 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_u
         ]
 
         # Convert the generated examples to the generated dataset.
-        data_generator.convert_generated_examples_to_generated_dataset()
+        (
+            all_generated_examples_dataset,
+            generated_dataset,
+        ) = data_generator.creat_all_exmaples_dataset_and_generated_dataset(
+            generated_examples
+        )
 
         # Define the expected dataset after conversion (duplicates are filtered).
         expected_dataset = Dataset.from_dict(
             {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
         )
 
+        expected_all_generated_examples_dataset = Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in generated_examples],
+                "output_col": [example.output_col for example in generated_examples],
+            }
+        )
+
         # Verify that the generated dataset matches the expected dataset.
+        assert are_datasets_identical(generated_dataset, expected_dataset)
         assert are_datasets_identical(
-            data_generator.generated_dataset, expected_dataset
+            all_generated_examples_dataset, expected_all_generated_examples_dataset
         )
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
 
 
-def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_duplicate_outputs():  # noqa 501
+def test_creat_all_exmaples_dataset_and_generated_dataset_with_duplicate_inputs_duplicate_outputs():  # noqa 501
     """Test constructing a map with duplicate inputs and duplicate outputs.
 
     This test case verifies the construction of the generated dataset with duplicate
@@ -437,11 +446,8 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_d
             filter_duplicated_examples=True, cache_root=cache_dir
         )
 
-        # Set the generating_split attribute to DatasetSplit.TEST.
-        data_generator.generating_split = DatasetSplit.TEST
-
         # Provide generated examples with duplicate inputs and duplicate outputs.
-        data_generator.generated_examples = [
+        generated_examples = [
             Example(input_col="apple", output_col="A"),
             Example(input_col="banana", output_col="C"),
             Example(input_col="apple", output_col="A"),
@@ -455,23 +461,36 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_d
         ]
 
         # Convert the generated examples to the generated dataset.
-        data_generator.convert_generated_examples_to_generated_dataset()
+        (
+            all_generated_examples_dataset,
+            generated_dataset,
+        ) = data_generator.creat_all_exmaples_dataset_and_generated_dataset(
+            generated_examples
+        )
 
         # Define the expected dataset after conversion (duplicates are filtered).
         expected_dataset = Dataset.from_dict(
             {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
         )
 
+        expected_all_generated_examples_dataset = Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in generated_examples],
+                "output_col": [example.output_col for example in generated_examples],
+            }
+        )
+
         # Verify that the generated dataset matches the expected dataset.
+        assert are_datasets_identical(generated_dataset, expected_dataset)
         assert are_datasets_identical(
-            data_generator.generated_dataset, expected_dataset
+            all_generated_examples_dataset, expected_all_generated_examples_dataset
         )
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
 
 
-def test_convert_generated_examples_to_generated_dataset_with_unique_inputs_outputs():
+def test_creat_all_exmaples_dataset_and_generated_dataset_with_unique_inputs_outputs():
     """Test constructing a map with unique inputs and outputs.
 
     This test case verifies the construction of the generated dataset with unique
@@ -488,34 +507,44 @@ def test_convert_generated_examples_to_generated_dataset_with_unique_inputs_outp
             filter_duplicated_examples=True, cache_root=cache_dir
         )
 
-        # Set the generating_split attribute to DatasetSplit.TEST.
-        data_generator.generating_split = DatasetSplit.TEST
-
         # Provide generated examples with unique inputs and outputs.
-        data_generator.generated_examples = [
+        generated_examples = [
             Example(input_col="apple", output_col="A"),
             Example(input_col="banana", output_col="B"),
             Example(input_col="orange", output_col="O"),
         ]
 
         # Convert the generated examples to the generated dataset.
-        data_generator.convert_generated_examples_to_generated_dataset()
+        (
+            all_generated_examples_dataset,
+            generated_dataset,
+        ) = data_generator.creat_all_exmaples_dataset_and_generated_dataset(
+            generated_examples
+        )
 
         # Define the expected dataset after conversion (no duplicates to filter).
         expected_dataset = Dataset.from_dict(
             {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
         )
 
+        expected_all_generated_examples_dataset = Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in generated_examples],
+                "output_col": [example.output_col for example in generated_examples],
+            }
+        )
+
         # Verify that the generated dataset matches the expected dataset.
+        assert are_datasets_identical(generated_dataset, expected_dataset)
         assert are_datasets_identical(
-            data_generator.generated_dataset, expected_dataset
+            all_generated_examples_dataset, expected_all_generated_examples_dataset
         )
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
 
 
-def test_convert_generated_examples_to_generated_dataset_with_empty_examples_list():
+def test_creat_all_exmaples_dataset_and_generated_dataset_with_empty_examples_list():
     """Test constructing a map with empty inputs and outputs.
 
     This test case verifies the construction of the generated dataset when the
@@ -532,22 +561,31 @@ def test_convert_generated_examples_to_generated_dataset_with_empty_examples_lis
             filter_duplicated_examples=True, cache_root=cache_dir
         )
 
-        # Set the generating_split attribute to DatasetSplit.TEST.
-        data_generator.generating_split = DatasetSplit.TEST
-
         # Provide an empty list of generated examples.
-        data_generator.generated_examples = []
+        generated_examples = []
 
         # Convert the empty generated examples to the generated dataset.
-        data_generator.convert_generated_examples_to_generated_dataset()
+        (
+            all_generated_examples_dataset,
+            generated_dataset,
+        ) = data_generator.creat_all_exmaples_dataset_and_generated_dataset(
+            generated_examples
+        )
 
         # Define the expected dataset (empty dataset when there are no examples).
         expected_dataset = Dataset.from_dict({})
 
-        # Verify that the generated dataset matches
-        # the expected dataset (empty dataset).
+        expected_all_generated_examples_dataset = Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in generated_examples],
+                "output_col": [example.output_col for example in generated_examples],
+            }
+        )
+
+        # Verify that the generated dataset matches the expected dataset.
+        assert are_datasets_identical(generated_dataset, expected_dataset)
         assert are_datasets_identical(
-            data_generator.generated_dataset, expected_dataset
+            all_generated_examples_dataset, expected_all_generated_examples_dataset
         )
 
     # Collect garbage to release memory resources after the test.
