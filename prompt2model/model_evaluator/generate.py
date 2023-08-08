@@ -48,10 +48,8 @@ class Seq2SeqEvaluator(ModelEvaluator):
                 logging.error("metrics must be within chr_f exact_match and bert_score")
                 raise NotImplementedError
             else:
-                logging.basicConfig(level=logging.INFO)
                 logging.info("using metrics: " + str(metric_names))
         else:
-            logging.basicConfig(level=logging.INFO)
             logging.info("using default metrics of chrf, exact_match and bertscore")
             metrics = [
                 evaluate.load("chrf"),
