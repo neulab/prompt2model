@@ -1,1 +1,0 @@
-{"pretrained_model_name": "Chae/scottbot_med", "description": "---\ntags:\n- conversational\n---\nChatbot trained on DialoGPT model to speak like Michael Scott", "size_bytes": "1444564637", "downloads": 62}

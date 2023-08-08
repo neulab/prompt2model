@@ -1,1 +1,0 @@
-{"pretrained_model_name": "smallcloudai/codify_3b_multi", "description": "---\nlicense: bigscience-openrail-m\ninference: false\nlanguage: code\ntags:\n  - code\n  - generation\nprogramming_language:\n  - Java\n  - JavaScript\n  - Python\n  - C\n  - C++\npipeline_tag: text-generation\n---", "size_bytes": 11121336320, "downloads": 9}
