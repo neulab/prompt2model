@@ -1,1 +1,0 @@
-{"pretrained_model_name": "cd-dvd/testmodel2", "description": "---\ntags:\n- Text Generation\n---\n\n# GIMPLEARN knows modeltest2\n# To generate conversation use input such as Human: What should I do?\\nAI:", "size_bytes": "551195025", "downloads": 0}

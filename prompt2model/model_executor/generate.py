@@ -47,6 +47,8 @@ class GenerationModelExecutor(ModelExecutor):
                     " Otherwise the truncation may lead to unexpected results."
                 )
             )
+            inference_column = "model_input"
+            assert len(inference_dataset) == num_examples
 
         for start_idx in range(0, num_examples, self.batch_size):
             end_idx = min(start_idx + self.batch_size, num_examples)
@@ -70,7 +72,8 @@ class GenerationModelExecutor(ModelExecutor):
                 max_length=self.sequence_max_length,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
-                repetition_penalty=2.0,
+                num_beams=3,
+                no_repeat_ngram_size=3,
             )
 
             for i, example in enumerate(batch):

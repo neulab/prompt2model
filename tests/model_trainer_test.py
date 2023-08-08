@@ -450,6 +450,15 @@ def test_gpt_trainer_without_validation_datasets():
                     "model_output": ["pomme", "pome"],
                 }
             ),
+            datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        "translate English to French.",
+                        "translate English to Kinyarwanda.",
+                    ],
+                    "model_output": ["pomme", "pome"],
+                }
+            ),
         ]
         with patch("logging.info") as mock_info, patch(
             "logging.warning"
