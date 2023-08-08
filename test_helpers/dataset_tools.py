@@ -1,4 +1,4 @@
-"""Tools for testing of two datasets or datasetDicts are identical."""
+"""Tools for testing if two Datasets or DatasetDicts are identical."""
 
 
 from __future__ import annotations  # noqa FI58
