@@ -231,7 +231,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         """Multi-vote to construct generated_dataset from input_output_map.
 
         Args:
-            generated_examples: A dictionary to map inputs to a `Counter` of their outputs.
+            generated_examples: A list of currently generated examples.
 
         This method uses multi-vote filtering to create a unique mapping from inputs
         to outputs. The input_col of generated_dataset contains unique inputs,
