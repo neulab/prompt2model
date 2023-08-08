@@ -109,6 +109,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             few_shot_example_string: A string representing the few-shot examples
                 parsed from the user's prompt, which equality is higher than the
                 genrated examples.
+            generated_examples: A list of currently generated examples.
 
         Returns:
             The generated prompt string.
@@ -176,6 +177,9 @@ class OpenAIDatasetGenerator(DatasetGenerator):
     def construct_input_output_map(self, generated_examples) -> dict[str, Counter]:
         """Constructs a dictionary mapping inputs to `Counter` objects of outputs.
 
+        Args:
+            generated_examples: A list of currently generated examples.
+
         Ideally, each input should have a unique output (one-to-one mapping).
         However, language models may occasionally generate different outputs
         for identical inputs. For instance, given the input “What is the biggest
@@ -204,8 +208,6 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             "orange": Counter({"O": 1})
         }
         """
-        # Whenever using the multi-vote filtering mechanism, refresh
-        # input_output_map to avoid duplicately countering.
         input_output_map: dict[str, Counter] = defaultdict(Counter)
 
         # Iterate through the examples and construct the mapping.
@@ -227,6 +229,9 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self, input_output_map: dict[str, Counter]
     ) -> Dataset:
         """Multi-vote to construct generated_dataset from input_output_map.
+
+        Args:
+            generated_examples: A dictionary to map inputs to a `Counter` of their outputs.
 
         This method uses multi-vote filtering to create a unique mapping from inputs
         to outputs. The input_col of generated_dataset contains unique inputs,
@@ -259,7 +264,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         and generated_dataset will be empty.
 
         Returns:
-            Current generated dataset with multi-vote filtering applied.
+            Currently generated dataset with multi-vote filtering applied.
         """
         # Ensure that multi-vote filtering is enabled.
         assert self.filter_duplicated_examples
@@ -309,7 +314,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
         Args:
             completions: The generated completion objects returned by OpenAI API.
-            generated_examples: Current generated examples of DatasetGenerator.
+            generated_examples: Currently generated examples of DatasetGenerator.
 
         Returns:
             A list of `Example` objects.
@@ -320,7 +325,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 - input_col is the generated example string extracted from the response.
                 - output_col is the generated label string extracted from the response.
                 If the response is not a valid JSON object, discard it.
-            There is 5 * len(completions) responses at a time.
+                There is responses_per_request * len(completions) responses at a time.
         """
         for completion in completions:
             try:
