@@ -1,1 +1,0 @@
-{"pretrained_model_name": "marca116/twitter_reply_generator", "description": "---\nlanguage: \n  - en\nwidget:\n - text: \"Christmas is coming soon! What are you going to do for the holidays?{REPLY}\"\n---\nTo generate a reply, first write a tweet in the textarea. Then, add {REPLY} at the end.", "size_bytes": "3134050365", "downloads": 12}

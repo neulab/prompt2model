@@ -1,1 +1,0 @@
-{"pretrained_model_name": "arnav7633/DialoGPT-medium-tony_stark", "description": "---\nlanguage:\n- en\ntags:\n- conversational\nlicense: MIT\n---\n**A casual chatbot**\n\nThis is a dialogpt medium fine tuned to talk like Tony Stark, Currently its only trained upon the script of Iron man 3", "size_bytes": "1444576537", "downloads": 7}

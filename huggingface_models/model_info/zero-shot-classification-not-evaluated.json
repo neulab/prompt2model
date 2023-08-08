@@ -1,1 +1,0 @@
-{"pretrained_model_name": "autoevaluate/zero-shot-classification-not-evaluated", "description": "---\nlanguage: en\ninference: false\ntags:\n- text-generation\n- opt\nduplicated_from: autoevaluate/zero-shot-classification\n---\n\nHello. I am a model, to be evaluated.\n", "size_bytes": "250540281", "downloads": 3}

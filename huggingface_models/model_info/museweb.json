@@ -1,1 +1,0 @@
-{"pretrained_model_name": "breadlicker45/museweb", "description": "---\nlicense: mit\ndatasets:\n- breadlicker45/midi-music-codes\n---\nuse https://mrcheeze.github.io/musenet-midi/ to make the midi file from the musenet encoding.\nthis is a 8k-step model.\n\nMusePy 1-1 https://huggingface.co/BreadAi/MusePy-1-1 is out", "size_bytes": "510396521", "downloads": 1}

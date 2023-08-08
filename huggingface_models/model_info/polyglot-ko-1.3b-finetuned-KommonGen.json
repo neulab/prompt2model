@@ -1,1 +1,0 @@
-{"pretrained_model_name": "jinwseong/polyglot-ko-1.3b-finetuned-KommonGen", "description": "---\nlicense: apache-2.0\n---\nPrompt: \"\ub2e8\uc5b4: {word1} {word2} ...\\n\uc7a5\uba74:\"", "size_bytes": "5428037343", "downloads": 0}
