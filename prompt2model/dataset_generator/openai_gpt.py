@@ -95,28 +95,28 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.requests_per_minute = requests_per_minute
         self.filter_duplicated_examples = filter_duplicated_examples
         self.cache_root = Path(cache_root)
-        self.generated_examples = []  # type: list[Example]
         # This list stores all generated examples. These will later be
         # converted into `generated_dataset` and `input_output_map`
         # if `filter_duplicated_examples` is True.
+        self.generated_examples: list[Example] = []
 
-        self.generated_dataset: Dataset = Dataset.from_dict({})
         # `generated_examples` will be transformed into `generated_dataset`.
         # If `filter_duplicated_examples` is True, `generated_examples` will
         # be filtered based on multi-votes before being used to construct
         # `generated_dataset`. If it's False, `generated_examples` will be
         # used directly to construct `generated_dataset`.
+        self.generated_dataset: Dataset = Dataset.from_dict({})
 
-        self.input_output_map: dict[str, Counter] = defaultdict(Counter)
         # If `filter_duplicated_examples` is True, `self.generated_examples`
         # will first be converted into `input_output_map`, and then into
         # `generated_dataset`. If it's False, `input_output_map` will remain
         # empty.
+        self.input_output_map: dict[str, Counter] = defaultdict(Counter)
 
-        self.generating_split: DatasetSplit | None = None
         # `generating_split` refers to the DatasetSplit currently being
         # generated. After each loop, `generated_examples` will be
         # stored as a Dataset at the path `{cache_root}/{generating_split}`.
+        self.generating_split: DatasetSplit | None = None
 
     def generate_prompt(
         self,
