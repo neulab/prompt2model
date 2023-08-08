@@ -1,1 +1,0 @@
-{"pretrained_model_name": "breadlicker45/gpt-ya", "description": "---\ndatasets:\n- breadlicker45/yahoo_answers\n---\n\nGpt-ya\n\nYa meaning yahoo answer\n\ntraining is done on this.\n\nthis ai model was trained on CPUs. keep your hopes on this being good very very low", "size_bytes": "3751985", "downloads": 7}
