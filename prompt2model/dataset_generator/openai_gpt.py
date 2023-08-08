@@ -174,7 +174,10 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             else:
                 continue
 
-    def construct_input_output_map(self, generated_examples) -> dict[str, Counter]:
+    def construct_input_output_map(
+         self,
+         generated_examples: list[Example],
+     ) -> dict[str, Counter]:
         """Constructs a dictionary mapping inputs to `Counter` objects of outputs.
 
         Args:
