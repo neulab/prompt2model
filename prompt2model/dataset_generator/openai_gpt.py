@@ -2,6 +2,7 @@
 
 from __future__ import annotations  # noqa FI58
 
+import asyncio
 import json
 import logging
 import os
@@ -35,6 +36,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         temperature: float = 1,
         presence_penalty: float = 0,
         frequency_penalty: float = 0,
+        batch_size: int = 5,
     ):
         """Initialize an OpenAI DatasetGenerator with an API key and max API call.
 
@@ -52,6 +54,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             frequency_penalty: Float between -2.0 and 2.0. Positive values penalize
                 new tokens based on their existing frequency in text, descouraging
                 the model to repeat the same line verbatim in generated examples.
+            batch_size: The number of examples to generate in each batch.
         """
         self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
         assert self.api_key is not None and self.api_key != "", (
@@ -65,6 +68,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.temperature = temperature
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
+        self.batch_size = batch_size
         self.generated_examples = []  # type: list[example]
         # Randomly selected several examples as addtional few-shot examples
         # from the generated examples to generate new examples.
@@ -168,27 +172,32 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             else:
                 continue
 
-    def extract_response(self, response: openai.Completion) -> example:
+    def extract_response(self, response: openai.Completion) -> example | None:
         """Extracts the generated sample and annotation from an OpenAI API response.
 
         Args:
             response (openai.Completion): The response object returned by OpenAI API.
 
         Returns:
-            An namedtuple called example consists of `input_col` and`output_col`, where:
-            - input_col is the generated example string extracted from the response.
-            - output_col is the generated label string extracted from the response.
+            If the API response is a valid JSON object, returns a namedtuple called
+                example, which consists of `input_col` and`output_col`, where:
+                - input_col is the generated example string extracted from the response.
+                - output_col is the generated label string extracted from the response.
+            If the API response is not a valid JSON object or do not contains
+                the required_keys, returns None.
         """
         try:
             response_json = json.loads(response.choices[0]["message"]["content"])
-        except json.decoder.JSONDecodeError as e:
-            logging.warning("API response was not a valid JSON")
-            raise e
+        except Exception as e:
+            logging.warning(f"Error happened parsing API response: {e}")
+            return None
         required_keys = ["input", "output"]
         missing_keys = [key for key in required_keys if key not in response_json]
-        assert (
-            len(missing_keys) == 0
-        ), f'API response must contain {", ".join(required_keys)} keys'
+        if len(missing_keys) != 0:
+            logging.warning(
+                f'API response must contain {", ".join(required_keys)} keys'
+            )
+            return None
         input = str(response_json["input"]).strip()
         output = str(response_json["output"]).strip()
         return example(input, output)
@@ -212,9 +221,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         _ = split  # suppress unused variable warnings
         chat_api = ChatGPTAgent(self.api_key)
         self.generated_examples = []
-
-        for _ in tqdm(range(num_examples), desc="Generating examples"):
-            while True:
+        with tqdm(total=num_examples, desc="Generating examples") as pbar:
+            while len(self.generated_examples) < num_examples:
                 try:
                     if (
                         self.max_api_calls
@@ -234,32 +242,68 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                             }
                         )
                     else:
-                        self.api_call_counter += 1
-                        prompt, _ = self.generate_prompt(
-                            instruction=prompt_spec.instruction,
-                            few_shot_example_string=prompt_spec.examples,
+                        batch_size = (
+                            min(
+                                self.batch_size,
+                                num_examples - len(self.generated_examples),
+                            )
+                            if self.max_api_calls is None
+                            else min(
+                                self.batch_size,
+                                num_examples - len(self.generated_examples),
+                                self.max_api_calls - self.api_call_counter,
+                            )
                         )
-                        response = chat_api.generate_openai_chat_completion(
-                            prompt,
-                            temperature=self.temperature,
-                            presence_penalty=self.presence_penalty,
-                            frequency_penalty=self.frequency_penalty,
-                        )
-                        example = self.extract_response(response)
-                        logging.info(f"Prompt: \n\n{prompt}\n\n")  # noqa: E501
-                        logging.info(f"Example: \n\n{example}\n\n")  # noqa: E501
-                        self.generated_examples.append(example)
-                        break
+
+                        assert batch_size > 0
+                        self.api_call_counter += batch_size
+                        prompts = [
+                            self.generate_prompt(
+                                instruction=prompt_spec.instruction,
+                                few_shot_example_string=prompt_spec.examples,
+                            )[0]
+                            for _ in range(batch_size)
+                        ]
+
+                        async def generate_responses():
+                            responses = (
+                                await chat_api.generate_batch_openai_chat_completion(
+                                    prompts,
+                                    temperature=self.temperature,
+                                )
+                            )
+                            return responses
+
+                        loop = asyncio.get_event_loop()
+                        responses = loop.run_until_complete(generate_responses())
+                        examples = [
+                            example
+                            for example in [
+                                self.extract_response(response)
+                                for response in responses
+                            ]
+                            if example is not None
+                        ]
+                        assert all(example is not None for example in examples)
+                        for index, example in enumerate(examples):
+                            logging.info(
+                                f"Prompt: \n\n{prompts[index]}\n\n"
+                            )  # noqa: E501
+                            logging.info(f"Example: \n\n{example}\n\n")  # noqa: E501
+                        self.generated_examples += examples
+                        pbar.update(len(examples))
                 except OPENAI_ERRORS as e:
                     self.api_call_counter = handle_openai_error(
                         e, self.api_call_counter
                     )
 
-        return Dataset.from_dict(
-            {
-                "input_col": [example.input_col for example in self.generated_examples],
-                "output_col": [
-                    example.output_col for example in self.generated_examples
-                ],
-            }
-        )
+            return Dataset.from_dict(
+                {
+                    "input_col": [
+                        example.input_col for example in self.generated_examples
+                    ],
+                    "output_col": [
+                        example.output_col for example in self.generated_examples
+                    ],
+                }
+            )
