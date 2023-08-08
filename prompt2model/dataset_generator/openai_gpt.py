@@ -8,7 +8,9 @@ import logging
 import math
 import os
 import random
-from collections import namedtuple
+from collections import Counter, defaultdict
+from dataclasses import dataclass
+from pathlib import Path
 
 import openai
 from datasets import Dataset
@@ -24,7 +26,13 @@ from prompt2model.utils import (
     handle_openai_error,
 )
 
-example = namedtuple("example", ["input_col", "output_col"])
+
+@dataclass(frozen=True)
+class Example:
+    """An example from a dataset, containing input and output columns."""
+
+    input_col: str
+    output_col: str
 
 
 class OpenAIDatasetGenerator(DatasetGenerator):
@@ -40,27 +48,35 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         batch_size: int = 5,
         responses_per_request: int = 5,
         requests_per_minute: int = 80,
+        filter_duplicated_examples: bool = True,
+        cache_root: str = "cached_genrated_dataset",
     ):
-        """Initialize an OpenAI DatasetGenerator with an API key and max API call.
+        """Initializes an instance of the OpenAI DatasetGenerator.
 
         Args:
-            api_key: A valid OpenAI API key. Alternatively, set as None and set
-                the environment variable with `export OPENAI_API_KEY=<your key>`.
+            api_key: A valid OpenAI API key. If not provided, the environment
+                variable OPENAI_API_KEY is used.
             max_api_calls: The maximum number of API calls allowed,
                 or None for unlimited.
-            temperature: What sampling temperature to use, between 0 and 2. Higher
-                values like 0.8 will make the output more random, while lower values
-                like 0.2 will make it more focused and deterministic.
-            presence_penalty: Float between -2.0 and 2.0. Positive values penalize
-                new tokens based on whether they appear in the text so far, increasing
-                the model's likelihood to talk about new topics in generated examples.
-            frequency_penalty: Float between -2.0 and 2.0. Positive values penalize
-                new tokens based on their existing frequency in text, descouraging
-                the model to repeat the same line verbatim in generated examples.
+            temperature: The sampling temperature to use, ranging from 0 to 2.
+                Higher values yield more random outputs, while lower values produce
+                more deterministic outputs.
+            presence_penalty: Value between -2.0 and 2.0 to penalize new tokens
+                based on their presence in the text so far. Positive values increase
+                the model's likelihood to discuss new topics in generated examples.
+            frequency_penalty: Value between -2.0 and 2.0 to penalize new tokens
+                based on their frequency in the text. Positive values discourage
+                the model from repeating the same line verbatim in generated examples.
             batch_size: The number of requests to make in each batch.
-            responses_per_request: Number of responses for each request.
-                i.e. the parameter n of OpenAI API call.
-            requests_per_minute: Number of requests per minute to allow.
+            responses_per_request: The number of responses for each request.
+            requests_per_minute: The maximum number of requests per minute.
+            filter_duplicated_examples: If True, filters duplicated examples based
+                on multi-votes.
+            cache_root: The root directory for caching generated examples.
+
+        Raises:
+            AssertionError: If an API key is not provided and set as an environment
+            variable, or if the 'max_api_calls' value is not greater than 0.
         """
         self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
         assert self.api_key is not None and self.api_key != "", (
@@ -77,9 +93,30 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.batch_size = batch_size
         self.responses_per_request = responses_per_request
         self.requests_per_minute = requests_per_minute
-        self.generated_examples = []  # type: list[example]
-        # Randomly selected several examples as addtional few-shot examples
-        # from the generated examples to generate new examples.
+        self.filter_duplicated_examples = filter_duplicated_examples
+        self.cache_root = Path(cache_root)
+        # This list stores all generated examples. These will later be
+        # converted into `generated_dataset` and `input_output_map`
+        # if `filter_duplicated_examples` is True.
+        self.generated_examples: list[Example] = []
+
+        # `generated_examples` will be transformed into `generated_dataset`.
+        # If `filter_duplicated_examples` is True, `generated_examples` will
+        # be filtered based on multi-votes before being used to construct
+        # `generated_dataset`. If it's False, `generated_examples` will be
+        # used directly to construct `generated_dataset`.
+        self.generated_dataset: Dataset = Dataset.from_dict({})
+
+        # If `filter_duplicated_examples` is True, `self.generated_examples`
+        # will first be converted into `input_output_map`, and then into
+        # `generated_dataset`. If it's False, `input_output_map` will remain
+        # empty.
+        self.input_output_map: dict[str, Counter] = defaultdict(Counter)
+
+        # `generating_split` refers to the DatasetSplit currently being
+        # generated. After each loop, `generated_examples` will be
+        # stored as a Dataset at the path `{cache_root}/{generating_split}`.
+        self.generating_split: DatasetSplit | None = None
 
     def generate_prompt(
         self,
@@ -193,7 +230,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         continue
                     input = str(response_json["input"]).strip()
                     output = str(response_json["output"]).strip()
-                    self.generated_examples.append(example(input, output))
+                    self.generated_examples.append(Example(input, output))
                     logging.info(f"input: \n\n{input}\n\n")  # noqa: E501
                     logging.info(f"output: \n\n{output}\n\n")  # noqa: E501
             except Exception:
