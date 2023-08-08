@@ -8,7 +8,8 @@ import logging
 import math
 import os
 import random
-from collections import Counter, defaultdict, namedtuple
+from collections import Counter, defaultdict
+from dataclasses import dataclass
 from pathlib import Path
 
 import openai
@@ -25,7 +26,13 @@ from prompt2model.utils import (
     handle_openai_error,
 )
 
-Example = namedtuple("Example", ["input_col", "output_col"])
+
+@dataclass(frozen=True)
+class Example:
+    """An example from a dataset, containing input and output columns."""
+
+    input_col: str
+    output_col: str
 
 
 class OpenAIDatasetGenerator(DatasetGenerator):
@@ -88,7 +95,6 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.requests_per_minute = requests_per_minute
         self.filter_duplicated_examples = filter_duplicated_examples
         self.cache_root = Path(cache_root)
-        self.cache_root.mkdir(exist_ok=True, parents=True)
         self.generated_examples = []  # type: list[Example]
         # This list stores all generated examples. These will later be
         # converted into `generated_dataset` and `input_output_map`
