@@ -136,6 +136,8 @@ class GenerationModelExecutor(ModelExecutor):
                     " Otherwise the truncation may lead to unexpected results."
                 )
             )
+            inference_column = "model_input"
+            assert len(inference_dataset) == num_examples
 
         for start_idx in range(0, num_examples, self.batch_size):
             end_idx = min(start_idx + self.batch_size, num_examples)
