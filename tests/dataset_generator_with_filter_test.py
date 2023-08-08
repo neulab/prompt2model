@@ -10,8 +10,7 @@ from datasets import Dataset
 from prompt2model.dataset_generator.openai_gpt import OpenAIDatasetGenerator
 from test_helpers import are_datasets_identical
 
-# Define a namedtuple to represent an example with 'input_col' and 'output_col' fields.
-Example = namedtuple("Example", ["input_col", "output_col"])
+from prompt2model.dataset_generator.openai_gpt import Example
 
 
 def test_construct_map_with_duplicate_inputs_unique_outputs():
