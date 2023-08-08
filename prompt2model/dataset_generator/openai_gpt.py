@@ -96,11 +96,6 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.filter_duplicated_examples = filter_duplicated_examples
         self.cache_root = Path(cache_root)
 
-        # `generating_split` refers to the DatasetSplit currently being
-        # generated. After each loop, `generated_examples` will be
-        # stored as a Dataset at the path `{cache_root}/{generating_split}`.
-        self.generating_split: DatasetSplit | None = None
-
     def generate_prompt(
         self,
         instruction: str,
@@ -309,7 +304,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
     def extract_responses(
         self, completions: list[openai.Completion], generated_examples: list[Example]
-    ) -> None:
+    ) -> list[Example]:
         """Extracts the generated sample and annotation from an OpenAI API response.
 
         Args:
@@ -317,6 +312,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             generated_examples: Current generated examples of DatasetGenerator.
 
         Returns:
+            A list of `Example` objects.
                 Each API call will return `responses_per_request` completion objects.
                 If the response is a valid JSON object, create a namedtuple called
                 `example` and append it to generated_examples. `example` consists
@@ -354,6 +350,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     f"Error happened when parsing API completion: {completion}"
                 )
                 continue
+        return generated_examples
 
     def generate_dataset_split(
         self,
@@ -439,7 +436,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
                     loop = asyncio.get_event_loop()
                     responses = loop.run_until_complete(generate_responses())
-                    self.extract_responses(
+                    generated_examples = self.extract_responses(
                         responses, generated_examples=generated_examples
                     )
                     pbar.update(len(generated_examples))

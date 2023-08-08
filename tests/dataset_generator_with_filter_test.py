@@ -3,14 +3,12 @@
 import gc
 import os
 import tempfile
-from collections import Counter, namedtuple
+from collections import Counter
 
 from datasets import Dataset
 
-from prompt2model.dataset_generator.openai_gpt import OpenAIDatasetGenerator
+from prompt2model.dataset_generator.openai_gpt import Example, OpenAIDatasetGenerator
 from test_helpers import are_datasets_identical
-
-from prompt2model.dataset_generator.openai_gpt import Example
 
 
 def test_construct_map_with_duplicate_inputs_unique_outputs():
