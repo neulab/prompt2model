@@ -35,7 +35,7 @@ def test_construct_map_with_duplicate_inputs_unique_outputs():
         )
 
         # Create a list of generated examples with duplicate inputs and unique outputs.
-        data_generator.generated_examples = [
+        generated_examples = [
             Example(input_col="apple", output_col="A"),
             Example(input_col="banana", output_col="B"),
             Example(input_col="apple", output_col="E"),
@@ -45,7 +45,7 @@ def test_construct_map_with_duplicate_inputs_unique_outputs():
 
         # Call the construct_input_output_map()
         # method to create the input-output map.
-        data_generator.construct_input_output_map()
+        input_output_map = data_generator.construct_input_output_map(generated_examples)
 
         # The expected input-output map afte
         # r constructing it from the generated examples.
@@ -57,7 +57,7 @@ def test_construct_map_with_duplicate_inputs_unique_outputs():
 
         # Assertions to verify that the input-output
         # map matches the expected output.
-        assert data_generator.input_output_map == expected_output
+        assert input_output_map == expected_output
 
     # Collect garbage to release memory
     # resources after the test.
@@ -86,7 +86,7 @@ def test_construct_map_with_duplicate_inputs_duplicate_outputs():
 
         # Create a list of generated examples with
         # duplicate inputs and duplicate outputs.
-        data_generator.generated_examples = [
+        generated_examples = [
             Example(input_col="apple", output_col="A"),
             Example(input_col="banana", output_col="C"),
             Example(input_col="apple", output_col="A"),
@@ -101,7 +101,7 @@ def test_construct_map_with_duplicate_inputs_duplicate_outputs():
 
         # Call the construct_input_output_map()
         # method to create the input-output map.
-        data_generator.construct_input_output_map()
+        input_output_map = data_generator.construct_input_output_map(generated_examples)
 
         # The expected input-output map after
         # constructing it from the generated examples.
@@ -113,7 +113,7 @@ def test_construct_map_with_duplicate_inputs_duplicate_outputs():
 
         # Assertions to verify that the input-output
         # map matches the expected output.
-        assert data_generator.input_output_map == expected_output
+        assert input_output_map == expected_output
 
     # Collect garbage to release memory
     # resources after the test.
@@ -141,7 +141,7 @@ def test_construct_map_with_unique_inputs_outputs():
         )
 
         # Create a list of generated examples with unique inputs and outputs.
-        data_generator.generated_examples = [
+        generated_examples = [
             Example(input_col="apple", output_col="A"),
             Example(input_col="banana", output_col="B"),
             Example(input_col="orange", output_col="O"),
@@ -149,7 +149,7 @@ def test_construct_map_with_unique_inputs_outputs():
 
         # Call the construct_input_output_map()
         # method to create the input-output map.
-        data_generator.construct_input_output_map()
+        input_output_map = data_generator.construct_input_output_map(generated_examples)
 
         # The expected input-output map after
         # constructing it from the generated examples.
@@ -161,7 +161,7 @@ def test_construct_map_with_unique_inputs_outputs():
 
         # Assertions to verify that the input-output
         # map matches the expected output.
-        assert data_generator.input_output_map == expected_output
+        assert input_output_map == expected_output
 
     # Collect garbage to release memory
     # resources after the test.
@@ -187,15 +187,15 @@ def test_construct_map_with_empty_examples_list():
         )
 
         # Create an empty list of generated examples.
-        data_generator.generated_examples = []
+        generated_examples = []
 
         # Call the construct_input_output_map()
         # method to create the input-output map.
-        data_generator.construct_input_output_map()
+        input_output_map = data_generator.construct_input_output_map(generated_examples)
 
         # The input-output map should be empty
         # when there are no generated examples.
-        assert data_generator.input_output_map == {}
+        assert input_output_map == {}
 
     # Collect garbage to release memory
     # resources after the test.
@@ -223,14 +223,18 @@ def test_multi_vote_with_duplicate_inputs_unique_outputs():
         )
 
         # Provide an input-output map with duplicate inputs but unique outputs.
-        data_generator.input_output_map = {
+        input_output_map = {
             "apple": Counter({"A": 1, "E": 1, "D": 1}),
             "banana": Counter({"B": 1}),
             "orange": Counter({"O": 1}),
         }
 
         # Apply multi-voting mechanism to construct the generated dataset.
-        data_generator.apply_multi_vote_to_construct_generated_dataset()
+        generated_dataset = (
+            data_generator.apply_multi_vote_to_construct_generated_dataset(
+                input_output_map
+            )
+        )
 
         # Define the expected dataset after multi-voting.
         expected_dataset = Dataset.from_dict(
@@ -238,9 +242,7 @@ def test_multi_vote_with_duplicate_inputs_unique_outputs():
         )
 
         # Verify that the generated dataset matches the expected dataset.
-        assert are_datasets_identical(
-            data_generator.generated_dataset, expected_dataset
-        )
+        assert are_datasets_identical(generated_dataset, expected_dataset)
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
@@ -267,14 +269,18 @@ def test_multi_vote_with_duplicate_inputs_duplicate_outputs():
         )
 
         # Provide an input-output map with duplicate inputs and duplicate outputs.
-        data_generator.input_output_map = {
+        input_output_map = {
             "apple": Counter({"A": 3, "D": 1, "G": 1}),
             "banana": Counter({"B": 2, "C": 1}),
             "orange": Counter({"O": 1, "F": 1}),
         }
 
         # Apply multi-voting mechanism to construct the generated dataset.
-        data_generator.apply_multi_vote_to_construct_generated_dataset()
+        generated_dataset = (
+            data_generator.apply_multi_vote_to_construct_generated_dataset(
+                input_output_map
+            )
+        )
 
         # Define the expected dataset after multi-voting.
         expected_dataset = Dataset.from_dict(
@@ -282,9 +288,7 @@ def test_multi_vote_with_duplicate_inputs_duplicate_outputs():
         )
 
         # Verify that the generated dataset matches the expected dataset.
-        assert are_datasets_identical(
-            data_generator.generated_dataset, expected_dataset
-        )
+        assert are_datasets_identical(generated_dataset, expected_dataset)
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
@@ -309,14 +313,18 @@ def test_multi_vote_with_unique_inputs_outputs():
         data_generator = OpenAIDatasetGenerator(cache_root=cache_dir)
 
         # Provide an input-output map with unique inputs and outputs.
-        data_generator.input_output_map = {
+        input_output_map = {
             "apple": Counter({"A": 1}),
             "banana": Counter({"B": 1}),
             "orange": Counter({"O": 1}),
         }
 
         # Apply multi-voting mechanism to construct the generated dataset.
-        data_generator.apply_multi_vote_to_construct_generated_dataset()
+        generated_dataset = (
+            data_generator.apply_multi_vote_to_construct_generated_dataset(
+                input_output_map
+            )
+        )
 
         # Define the expected dataset after multi-voting.
         expected_dataset = Dataset.from_dict(
@@ -324,9 +332,7 @@ def test_multi_vote_with_unique_inputs_outputs():
         )
 
         # Verify that the generated dataset matches the expected dataset.
-        assert are_datasets_identical(
-            data_generator.generated_dataset, expected_dataset
-        )
+        assert are_datasets_identical(generated_dataset, expected_dataset)
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
@@ -350,19 +356,21 @@ def test_multi_vote_with_empty_examples_list():
         )
 
         # Set the input-output map to be empty.
-        data_generator.input_output_map = {}
+        input_output_map = {}
 
         # Apply multi-voting mechanism to construct the generated dataset.
-        data_generator.apply_multi_vote_to_construct_generated_dataset()
+        generated_dataset = (
+            data_generator.apply_multi_vote_to_construct_generated_dataset(
+                input_output_map
+            )
+        )
 
         # Define the expected dataset after multi-voting (empty dataset).
         expected_dataset = Dataset.from_dict({})
 
         # Verify that the generated dataset matches
         # the expected dataset (empty dataset).
-        assert are_datasets_identical(
-            data_generator.generated_dataset, expected_dataset
-        )
+        assert are_datasets_identical(generated_dataset, expected_dataset)
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
