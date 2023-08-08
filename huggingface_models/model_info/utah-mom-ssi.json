@@ -1,1 +1,0 @@
-{"pretrained_model_name": "ataricom/utah-mom-ssi", "description": "---\nlanguage: en\nlicense: wtfpl\ntags: \n - text-generation\n---\n", "size_bytes": "510396521", "downloads": 9}

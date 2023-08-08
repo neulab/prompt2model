@@ -1,1 +1,0 @@
-{"pretrained_model_name": "OctaviusI/staging", "description": "---\nlicense: creativeml-openrail-m\ntags:\n- conversational\n---\n\nThis is just a mirror of [ConvoGPT-1.3B](https://huggingface.co/hakurei/convogpt-staging/tree/main/1.3b-uft) just for archiving purposes.", "size_bytes": "2731927977", "downloads": 4}
