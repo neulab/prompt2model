@@ -1,4 +1,4 @@
-"""Tools for testing of two datasets or datasetDicts are identical."""
+"""Tools for testing if two Datasets or DatasetDicts are identical."""
 
 
 from __future__ import annotations  # noqa FI58
@@ -13,11 +13,9 @@ def are_datasets_identical(
     if len(dataset1) != len(dataset2):
         return False
 
-    for instance1, instance2 in zip(dataset1, dataset2):
-        if instance1 != instance2:
-            return False
-
-    return True
+    return all(
+        instance1 == instance2 for instance1, instance2 in zip(dataset1, dataset2)
+    )
 
 
 def are_dataset_dicts_identical(
@@ -27,11 +25,7 @@ def are_dataset_dicts_identical(
     if set(dataset_dict1.keys()) != set(dataset_dict2.keys()):
         return False
 
-    for split_name in dataset_dict1.keys():
-        dataset1 = dataset_dict1[split_name]
-        dataset2 = dataset_dict2[split_name]
-
-        if not are_datasets_identical(dataset1, dataset2):
-            return False
-
-    return True
+    return all(
+        dataset_dict1[split_name] == dataset_dict2[split_name]
+        for split_name in dataset_dict1.keys()
+    )
