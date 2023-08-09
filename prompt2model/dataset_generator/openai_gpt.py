@@ -381,33 +381,22 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         Returns:
             The batch size for the next batch of OpenAI API calls with zeno-build.
         """
-        if self.max_api_calls is None:
-            # If there is no limit on the number of API calls, the batch_size should
-            # be the minimum of self.max_batch_size and the minimum number of calls
-            # to get more than expected_num_examples examples.
-            batch_size = min(
-                self.max_batch_size,
-                math.ceil(
-                    (
-                        (expected_num_examples - len(generated_dataset))
-                        / self.responses_per_request
-                    )
-                ),
-            )
-        else:
-            # If there is a limit on the number of API calls, the batch_size
-            # should also take remaining API calls into account.
-            batch_size = min(
-                self.max_batch_size,
-                math.ceil(
-                    (
-                        (expected_num_examples - len(generated_dataset))
-                        / self.responses_per_request
-                    )
-                ),
-                self.max_api_calls - self.api_call_counter,
-            )
-
+        # If max_api_calls is not set, make it equivalent to the batch size
+        max_api_calls = (
+            self.max_batch_size
+            if self.max_api_calls is None
+            else self.max_api_calls - self.api_call_counter
+        )
+        batch_size = min(
+            self.max_batch_size,
+            math.ceil(
+                (
+                    (expected_num_examples - len(generated_dataset))
+                    / self.responses_per_request
+                )
+            ),
+            max_api_calls,
+        )
         # Ensure that the batch_size is a positive value.
         assert batch_size > 0
         return batch_size
