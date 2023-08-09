@@ -36,13 +36,111 @@ class MockCompletion:
         return _string
 
 
-class BatchCompletions:
+class MockBatchCompletions:
     """Mock batch openai completion object."""
 
-    def __init__(self) -> None:
-        """Init a new instance of `BatchCompletions`."""
+    def __init__(self, length: int = 4) -> None:
+        """Init a new instance of `MockBatchCompletions`.
+
+        Args:
+            length: Length of the batch completions.
+
+        This class is designed to simulate the response of ChatGPTAgent and test the
+        generation process of the OpenAIDataSetGenerator with
+        `filter_duplicated_examples` set to True in
+        `dataset_generator_with_filter_test`.
+
+        The class works in conjunction with OpenAIDataSetGenerator with
+        batch_size = 2, responses_per_request = 3, expected_num_examples
+        = 5, and filter_duplicated_examples = True.
+
+        Explanation of the generation process:
+
+        In the first API call, the generator produces 2 * 3 = 6 responses.
+        After filtering duplicates, the generated_dataset will be:
+
+        Dataset.from_dict({
+            "input_col": ["1", "2"],
+            "output_col": ["a", "a"],
+        })
+
+        The second API call reduces batch_size to 1 and generates 3 more
+        responses. After filtering duplicates, the generated_dataset will be:
+
+        Dataset.from_dict({
+            "input_col": ["1", "2", "3"],
+            "output_col": ["a", "a", "a"],
+        })
+
+        The third API call again uses batch_size = 1 and generates another
+        3 responses. After filtering duplicates, the generated_dataset will be:
+
+        Dataset.from_dict({
+            "input_col": ["1", "2", "3"],
+            "output_col": ["b", "a", "a"],
+        })
+
+        The fourth and API call also uses batch_size = 1 and generates the final
+        3 responses. After filtering duplicates, the generated_dataset will be:
+
+        Dataset.from_dict({
+            "input_col": ["1", "2", "3", "4", "5"],
+            "output_col": ["b", "a", "a", "c", "a"],
+        })
+
+        The fivth and API call is specifically designed for
+        testing generate dataset_dict.
+        """
+        assert length == 4 or length == 5
         self.mock_completions: list[list[MockCompletion]] = []
         self.current_index = 0
+        mock_completion_1 = MockCompletion()
+        mock_completion_1.choices = [
+            {"message": {"content": '{"input": "1", "output": "a"}'}},
+            {"message": {"content": '{"input": "1", "output": "b"}'}},
+            {"message": {"content": '{"input": "1", "output": "a"}'}},
+        ]
+        mock_completion_2 = MockCompletion()
+        mock_completion_2.choices = [
+            {"message": {"content": '{"input": "1", "output": "c"}'}},
+            {"message": {"content": '{"input": "2", "output": "a"}'}},
+            {"message": {"content": '{"input": "2", "output": "b"}'}},
+        ]
+        self.mock_completions.append(
+            [
+                mock_completion_1,
+                mock_completion_2,
+            ]
+        )
+        mock_completion_3 = MockCompletion()
+        mock_completion_3.choices = [
+            {"message": {"content": '{"input": "3", "output": "a"}'}},
+            {"message": {"content": '{"input": "3", "output": "a"}'}},
+            {"message": {"content": '{"input": "3", "output": "b"}'}},
+        ]
+        self.mock_completions.append([mock_completion_3])
+
+        mock_completion_4 = MockCompletion()
+        mock_completion_4.choices = [
+            {"message": {"content": '{"input": "1", "output": "b"}'}},
+            {"message": {"content": '{"input": "1", "output": "b"}'}},
+            {"message": {"content": '{"input": "1", "output": "b"}'}},
+        ]
+        self.mock_completions.append([mock_completion_4])
+        mock_completion_5 = MockCompletion()
+        mock_completion_5.choices = [
+            {"message": {"content": '{"input": "4", "output": "c"}'}},
+            {"message": {"content": '{"input": "4", "output": "c"}'}},
+            {"message": {"content": '{"input": "5", "output": "a"}'}},
+        ]
+        self.mock_completions.append([mock_completion_5])
+        if length == 5:
+            self.mock_completions.append(
+                [
+                    mock_completion_1,
+                    mock_completion_2,
+                ]
+            )
 
 
 def mock_one_openai_response(
@@ -103,143 +201,4 @@ def mock_batch_openai_response_with_identical_completions(
         MockCompletion(content=content, responses_per_request=responses_per_request)
         for _ in prompts
     ]
-    return mock_completions
-
-
-batch_completions = BatchCompletions()
-
-batch_completions.mock_completions = [
-    [MockCompletion(), MockCompletion()],
-    [MockCompletion()],
-    [MockCompletion()],
-    [MockCompletion()],
-]
-
-# Populate mock_completions with desired choices as before.
-
-mock_completion_1 = MockCompletion()
-mock_completion_1.choices = [
-    {"message": {"content": '{"input": "1", "output": "a"}'}},
-    {"message": {"content": '{"input": "1", "output": "b"}'}},
-    {"message": {"content": '{"input": "1", "output": "a"}'}},
-]
-mock_completion_2 = MockCompletion()
-mock_completion_2.choices = [
-    {"message": {"content": '{"input": "1", "output": "c"}'}},
-    {"message": {"content": '{"input": "2", "output": "a"}'}},
-    {"message": {"content": '{"input": "2", "output": "b"}'}},
-]
-batch_completions.mock_completions[0] = [
-    mock_completion_1,
-    mock_completion_2,
-]
-mock_completion_3 = MockCompletion()
-mock_completion_3.choices = [
-    {"message": {"content": '{"input": "3", "output": "a"}'}},
-    {"message": {"content": '{"input": "3", "output": "a"}'}},
-    {"message": {"content": '{"input": "3", "output": "b"}'}},
-]
-batch_completions.mock_completions[1] = [mock_completion_3]
-
-mock_completion_4 = MockCompletion()
-mock_completion_4.choices = [
-    {"message": {"content": '{"input": "1", "output": "b"}'}},
-    {"message": {"content": '{"input": "1", "output": "b"}'}},
-    {"message": {"content": '{"input": "1", "output": "b"}'}},
-]
-batch_completions.mock_completions[2] = [mock_completion_4]
-mock_completion_5 = MockCompletion()
-mock_completion_5.choices = [
-    {"message": {"content": '{"input": "4", "output": "c"}'}},
-    {"message": {"content": '{"input": "4", "output": "c"}'}},
-    {"message": {"content": '{"input": "5", "output": "a"}'}},
-]
-batch_completions.mock_completions[3] = [mock_completion_5]
-
-
-def mock_batch_openai_response_with_different_completions(
-    prompts: list[str] = None,
-    content: str = None,
-    temperature: float = None,
-    presence_penalty: float = 0,
-    frequency_penalty: float = 0,
-    responses_per_request: int = 5,
-    requests_per_minute: int = 80,
-) -> list[MockCompletion]:
-    """Simulates the response of ChatGPTAgent with different completions at each call.
-
-    This function is designed to simulate the response of ChatGPTAgent and test the
-    generation process of the OpenAIDataSetGenerator with `filter_duplicated_examples`
-    set to True in `dataset_generator_with_filter_test`.
-
-    The function works in conjunction with OpenAIDataSetGenerator with
-    batch_size = 2, responses_per_request = 3, expected_num_examples
-    = 5, and filter_duplicated_examples = True.
-
-    Explanation of the generation process:
-
-    In the first API call, the generator produces 2 * 3 = 6 responses.
-    After filtering duplicates, the generated_dataset will be:
-
-    Dataset.from_dict({
-        "input_col": ["1", "2"],
-        "output_col": ["a", "a"],
-    })
-
-    The second API call reduces batch_size to 1 and generates 3 more
-    responses. After filtering duplicates, the generated_dataset will be:
-
-    Dataset.from_dict({
-        "input_col": ["1", "2", "3"],
-        "output_col": ["a", "a", "a"],
-    })
-
-    The third API call again uses batch_size = 1 and generates another
-    3 responses. After filtering duplicates, the generated_dataset will be:
-
-    Dataset.from_dict({
-        "input_col": ["1", "2", "3"],
-        "output_col": ["b", "a", "a"],
-    })
-
-    The fourth and API call also uses batch_size = 1 and generates the final
-    3 responses. After filtering duplicates, the generated_dataset will be:
-
-    Dataset.from_dict({
-        "input_col": ["1", "2", "3", "4", "5"],
-        "output_col": ["b", "a", "a", "c", "a"],
-    })
-
-    Args:
-        prompts: List of prompt strings.
-        content: Content string.
-        temperature: Temperature value for generating completions.
-        presence_penalty: Presence penalty for generating completions.
-        frequency_penalty: Frequency penalty for generating completions.
-        responses_per_request: Number of completions per API call.
-        requests_per_minute: Maximum number of API calls per minute.
-
-    Returns:
-        A batch of different MockCompletion objects at each call.
-    """
-    _ = (
-        prompts,
-        content,
-        temperature,
-        presence_penalty,
-        frequency_penalty,
-        requests_per_minute,
-        responses_per_request,
-    )
-    global batch_completions
-    current_index = batch_completions.current_index
-    batch_completions.current_index += 1
-    if batch_completions.current_index == 4:
-        batch_completions.current_index = 0
-
-    mock_completions: list[MockCompletion] = batch_completions.mock_completions[
-        current_index
-    ]
-
-    # Return the corresponding MockCompletion object for this call.
     return mock_completions
