@@ -49,7 +49,7 @@ def check_generate_dataset(dataset_generator: OpenAIDatasetGenerator):
     columns, and each example is not empty.
 
     Args:
-        dataset_generator (OpenAIDatasetGenerator): The dataset_generator will be tested
+        dataset_generator: The dataset_generator will be tested
             with limited max_api_calls or unlimited max_api_calls.
     """
     prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
@@ -82,7 +82,7 @@ def check_generate_dataset_dict(dataset_generator: OpenAIDatasetGenerator):
     the dataset dictionary is saved to the output directory.
 
     Args:
-        dataset_generator (OpenAIDatasetGenerator): The dataset_generator will be tested
+        dataset_generator: The dataset_generator will be tested
             with limited max_api_calls or unlimited max_api_calls.
     """
     prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
