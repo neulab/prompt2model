@@ -16,19 +16,19 @@ from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from test_helpers import (
     MockCompletion,
     are_datasets_identical,
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
 )
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
     content='{"input": "This is a great movie!", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
     content='{"input": "This is a great movie!", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
     content='{"input": "This is a great movie!", "output": "1}',
 )
 
