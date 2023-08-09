@@ -9,7 +9,7 @@ import openai
 import pytest
 
 from prompt2model.prompt_parser import OpenAIInstructionParser, TaskType
-from test_helpers import mock_one_openai_response
+from test_helpers import UnknownGpt3Exception, mock_one_openai_response
 
 GPT3_RESPONSE_WITH_DEMONSTRATIONS = (
     '{"Instruction": "Convert each date from an informal description into a'
@@ -31,12 +31,6 @@ GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS = (
 GPT3_RESPONSE_WITH_INVALID_JSON = (
     '{"Instruction": "A", "Demonstrations": "B}'  # Missing final quotation mark
 )
-
-
-class UNKNOWN_GPT3_EXCEPTION(Exception):
-    """This is a newly-defined exception for testing purposes."""
-
-    pass
 
 
 mock_prompt_parsing_example_with_demonstrations = partial(
@@ -183,7 +177,7 @@ def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_met
 
 @patch(
     "prompt2model.utils.ChatGPTAgent.generate_one_openai_chat_completion",
-    side_effect=UNKNOWN_GPT3_EXCEPTION(),
+    side_effect=UnknownGpt3Exception(),
 )
 def test_instruction_parser_with_unexpected_error(mocked_parsing_method):
     """Verify we don't retry the API call if an unexpected exception appears.
@@ -193,7 +187,7 @@ def test_instruction_parser_with_unexpected_error(mocked_parsing_method):
     """
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     prompt = """This prompt will be ignored by the parser in this test."""
-    with pytest.raises(UNKNOWN_GPT3_EXCEPTION):
+    with pytest.raises(UnknownGpt3Exception):
         prompt_spec = OpenAIInstructionParser(
             task_type=TaskType.TEXT_GENERATION, max_api_calls=3
         )

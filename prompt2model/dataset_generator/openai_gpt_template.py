@@ -5,7 +5,7 @@ import random
 COMPLEX_PROMPT_TEMPLATE = """
 {META_PROMPT}
 --------------------------------------------------------------------------------------------
-Here are some exmaples you can refer to:
+Here are some examples you can refer to:
 
 - Example 1
 
@@ -43,7 +43,7 @@ These are some [low-quality examples]Their formats and contents may not be accur
 MIDDLE_PROMPT_TEMPLATE = """
 {META_PROMPT}
 --------------------------------------------------------------------------------------------
-Here are some exmaples you can refer to:
+Here are some examples you can refer to:
 
 - Example 1
 
@@ -77,7 +77,7 @@ These are some [low-quality examples]Their formats and contents may not be accur
 SIMPLE_PROMPT_TEMPLATE = """
 {META_PROMPT}
 --------------------------------------------------------------------------------------------
-Here are some exmaples you can refer to:
+Here are some examples you can refer to:
 
 - Example 1
 
