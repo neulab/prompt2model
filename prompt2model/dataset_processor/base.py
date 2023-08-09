@@ -38,14 +38,15 @@ class BaseProcessor(ABC):
         Args:
             example: A dictionary representing an example.
             instruction: The instruction used as a prefix to explain the task.
-            task_id: A tag marking which dataset (from dataset_dicts) this example
-                comes from. Used for multi-task training.
+            task_id: A tag marking which dataset (from dataset_dicts) this
+                example comes from. Used for multi-task training.
             has_encoder: Whether the retrieved model has an encoder.
             dataset_split: The split of the example, i.e. train/val/test.
             eos_token: The end-of-sentence token of the tokenizer.
 
         Returns:
-            A dictionary with `model_input` as the input to models.
+            A dictionary with `model_input` as the input to models
+            and `model_output` as the expected output of models.
         """
 
     def process_dataset_dict(
