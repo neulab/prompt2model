@@ -2,8 +2,6 @@
 
 from __future__ import annotations  # noqa FI58
 
-import typing
-
 
 class MockCompletion:
     """Mock openai completion object."""
@@ -36,6 +34,15 @@ class MockCompletion:
         """
         _string = f"<MockObject choices={self.choices}>"
         return _string
+
+
+class BatchCompletions:
+    """Mock batch openai completion object."""
+
+    def __init__(self) -> None:
+        """Init a new instance of `BatchCompletions`."""
+        self.mock_completions: list[list[MockCompletion]] = []
+        self.current_index = 0
 
 
 def mock_one_openai_response(
@@ -99,7 +106,57 @@ def mock_batch_openai_response_with_identical_completions(
     return mock_completions
 
 
-@typing.no_type_check
+batch_completions = BatchCompletions()
+
+batch_completions.mock_completions = [
+    [MockCompletion(), MockCompletion()],
+    [MockCompletion()],
+    [MockCompletion()],
+    [MockCompletion()],
+]
+
+# Populate mock_completions with desired choices as before.
+
+mock_completion_1 = MockCompletion()
+mock_completion_1.choices = [
+    {"message": {"content": '{"input": "1", "output": "a"}'}},
+    {"message": {"content": '{"input": "1", "output": "b"}'}},
+    {"message": {"content": '{"input": "1", "output": "a"}'}},
+]
+mock_completion_2 = MockCompletion()
+mock_completion_2.choices = [
+    {"message": {"content": '{"input": "1", "output": "c"}'}},
+    {"message": {"content": '{"input": "2", "output": "a"}'}},
+    {"message": {"content": '{"input": "2", "output": "b"}'}},
+]
+batch_completions.mock_completions[0] = [
+    mock_completion_1,
+    mock_completion_2,
+]
+mock_completion_3 = MockCompletion()
+mock_completion_3.choices = [
+    {"message": {"content": '{"input": "3", "output": "a"}'}},
+    {"message": {"content": '{"input": "3", "output": "a"}'}},
+    {"message": {"content": '{"input": "3", "output": "b"}'}},
+]
+batch_completions.mock_completions[1] = [mock_completion_3]
+
+mock_completion_4 = MockCompletion()
+mock_completion_4.choices = [
+    {"message": {"content": '{"input": "1", "output": "b"}'}},
+    {"message": {"content": '{"input": "1", "output": "b"}'}},
+    {"message": {"content": '{"input": "1", "output": "b"}'}},
+]
+batch_completions.mock_completions[2] = [mock_completion_4]
+mock_completion_5 = MockCompletion()
+mock_completion_5.choices = [
+    {"message": {"content": '{"input": "4", "output": "c"}'}},
+    {"message": {"content": '{"input": "4", "output": "c"}'}},
+    {"message": {"content": '{"input": "5", "output": "a"}'}},
+]
+batch_completions.mock_completions[3] = [mock_completion_5]
+
+
 def mock_batch_openai_response_with_different_completions(
     prompts: list[str] = None,
     content: str = None,
@@ -108,7 +165,7 @@ def mock_batch_openai_response_with_different_completions(
     frequency_penalty: float = 0,
     responses_per_request: int = 5,
     requests_per_minute: int = 80,
-):
+) -> list[MockCompletion]:
     """Simulates the response of ChatGPTAgent with different completions at each call.
 
     This function is designed to simulate the response of ChatGPTAgent and test the
@@ -174,98 +231,15 @@ def mock_batch_openai_response_with_different_completions(
         requests_per_minute,
         responses_per_request,
     )
-    # Add explicit types to the function attributes.
-    if not hasattr(
-        mock_batch_openai_response_with_different_completions, "mock_completions"
-    ):
-        # Initialize mock_completions if it doesn't exist yet.
-        mock_batch_openai_response_with_different_completions.mock_completions = [
-            [MockCompletion(), MockCompletion()],
-            [MockCompletion()],
-            [MockCompletion()],
-            [MockCompletion()],
-        ]
-        mock_batch_openai_response_with_different_completions.current_index = 0
+    global batch_completions
+    current_index = batch_completions.current_index
+    batch_completions.current_index += 1
+    if batch_completions.current_index == 4:
+        batch_completions.current_index = 0
 
-        # Populate mock_completions with desired choices as before.
+    mock_completions: list[MockCompletion] = batch_completions.mock_completions[
+        current_index
+    ]
 
-        mock_completion_1 = MockCompletion()
-        mock_completion_1.choices = [
-            {"message": {"content": '{"input": "1", "output": "a"}'}},
-            {"message": {"content": '{"input": "1", "output": "b"}'}},
-            {"message": {"content": '{"input": "1", "output": "a"}'}},
-        ]
-        mock_completion_2 = MockCompletion()
-        mock_completion_2.choices = [
-            {"message": {"content": '{"input": "1", "output": "c"}'}},
-            {"message": {"content": '{"input": "2", "output": "a"}'}},
-            {"message": {"content": '{"input": "2", "output": "b"}'}},
-        ]
-        mock_batch_openai_response_with_different_completions.mock_completions[0] = [
-            mock_completion_1,
-            mock_completion_2,
-        ]
-        mock_completion_3 = MockCompletion()
-        mock_completion_3.choices = [
-            {"message": {"content": '{"input": "3", "output": "a"}'}},
-            {"message": {"content": '{"input": "3", "output": "a"}'}},
-            {"message": {"content": '{"input": "3", "output": "b"}'}},
-        ]
-        mock_batch_openai_response_with_different_completions.mock_completions[1] = [
-            mock_completion_3
-        ]
-
-        mock_completion_4 = MockCompletion()
-        mock_completion_4.choices = [
-            {"message": {"content": '{"input": "1", "output": "b"}'}},
-            {"message": {"content": '{"input": "1", "output": "b"}'}},
-            {"message": {"content": '{"input": "1", "output": "b"}'}},
-        ]
-        mock_batch_openai_response_with_different_completions.mock_completions[2] = [
-            mock_completion_4
-        ]
-        mock_completion_5 = MockCompletion()
-        mock_completion_5.choices = [
-            {"message": {"content": '{"input": "4", "output": "c"}'}},
-            {"message": {"content": '{"input": "4", "output": "c"}'}},
-            {"message": {"content": '{"input": "5", "output": "a"}'}},
-        ]
-        mock_batch_openai_response_with_different_completions.mock_completions[3] = [
-            mock_completion_5
-        ]
-
-    # Get the current index and increment it for the next call.
-    current_index = mock_batch_openai_response_with_different_completions.current_index
-    mock_batch_openai_response_with_different_completions.current_index += 1
-
-    mock_completions = (
-        mock_batch_openai_response_with_different_completions.mock_completions[
-            current_index % 4
-        ]
-    )
-    assert len(mock_completions) == len(prompts)
     # Return the corresponding MockCompletion object for this call.
     return mock_completions
-
-
-def reset_mock_batch_openai_response_with_different_completions():
-    """Resets mock_batch_openai_response_with_different_completions's state.
-
-    This function resets `mock_batch_openai_response_with_different_completions`
-    function's state by deleting its `mock_completions` and `current_index` attributes,
-    if they exist. The `mock_batch_openai_response_with_different_completions`
-    function cab be reused in a fresh state in subsequent tests.
-
-    The 'mock_batch_openai_response_with_different_completions' function simulates
-    the behavior of the OpenAI API during the generation of OpenAIDataSetGenerator.
-    It returns a batch of different MockCompletion objects on each call, which are used
-    to simulate different API responses. The `mock_completions` attribute stores these
-    `MockCompletion` objects, while the `current_index` attribute keeps track of the
-    current position in the `mock_completions` list.
-    """
-    if hasattr(
-        mock_batch_openai_response_with_different_completions, "mock_completions"
-    ):
-        del mock_batch_openai_response_with_different_completions.mock_completions
-    if hasattr(mock_batch_openai_response_with_different_completions, "current_index"):
-        del mock_batch_openai_response_with_different_completions.current_index
