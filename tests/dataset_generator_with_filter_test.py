@@ -865,17 +865,17 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
         cached_dataset.save_to_disk(dataset_cache_path)
 
         # The generate_dataset_split would first load the cached dataset into
-        # self.generated_examples. Then, in the while loop,
+        # generated_examples. Then, in the while loop,
         # convert_generated_examples_to_generated_dataset would be called to
         # construct the self.generated_dataset. Note that filter_duplicated_examples
-        # is True, so the self.generated_examples will be filtered to 3 examples
+        # is True, so the generated_examples will be filtered to 3 examples
         # in self.generated_dataset. Since expected_num_examples is 3, the while loop
         # would exit immediately. So the self.generated_dataset would be the filtered
         # cached dataset.
         with patch("logging.info") as mock_info, patch(
             "logging.warning"
         ) as mock_warning:
-            data_generator.generate_dataset_split(
+            generated_dataset = data_generator.generate_dataset_split(
                 expected_num_examples=3,
                 prompt_spec=MockPromptSpec,
                 split=DatasetSplit.TEST,
@@ -896,40 +896,7 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
         )
 
         # Verify that the generated dataset matches the expected filtered dataset.
-        assert are_datasets_identical(
-            data_generator.generated_dataset, excepted_generated_dataset
-        )
-
-        # Verify the generated_examples list after loading the cache.
-        assert data_generator.generated_examples == [
-            Example("1", "a"),
-            Example("1", "a"),
-            Example("1", "b"),
-            Example("1", "c"),
-            Example("2", "a"),
-            Example("3", "d"),
-        ]
-
-        # Verify the input_output_map after loading the cache.
-        assert data_generator.input_output_map == {
-            "1": Counter({"a": 2, "b": 1, "c": 1}),
-            "2": Counter({"a": 1}),
-            "3": Counter({"d": 1}),
-        }
-
-        # Verify that the directly constructed dataset from the generated_examples
-        # matches the original cached dataset.
-        directly_constructed_dataset = Dataset.from_dict(
-            {
-                "input_col": [
-                    example.input_col for example in data_generator.generated_examples
-                ],
-                "output_col": [
-                    example.output_col for example in data_generator.generated_examples
-                ],
-            }
-        )
-        assert are_datasets_identical(directly_constructed_dataset, cached_dataset)
+        assert are_datasets_identical(generated_dataset, excepted_generated_dataset)
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
@@ -972,17 +939,17 @@ def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generat
         cached_dataset.save_to_disk(dataset_cache_path)
 
         # The generate_dataset_split would first load the cached dataset into
-        # self.generated_examples. Then, in the while loop,
+        # generated_examples. Then, in the while loop,
         # convert_generated_examples_to_generated_dataset would be called to
         # construct the self.generated_dataset. Note that filter_duplicated_examples
-        # is True, so the self.generated_examples will be filtered to 3 examples
+        # is True, so the generated_examples will be filtered to 3 examples
         # in self.generated_dataset. Since expected_num_examples is 4, the generation
         # would continue, and the batch_size = 1. After one batch of API calls,
         # self.generated_dataset meets the requirement and stop generation.
         with patch("logging.info") as mock_info, patch(
             "logging.warning"
         ) as mock_warning:
-            data_generator.generate_dataset_split(
+            generated_dataset = data_generator.generate_dataset_split(
                 expected_num_examples=4,
                 prompt_spec=MockPromptSpec,
                 split=DatasetSplit.TEST,
@@ -1006,32 +973,7 @@ def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generat
         )
 
         # Verify that the generated dataset matches the expected dataset.
-        assert are_datasets_identical(
-            data_generator.generated_dataset, excepted_generated_dataset
-        )
-
-        # Verify the generated_examples list after continuing generation.
-        assert data_generator.generated_examples == [
-            Example("1", "a"),
-            Example("1", "a"),
-            Example("1", "b"),
-            Example("1", "c"),
-            Example("2", "a"),
-            Example("3", "d"),
-            Example("6", "f"),
-            Example("6", "f"),
-            Example("6", "f"),
-            Example("6", "f"),
-            Example("6", "f"),
-        ]
-
-        # Verify the input_output_map after continuing generation.
-        assert data_generator.input_output_map == {
-            "1": Counter({"a": 2, "b": 1, "c": 1}),
-            "2": Counter({"a": 1}),
-            "3": Counter({"d": 1}),
-            "6": Counter({"f": 5}),
-        }
+        assert are_datasets_identical(generated_dataset, excepted_generated_dataset)
 
         # Verify that the API was called once to generate responses.
         assert mocked_generate_example.call_count == 1
