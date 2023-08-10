@@ -37,7 +37,7 @@ class GenerationModelExecutor(ModelExecutor):
             "greedy",  # greedy search.
             "intersect",  # If both top_k and top_p are set, the model will
             # sample from the intersection of the top-k tokens and the top-p tokens.
-        ], "Only support top_k/top_p/intersect sampling and beam/greedy search for inference."  # noqa 501
+        ], f"Only support top_k/top_p/intersect sampling and beam/greedy search for inference. But the passed in generate_strategy is {generate_strategy}"  # noqa 501
         if generate_strategy == "greedy":
             output = self.model.generate(
                 input_ids=input_ids,
@@ -45,7 +45,9 @@ class GenerationModelExecutor(ModelExecutor):
                 max_length=self.sequence_max_length,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
-                repetition_penalty=2.0,
+                repetition_penalty=hyperparameter_choices.get(
+                    "repetition_penalty", 2.0
+                ),
             )
         elif generate_strategy == "beam":
             output = self.model.generate(
@@ -54,7 +56,9 @@ class GenerationModelExecutor(ModelExecutor):
                 max_length=self.sequence_max_length,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
-                repetition_penalty=2.0,
+                repetition_penalty=hyperparameter_choices.get(
+                    "repetition_penalty", 2.0
+                ),
                 num_beams=hyperparameter_choices.get("num_beams", 3),
                 do_sample=False,
             )
@@ -65,8 +69,10 @@ class GenerationModelExecutor(ModelExecutor):
                 max_length=self.sequence_max_length,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
-                repetition_penalty=2.0,
                 do_sample=True,
+                repetition_penalty=hyperparameter_choices.get(
+                    "repetition_penalty", 2.0
+                ),
                 top_k=hyperparameter_choices.get("top_k", 20),
             )
         elif generate_strategy == "top_p":
@@ -76,8 +82,10 @@ class GenerationModelExecutor(ModelExecutor):
                 max_length=self.sequence_max_length,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
-                repetition_penalty=2.0,
                 do_sample=True,
+                repetition_penalty=hyperparameter_choices.get(
+                    "repetition_penalty", 2.0
+                ),
                 top_p=hyperparameter_choices.get("top_p", 0.95),
             )
         else:
@@ -88,8 +96,10 @@ class GenerationModelExecutor(ModelExecutor):
                 max_length=self.sequence_max_length,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
-                repetition_penalty=2.0,
                 do_sample=True,
+                repetition_penalty=hyperparameter_choices.get(
+                    "repetition_penalty", 2.0
+                ),
                 top_k=hyperparameter_choices.get("top_k", 20),
                 top_p=hyperparameter_choices.get("top_p", 0.95),
             )

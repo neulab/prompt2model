@@ -277,7 +277,7 @@ def test_t5_trainer_with_epoch_evaluation():
             # Check if logging.info was called correctly.
             # Eech epoch will log 3 times, twice in `on_epoch_end`
             # and once in `evaluate_model`.
-            assert mock_info.call_count == 3 * 1
+            assert mock_info.call_count == 3 * num_epochs
             # Check if logging.warning was not called.
             assert mock_warning.call_count == 0
 
@@ -318,10 +318,11 @@ def test_t5_trainer_without_validation_datasets():
                 has_encoder=True,
                 tokenizer_max_length=128,
             )
+            num_epochs = 1
             trained_model, trained_tokenizer = trainer.train_model(
                 {
                     "output_dir": cache_dir,
-                    "num_train_epochs": 1,
+                    "num_train_epochs": num_epochs,
                     "per_device_train_batch_size": 2,
                     "evaluation_strategy": "epoch",
                 },
@@ -330,7 +331,7 @@ def test_t5_trainer_without_validation_datasets():
             # Check if logging.info was called correctly.
             # Eech epoch will log 3 times, twice in `on_epoch_end`
             # and once in `evaluate_model`.
-            assert mock_info.call_count == 3 * 1
+            assert mock_info.call_count == 3 * num_epochs
             # The evaluation_strategy is set to epoch, but validation
             # datasets are not provided. So the training dataset will
             # be splited to generate validation dataset.
@@ -375,10 +376,11 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
         with patch("logging.info") as mock_info, patch(
             "logging.warning"
         ) as mock_warning:
+            num_epochs = 2
             trained_model, trained_tokenizer = trainer.train_model(
                 {
                     "output_dir": cache_dir,
-                    "num_train_epochs": 2,
+                    "num_train_epochs": num_epochs,
                     "per_device_train_batch_size": 1,
                     "evaluation_strategy": "step",
                 },
@@ -388,7 +390,7 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
 
             # Check if logging.info was called correctly.
             # Eech epoch will log 3 times, in `on_epoch_end`, `evaluate_model`
-            assert mock_info.call_count == 3 * 2
+            assert mock_info.call_count == 3 * num_epochs
 
             # Check if logging.warning was called once
             assert mock_warning.call_count == 1
