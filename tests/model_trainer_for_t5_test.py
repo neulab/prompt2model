@@ -457,6 +457,7 @@ def test_t5_trainer_with_truncation_warning():
             "model_output": ["pomme"] * 2,
         }
     )
+    # The `model_input` is longer than 32 tokens. So it will trigger truncation warning.
     with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
         trainer.tokenize_dataset(training_dataset)
         # logging.warning was called for truncation.

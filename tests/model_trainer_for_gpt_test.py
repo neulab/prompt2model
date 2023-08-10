@@ -74,7 +74,6 @@ def test_gpt_model_trainer_tokenize():
         # Test that the last token of input_id is an eos_token.
         assert input_id[-1] == trainer.model.config.eos_token_id
 
-        # We are using teaching force in training decoder-only model.
         # The end of the `model_input` is the `model_output`, only which
         # should be taken into account by the loss function.
         # length_of_output_encoding_id_without_padding is the length
