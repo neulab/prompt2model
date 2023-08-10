@@ -36,22 +36,6 @@ class MockCompletion:
         return _string
 
 
-class MockOneOpenAIResponse:
-    """Mock one response with a single completion."""
-
-    def __init__(
-        self,
-        prompt: str = "",
-        temperature: float = 1,
-        presence_penalty: float = 0,
-        frequency_penalty: float = 0,
-        content: str = "",
-    ) -> None:
-        """Init a new instance of `MockOneOpenAIResponse`."""
-        _ = prompt, temperature, presence_penalty, frequency_penalty
-        self.mock_completion = MockCompletion(content=content)
-
-
 def mock_batch_openai_response_identical_completions(
     prompts: list[str],
     content: str,
