@@ -75,7 +75,6 @@ def test_gpt_model_trainer_tokenize():
         # Test that the last token of input_id is an eos_token.
         assert input_id[-1] == trainer.model.config.eos_token_id
 
-        # We are using teaching force in training decoder-only model.
         # The end of the `model_input` is the `model_output`, only which
         # should be taken into account by the loss function.
         # length_of_output_encoding_id_without_padding is the length
@@ -289,7 +288,7 @@ def test_gpt_trainer_with_epoch_evaluation():
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
                 info_list.count(
-                    "Using default metrics of chrf, exact_match and bert_score."
+                    "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
@@ -410,7 +409,7 @@ def test_gpt_trainer_with_unsupported_evaluation_strategy():
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
                 info_list.count(
-                    "Using default metrics of chrf, exact_match and bert_score."
+                    "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )

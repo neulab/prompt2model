@@ -165,7 +165,7 @@ class GenerationModelTrainer(BaseTrainer):
                 length_of_padding_in_output_encoding_id = self.get_left_padding_length(
                     output_encoding_id, self.model.config.pad_token_id
                 )
-                # We are using teaching force in training decoder-only model.
+
                 # The index -100 is ignored for loss compute in Autoregressive model.
                 # Reference: https://huggingface.co/docs/transformers/model_doc/gpt2#transformers.GPT2DoubleHeadsModel.forward.labels # noqa E501
                 length_of_output_encoding_id_without_padding = (
@@ -226,7 +226,7 @@ class GenerationModelTrainer(BaseTrainer):
         """Train a text generation model.
 
         Args:
-            hyperparameter_choices: A dictionary of hyperparameter for training.
+            hyperparameter_choices: A dictionary of hyperparameters for training.
             training_datasets: Training datasets with `input_col` and `model_output`.
             validation_datasets: Validation datasets during training. If not provided,
                 15% of training data will be spilt from training_datasets to validate.

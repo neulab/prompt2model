@@ -272,7 +272,7 @@ def test_t5_trainer_with_epoch_evaluation():
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
                 info_list.count(
-                    "Using default metrics of chrf, exact_match and bert_score."
+                    "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
@@ -337,7 +337,7 @@ def test_t5_trainer_without_validation_datasets():
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
                 info_list.count(
-                    "Using default metrics of chrf, exact_match and bert_score."
+                    "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
@@ -429,7 +429,7 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
                 info_list.count(
-                    "Using default metrics of chrf, exact_match and bert_score."
+                    "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
@@ -510,6 +510,7 @@ def test_t5_trainer_with_truncation_warning():
             "model_output": ["pomme"] * 2,
         }
     )
+    # The `model_input` is longer than 32 tokens. So it will trigger truncation warning.
     with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
         trainer.tokenize_dataset(training_dataset)
         # logging.warning was called for truncation.
