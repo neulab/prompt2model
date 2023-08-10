@@ -83,7 +83,6 @@ def test_gpt_model_trainer_tokenize():
         # Test that the last token of input_id is a eos_token.
         assert input_id[-1] == trainer.model.config.eos_token_id
 
-        # We are using teaching force in training decoder-only model.
         # The end of the `model_input` is the `model_output`, only which
         # should be taken into account by the loss function.
         # length_of_output_encoding_id_without_padding is the length
@@ -585,7 +584,7 @@ def test_truncation_warning_for_gpt_trainer():
         trainer.tokenize_dataset(training_dataset)
         # logging.warning was called for truncation.
         mock_warning.assert_called_once_with(
-            "Truncation happened when tokenizing dataset. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
+            "Truncation happened when tokenizing dataset. Consider increasing the tokenizer_max_length if possible. Otherwise, truncation may lead to unexpected results."  # noqa: E501
         )
 
 
@@ -607,5 +606,5 @@ def test_truncation_warning_for_t5_trainer():
         trainer.tokenize_dataset(training_dataset)
         # logging.warning was called for truncation.
         mock_warning.assert_called_once_with(
-            "Truncation happened when tokenizing dataset. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
+            "Truncation happened when tokenizing dataset. Consider increasing the tokenizer_max_length if possible. Otherwise, truncation may lead to unexpected results."  # noqa: E501
         )
