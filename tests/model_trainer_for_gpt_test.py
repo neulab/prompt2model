@@ -288,7 +288,7 @@ def test_gpt_trainer_with_epoch_evaluation():
             assert (
                 info_list.count("Conduct evaluation after each epoch ends.")
                 == info_list.count(
-                    "Using default metrics of chrf, exact_match and bert_score."
+                    "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
@@ -401,7 +401,7 @@ def test_gpt_trainer_with_unsupported_evaluation_strategy():
             assert (
                 info_list.count("Conduct evaluation after each epoch ends.")
                 == info_list.count(
-                    "Using default metrics of chrf, exact_match and bert_score."
+                    "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
