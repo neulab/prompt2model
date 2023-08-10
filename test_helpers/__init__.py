@@ -6,7 +6,6 @@ from test_helpers.dataset_tools import (
 from test_helpers.mock_openai import (
     MockBatchResponseDifferentCompletions,
     MockCompletion,
-    MockOneOpenAIResponse,
     mock_batch_openai_response_identical_completions,
 )
 from test_helpers.model_and_tokenizer import (
