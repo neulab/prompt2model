@@ -8,7 +8,7 @@ from prompt2model.dataset_processor.base import BaseProcessor
 
 
 class TextualizeProcessor(BaseProcessor):
-    """A class for post-processing datasets, convert them into Text2Text fashion."""
+    """A class for pre-processing datasets before training."""
 
     def __init__(self, has_encoder: bool, eos_token: str | None = None) -> None:
         """Initialize the `TextualizeProcessor`.
