@@ -99,6 +99,7 @@ class GenerationModelTrainer(BaseTrainer):
         Returns:
             The length of [suffix, ..., suffix] in [Others, suffix, ..., suffix].
         """
+        # Reverse the input_ids to get the length of right padding.
         suffix_length = cls.get_left_padding_length(input_ids[::-1], padding_token_id)
         return suffix_length
 
