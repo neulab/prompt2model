@@ -95,8 +95,7 @@ class GenerationModelTrainer(BaseTrainer):
         Returns:
             The length of [suffix, ..., suffix] in [Others, suffix, ..., suffix].
         """
-        reversed_input_ids = input_ids.reverse()
-        suffix_length = cls.get_left_padding_length(reversed_input_ids, padding_token_id)
+        suffix_length = cls.get_left_padding_length(input_ids[::-1], padding_token_id)
         return suffix_length
 
     def tokenize_dataset(

@@ -72,14 +72,14 @@ def test_gpt_model_trainer_tokenize():
     )
 
     for idx, input_id in enumerate(tokenized_dataset["input_ids"]):
-        attentent_mask = tokenized_dataset["attention_mask"][idx]
+        attention_mask = tokenized_dataset["attention_mask"][idx]
         label = tokenized_dataset["labels"][idx]
         output_encoding_id = output_encodings["input_ids"][idx]
         # Test that each pad_token in input_id list corresponds to
         # a 0 in attention_mask.
         assert trainer.get_left_padding_length(
             input_id, trainer.model.config.pad_token_id
-        ) == trainer.get_left_padding_length(attentent_mask, 0)
+        ) == trainer.get_left_padding_length(attention_mask, 0)
         # Test that the last token of input_id is a eos_token.
         assert input_id[-1] == trainer.model.config.eos_token_id
 
@@ -124,7 +124,7 @@ def test_gpt_model_trainer_tokenize():
             == trainer.model.config.eos_token_id
         )
         # For GPT model, length of input_id, atattention_mask, label is the same.
-        assert len(input_id) == len(attentent_mask) == len(label)
+        assert len(input_id) == len(attention_mask) == len(label)
 
 
 def test_t5_model_trainer_tokenize():
