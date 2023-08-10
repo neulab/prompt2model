@@ -264,10 +264,11 @@ def test_t5_trainer_with_epoch_evaluation():
                 "patrickvonplaten/t5-tiny-random",
                 has_encoder=True,
             )
+            num_epochs = 1
             trained_model, trained_tokenizer = trainer.train_model(
                 {
                     "output_dir": cache_dir,
-                    "num_train_epochs": 1,
+                    "num_train_epochs": num_epochs,
                     "per_device_train_batch_size": 2,
                     "evaluation_strategy": "epoch",
                 },

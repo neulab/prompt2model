@@ -29,7 +29,7 @@ class GenerationModelExecutor(ModelExecutor):
         Returns:
             A list of model output tensors, one for each element in input_ids.
         """
-        generate_strategy = hyperparameter_choices.get("generate_strategy", "beam")
+        generate_strategy = hyperparameter_choices.get("generate_strategy", "greedy")
         assert generate_strategy in [
             "beam",  # beam search.
             "top_k",  # top_k sampling.
@@ -56,11 +56,11 @@ class GenerationModelExecutor(ModelExecutor):
                 max_length=self.sequence_max_length,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
+                do_sample=False,
                 repetition_penalty=hyperparameter_choices.get(
                     "repetition_penalty", 2.0
                 ),
                 num_beams=hyperparameter_choices.get("num_beams", 3),
-                do_sample=False,
             )
         elif generate_strategy == "top_k":
             output = self.model.generate(

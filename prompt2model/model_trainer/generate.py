@@ -222,7 +222,7 @@ class GenerationModelTrainer(BaseTrainer):
         """Train a text generation model.
 
         Args:
-            hyperparameter_choices: A dictionary of hyperparameter for training.
+            hyperparameter_choices: A dictionary of hyperparameters for training.
             training_datasets: Training datasets with `input_col` and `model_output`.
             validation_datasets: Validation datasets during training. If not provided,
                 15% of training data will be spilt from training_datasets to validate.
