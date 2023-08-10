@@ -34,11 +34,11 @@ class EvaluationCallback(TrainerCallback):
         model_executor = GenerationModelExecutor(
             self.trainer.model,
             self.tokenizer,
+        )
+        model_outputs = model_executor.make_prediction(
             self.val_dataset,
             "model_input",
-            10,
         )
-        model_outputs = model_executor.make_prediction()
         evaluator = Seq2SeqEvaluator()
         metric_values = evaluator.evaluate_model(
             self.val_dataset,
