@@ -108,7 +108,7 @@ class GenerationModelExecutor(ModelExecutor):
     def make_prediction(
         self,
         single_model_input: str = None,
-        hyperparameter_choices: dict[str, Any] | None = None,
+        hyperparameter_choices: dict[str, Any] = {},
     ) -> list[ModelOutput]:
         """Evaluate a T5-type or GPT-type model on a test set.
 
@@ -164,11 +164,6 @@ class GenerationModelExecutor(ModelExecutor):
             device = self.model.device
             input_ids = encoded_inputs["input_ids"].to(device)
             attention_mask = encoded_inputs["attention_mask"].to(device)
-            hyperparameter_choices = (
-                hyperparameter_choices
-                if hyperparameter_choices is not None
-                else {"generate_strategy": "greedy"}
-            )
             output = self.generate(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
@@ -190,7 +185,7 @@ class GenerationModelExecutor(ModelExecutor):
         return model_outputs
 
     def make_single_prediction(
-        self, model_input: str, hyperparameter_choices: dict[str, Any] | None = None
+        self, model_input: str, hyperparameter_choices: dict[str, Any] = {}
     ) -> ModelOutput:
         """Mock evaluation on one example.
 
