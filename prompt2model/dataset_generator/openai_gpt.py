@@ -557,23 +557,25 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         """
         # Refresh the relevant data structures for the new split.
         self.cache_root.mkdir(parents=True, exist_ok=True)
-        exmaples_cache_path = Path(self.cache_root / f"{split.value}")
+        examples_cache_path = Path(
+            self.cache_root / f"generated_examples_{split.value}"
+        )
+        dataset_cache_path = Path(self.cache_root / f"generated_dataset_{split.value}")
 
-        if exmaples_cache_path.exists():
+        if examples_cache_path.exists():
             # If cache exists, load generated examples from disk.
-            logging.info(f"Loading cache from {str(exmaples_cache_path)}.")
-            all_generated_examples_dataset = Dataset.load_from_disk(exmaples_cache_path)
+            logging.info(f"Loading cache from {str(examples_cache_path)}.")
+            all_generated_examples_dataset = Dataset.load_from_disk(examples_cache_path)
             generated_examples = [
                 Example(input_col=ex["input_col"], output_col=ex["output_col"])
                 for ex in all_generated_examples_dataset
             ]
-
         else:
             # Initialize data structures for a new split.
             generated_examples = []
 
-        chat_api = ChatGPTAgent(self.api_key)
         pbar = tqdm(total=expected_num_examples, desc="Generating examples")
+        chat_api = ChatGPTAgent(self.api_key)
 
         while True:
             # Each API call will return `responses_per_request` completion
@@ -588,7 +590,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 ) = self.create_all_examples_dataset_and_generated_dataset(
                     generated_examples
                 )
-                all_generated_examples_dataset.save_to_disk(exmaples_cache_path)
+                all_generated_examples_dataset.save_to_disk(examples_cache_path)
+                generated_dataset.save_to_disk(dataset_cache_path)
                 pbar.update(len(generated_dataset))
 
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
@@ -608,15 +611,22 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         self.construct_prompt(
                             instruction=prompt_spec.instruction,
                             few_shot_example_string=prompt_spec.examples,
-                            generated_examples=generated_examples,
+                            generated_examples=generated_examples
+                            if not self.filter_duplicated_examples
+                            else [
+                                Example(each["input_col"], each["output_col"])
+                                for each in generated_dataset
+                            ],
                         )
                         for _ in range(batch_size)
                     ]
 
                     loop = asyncio.get_event_loop()
                     responses = loop.run_until_complete(
-                        self.generate_responses(chat_api, prompts)
+                        self.generate_responses(chat_api=chat_api, prompts=prompts)
                     )
+
+                    # Extract the responses and add new examples to the dataset.
                     generated_examples = self.extract_responses(
                         responses, generated_examples
                     )

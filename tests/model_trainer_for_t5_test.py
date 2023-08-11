@@ -36,7 +36,7 @@ def test_t5_trainer_with_get_right_padding_length():
 
 
 def test_t5_trainer_tokenize():
-    """Test that the T5 Model Trainer  correctly tokenizes a dataset."""
+    """Test that the T5 Model Trainer correctly tokenizes a dataset."""
     trainer = GenerationModelTrainer(
         "patrickvonplaten/t5-tiny-random", has_encoder=True, tokenizer_max_length=64
     )
@@ -354,10 +354,10 @@ def test_t5_trainer_without_validation_datasets():
             assert trainer.validation_callback.epoch_count == num_train_epochs
 
             concatenated_training_dataset = concatenate_datasets(training_datasets)
-            splited_dataset = concatenated_training_dataset.train_test_split(
+            splitted_dataset = concatenated_training_dataset.train_test_split(
                 test_size=0.15, seed=trainer.training_seed
             )
-            val_dataset = splited_dataset["test"]
+            val_dataset = splitted_dataset["test"]
             assert trainer.validation_callback.val_dataset is not None
             assert len(trainer.validation_callback.val_dataset.features) == 2
             assert (

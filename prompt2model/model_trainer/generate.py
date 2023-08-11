@@ -183,8 +183,8 @@ class GenerationModelTrainer(BaseTrainer):
                 )
                 assert (
                     length_of_output_encoding_id_without_padding != 0
-                ), "One of the model's outputs is empty."
-                label = [-100] * (
+                ), "One of the model_output is empty."
+                label = [IGNORE_INDEX] * (
                     length_of_input_encoding_ids_with_padding
                     - length_of_output_encoding_id_without_padding
                 ) + input_id[-length_of_output_encoding_id_without_padding:]
@@ -320,16 +320,16 @@ class GenerationModelTrainer(BaseTrainer):
                     test_size = hyperparameter_choices.get("test_size", 0.15)
                     assert (
                         len(concatenated_training_dataset) > 1
-                    ), "Training dataset should be larger than 1 for train_test_split."
-                    splited_dataset = concatenated_training_dataset.train_test_split(
-                        test_size=test_size, seed=seed_generator.get_seed()
+                    ), "Dataset should be larger than 1 to make train/test split."
+                    splitted_dataset = concatenated_training_dataset.train_test_split(
+                        test_size=test_size, seed=self.training_seed
                     )
-                    train_dataset = self.tokenize_dataset(splited_dataset["train"])
-                    # the training dataset will be tokenized to train the model.
-                    # But we evaluate the model on the validation dataset in the
-                    # call back with the model executor and model evaluator,
-                    # the validation dataset should not be tokenized.
-                    val_dataset = splited_dataset["test"]
+                    train_dataset = self.tokenize_dataset(splitted_dataset["train"])
+                    # The training dataset will be tokenized to train the model.
+                    # We evaluate the model on the validation dataset in the
+                    # callback with the model executor and model evaluator,
+                    # so the validation dataset should not be pre-tokenized here.
+                    val_dataset = splitted_dataset["test"]
             else:
                 # the training dataset will be tokenized to train the model.
                 # But we evaluate the model on the validation dataset in the
