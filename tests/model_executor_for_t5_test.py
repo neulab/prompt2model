@@ -2,7 +2,6 @@
 
 from unittest.mock import patch
 
-import pytest
 from datasets import Dataset
 
 from prompt2model.model_executor import GenerationModelExecutor, ModelOutput
@@ -28,12 +27,10 @@ def test_make_prediction_t5():
     )
 
     # Create GenerationModelExecutor.
-    model_executor = GenerationModelExecutor(
-        t5_model, t5_tokenizer, test_dataset, "model_input"
-    )
+    model_executor = GenerationModelExecutor(t5_model, t5_tokenizer)
 
     # Test T5 model.
-    t5_outputs = model_executor.make_prediction()
+    t5_outputs = model_executor.make_prediction(test_dataset, "model_input")
     assert isinstance(t5_outputs, list)
     assert len(t5_outputs) == len(test_dataset)
 
@@ -98,28 +95,6 @@ def test_make_single_prediction_t5_without_length_constraints():
     assert isinstance(t5_output.auxiliary_info, dict)
 
 
-def test_wrong_init_for_model_excutor_t5():
-    """For T5 Executor, input_column and test_set should be provided simultaneously."""
-    t5_model_and_tokenizer = create_t5_model_and_tokenizer()
-    t5_model = t5_model_and_tokenizer.model
-    t5_tokenizer = t5_model_and_tokenizer.tokenizer
-    test_dataset = Dataset.from_dict(
-        {
-            "model_input": [
-                "Translate French to English: cher",
-                "Translate French to English: Bonjour",
-                "Translate French to English: raisin",
-            ]
-        }
-    )
-
-    with pytest.raises(AssertionError) as exc_info:
-        _ = GenerationModelExecutor(t5_model, t5_tokenizer, test_set=test_dataset)
-        assert str(exc_info.value) == (
-            "input_column and test_set should be provided simultaneously."
-        )
-
-
 def test_sequence_max_length_init_for_t5():
     """Test the sequence_max_length is correctly set for t5."""
     t5_model_and_tokenizer = create_t5_model_and_tokenizer()
@@ -135,7 +110,7 @@ def test_sequence_max_length_init_for_t5():
             sequence_max_length=10000,
         )
         t5_executor.make_single_prediction(test_input)
-        assert mock_warning.call_count == 0
+        mock_warning.assert_not_called()
         # T5 model has no max_position_embeddings,
         # so the sequence_max_length will not be affected.
         assert t5_executor.sequence_max_length == 10000
@@ -155,7 +130,7 @@ def test_truncation_warning_for_t5_executor():
     with patch("logging.warning") as mock_warning:
         t5_executor.make_single_prediction(test_input)
         mock_warning.assert_called_once_with(
-            "Truncation happened when tokenizing dataset / input string. Consider increasing the tokenizer_max_length if possible. Otherwise, truncation may lead to unexpected results."  # noqa: E501
+            "Truncation happened when tokenizing dataset / input string. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
         )
 
 

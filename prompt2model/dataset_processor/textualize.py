@@ -65,12 +65,12 @@ class TextualizeProcessor(BaseProcessor):
         """
         assert (
             "input_col" in example and "output_col" in example
-        ), "Example dictionary must have 'input_col' and 'output_col' keys"
+        ), "Example dictionary must have 'input_col' and 'output_col' keys."
         assert dataset_split in (
             "train",
             "val",
             "test",
-        ), "Split must be one of train/val/test"
+        ), "Datset split must be in train/val/test."
 
         if has_encoder:
             model_input = f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n"  # noqa E501

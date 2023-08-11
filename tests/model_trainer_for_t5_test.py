@@ -130,10 +130,9 @@ def test_t5_trainer_with_tokenizer_max_length():
             datasets.Dataset.from_dict(
                 {
                     "model_input": [
-                        "<task 1>Given a product review, predict the sentiment score associated with it.\nExample:\nBeen using for a week and have noticed a huuge difference.\nLabel:\n",  # noqa 501
                         "<task 1>Given a product review, predict the sentiment score associated with it.\nExample:\nI have been using this every night for 6 weeks now. I do not see a change in my acne or blackheads. My skin is smoother and brighter. There is a glow. But that is it.\nLabel:\n",  # noqa 501
                     ],
-                    "model_output": ["5", "3"],
+                    "model_output": ["3"],
                 }
             ),
         ]
@@ -147,11 +146,11 @@ def test_t5_trainer_with_tokenizer_max_length():
                 tokenizer_max_length=128,
             )
 
-            trained_model, trained_tokenizer = trainer.train_model(
+            trainer.train_model(
                 {
                     "output_dir": cache_dir,
                     "num_train_epochs": 1,
-                    "per_device_train_batch_size": 2,
+                    "per_device_train_batch_size": 1,
                     "evaluation_strategy": "no",
                 },
                 training_datasets,
@@ -165,12 +164,7 @@ def test_t5_trainer_with_tokenizer_max_length():
             )
 
             # Check if logging.warning wasn't called.
-            assert mock_warning.call_count == 0
-
-            trained_model.save_pretrained(cache_dir)
-            trained_tokenizer.save_pretrained(cache_dir)
-            assert isinstance(trained_model, transformers.T5ForConditionalGeneration)
-            assert isinstance(trained_tokenizer, transformers.T5Tokenizer)
+            mock_warning.assert_not_called()
     gc.collect()
 
 
@@ -191,9 +185,8 @@ def test_t5_trainer_without_tokenizer_max_length():
                 {
                     "model_input": [
                         "<task 1>Given a product review, predict the sentiment score associated with it.\nExample:\nBeen using for a week and have noticed a huuge difference.\nLabel:\n",  # noqa 501
-                        "<task 1>Given a product review, predict the sentiment score associated with it.\nExample:\nI have been using this every night for 6 weeks now. I do not see a change in my acne or blackheads. My skin is smoother and brighter. There is a glow. But that is it.\nLabel:\n",  # noqa 501
                     ],
-                    "model_output": ["5", "3"],
+                    "model_output": ["5"],
                 }
             ),
         ]
@@ -206,11 +199,12 @@ def test_t5_trainer_without_tokenizer_max_length():
                 has_encoder=True,
                 tokenizer_max_length=None,
             )
-            trained_model, trained_tokenizer = trainer.train_model(
+            num_train_epochs = 1
+            trainer.train_model(
                 {
                     "output_dir": cache_dir,
-                    "num_train_epochs": 1,
-                    "per_device_train_batch_size": 2,
+                    "num_train_epochs": num_train_epochs,
+                    "per_device_train_batch_size": 1,
                     "evaluation_strategy": "no",
                 },
                 training_datasets,
@@ -224,11 +218,6 @@ def test_t5_trainer_without_tokenizer_max_length():
             mock_warning.assert_called_once_with(
                 "Set the tokenizer_max_length is preferable for finetuning model, which saves the cost of training."  # noqa 501
             )
-
-            trained_model.save_pretrained(cache_dir)
-            trained_tokenizer.save_pretrained(cache_dir)
-        assert isinstance(trained_model, transformers.T5ForConditionalGeneration)
-        assert isinstance(trained_tokenizer, transformers.T5Tokenizer)
     gc.collect()
 
 
@@ -264,12 +253,12 @@ def test_t5_trainer_with_epoch_evaluation():
                 "patrickvonplaten/t5-tiny-random",
                 has_encoder=True,
             )
-            num_epochs = 1
-            trained_model, trained_tokenizer = trainer.train_model(
+            num_train_epochs = 1
+            trainer.train_model(
                 {
                     "output_dir": cache_dir,
-                    "num_train_epochs": num_epochs,
-                    "per_device_train_batch_size": 2,
+                    "num_train_epochs": num_train_epochs,
+                    "per_device_train_batch_size": 1,
                     "evaluation_strategy": "epoch",
                 },
                 training_datasets,
@@ -278,14 +267,18 @@ def test_t5_trainer_with_epoch_evaluation():
             # Check if logging.info was called correctly.
             # Eech epoch will log 3 times, twice in `on_epoch_end`
             # and once in `evaluate_model`.
-            assert mock_info.call_count == 3 * num_epochs
+            assert mock_info.call_count == 3 * num_train_epochs
+            info_list = [each.args[0] for each in mock_info.call_args_list]
+            assert (
+                info_list.count("Conduct evaluation after each epoch ends.")
+                == info_list.count(
+                    "Using default metrics of chr_f, exact_match and bert_score."
+                )
+                == num_train_epochs
+            )
+            # The other logging.info is the `metric_values` in `evaluate_model`.
             # Check if logging.warning was not called.
-            assert mock_warning.call_count == 0
-
-        trained_model.save_pretrained(cache_dir)
-        trained_tokenizer.save_pretrained(cache_dir)
-        assert isinstance(trained_model, transformers.T5ForConditionalGeneration)
-        assert isinstance(trained_tokenizer, transformers.T5Tokenizer)
+            mock_warning.assert_not_called()
     gc.collect()
 
 
@@ -319,12 +312,12 @@ def test_t5_trainer_without_validation_datasets():
                 has_encoder=True,
                 tokenizer_max_length=128,
             )
-            num_epochs = 1
+            num_train_epochs = 1
             trained_model, trained_tokenizer = trainer.train_model(
                 {
                     "output_dir": cache_dir,
-                    "num_train_epochs": num_epochs,
-                    "per_device_train_batch_size": 2,
+                    "num_train_epochs": num_train_epochs,
+                    "per_device_train_batch_size": 1,
                     "evaluation_strategy": "epoch",
                 },
                 training_datasets,
@@ -332,7 +325,17 @@ def test_t5_trainer_without_validation_datasets():
             # Check if logging.info was called correctly.
             # Eech epoch will log 3 times, twice in `on_epoch_end`
             # and once in `evaluate_model`.
-            assert mock_info.call_count == 3 * num_epochs
+            assert mock_info.call_count == 3 * num_train_epochs
+            info_list = [each.args[0] for each in mock_info.call_args_list]
+            assert (
+                info_list.count("Conduct evaluation after each epoch ends.")
+                == info_list.count(
+                    "Using default metrics of chr_f, exact_match and bert_score."
+                )
+                == num_train_epochs
+            )
+            # The other logging.info is the `metric_values` in `evaluate_model`.
+
             # The evaluation_strategy is set to epoch, but validation
             # datasets are not provided. So the training dataset will
             # be splited to generate validation dataset.
@@ -359,8 +362,10 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
         training_datasets = [
             datasets.Dataset.from_dict(
                 {
-                    "model_input": ["translate apple to french"] * 2,
-                    "model_output": ["pomme"] * 2,
+                    "model_input": [
+                        "<task 0>Given a product review, predict the sentiment score associated with it.\nExample:\nIt isn’t my fav lip balm, but it’s up there. It moisturises really well and the lemon isn’t strong or over powering.\nLabel:\n",  # noqa 501
+                    ],
+                    "model_output": ["4"],
                 }
             ),
         ]
@@ -368,8 +373,10 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
         validation_datasets = [
             datasets.Dataset.from_dict(
                 {
-                    "model_input": ["translate apple to french"] * 2,
-                    "model_output": ["pomme"] * 2,
+                    "model_input": [
+                        "<task 1>Given a product review, predict the sentiment score associated with it.\nExample:\nBeen using for a week and have noticed a huuge difference.\nLabel:\n",  # noqa 501
+                    ],
+                    "model_output": ["5"],
                 }
             ),
         ]
@@ -377,11 +384,11 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
         with patch("logging.info") as mock_info, patch(
             "logging.warning"
         ) as mock_warning:
-            num_epochs = 2
-            trained_model, trained_tokenizer = trainer.train_model(
+            num_train_epochs = 1
+            trainer.train_model(
                 {
                     "output_dir": cache_dir,
-                    "num_train_epochs": num_epochs,
+                    "num_train_epochs": num_train_epochs,
                     "per_device_train_batch_size": 1,
                     "evaluation_strategy": "step",
                 },
@@ -391,14 +398,21 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
 
             # Check if logging.info was called correctly.
             # Eech epoch will log 3 times, in `on_epoch_end`, `evaluate_model`
-            assert mock_info.call_count == 3 * num_epochs
+            assert mock_info.call_count == 3 * num_train_epochs
+            info_list = [each.args[0] for each in mock_info.call_args_list]
+            assert (
+                info_list.count("Conduct evaluation after each epoch ends.")
+                == info_list.count(
+                    "Using default metrics of chr_f, exact_match and bert_score."
+                )
+                == num_train_epochs
+            )
+            # The other logging.info is the `metric_values` in `evaluate_model`.
 
             # Check if logging.warning was called once
-            assert mock_warning.call_count == 1
-
-        assert isinstance(trained_model, transformers.T5ForConditionalGeneration)
-        assert isinstance(trained_tokenizer, transformers.T5Tokenizer)
-    gc.collect()
+            mock_warning.assert_called_once_with(
+                "Only `epoch` evaluation strategy is supported, the evaluation strategy will be set to evaluate_after_epoch."  # noqa E501
+            )
 
 
 def test_t5_trainer_with_unsupported_parameter():

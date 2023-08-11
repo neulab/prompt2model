@@ -2,7 +2,6 @@
 
 from unittest.mock import patch
 
-import pytest
 from datasets import Dataset
 
 from prompt2model.model_executor import GenerationModelExecutor, ModelOutput
@@ -28,12 +27,10 @@ def test_make_prediction_gpt2():
     )
 
     # Create GenerationModelExecutor.
-    model_executor = GenerationModelExecutor(
-        gpt2_model, gpt2_tokenizer, test_dataset, "model_input"
-    )
+    model_executor = GenerationModelExecutor(gpt2_model, gpt2_tokenizer)
 
     # Test GPT-2 model.
-    gpt2_outputs = model_executor.make_prediction()
+    gpt2_outputs = model_executor.make_prediction(test_dataset, "model_input")
     assert isinstance(gpt2_outputs, list)
     assert len(gpt2_outputs) == len(test_dataset)
 
@@ -96,31 +93,6 @@ def test_make_single_prediction_gpt2_without_length_constraints():
     assert isinstance(gpt2_output.auxiliary_info, dict)
 
 
-def test_wrong_init_for_model_excutor_gpt2():
-    """For GPT Executor, input_column and test_set should be provided simultaneously."""
-    gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
-    gpt2_model = gpt2_model_and_tokenizer.model
-    gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
-
-    # Create test dataset.
-    test_dataset = Dataset.from_dict(
-        {
-            "model_input": [
-                "What's your name? Please reply in 10 words.",
-                "Hello! Just tell me your name.",
-                "How are you today? Please reply in 10 words.",
-            ]
-        }
-    )
-
-    # Create GenerationModelExecutor.
-    with pytest.raises(AssertionError) as exc_info:
-        _ = GenerationModelExecutor(gpt2_model, gpt2_tokenizer, test_set=test_dataset)
-        assert str(exc_info.value) == (
-            "input_column and test_set should be provided simultaneously."
-        )
-
-
 def test_sequence_max_length_init_for_gpt2():
     """Test the sequence_max_length is correctly set for gpt2."""
     gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
@@ -165,7 +137,7 @@ def test_truncation_warning_for_gpt2_executor():
     with patch("logging.warning") as mock_warning:
         gpt2_executor.make_single_prediction(test_input)
         mock_warning.assert_called_once_with(
-            "Truncation happened when tokenizing dataset / input string. Consider increasing the tokenizer_max_length if possible. Otherwise, truncation may lead to unexpected results."  # noqa: E501
+            "Truncation happened when tokenizing dataset / input string. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
         )
 
 
