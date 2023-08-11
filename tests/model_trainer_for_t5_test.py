@@ -515,7 +515,7 @@ def test_t5_trainer_with_truncation_warning():
         trainer.tokenize_dataset(training_dataset)
         # logging.warning was called for truncation.
         mock_warning.assert_called_once_with(
-            "Truncation happened when tokenizing dataset. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
+            "Truncation happened when tokenizing dataset. Consider increasing the tokenizer_max_length if possible. Otherwise, truncation may lead to unexpected results."  # noqa: E501
         )
         mock_info.assert_not_called()
     gc.collect()

@@ -136,8 +136,8 @@ class GenerationModelTrainer(BaseTrainer):
             logging.warning(
                 (
                     "Truncation happened when tokenizing dataset."
-                    " You should consider increasing the tokenizer_max_length."
-                    " Otherwise the truncation may lead to unexpected results."
+                    " Consider increasing the tokenizer_max_length if possible."
+                    " Otherwise, truncation may lead to unexpected results."
                 )
             )
         input_encodings = self.tokenizer.batch_encode_plus(
@@ -175,7 +175,7 @@ class GenerationModelTrainer(BaseTrainer):
                 )
                 assert (
                     length_of_output_encoding_id_without_padding != 0
-                ), "One of the model_output is empty."
+                ), "One of the model's outputs is empty."
                 label = [-100] * (
                     length_of_input_encoding_ids_with_padding
                     - length_of_output_encoding_id_without_padding
@@ -187,7 +187,7 @@ class GenerationModelTrainer(BaseTrainer):
                 )
                 labels.append(label)
         else:
-            # For T5 model, right padding token id should not be taken into
+            # For T5 model,  the right padding token id should not be taken into
             # account by the loss function. In PyTorch and Tensorflow, this can
             # be done by replacing them with -100, which is the ignore_index
             # of the CrossEntropyLoss.
@@ -314,7 +314,7 @@ class GenerationModelTrainer(BaseTrainer):
                         len(concatenated_training_dataset) > 1
                     ), "Training dataset should be larger than 1 for train_test_split."
                     splited_dataset = concatenated_training_dataset.train_test_split(
-                        test_size=test_size, seed=self.training_seed
+                        test_size=test_size, seed=seed_generator.get_seed()
                     )
                     train_dataset = self.tokenize_dataset(splited_dataset["train"])
                     # the training dataset will be tokenized to train the model.
