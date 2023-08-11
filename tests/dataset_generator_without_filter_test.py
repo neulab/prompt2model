@@ -124,53 +124,67 @@ def test_api_call_counter(mocked_generate_example):
     Args:
         mocked_generate_example: The function represents the @patch function.
     """
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    unlimited_dataset_generator = OpenAIDatasetGenerator()
-    unlimited_generated_dataset = check_generate_dataset(unlimited_dataset_generator)
-    # The default responses_per_request is 5. So each API call will return
-    # 5 responses, i.e. 5 choices in openai.Completion.choices.
-    # Each api call will return 5 responses, and each response is valid JSON.
-    # So the unlimited_dataset_generator will call API (29 // 5 + 1) times.
-    assert unlimited_dataset_generator.api_call_counter == (29 // 5 + 1)
-    # The default batch_size is 5. So generate_batch_openai_chat_completion
-    # will be called 2 times with  first batch_size = 5 and second batch_size = 1.
-    assert mocked_generate_example.call_count == 2
-    # Since all the responses are valid JSON and the api_call_counter is 6,
-    # the unlimited_generated_dataset will contain 30 examples.
-    assert len(unlimited_generated_dataset) == 30
-
-    # Refresh the call_count and api_call_counter.
-    mocked_generate_example.call_count = 0
-    unlimited_dataset_generator.api_call_counter = 0
-
-    unlimited_generated_dataset_dict = check_generate_dataset_dict(
-        unlimited_dataset_generator
-    )
-
-    # Each API call returns five responses. So unlimited_dataset_generator will
-    # call API (50 // 5 + 24 // 5 + 1 + 26 // 5 + 1) = 21 times.
-    assert unlimited_dataset_generator.api_call_counter == (
-        50 // 5 + 24 // 5 + 1 + 26 // 5 + 1
-    )
-    # The default batch_size is 5. So generate_batch_openai_chat_completion
-    # will be called 2 times for 50 examples in train split, 1 times for 24 examples
-    # in the validation split, and 2 times for 26 examples in test split.
-    assert mocked_generate_example.call_count == 2 + 1 + 2
-
-    # Each API call returns 5 responses, and each response is valid JSON.
-    # So the unlimited_generated_dataset_dict will contain (50, 25, 30) examples.
-    assert len(unlimited_generated_dataset_dict["train"]) == 50
-    assert len(unlimited_generated_dataset_dict["val"]) == 25
-    assert len(unlimited_generated_dataset_dict["test"]) == 30
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        unlimited_dataset_generator = OpenAIDatasetGenerator(
+            filter_duplicated_examples=False, cache_root=cache_dir
+        )
+        unlimited_generated_dataset = check_generate_dataset(
+            unlimited_dataset_generator
+        )
+        # The default responses_per_request is 5. So each API call will return
+        # 5 responses, i.e. 5 choices in openai.Completion.choices.
+        # Each api call will return 5 responses, and each response is valid JSON.
+        # So the unlimited_dataset_generator will call API (29 // 5 + 1) times.
+        assert unlimited_dataset_generator.api_call_counter == (29 // 5 + 1)
+        # The default batch_size is 5. So generate_batch_openai_chat_completion
+        # will be called 2 times with  first batch_size = 5 and second batch_size = 1.
+        assert mocked_generate_example.call_count == 2
+        # Since all the responses are valid JSON and the api_call_counter is 6,
+        # the unlimited_generated_dataset will contain 30 examples.
+        assert len(unlimited_generated_dataset) == 30
 
     # Refresh the call_count.
     mocked_generate_example.call_count = 0
 
-    limited_dataset_generator = OpenAIDatasetGenerator(max_api_calls=3)
-    limited_generated_dataset = check_generate_dataset(limited_dataset_generator)
-    # The max_api_calls is 3. So the limited_dataset_generator will call API 3 times.
-    # Each API call returns 5 responses. So the limited_dataset_generator will
-    # have 3 * 5 = 15 examples.
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        unlimited_dataset_generator = OpenAIDatasetGenerator(
+            filter_duplicated_examples=False, cache_root=cache_dir
+        )
+        unlimited_generated_dataset_dict = check_generate_dataset_dict(
+            unlimited_dataset_generator
+        )
+
+        # Each API call returns five responses. So unlimited_dataset_generator will
+        # call API (50 // 5 + 24 // 5 + 1 + 26 // 5 + 1) = 21 times.
+        assert unlimited_dataset_generator.api_call_counter == (
+            50 // 5 + 24 // 5 + 1 + 26 // 5 + 1
+        )
+        # The default batch_size is 5. So generate_batch_openai_chat_completion
+        # will be called 2 times for 50 examples in train split, 1 times for 24 examples
+        # in the validation split, and 2 times for 26 examples in test split.
+        assert mocked_generate_example.call_count == 2 + 1 + 2
+
+        # Each API call returns 5 responses, and each response is valid JSON.
+        # So the unlimited_generated_dataset_dict will contain (50, 25, 30) examples.
+        assert len(unlimited_generated_dataset_dict["train"]) == 50
+        assert len(unlimited_generated_dataset_dict["val"]) == 25
+        assert len(unlimited_generated_dataset_dict["test"]) == 30
+
+    # Refresh the call_count.
+    mocked_generate_example.call_count = 0
+
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        limited_dataset_generator = OpenAIDatasetGenerator(
+            filter_duplicated_examples=False, max_api_calls=3, cache_root=cache_dir
+        )
+        limited_generated_dataset = check_generate_dataset(limited_dataset_generator)
+        # The max_api_calls is 3. So the limited_dataset_generator calls API 3 times.
+        # Each API call returns 5 responses. So the limited_dataset_generator will
+        # have 3 * 5 = 15 examples.
+
     assert len(limited_generated_dataset) == 15
 
     # The default batch_size is 5. So generate_batch_openai_chat_completion
@@ -187,11 +201,15 @@ def test_api_call_counter(mocked_generate_example):
 
     # Refresh the call_count and create a new limited_dataset_generator.
     mocked_generate_example.call_count = 0
-    limited_dataset_generator = OpenAIDatasetGenerator(max_api_calls=13)
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        limited_dataset_generator = OpenAIDatasetGenerator(
+            filter_duplicated_examples=False, max_api_calls=13, cache_root=cache_dir
+        )
+        limited_generated_dataset_dict = check_generate_dataset_dict(
+            limited_dataset_generator
+        )
 
-    limited_generated_dataset_dict = check_generate_dataset_dict(
-        limited_dataset_generator
-    )
     # Since the max_api_calls is 13, the limited_dataset_generator can not
     # generate the whole dataset_dict, and will call API 13 times.
     assert limited_dataset_generator.api_call_counter == 13
@@ -223,9 +241,10 @@ def test_wrong_key_example(mocked_generate_example):
     Args:
         mocked_generate_example: The function represents the @patch function.
     """
-    api_key = "fake_api_key"
-    # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
-    dataset_generator = OpenAIDatasetGenerator(api_key, 3)
+    with tempfile.TemporaryDirectory() as cache_dir:
+        api_key = "fake_api_key"
+        # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
+        dataset_generator = OpenAIDatasetGenerator(api_key, 3, cache_root=cache_dir)
     prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
     expected_num_examples = 1
     split = DatasetSplit.TRAIN
@@ -248,14 +267,15 @@ def test_invalid_json_response(mocked_generate_example):
         mocked_generate_example: The function represents the @patch function.
     """
     api_key = "fake_api_key"
-    # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
-    dataset_generator = OpenAIDatasetGenerator(api_key, 3)
-    prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
-    expected_num_examples = 1
-    split = DatasetSplit.VAL
-    dataset = dataset_generator.generate_dataset_split(
-        prompt_spec, expected_num_examples, split
-    )
+    with tempfile.TemporaryDirectory() as cache_dir:
+        # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
+        dataset_generator = OpenAIDatasetGenerator(api_key, 3, cache_root=cache_dir)
+        prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
+        expected_num_examples = 1
+        split = DatasetSplit.VAL
+        dataset = dataset_generator.generate_dataset_split(
+            prompt_spec, expected_num_examples, split
+        )
     assert mocked_generate_example.call_count == 3
     assert dataset["input_col"] == dataset["output_col"] and dataset["input_col"] == []
     gc.collect()
@@ -273,8 +293,12 @@ def test_unexpected_examples_of_GPT(mocked_generate_example):
     """
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
-    with pytest.raises(UNKNOWN_GPT3_EXCEPTION):
-        dataset_generator = OpenAIDatasetGenerator(max_api_calls=3)
+    with pytest.raises(
+        UNKNOWN_GPT3_EXCEPTION
+    ), tempfile.TemporaryDirectory() as cache_dir:
+        dataset_generator = OpenAIDatasetGenerator(
+            max_api_calls=3, cache_root=cache_dir
+        )
         prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
         expected_num_examples = 1
         split = DatasetSplit.TEST
