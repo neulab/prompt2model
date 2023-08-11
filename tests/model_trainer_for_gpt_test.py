@@ -169,7 +169,7 @@ def test_gpt_trainer_with_tokenizer_max_length():
             # evaluation_strategy to `no`. Check if logging.info was
             # called once for not setting the evaluation strategy.
             mock_info.assert_called_once_with(
-                "The training doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
+                "The trainer doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
 
             # Check if logging.warning wasn't called.
@@ -226,7 +226,7 @@ def test_gpt_trainer_without_tokenizer_max_length():
             # evaluation_strategy to `no`. Check if logging.info was
             # called once for not setting the evaluation strategy.
             mock_info.assert_called_once_with(
-                "The training doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
+                "The trainer doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
 
             # Check if logging.warning was called once for
@@ -443,7 +443,8 @@ def test_gpt_trainer_with_unsupported_evaluation_strategy():
 
 def test_gpt_trainer_with_unsupported_parameter():
     """Test the error handler with an unsupported hyperparameter with GPT Trainer."""
-    # We do support per_device_train_batch_size, but this test case uses batch_size.
+    # In this test case we provide an unsupported parameter called `batch_size` to
+    # `trainer.train_model`. The supported parameter is `per_device_train_batch_size`.
     with pytest.raises(AssertionError) as exc_info:
         with tempfile.TemporaryDirectory() as cache_dir:
             trainer = GenerationModelTrainer(

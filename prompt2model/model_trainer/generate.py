@@ -279,7 +279,7 @@ class GenerationModelTrainer(BaseTrainer):
             evaluate_after_epoch = True
         elif evaluation_strategy == "no":
             logging.info(
-                "The training doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
+                "The trainer doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
             evaluate_after_epoch = False
         else:

@@ -106,8 +106,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
         The function generates a prompt string using the provided instruction and
         few_shot_example_string. It also selects random examples from the generated
-        dataset to provide additional context for the prompt. If the generated_dataset
-        is empty, it defaults to using the few_shot_example_string.
+        dataset to provide additional context for the prompt. At the start of dataset
+        generation, it defaults to using the few_shot_example_string.
 
         The function uses different prompt templates based on the number of selected
         examples from the generated dataset. If the total length of the prompt exceeds
@@ -435,7 +435,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         then checks for the presence of `input` and `output` keys in the JSON
         object. If either is missing, the completion is discarded.
 
-        For valid completions, the function creates a namedtuple `example`
+        For valid completions, the function instantiates a class
         with `input_col` and `output_col` fields, representing the generated
         example and label strings respectively. The `example` is then added
         to generated_examples.
@@ -465,7 +465,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             Example(input_col="2", output_col="a")
             Example(input_col="2", output_col="b")
 
-            And append them to generated_examples.
+            It will then append them to generated_examples.
 
         Returns:
             A list of `Example` objects.
