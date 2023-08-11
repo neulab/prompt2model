@@ -74,7 +74,7 @@ def mock_batch_openai_response_with_identical_completions(
 ) -> list[MockCompletion]:
     """Generate a batch of mock completion objects.
 
-        This function creat es a batch of `MockCompletion`
+        This function creates a batch of `MockCompletion`
         object with a `content` attribute set to an LLM completion string.
 
     Args:

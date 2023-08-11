@@ -371,3 +371,222 @@ def test_multi_vote_with_empty_examples_list():
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
+
+
+def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_unique_outputs():  # noqa 501
+    """Test constructing generated dataset with duplicate inputs but unique outputs.
+
+    This test case verifies the construction of the generated dataset with duplicate
+    inputs but unique outputs. The OpenAIDatasetGenerator object is initialized with
+    `filter_duplicated_examples=True` to ensure that duplicates are filtered.
+
+    Attributes:
+        api_key (str): The fake API key used for testing.
+    """
+    # Initialize the OpenAIDatasetGenerator with `filter_duplicated_examples=True`.
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        data_generator = OpenAIDatasetGenerator(
+            filter_duplicated_examples=True, cache_root=cache_dir
+        )
+
+        # Provide generated examples with duplicate inputs but unique outputs.
+        generated_examples = [
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="banana", output_col="B"),
+            Example(input_col="apple", output_col="E"),
+            Example(input_col="orange", output_col="O"),
+            Example(input_col="apple", output_col="D"),
+        ]
+
+        # Convert the generated examples to the generated dataset.
+        (
+            all_generated_examples_dataset,
+            generated_dataset,
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
+            generated_examples
+        )
+
+        # Define the expected dataset after conversion (duplicates are filtered).
+        expected_dataset = Dataset.from_dict(
+            {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
+        )
+
+        expected_all_generated_examples_dataset = Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in generated_examples],
+                "output_col": [example.output_col for example in generated_examples],
+            }
+        )
+
+        # Verify that the generated dataset matches the expected dataset.
+        assert are_datasets_identical(generated_dataset, expected_dataset)
+        assert are_datasets_identical(
+            all_generated_examples_dataset, expected_all_generated_examples_dataset
+        )
+
+    # Collect garbage to release memory resources after the test.
+    gc.collect()
+
+
+def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_duplicate_outputs():  # noqa 501
+    """Test constructing a map with duplicate inputs and duplicate outputs.
+
+    This test case verifies the construction of the generated dataset with duplicate
+    inputs and duplicate outputs. The OpenAIDatasetGenerator object is initialized with
+    `filter_duplicated_examples=True` to ensure that duplicates are filtered.
+
+    Attributes:
+        api_key (str): The fake API key used for testing.
+    """
+    # Initialize the OpenAIDatasetGenerator with `filter_duplicated_examples=True`.
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        data_generator = OpenAIDatasetGenerator(
+            filter_duplicated_examples=True, cache_root=cache_dir
+        )
+
+        # Provide generated examples with duplicate inputs and duplicate outputs.
+        generated_examples = [
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="banana", output_col="C"),
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="banana", output_col="B"),
+            Example(input_col="apple", output_col="G"),
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="orange", output_col="O"),
+            Example(input_col="apple", output_col="D"),
+            Example(input_col="banana", output_col="B"),
+            Example(input_col="orange", output_col="F"),
+        ]
+
+        # Convert the generated examples to the generated dataset.
+        (
+            all_generated_examples_dataset,
+            generated_dataset,
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
+            generated_examples
+        )
+
+        # Define the expected dataset after conversion (duplicates are filtered).
+        expected_dataset = Dataset.from_dict(
+            {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
+        )
+
+        expected_all_generated_examples_dataset = Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in generated_examples],
+                "output_col": [example.output_col for example in generated_examples],
+            }
+        )
+
+        # Verify that the generated dataset matches the expected dataset.
+        assert are_datasets_identical(generated_dataset, expected_dataset)
+        assert are_datasets_identical(
+            all_generated_examples_dataset, expected_all_generated_examples_dataset
+        )
+
+    # Collect garbage to release memory resources after the test.
+    gc.collect()
+
+
+def test_create_all_examples_dataset_and_generated_dataset_with_unique_inputs_outputs():
+    """Test constructing a map with unique inputs and outputs.
+
+    This test case verifies the construction of the generated dataset with unique
+    inputs and outputs. The OpenAIDatasetGenerator object is initialized with
+    `filter_duplicated_examples=True` to ensure that duplicates are filtered.
+
+    Attributes:
+        api_key (str): The fake API key used for testing.
+    """
+    # Initialize the OpenAIDatasetGenerator with `filter_duplicated_examples=True`.
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        data_generator = OpenAIDatasetGenerator(
+            filter_duplicated_examples=True, cache_root=cache_dir
+        )
+
+        # Provide generated examples with unique inputs and outputs.
+        generated_examples = [
+            Example(input_col="apple", output_col="A"),
+            Example(input_col="banana", output_col="B"),
+            Example(input_col="orange", output_col="O"),
+        ]
+
+        # Convert the generated examples to the generated dataset.
+        (
+            all_generated_examples_dataset,
+            generated_dataset,
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
+            generated_examples
+        )
+
+        # Define the expected dataset after conversion (no duplicates to filter).
+        expected_dataset = Dataset.from_dict(
+            {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
+        )
+
+        expected_all_generated_examples_dataset = Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in generated_examples],
+                "output_col": [example.output_col for example in generated_examples],
+            }
+        )
+
+        # Verify that the generated dataset matches the expected dataset.
+        assert are_datasets_identical(generated_dataset, expected_dataset)
+        assert are_datasets_identical(
+            all_generated_examples_dataset, expected_all_generated_examples_dataset
+        )
+
+    # Collect garbage to release memory resources after the test.
+    gc.collect()
+
+
+def test_create_all_examples_dataset_and_generated_dataset_with_empty_examples_list():
+    """Test constructing a map with empty inputs and outputs.
+
+    This test case verifies the construction of the generated dataset when the
+    generated_examples list is empty. The OpenAIDatasetGenerator object is initialized
+    with `filter_duplicated_examples=True` to ensure that duplicates are filtered.
+
+    Attributes:
+        api_key (str): The fake API key used for testing.
+    """
+    # Initialize the OpenAIDatasetGenerator with `filter_duplicated_examples=True`.
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        data_generator = OpenAIDatasetGenerator(
+            filter_duplicated_examples=True, cache_root=cache_dir
+        )
+
+        # Provide an empty list of generated examples.
+        generated_examples = []
+
+        # Convert the empty generated examples to the generated dataset.
+        (
+            all_generated_examples_dataset,
+            generated_dataset,
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
+            generated_examples
+        )
+
+        # Define the expected dataset (empty dataset when there are no examples).
+        expected_dataset = Dataset.from_dict({})
+
+        expected_all_generated_examples_dataset = Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in generated_examples],
+                "output_col": [example.output_col for example in generated_examples],
+            }
+        )
+
+        # Verify that the generated dataset matches the expected dataset.
+        assert are_datasets_identical(generated_dataset, expected_dataset)
+        assert are_datasets_identical(
+            all_generated_examples_dataset, expected_all_generated_examples_dataset
+        )
+
+    # Collect garbage to release memory resources after the test.
+    gc.collect()
