@@ -11,7 +11,7 @@ import datasets
 import transformers
 
 
-@dataclass(frozen=False)
+@dataclass(frozen=True)
 class ModelOutput:
     """A model output for a single example.
 
