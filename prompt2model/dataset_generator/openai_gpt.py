@@ -106,22 +106,16 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.initial_temperature = initial_temperature
         self.max_temperature = max_temperature
         if self.initial_temperature < 0:
-            logging.warning(
-                "The lowest temperature for GPT-3.5 API is 0. So the initial_temperature is set to 0."  # noqa E501
+            raise ValueError(
+                f"initial_temperature must be >= 0, but {self.initial_temperature=}"
             )
-            self.initial_temperature = 0
         if self.max_temperature > 2.0:
-            logging.warning(
-                "The highest temperature for GPT-3.5 API is 2. So the max_temperature is set to 2."  # noqa E501
+            raise ValueError(
+                "max_temperature must be <= 2.0 but {self.max_temperature=}"
             )
-            self.max_temperature = 2
-        if self.initial_temperature >= self.max_temperature:
-            logging.warning(
-                "The generator gradually increases the temperature from a lower value to a higher value. So the initial_temperature and the max_temperature are switched."  # noqa E501
-            )
-            self.initial_temperature, self.max_temperature = (
-                self.max_temperature,
-                self.initial_temperature,
+        if self.initial_temperature > self.max_temperature:
+            raise ValueError(
+                f"{self.initial_temperature=} must be <= {self.max_temperature=}"
             )
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
