@@ -100,6 +100,7 @@ class GenerationModelTrainer(BaseTrainer):
         Returns:
             The length of [suffix, ..., suffix] in [Others, suffix, ..., suffix].
         """
+        # Reverse the input_ids to get the length of right padding.
         suffix_length = cls.get_left_padding_length(input_ids[::-1], padding_token_id)
         return suffix_length
 
@@ -142,8 +143,8 @@ class GenerationModelTrainer(BaseTrainer):
             logging.warning(
                 (
                     "Truncation happened when tokenizing dataset."
-                    " You should consider increasing the tokenizer_max_length."
-                    " Otherwise the truncation may lead to unexpected results."
+                    " Consider increasing the tokenizer_max_length if possible."
+                    " Otherwise, truncation may lead to unexpected results."
                 )
             )
         input_encodings = self.tokenizer.batch_encode_plus(
@@ -174,7 +175,6 @@ class GenerationModelTrainer(BaseTrainer):
                 length_of_padding_in_output_encoding_id = self.get_left_padding_length(
                     output_encoding_id, self.model.config.pad_token_id
                 )
-                # We are using teaching forcing for training the decoder-only model.
                 # The IGNORE_INDEX is ignored for loss compute in Autoregressive model.
                 # Reference: https://huggingface.co/docs/transformers/model_doc/gpt2#transformers.GPT2DoubleHeadsModel.forward.labels # noqa E501
                 length_of_output_encoding_id_without_padding = (
@@ -235,7 +235,7 @@ class GenerationModelTrainer(BaseTrainer):
         """Train a text generation model.
 
         Args:
-            hyperparameter_choices: A dictionary of hyperparameter for training.
+            hyperparameter_choices: A dictionary of hyperparameters for training.
             training_datasets: Training datasets with `input_col` and `model_output`.
             validation_datasets: Validation datasets during training. If not provided,
                 15% of training data will be spilt from training_datasets to validate.
@@ -279,7 +279,7 @@ class GenerationModelTrainer(BaseTrainer):
             evaluate_after_epoch = True
         elif evaluation_strategy == "no":
             logging.info(
-                "The training doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
+                "The trainer doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
             evaluate_after_epoch = False
         else:
@@ -296,11 +296,11 @@ class GenerationModelTrainer(BaseTrainer):
         if evaluate_after_epoch is True:
             if validation_datasets is None:
                 if not self.has_encoder:
-                    # The validation dataset for autoregressive model is missed.
+                    # The validation dataset for autoregressive model is missing.
                     logging.warning(
                         (
                             (
-                                "The validation split for autoregressive model is missed"  # noqa E501
+                                "The validation split for autoregressive model is missing"  # noqa E501
                                 + ", which should not contain labels as the training spilt."  # noqa E501
                                 + " Thus this evaluation will be skipped."
                             )
@@ -331,6 +331,10 @@ class GenerationModelTrainer(BaseTrainer):
                     # so the validation dataset should not be pre-tokenized here.
                     val_dataset = splitted_dataset["test"]
             else:
+                # the training dataset will be tokenized to train the model.
+                # But we evaluate the model on the validation dataset in the
+                # call back with the model executor and model evaluator,
+                # the validation dataset should not be tokenized.
                 train_dataset = self.tokenize_dataset(concatenated_training_dataset)
                 val_dataset = concatenate_datasets(validation_datasets)
         else:

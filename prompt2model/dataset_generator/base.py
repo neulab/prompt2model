@@ -33,7 +33,7 @@ class DatasetGenerator(ABC):
 
         Args:
             prompt_spec: A prompt spec (containing a system description).
-            expected_num_examples: Number of examples in split.
+            expected_num_examples: Expected number of examples in split.
             split: Name of dataset split to generate.
 
         Returns:
@@ -50,7 +50,8 @@ class DatasetGenerator(ABC):
 
         Args:
             prompt_spec: A prompt specification.
-            expected_num_examples: Number of examples per split (train/val/test/etc).
+            expected_num_examples: Expected number of
+                examples per split (train/val/test).
 
         Returns:
             A DatasetDict containing train, val, and test splits.
