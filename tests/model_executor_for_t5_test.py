@@ -155,7 +155,7 @@ def test_truncation_warning_for_t5_executor():
     with patch("logging.warning") as mock_warning:
         t5_executor.make_single_prediction(test_input)
         mock_warning.assert_called_once_with(
-            "Truncation happened when tokenizing dataset / input string. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
+            "Truncation happened when tokenizing dataset / input string. Consider increasing the tokenizer_max_length if possible. Otherwise, truncation may lead to unexpected results."  # noqa: E501
         )
 
 
