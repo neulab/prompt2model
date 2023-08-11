@@ -5,7 +5,7 @@ import random
 COMPLEX_PROMPT_TEMPLATE = """
 {META_PROMPT}
 --------------------------------------------------------------------------------------------
-Here are some exmaples you can refer to:
+Here are some examples you can refer to:
 
 - Example 1
 
@@ -30,13 +30,13 @@ Here is the requirement for the generation of a new example:
 ---------------------------------------------------------------------------------------------
 Here are some [high-quality examples] for the [new instruction]. These examples can provide you with very strict format requirements. You should pay extreme attention to them!!!
 
-[high-equality examples]:
-{high_equality_example_string}
+[high-quality examples]:
+{high_quality_example_string}
 ---------------------------------------------------------------------------------------------
 These are some [low-quality examples]. Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
 
 [low-quality examples]:
-{low_equality_example_string}
+{low_quality_example_string}
 ---------------------------------------------------------------------------------------------
 Before generating a new example, ensure that you strictly adhere to the rules mentioned in the [new instruction] and follow the format of the [high-quality examples]. Even if there are conflicts between [low-quality examples] and [new instruction], prioritize the [new instruction] guidelines to maintain consistency and quality. Think twice before generating a new example.
 
@@ -45,7 +45,7 @@ Before generating a new example, ensure that you strictly adhere to the rules me
 MIDDLE_PROMPT_TEMPLATE = """
 {META_PROMPT}
 --------------------------------------------------------------------------------------------
-Here are some exmaples you can refer to:
+Here are some examples you can refer to:
 
 - Example 1
 
@@ -66,13 +66,13 @@ Here is the requirement for the generation of a new example:
 ---------------------------------------------------------------------------------------------
 Here are some [high-quality examples] for the [new instruction]. These examples can provide you with very strict format requirements. You should pay extreme attention to them!!!
 
-[high-equality examples]:
-{high_equality_example_string}
+[high-quality examples]:
+{high_quality_example_string}
 ---------------------------------------------------------------------------------------------
 These are some [low-quality examples]. Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
 
 [low-quality examples]:
-{low_equality_example_string}
+{low_quality_example_string}
 ---------------------------------------------------------------------------------------------
 Before generating a new example, ensure that you strictly adhere to the rules mentioned in the [new instruction] and follow the format of the [high-quality examples]. Even if there are conflicts between [low-quality examples] and [new instruction], prioritize the [new instruction] guidelines to maintain consistency and quality. Think twice before generating a new example.
 
@@ -81,7 +81,7 @@ Before generating a new example, ensure that you strictly adhere to the rules me
 SIMPLE_PROMPT_TEMPLATE = """
 {META_PROMPT}
 --------------------------------------------------------------------------------------------
-Here are some exmaples you can refer to:
+Here are some examples you can refer to:
 
 - Example 1
 
@@ -98,13 +98,13 @@ Here is the requirement for the generation of a new example:
 ---------------------------------------------------------------------------------------------
 Here are some [high-quality examples] for the [new instruction]. These examples can provide you with very strict format requirements. You should pay extreme attention to them!!!
 
-[high-equality examples]:
-{high_equality_example_string}
+[high-quality examples]:
+{high_quality_example_string}
 ---------------------------------------------------------------------------------------------
 These are some [low-quality examples]. Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
 
 [low-quality examples]:
-{low_equality_example_string}
+{low_quality_example_string}
 ---------------------------------------------------------------------------------------------
 Before generating a new example, ensure that you strictly adhere to the rules mentioned in the [new instruction] and follow the format of the [high-quality examples]. Even if there are conflicts between [low-quality examples] and [new instruction], prioritize the [new instruction] guidelines to maintain consistency and quality. Think twice before generating a new example.
 
@@ -245,16 +245,16 @@ Your Name\"""",  # noqa: E501
 
 def construct_meta_prompt(
     instruction: str = None,
-    low_equality_example_string: str = None,
-    high_equality_example_string: str = None,
+    low_quality_example_string: str = None,
+    high_quality_example_string: str = None,
     template_type: str = "SIMPLE",
 ) -> str:
     """Constructs a prompt template for the dataset generator.
 
     Args:
         instruction: The natural language instruction for the prompt.
-        low_equality_example_string: A string representing the low equality examples.
-        high_equality_example_string: A string representing the high equality examples.
+        low_quality_example_string: A string representing the low quality examples.
+        high_quality_example_string: A string representing the high quality examples.
         template_type: If template_type is COMPLEX, uses the
         COMPLEX_PROMPT_TEMPLATE, if template_type is MIDDLE, uses the
         MIDDLE_PROMPT_TEMPLATE, and if template_type is SIMPLE,
@@ -280,8 +280,8 @@ def construct_meta_prompt(
             example_3=example_3,
             example_4=example_4,
             instruction=instruction,
-            high_equality_example_string=high_equality_example_string,
-            low_equality_example_string=low_equality_example_string,
+            high_quality_example_string=high_quality_example_string,
+            low_quality_example_string=low_quality_example_string,
         )
     elif template_type == "MIDDLE":
         return MIDDLE_PROMPT_TEMPLATE.format(
@@ -290,8 +290,8 @@ def construct_meta_prompt(
             example_2=example_2,
             example_3=example_3,
             instruction=instruction,
-            high_equality_example_string=high_equality_example_string,
-            low_equality_example_string=low_equality_example_string,
+            high_quality_example_string=high_quality_example_string,
+            low_quality_example_string=low_quality_example_string,
         )
     else:
         return SIMPLE_PROMPT_TEMPLATE.format(
@@ -299,6 +299,6 @@ def construct_meta_prompt(
             example_1=example_1,
             example_2=example_2,
             instruction=instruction,
-            high_equality_example_string=high_equality_example_string,
-            low_equality_example_string=low_equality_example_string,
+            high_quality_example_string=high_quality_example_string,
+            low_quality_example_string=low_quality_example_string,
         )

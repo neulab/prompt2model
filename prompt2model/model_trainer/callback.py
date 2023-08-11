@@ -53,7 +53,7 @@ class ValidationCallback(TrainerCallback):
     def on_epoch_end(self, args, state, control, **kwargs):
         """After each  evaluation, this function will be called."""
         _ = (args, state, control, kwargs)
-        # Supress the unused parameters warning.
+        # Suppress the unused parameters warning.
         self.epoch_count += 1
         logger.info(
             f"Epoch: {self.epoch_count}. Evaluate on { self.val_dataset_size} examples."
