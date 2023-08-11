@@ -502,10 +502,9 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         generated_examples.append(Example(input, output))
                     else:
                         logging.info(
-                            "Empty input or output ditected. Discard this example."
+                            "Empty input or output detected. Discard this example."
                         )
                         continue
-                    # Add the validated example to the generated examples list.
                     logging.info(f"input: \n\n{input}\n\n")
                     logging.info(f"output: \n\n{output}\n\n")
             except Exception:
