@@ -1,4 +1,4 @@
-"""Testing T5 (encoder-decoder) ModelTrainer with different configurations (part 2)."""
+"""Testing T5 (encoder-decoder) ModelTrainer with different configurations."""
 
 import gc
 import os
@@ -31,7 +31,7 @@ def test_t5_trainer_with_get_right_padding_length():
     gc.collect()
 
 
-def test_t5_trainer_tokenize():
+def test_t5_model_trainer_tokenize():
     """Test the Trainer for T5 mode correctly tokenize dataset."""
     trainer = GenerationModelTrainer(
         "patrickvonplaten/t5-tiny-random", has_encoder=True, tokenizer_max_length=64
@@ -347,6 +347,7 @@ def test_t5_trainer_without_validation_datasets():
         trained_tokenizer.save_pretrained(cache_dir)
         assert isinstance(trained_model, transformers.T5ForConditionalGeneration)
         assert isinstance(trained_tokenizer, transformers.T5Tokenizer)
+    gc.collect()
 
 
 def test_t5_trainer_with_unsupported_evaluation_strategy():
@@ -457,6 +458,7 @@ def test_t5_trainer_with_unsupported_parameter():
         assert str(exc_info.value) == (
             f"Only support {supported_keys} as training parameters."
         )
+    gc.collect()
 
 
 def test_t5_trainer_with_truncation_warning():
@@ -478,6 +480,7 @@ def test_t5_trainer_with_truncation_warning():
         trainer.tokenize_dataset(training_dataset)
         # logging.warning was called for truncation.
         mock_warning.assert_called_once_with(
-            "Truncation happened when tokenizing dataset. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
+            "Truncation happened when tokenizing dataset. Consider increasing the tokenizer_max_length if possible. Otherwise, truncation may lead to unexpected results."  # noqa: E501
         )
         mock_info.assert_not_called()
+    gc.collect()
