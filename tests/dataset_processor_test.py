@@ -92,7 +92,7 @@ def test_the_logging_for_provide_unnecessary_eos_token_for_t5():
     with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
         _ = TextualizeProcessor(has_encoder=True, eos_token=t5_tokenizer.eos_token)
         mock_info.assert_called_once_with(
-            "The T5 tokenizer automatically adds eos token in the end of sequence in when tokenizing. So the eos_token of encoder-decoder model tokenizer is unnecessary."  # noqa E501
+            "The T5 tokenizer automatically adds eos token in the end of sequence when tokenizing. So the eos_token of encoder-decoder model tokenizer is unnecessary."  # noqa E501
         )
         mock_warning.assert_not_called()
     gc.collect()

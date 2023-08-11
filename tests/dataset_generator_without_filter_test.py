@@ -46,6 +46,19 @@ MOCK_INVALID_JSON = partial(
     content='{"input": "This is a great movie!", "output": "1}',
 )
 
+MOCK_CLASSIFICATION_EXAMPLE = partial(
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "This is a great movie!", "output": "1"}',
+)
+MOCK_WRONG_KEY_EXAMPLE = partial(
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "This is a great movie!", "label": "1"}',
+)
+MOCK_INVALID_JSON = partial(
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "This is a great movie!", "output": "1}',
+)
+
 
 def check_generate_dataset(dataset_generator: OpenAIDatasetGenerator):
     """Test the `generate_dataset_split()` function of `OpenAIDatasetGenerator`.
@@ -395,9 +408,10 @@ def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs
     The test uses the `OpenAIDatasetGenerator` with `filter_duplicated_examples=False`.
     The `generating_split` attribute of the generator is set to `DatasetSplit.TEST`,
     and the `generated_examples` list contains examples with some duplicate inputs but
-    unique outputs. The function then calls the
-    `create_all_examples_dataset_and_generated_dataset()` method to create the generated
-    dataset.
+    unique outputs.
+
+    The function then calls the `create_all_examples_dataset_and_generated_dataset()`
+    method to create the generated dataset.
 
     Finally, the function checks whether the generated dataset matches the expected
     dataset constructed from the input examples.
@@ -738,19 +752,19 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
         data_generator = OpenAIDatasetGenerator(
             cache_root=cache_dir, filter_duplicated_examples=False
         )
-        dataset_cache_path = Path(
-            data_generator.cache_root / f"{DatasetSplit.TEST.value}"
+        examples_cache_path = Path(
+            data_generator.cache_root / f"generated_examples_{DatasetSplit.TEST.value}"
         )
-        cached_dataset = Dataset.from_dict(
+        cached_examples = Dataset.from_dict(
             {
                 "input_col": ["1"] * 110,
                 "output_col": ["2"] * 110,
             }
         )
-        cached_dataset.save_to_disk(dataset_cache_path)
+        cached_examples.save_to_disk(examples_cache_path)
         # The generate_dataset_split would first load the cached
         # dataset into generated_examples. Then in the while
-        # loop, create_all_examples_dataset_and_generated_dataset
+        # loop, ccreate_all_examples_dataset_and_generated_dataset
         # would be called to construct the generated_dataset.
         # Note that filter_duplicated_examples is False, so the
         # generated_examples won't be filtered. And since the
@@ -766,10 +780,10 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
                 split=DatasetSplit.TEST,
             )
             mock_info.assert_called_once_with(
-                f"Loading cache from {str(dataset_cache_path)}."
+                f"Loading cache from {str(examples_cache_path)}."
             )
             mock_warning.assert_not_called()
-        assert are_datasets_identical(generated_dataset, cached_dataset)
+        assert are_datasets_identical(generated_dataset, cached_examples)
     gc.collect()
 
 
@@ -804,8 +818,8 @@ def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_gene
         data_generator = OpenAIDatasetGenerator(
             cache_root=cache_dir, filter_duplicated_examples=False
         )
-        dataset_cache_path = Path(
-            data_generator.cache_root / f"{DatasetSplit.TEST.value}"
+        examples_cache_path = Path(
+            data_generator.cache_root / f"generated_examples_{DatasetSplit.TEST.value}"
         )
         cached_dataset = Dataset.from_dict(
             {
@@ -813,10 +827,10 @@ def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_gene
                 "output_col": ["2"] * 110,
             }
         )
-        cached_dataset.save_to_disk(dataset_cache_path)
+        cached_dataset.save_to_disk(examples_cache_path)
         # The generate_dataset_split would first load the cached
         # dataset into generated_examples. Then in the while
-        # loop, create_all_examples_dataset_and_generated_dataset
+        # loop, ccreate_all_examples_dataset_and_generated_dataset
         # would be called to construct the generated_dataset.
         # Note that filter_duplicated_examples is False, so the
         # generated_examples won't be filtered. And since the
@@ -833,7 +847,7 @@ def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_gene
                 split=DatasetSplit.TEST,
             )
             info_list = [each.args[0] for each in mock_info.call_args_list]
-            assert info_list[0] == f"Loading cache from {str(dataset_cache_path)}."
+            assert info_list[0] == f"Loading cache from {str(examples_cache_path)}."
             # The first logging.info is loaded cache, and there is
             # another 2 * 5 * 2 logging.info in extract_responses.
             assert len(info_list) == 1 + 2 * 5 * 2

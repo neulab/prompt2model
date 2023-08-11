@@ -855,8 +855,8 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
         )
 
         # Create a cached dataset and save it to the disk.
-        dataset_cache_path = Path(
-            data_generator.cache_root / f"{DatasetSplit.TEST.value}"
+        examples_cache_path = Path(
+            data_generator.cache_root / f"generated_examples_{DatasetSplit.TEST.value}"
         )
         cached_dataset = Dataset.from_dict(
             {
@@ -864,11 +864,11 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
                 "output_col": ["a", "a", "b", "c", "a", "d"],
             }
         )
-        cached_dataset.save_to_disk(dataset_cache_path)
+        cached_dataset.save_to_disk(examples_cache_path)
 
         # The generate_dataset_split would first load the cached dataset into
         # generated_examples. Then, in the while loop,
-        # convert_generated_examples_to_generated_dataset would be called to
+        # create_all_examples_dataset_and_generated_dataset would be called to
         # construct the generated_dataset. Note that filter_duplicated_examples
         # is True, so the generated_examples will be filtered to 3 examples
         # in generated_dataset. Since expected_num_examples is 3, the while loop
@@ -885,7 +885,7 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
 
             # Verify that logging.info was called with the correct message.
             mock_info.assert_called_once_with(
-                f"Loading cache from {str(dataset_cache_path)}."
+                f"Loading cache from {str(examples_cache_path)}."
             )
             mock_warning.assert_not_called()
 
@@ -928,21 +928,21 @@ def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generat
             cache_root=cache_dir, filter_duplicated_examples=True
         )
 
-        # Create a cached dataset and save it to the disk.
-        dataset_cache_path = Path(
-            data_generator.cache_root / f"{DatasetSplit.TEST.value}"
+        # Create cached examples and save them to the disk.
+        examples_cache_path = (
+            Path(cache_dir) / f"generated_examples_{DatasetSplit.TEST.value}"
         )
-        cached_dataset = Dataset.from_dict(
+        cached_examples = Dataset.from_dict(
             {
                 "input_col": ["1", "1", "1", "1", "2", "3"],
                 "output_col": ["a", "a", "b", "c", "a", "d"],
             }
         )
-        cached_dataset.save_to_disk(dataset_cache_path)
+        cached_examples.save_to_disk(examples_cache_path)
 
         # The generate_dataset_split would first load the cached dataset into
         # generated_examples. Then, in the while loop,
-        # convert_generated_examples_to_generated_dataset would be called to
+        # create_all_examples_dataset_and_generated_dataset would be called to
         # construct the generated_dataset. Note that filter_duplicated_examples
         # is True, so the generated_examples will be filtered to 3 examples
         # in generated_dataset. Since expected_num_examples is 4, the generation
@@ -960,7 +960,7 @@ def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generat
             # Verify that logging.info was called with
             # the correct message for loading cache.
             info_list = [each.args[0] for each in mock_info.call_args_list]
-            assert info_list[0] == f"Loading cache from {str(dataset_cache_path)}."
+            assert info_list[0] == f"Loading cache from {str(examples_cache_path)}."
             # The first logging.info is for loading cache, and there are
             # 5 * 2 additional logging.info messages in extract_responses.
             assert len(info_list) == 1 + 5 * 2
