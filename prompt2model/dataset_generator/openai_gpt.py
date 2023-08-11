@@ -49,7 +49,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         responses_per_request: int = 5,
         requests_per_minute: int = 80,
         filter_duplicated_examples: bool = True,
-        cache_root: str = "cached_genrated_dataset",
+        cache_root: str = "cached_generated_dataset",
     ):
         """Initializes an instance of the OpenAI DatasetGenerator.
 
@@ -70,8 +70,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             max_batch_size: The maximum number of requests to make in each batch.
             responses_per_request: The number of responses for each request.
             requests_per_minute: The maximum number of requests per minute.
-            filter_duplicated_examples: If True, filters duplicated examples based
-                on multi-votes.
+            filter_duplicated_examples: If True, filters duplicated examples,
+                using the most-frequent output for each input.
             cache_root: The root directory for caching generated examples.
 
         Raises:
@@ -101,13 +101,13 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         instruction: str,
         few_shot_example_string: str,
         generated_examples: list[Example],
-    ) -> tuple[str, str]:
+    ) -> str:
         """Generates a prompt string.
 
         Args:
             instruction: The natural language instruction for the prompt.
             few_shot_example_string: A string representing the few-shot examples
-                parsed from the user's prompt, which equality is higher than the
+                parsed from the user's prompt, which quality is higher than the
                 genrated examples.
             generated_examples: A list of currently generated examples.
 
@@ -120,36 +120,36 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         # is the few-shot examples parsed from the user's prompt.
         while True:
             if len(generated_examples) == 0:
-                low_equality_example_string = "N/A\n"
-                # Create default low_equality_example_string if generated_examples
-                # is empty. few_shot_example_string is the high-equality few-shot
+                low_quality_example_string = "N/A\n"
+                # Create default low_quality_example_string if generated_examples
+                # is empty. few_shot_example_string is the high-quality few-shot
                 # examples parsed from the user's prompt. But if user does not
                 # provideany examples in the input prompt, the few_shot_example_string
                 # will be "N/A"/""/None.
                 random_selected_generated_example_num = 0
                 # random_selected_generated_example_num is the number of selected
                 # random examples from generated_examples that will be used to
-                # create the low_equality_example_string. If generated_examples
+                # create the low_quality_example_string. If generated_examples
                 # is empty, then random_selected_generated_example_num is 0.
             else:
-                # If generated_examples is not empty, low_equality_example_string
+                # If generated_examples is not empty, low_quality_example_string
                 # is sveral random generated examples from generated_examples.
 
-                low_equality_example_string = ""
+                low_quality_example_string = ""
                 random_selected_generated_example_num = random.randint(
                     1, min(len(generated_examples), 10)
                 )
                 # random_selected_generated_example_num is the number of selected
                 # random examples from generated_examples that will
-                # be concatenated to create low_equality_example_string.
+                # be concatenated to create low_quality_example_string.
                 random_examples = random.sample(
                     generated_examples, random_selected_generated_example_num
                 )
                 # If generated_examples is not empty, then choose several
                 # random examples from generated_examples to construct
-                # new low_equality_example_string.
+                # new low_quality_example_string.
                 for example in random_examples:
-                    low_equality_example_string += (
+                    low_quality_example_string += (
                         f'input="{example.input_col}"\noutput="{example.output_col}"\n'
                     )
             # To increase the diversity of the prompt to DatasetGenerator, create three
@@ -162,8 +162,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             ]
             prompt = construct_meta_prompt(
                 instruction=instruction,
-                low_equality_example_string=low_equality_example_string,
-                high_equality_example_string=few_shot_example_string,
+                low_quality_example_string=low_quality_example_string,
+                high_quality_example_string=few_shot_example_string,
                 template_type=template_type,
             )
             # The max content length of gpt-3.5-turbo is 4097, so if the
@@ -442,14 +442,34 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     input = str(response_json["input"]).strip()
                     output = str(response_json["output"]).strip()
                     generated_examples.append(Example(input, output))
-                    logging.info(f"input: \n\n{input}\n\n")  # noqa: E501
-                    logging.info(f"output: \n\n{output}\n\n")  # noqa: E501
+                    logging.info(f"input: \n\n{input}\n\n")
+                    logging.info(f"output: \n\n{output}\n\n")
             except Exception:
                 logging.warning(
                     f"Error happened when parsing API completion: {completion}"
                 )
                 continue
         return generated_examples
+
+    async def generate_responses(
+        self, chat_api: ChatGPTAgent, prompts: list[str]
+    ) -> list[openai.Completion]:
+        """Generates async responses using OpenAI API.
+
+        Args:
+            chat_api (ChatGPTAgent): ChatGPTAgent to generate responses.
+            prompts (list[str]): A list of prompts to generate responses.
+
+        Returns:
+            A list of openai.Completion.
+        """
+        responses = await chat_api.generate_batch_openai_chat_completion(
+            prompts,
+            temperature=self.temperature,
+            responses_per_request=self.responses_per_request,
+            requests_per_minute=self.requests_per_minute,
+        )
+        return responses
 
     def generate_dataset_split(
         self,
@@ -478,16 +498,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             try:
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
                     logging.warning("Maximum number of API calls reached.")
-                    return Dataset.from_dict(
-                        {
-                            "input_col": [
-                                example.input_col for example in generated_examples
-                            ],
-                            "output_col": [
-                                example.output_col for example in generated_examples
-                            ],
-                        }
-                    )
+                    break
                 else:
                     batch_size = (
                         min(
@@ -522,23 +533,14 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         for _ in range(batch_size)
                     ]
 
-                    async def generate_responses():
-                        responses = (
-                            await chat_api.generate_batch_openai_chat_completion(
-                                prompts,
-                                temperature=self.temperature,
-                                responses_per_request=self.responses_per_request,
-                                requests_per_minute=self.requests_per_minute,
-                            )
-                        )
-                        return responses
-
                     loop = asyncio.get_event_loop()
-                    responses = loop.run_until_complete(generate_responses())
+                    responses = loop.run_until_complete(
+                        self.generate_responses(chat_api, prompts)
+                    )
                     generated_examples = self.extract_responses(
                         responses, generated_examples=generated_examples
                     )
-                    pbar.update(len(generated_examples))
+                    pbar.update(len(generated_examples) - pbar.n)
             except OPENAI_ERRORS as e:
                 self.api_call_counter = handle_openai_error(e, self.api_call_counter)
         # Each API call will return `responses_per_request` completion
