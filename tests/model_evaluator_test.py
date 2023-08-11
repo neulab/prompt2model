@@ -55,7 +55,7 @@ def test_t5_evaluator_with_default_metrics():
             encoder_model_name="xlm-roberta-base",
         )
         mock_info.assert_called_once_with(
-            "Using default metrics of chrf, exact_match and bert_score."
+            "Using default metrics of chr_f, exact_match and bert_score."
         )
         mock_warning.assert_not_called()
     # Assert the expected metric values
@@ -82,7 +82,7 @@ def test_gpt_evaluator_with_default_metrics():
         )
         info_list = [each.args[0] for each in mock_info.call_args_list]
         assert info_list == [
-            "Using default metrics of chrf, exact_match and bert_score.",
+            "Using default metrics of chr_f, exact_match and bert_score.",
             "The model_input_column is not None. The model input will be detached from predictions if necessary.",  # noqa 501
         ]
         mock_warning.assert_not_called()
@@ -96,7 +96,7 @@ def test_gpt_evaluator_with_default_metrics():
 
 
 def test_t5_evaluator_with_selected_metrics():
-    """Test the T5 Evaluator with chrf, exact_match metrics."""
+    """Test the T5 Evaluator with chr_f, exact_match metrics."""
     evaluator = Seq2SeqEvaluator()
     metrics = [
         evaluate.load("chrf"),
@@ -128,7 +128,7 @@ def test_t5_evaluator_with_selected_metrics():
 
 
 def test_gpt_evaluator_with_selected_metrics():
-    """Test the GPT Evaluator with chrf, exact_match metrics."""
+    """Test the GPT Evaluator with chr_f, exact_match metrics."""
     evaluator = Seq2SeqEvaluator()
     metrics = [
         evaluate.load("chrf"),
@@ -219,7 +219,7 @@ def test_gpt_evaluator_without_model_input_column():
         )
         info_list = [each.args[0] for each in mock_info.call_args_list]
         assert info_list == [
-            "Using default metrics of chrf, exact_match and bert_score.",
+            "Using default metrics of chr_f, exact_match and bert_score.",
         ]
         mock_warning.assert_not_called()
     # Since the model_input_column is not specified, the model input will not be

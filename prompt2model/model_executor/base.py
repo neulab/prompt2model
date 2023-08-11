@@ -73,7 +73,7 @@ class ModelExecutor(ABC):
             )
         if hasattr(self.model.config, "max_position_embeddings"):
             max_embeddings = self.model.config.max_position_embeddings
-            if sequence_max_length is not None and max_embeddings < sequence_max_length:
+            if sequence_max_length is not None and sequence_max_length > max_embeddings:
                 logger.warning(
                     (
                         f"The sequence_max_length ({sequence_max_length})"
