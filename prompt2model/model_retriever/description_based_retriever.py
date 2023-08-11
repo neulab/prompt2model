@@ -145,7 +145,7 @@ class DescriptionModelRetriever(ModelRetriever):
         )
         return model_vectors
 
-    def scaled_similarity_score(
+    def scale_similarity_score(
         self, model_info: ModelInfo, model_score: float
     ) -> float:
         """Adjust the search score using the model size and number of downloads.
@@ -195,7 +195,7 @@ class DescriptionModelRetriever(ModelRetriever):
         for model_idx_str, model_score in ranked_list:
             model_idx = int(model_idx_str)
             model_info = self.model_infos[model_idx]
-            scaled_model_score = self.scaled_similarity_score(model_info, model_score)
+            scaled_model_score = self.scale_similarity_score(model_info, model_score)
             self.model_infos[model_idx].score = scaled_model_score
 
         ranked_list = sorted(self.model_infos, key=lambda x: x.score, reverse=True)
