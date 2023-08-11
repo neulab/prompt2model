@@ -23,7 +23,7 @@ class MockTrainer(BaseTrainer):
 
         Args:
             training_datasets: A list of training datasets.
-            hyperparameter_choices: A dictionary of hyperparameter choices.
+            hyperparameter_choices: A dictionary of hyperparameters for training.
 
         Returns:
             A HuggingFace model and tokenizer.
