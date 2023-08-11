@@ -498,7 +498,14 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         continue
                     input = str(response_json["input"]).strip()
                     output = str(response_json["output"]).strip()
-                    generated_examples.append(Example(input, output))
+                    if input != "" and output != "":
+                        generated_examples.append(Example(input, output))
+                    else:
+                        logging.info(
+                            "Empty input or output ditected. Discard this example."
+                        )
+                        continue
+                    # Add the validated example to the generated examples list.
                     logging.info(f"input: \n\n{input}\n\n")
                     logging.info(f"output: \n\n{output}\n\n")
             except Exception:

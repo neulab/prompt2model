@@ -63,9 +63,6 @@ class TextualizeProcessor(BaseProcessor):
             A dictionary with `model_input` as the input to models
             and `model_output` as the expected output of models.
         """
-        assert (
-            "input_col" in example and "output_col" in example
-        ), "Example dictionary must have 'input_col' and 'output_col' keys."
         assert dataset_split in (
             "train",
             "val",
