@@ -20,7 +20,9 @@ class BaseTrainer(ABC):
             pretrained_model_name: A HuggingFace model name to use for training.
         """
         self.model = AutoModel.from_pretrained(pretrained_model_name)
-        self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            pretrained_model_name, padding_side="left"
+        )
         self.wandb = None
 
     @abstractmethod
