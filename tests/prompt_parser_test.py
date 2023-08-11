@@ -8,11 +8,7 @@ import openai
 import pytest
 
 from prompt2model.prompt_parser import OpenAIInstructionParser, TaskType
-<<<<<<< HEAD
-from test_helpers import UnknownGpt3Exception, mock_one_openai_response
-=======
-from test_helpers.mock_openai import MockCompletion
->>>>>>> mock_batch_openai_response_with_different_completions
+from test_helpers import MockCompletion, UnknownGpt3Exception
 
 GPT3_RESPONSE_WITH_DEMONSTRATIONS = MockCompletion(
     '{"Instruction": "Convert each date from an informal description into a'
@@ -34,24 +30,6 @@ GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS = MockCompletion(
 GPT3_RESPONSE_WITH_INVALID_JSON = MockCompletion(
     '{"Instruction": "A", "Demonstrations": "B}'  # Missing final quotation mark
 )
-
-
-<<<<<<< HEAD
-mock_prompt_parsing_example_with_demonstrations = partial(
-    mock_one_openai_response, content=GPT3_RESPONSE_WITH_DEMONSTRATIONS
-)
-mock_prompt_parsing_example_without_demonstrations = partial(
-    mock_one_openai_response, content=GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS
-)
-mock_prompt_parsing_example_with_invalid_json = partial(
-    mock_one_openai_response, content=GPT3_RESPONSE_WITH_INVALID_JSON
-)
-=======
-class UNKNOWN_GPT3_EXCEPTION(Exception):
-    """This is a newly-defined exception for testing purposes."""
-
-    pass
->>>>>>> mock_batch_openai_response_with_different_completions
 
 
 @patch(
