@@ -107,34 +107,25 @@ class GenerationModelExecutor(ModelExecutor):
 
     def make_prediction(
         self,
-        single_model_input: str = None,
+        test_set: datasets.Dataset,
+        input_column: str,
         hyperparameter_choices: dict[str, Any] = {},
     ) -> list[ModelOutput]:
-        """Evaluate a T5-type or GPT-type model on a test set.
+        """Make predictions with a T5-type or GPT-type model on a test set.
 
         Args:
-            single_model_input: An optional parameter. If `single_model_input` is None,
-                the model executor will make prediction on self.test_set, else it will
-                make prediction on the single_model_input.
-            hyperparameter_choices: A dictionary of hyperparameter for inference.
+            test_set: The dataset to make predictions on. Note that
+                make_single_prediction will warp single_model_input
+                into a inference_dataset with only one element.
+            input_column: The dataset column to use as input to the model.
+            hyperparameter_choices: A dictionary of hyperparameter for generate.
 
         Returns:
             A list of model outputs, one for each element in the test set.
         """
+        num_examples = len(test_set)
         model_outputs = []
-        if not single_model_input:
-            inference_column = self.input_column
-            num_examples = len(self.test_set)
-            inference_dataset = self.test_set
-        else:
-            logging.info("Making single prediction for DemoCreator.")
-            num_examples = 1
-            inference_dataset = datasets.Dataset.from_dict(
-                {"model_input": [single_model_input]}
-            )
-            inference_column = "model_input"
-            assert len(inference_dataset) == num_examples
-        longest_input = max(inference_dataset[inference_column], key=len)
+        longest_input = max(test_set[input_column], key=len)
         if (
             self.tokenizer_max_length is not None
             and len(self.tokenizer.tokenize(longest_input)) > self.tokenizer_max_length
@@ -142,16 +133,16 @@ class GenerationModelExecutor(ModelExecutor):
             logging.warning(
                 (
                     "Truncation happened when tokenizing dataset / input string."
-                    " Consider increasing the tokenizer_max_length if possible."
-                    " Otherwise, truncation may lead to unexpected results."
+                    " You should consider increasing the tokenizer_max_length."
+                    " Otherwise the truncation may lead to unexpected results."
                 )
             )
 
         for start_idx in range(0, num_examples, self.batch_size):
             end_idx = min(start_idx + self.batch_size, num_examples)
-            batch = datasets.Dataset.from_dict(inference_dataset[start_idx:end_idx])
+            batch = datasets.Dataset.from_dict(test_set[start_idx:end_idx])
 
-            input_texts = batch[inference_column]
+            input_texts = batch[input_column]
             encoded_inputs = self.tokenizer.batch_encode_plus(
                 input_texts,
                 truncation=True,
@@ -194,8 +185,14 @@ class GenerationModelExecutor(ModelExecutor):
         Returns:
             A single model output, useful for exposing a model to a user interface.
         """
+        logging.info("Making single prediction for DemoCreator.")
+        num_examples = 1
+        inference_dataset = datasets.Dataset.from_dict({"model_input": [model_input]})
+        inference_column = "model_input"
+        assert len(inference_dataset) == num_examples
         model_output = self.make_prediction(
-            single_model_input=model_input,
-            hyperparameter_choices=hyperparameter_choices,
+            inference_dataset,
+            inference_column,
+            hyperparameter_choices,
         )[0]
         return model_output
