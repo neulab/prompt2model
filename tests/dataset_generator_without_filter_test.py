@@ -11,18 +11,18 @@ import pytest
 from prompt2model.dataset_generator.base import DatasetSplit
 from prompt2model.dataset_generator.openai_gpt import OpenAIDatasetGenerator
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
-from test_helpers import mock_batch_openai_response
+from test_helpers import mock_batch_openai_response_with_identical_completions
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
-    mock_batch_openai_response,
+    mock_batch_openai_response_with_identical_completions,
     content='{"input": "This is a great movie!", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
-    mock_batch_openai_response,
+    mock_batch_openai_response_with_identical_completions,
     content='{"input": "This is a great movie!", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
-    mock_batch_openai_response,
+    mock_batch_openai_response_with_identical_completions,
     content='{"input": "This is a great movie!", "output": "1}',
 )
 
