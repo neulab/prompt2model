@@ -37,7 +37,7 @@ class GenerationModelExecutor(ModelExecutor):
             "greedy",  # greedy search.
             "intersect",  # If both top_k and top_p are set, the model will
             # sample from the intersection of the top-k tokens and the top-p tokens.
-        ], f"Only support top_k/top_p/intersect sampling and beam/greedy search for inference. But the passed in generate_strategy is {generate_strategy}"  # noqa 501
+        ], "Only support top_k/top_p/intersect sampling and beam/greedy search for inference."  # noqa 501
         if generate_strategy == "greedy":
             output = self.model.generate(
                 input_ids=input_ids,
@@ -123,7 +123,7 @@ class GenerationModelExecutor(ModelExecutor):
         Returns:
             A list of model outputs, one for each element in the test set.
         """
-        num_examples = len(test_set)
+        expected_num_examples = len(test_set)
         model_outputs = []
         longest_input = max(test_set[input_column], key=len)
         if (
@@ -138,8 +138,8 @@ class GenerationModelExecutor(ModelExecutor):
                 )
             )
 
-        for start_idx in range(0, num_examples, self.batch_size):
-            end_idx = min(start_idx + self.batch_size, num_examples)
+        for start_idx in range(0, expected_num_examples, self.batch_size):
+            end_idx = min(start_idx + self.batch_size, expected_num_examples)
             batch = datasets.Dataset.from_dict(test_set[start_idx:end_idx])
 
             input_texts = batch[input_column]
@@ -186,10 +186,10 @@ class GenerationModelExecutor(ModelExecutor):
             A single model output, useful for exposing a model to a user interface.
         """
         logging.info("Making single prediction for DemoCreator.")
-        num_examples = 1
+        expected_num_examples = 1
         inference_dataset = datasets.Dataset.from_dict({"model_input": [model_input]})
         inference_column = "model_input"
-        assert len(inference_dataset) == num_examples
+        assert len(inference_dataset) == expected_num_examples
         model_output = self.make_prediction(
             inference_dataset,
             inference_column,

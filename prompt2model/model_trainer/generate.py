@@ -166,7 +166,6 @@ class GenerationModelTrainer(BaseTrainer):
                 length_of_padding_in_output_encoding_id = self.get_left_padding_length(
                     output_encoding_id, self.model.config.pad_token_id
                 )
-
                 # The index -100 is ignored for loss compute in Autoregressive model.
                 # Reference: https://huggingface.co/docs/transformers/model_doc/gpt2#transformers.GPT2DoubleHeadsModel.forward.labels # noqa E501
                 length_of_output_encoding_id_without_padding = (

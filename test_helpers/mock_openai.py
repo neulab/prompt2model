@@ -7,15 +7,17 @@ from __future__ import annotations  # noqa FI58
 class MockCompletion:
     """Mock openai completion object."""
 
-    def __init__(self, content: str):
+    def __init__(self, content: str, responses_per_request: int = 1):
         """Initialize a new instance of `MockCompletion` class.
 
         Args:
             content: The mocked content to be returned, i.e.,
             `json.dumps({"comment": "This is a great movie!",
             "label": 1})`.
+            responses_per_request: Number of responses for each request.
         """
-        self.choices = [{"message": {"content": content}}]
+        # We generate 5 responses for each API call.
+        self.choices = [{"message": {"content": content}}] * responses_per_request
 
     def __repr__(self):
         """Return a string representation of the `MockCompletion` object.
@@ -56,10 +58,12 @@ def mock_one_openai_response(
 
 def mock_batch_openai_response(
     prompts: list[str],
-    temperature: float,
     content: str,
+    temperature: float,
     presence_penalty: float = 0,
     frequency_penalty: float = 0,
+    responses_per_request: int = 5,
+    requests_per_minute: int = 80,
 ) -> list[MockCompletion]:
     """Generate a batch of  mock completion objects.
 
@@ -68,14 +72,19 @@ def mock_batch_openai_response(
 
     Args:
         prompts: A batch of mocked prompts that won't be used.
+        content: The example string to be returned.
         temperature: A mocked temperature.
         presence_penalty: A mocked presence penalty.
         frequency_penalty: A mocked frequency penalty.
-        content: The example string to be returned.
+        responses_per_request: Number of responses for each request.
+        requests_per_minute: Number of requests per minute to allow.
 
     Returns:
         A mock completion object simulating an OpenAI ChatCompletion API response.
     """
-    _ = prompts, temperature, presence_penalty, frequency_penalty
-    mock_completions = [MockCompletion(content=content) for _ in prompts]
+    _ = prompts, temperature, presence_penalty, frequency_penalty, requests_per_minute
+    mock_completions = [
+        MockCompletion(content=content, responses_per_request=responses_per_request)
+        for _ in prompts
+    ]
     return mock_completions
