@@ -17,28 +17,28 @@ from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from test_helpers import (
     UnknownGpt3Exception,
     are_datasets_identical,
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
 )
 
 # Create partial functions to simulate different API responses.
 # MOCK_EXAMPLE: Represents a mock example with identical completions.
 # The content contains an input ("6") and the corresponding output ("f").
 MOCK_EXAMPLE = partial(
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
     content='{"input": "6", "output": "f"}',
 )
 
 # MOCK_WRONG_KEY_EXAMPLE: Represents a mock example with identical completions,
 # but the content contains an incorrect key "label" instead of "output".
 MOCK_WRONG_KEY_EXAMPLE = partial(
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
     content='{"input": "This is a great movie!", "label": "1"}',
 )
 
 # MOCK_INVALID_JSON: Represents a mock example with an invalid JSON content.
 # The content is missing a closing double-quote for the "output" value.
 MOCK_INVALID_JSON = partial(
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
     content='{"input": "This is a great movie!", "output": "1}',
 )
 
