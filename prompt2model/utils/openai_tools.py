@@ -83,14 +83,17 @@ class ChatGPTAgent:
         self,
         prompts: list[str],
         temperature: float = 1,
-        requests_per_minute: int = 150,
-    ) -> list[str]:
+        responses_per_request: int = 5,
+        requests_per_minute: int = 80,
+    ) -> list[openai.Completion]:
         """Generate a batch responses from OpenAI Chat Completion API.
 
         Args:
             prompts: List of prompts to generate from.
             model_config: Model configuration.
             temperature: Temperature to use.
+            responses_per_request: Number of responses for each request.
+                i.e. the parameter n of OpenAI API call.
             requests_per_minute: Number of requests per minute to allow.
 
         Returns:
@@ -98,6 +101,9 @@ class ChatGPTAgent:
         """
         openai.aiosession.set(ClientSession())
         limiter = aiolimiter.AsyncLimiter(requests_per_minute)
+        # Create an API call for each prompt. Each API call will
+        # be throttled by the limiter then generate n responses.
+        # Totally there are 5 * len(prompts) responses.
         async_responses = [
             _throttled_openai_chat_completion_acreate(
                 model="gpt-3.5-turbo",
@@ -105,7 +111,8 @@ class ChatGPTAgent:
                     {"role": "user", "content": f"{prompt}"},
                 ],
                 temperature=temperature,
-                max_tokens=2000,
+                max_tokens=500,
+                n=responses_per_request,
                 top_p=1,
                 limiter=limiter,
             )
@@ -113,7 +120,7 @@ class ChatGPTAgent:
         ]
         responses = await tqdm_asyncio.gather(*async_responses)
         # Note: will never be none because it's set, but mypy doesn't know that.
-        await openai.aiosession.get().close()  # type: ignore
+        await openai.aiosession.get().close()
         return responses
 
 
