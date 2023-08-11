@@ -16,13 +16,11 @@ class ModelOutput:
     """A model output for a single example.
 
     Attributes:
-        prediction: The prediction by the model
-        confidence: A confidence value in the prediction (or None)
-        auxiliary_info: Any other auxiliary information provided by the model
+        prediction: The prediction by the model.
+        auxiliary_info: Any other auxiliary information provided by the model.
     """
 
     prediction: Any
-    confidence: float | None
     auxiliary_info: dict[str, Any]
 
 
@@ -71,7 +69,7 @@ class ModelExecutor(ABC):
         self.batch_size = batch_size
         if self.tokenizer.pad_token is None:
             logging.warning(
-                "Trying to init an ModelExecutor's tokenizer without pad_token"
+                "Trying to init an ModelExecutor's tokenizer without pad_token."
             )
             self.tokenizer.pad_token = self.tokenizer.eos_token
             self.model.config.pad_token_id = self.model.config.eos_token_id

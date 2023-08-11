@@ -12,8 +12,8 @@ GROUND_TRUTH = ["The cat is sleeping.", "The dog is playing."]
 
 # Define the model PREDICTIONS
 PREDICTIONS = [
-    ModelOutput("The cat is sleeping.", confidence=0.9, auxiliary_info={}),
-    ModelOutput("The dog is barking.", confidence=0.8, auxiliary_info={}),
+    ModelOutput("The cat is sleeping.", auxiliary_info={}),
+    ModelOutput("The dog is barking.", auxiliary_info={}),
 ]
 
 # Create a dummy dataset with the ground truth
