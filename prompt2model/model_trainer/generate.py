@@ -2,7 +2,6 @@
 
 from __future__ import annotations  # noqa FI58
 
-import logging
 import os
 from itertools import takewhile
 from typing import Any
@@ -16,13 +15,10 @@ from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 
 from prompt2model.model_trainer.base import BaseTrainer
 from prompt2model.model_trainer.callback import ValidationCallback
-from prompt2model.utils import seed_generator
+from prompt2model.utils import get_formatted_logger, seed_generator
 
-logger = logging.getLogger("ModelTrainer")
-ch = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-ch.setFormatter(formatter)
-logger.addHandler(ch)
+logger = get_formatted_logger("ModelTrainer")
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 

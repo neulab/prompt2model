@@ -2,15 +2,10 @@
 
 from __future__ import annotations  # noqa FI58
 
-import logging
-
 from prompt2model.dataset_processor.base import BaseProcessor
+from prompt2model.utils.logging_utils import get_formatted_logger
 
-logger = logging.getLogger("DatasetProcessor")
-ch = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-ch.setFormatter(formatter)
-logger.addHandler(ch)
+logger = get_formatted_logger("DatasetProcessor")
 
 
 class TextualizeProcessor(BaseProcessor):

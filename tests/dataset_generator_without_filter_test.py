@@ -767,7 +767,7 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
         cached_examples.save_to_disk(examples_cache_path)
         # The generate_dataset_split would first load the cached
         # dataset into generated_examples. Then in the while
-        # loop, ccreat_all_examples_dataset_and_generated_dataset
+        # loop, create_all_examples_dataset_and_generated_dataset
         # would be called to construct the generated_dataset.
         # Note that filter_duplicated_examples is False, so the
         # generated_examples won't be filtered. And since the
@@ -833,7 +833,7 @@ def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_gene
         cached_dataset.save_to_disk(examples_cache_path)
         # The generate_dataset_split would first load the cached
         # dataset into generated_examples. Then in the while
-        # loop, ccreat_all_examples_dataset_and_generated_dataset
+        # loop, create_all_examples_dataset_and_generated_dataset
         # would be called to construct the generated_dataset.
         # Note that filter_duplicated_examples is False, so the
         # generated_examples won't be filtered. And since the
@@ -1054,39 +1054,27 @@ def test_initialize_dataset_generator_with_dynamic_temperature():
     """Test the correct initialization of the dynamic temperature strategy."""
     with tempfile.TemporaryDirectory() as cache_dir:
         os.environ["OPENAI_API_KEY"] = "fake_api_key"
-        with patch.object(logger, "info") as mock_info, patch.object(
-            logger, "warning"
-        ) as mock_warning:
-            data_generator = OpenAIDatasetGenerator(
-                cache_root=cache_dir, initial_temperature=-0.2
+        with pytest.raises(ValueError) as exc_info:
+            _ = OpenAIDatasetGenerator(cache_root=cache_dir, initial_temperature=-0.2)
+        error_info = exc_info.value.args[0]
+        assert (
+            error_info
+            == "initial_temperature must be >= 0, but self.initial_temperature=-0.2"
+        )
+        with pytest.raises(ValueError) as exc_info:
+            _ = OpenAIDatasetGenerator(cache_root=cache_dir, max_temperature=2.3)
+            error_info = exc_info.value.args[0]
+            assert (
+                error_info
+                == "max_temperature must be <= 2,0, but self.max_temperature=2.3"
             )
-            mock_info.assert_not_called()
-            mock_warning.assert_called_once_with(
-                "The lowest temperature for GPT-3.5 API is 0. So the initial_temperature is set to 0."  # noqa E501
-            )
-            assert data_generator.initial_temperature == 0
 
-        with patch.object(logger, "info") as mock_info, patch.object(
-            logger, "warning"
-        ) as mock_warning:
-            data_generator = OpenAIDatasetGenerator(
-                cache_root=cache_dir, max_temperature=2.3
-            )
-            mock_info.assert_not_called()
-            mock_warning.assert_called_once_with(
-                "The highest temperature for GPT-3.5 API is 2. So the max_temperature is set to 2."  # noqa E501
-            )
-            assert data_generator.max_temperature == 2
-
-        with patch.object(logger, "info") as mock_info, patch.object(
-            logger, "warning"
-        ) as mock_warning:
-            data_generator = OpenAIDatasetGenerator(
+        with pytest.raises(ValueError) as exc_info:
+            _ = OpenAIDatasetGenerator(
                 cache_root=cache_dir, max_temperature=1.2, initial_temperature=1.5
             )
-            mock_info.assert_not_called()
-            mock_warning.assert_called_once_with(
-                "The generator gradually increases the temperature from a lower value to a higher value. So the initial_temperature and the max_temperature are switched."  # noqa E501
+            error_info = exc_info.value.args[0]
+            assert (
+                error_info
+                == "self.initial_temperature=1.5 must be <= self.max_temperature=1.2"
             )
-            assert data_generator.initial_temperature == 1.2
-            assert data_generator.max_temperature == 1.5

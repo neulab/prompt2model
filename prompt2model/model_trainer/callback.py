@@ -1,17 +1,13 @@
 """The real evaluation will be conduted after each mock evaluation of Trainer."""
 
-import logging
 
 from transformers import TrainerCallback
 
 from prompt2model.model_evaluator import Seq2SeqEvaluator
 from prompt2model.model_executor import GenerationModelExecutor
+from prompt2model.utils import get_formatted_logger
 
-logger = logging.getLogger("ModelTrainer")
-ch = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-ch.setFormatter(formatter)
-logger.addHandler(ch)
+logger = get_formatted_logger("ModelTrainer")
 
 
 class ValidationCallback(TrainerCallback):
@@ -37,8 +33,8 @@ class ValidationCallback(TrainerCallback):
                 make predictions.
             tokenizer_max_length: The maximum number of tokens that
                 tokenizer is allowed to generate.
-            sequence_max_length: The maximum number of tokens to generate.
-                This includes the input and output tokens.
+            sequence_max_length: The maximum number of tokens in
+                the input and output.
         """
         super().__init__()
         self.trainer = trainer

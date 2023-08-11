@@ -2,7 +2,6 @@
 
 from __future__ import annotations  # noqa FI58
 
-import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
@@ -10,11 +9,9 @@ from typing import Any
 import datasets
 import transformers
 
-logger = logging.getLogger("ModelExecutor")
-ch = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-ch.setFormatter(formatter)
-logger.addHandler(ch)
+from prompt2model.utils import get_formatted_logger
+
+logger = get_formatted_logger("ModelExecutor")
 
 
 @dataclass(frozen=False)
@@ -49,8 +46,8 @@ class ModelExecutor(ABC):
             batch_size: The batch size to use when making predictions.
             tokenizer_max_length: The maximum number of tokens that
                 tokenizer is allowed to generate.
-            sequence_max_length: The maximum number of tokens to generate.
-                This includes the input and output tokens.
+            sequence_max_length: The maximum number of tokens in
+                the input and output.
         """
         self.model = model
         self.tokenizer = tokenizer

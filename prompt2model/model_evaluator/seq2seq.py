@@ -2,7 +2,6 @@
 
 from __future__ import annotations  # noqa FI58
 
-import logging
 from typing import Any
 
 import datasets
@@ -11,12 +10,9 @@ import numpy as np
 
 from prompt2model.model_evaluator.base import ModelEvaluator
 from prompt2model.model_executor import ModelOutput
+from prompt2model.utils import get_formatted_logger
 
-logger = logging.getLogger("ModelEvaluator")
-ch = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-ch.setFormatter(formatter)
-logger.addHandler(ch)
+logger = get_formatted_logger("ModelEvaluator")
 
 
 class Seq2SeqEvaluator(ModelEvaluator):

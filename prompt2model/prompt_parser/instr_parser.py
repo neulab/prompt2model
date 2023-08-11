@@ -3,7 +3,6 @@
 from __future__ import annotations  # noqa FI58
 
 import json
-import logging
 import os
 
 import openai
@@ -13,13 +12,15 @@ from prompt2model.prompt_parser.base import PromptSpec, TaskType
 from prompt2model.prompt_parser.instr_parser_prompt import (  # isort: split
     construct_prompt_for_instruction_parsing,
 )
-from prompt2model.utils import OPENAI_ERRORS, ChatGPTAgent, handle_openai_error
+from prompt2model.utils import (
+    OPENAI_ERRORS,
+    ChatGPTAgent,
+    get_formatted_logger,
+    handle_openai_error,
+)
 
-logger = logging.getLogger("PromptParser")
-ch = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-ch.setFormatter(formatter)
-logger.addHandler(ch)
+logger = get_formatted_logger("PromptParser")
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
