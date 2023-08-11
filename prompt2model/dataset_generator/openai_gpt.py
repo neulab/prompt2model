@@ -122,7 +122,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self,
         instruction: str,
         few_shot_example_string: str = None,
-    ) -> tuple[str, str]:
+    ) -> str:
         """Generates a prompt string.
 
         Args:
@@ -231,13 +231,33 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     input = str(response_json["input"]).strip()
                     output = str(response_json["output"]).strip()
                     self.generated_examples.append(Example(input, output))
-                    logging.info(f"input: \n\n{input}\n\n")  # noqa: E501
-                    logging.info(f"output: \n\n{output}\n\n")  # noqa: E501
+                    logging.info(f"input: \n\n{input}\n\n")
+                    logging.info(f"output: \n\n{output}\n\n")
             except Exception:
                 logging.warning(
                     f"Error happened when parsing API completion: {completion}"
                 )
                 continue
+
+    async def generate_responses(
+        self, chat_api: ChatGPTAgent, prompts: list[str]
+    ) -> list[openai.Completion]:
+        """Generates async responses using OpenAI API.
+
+        Args:
+            chat_api (ChatGPTAgent): ChatGPTAgent to generate responses.
+            prompts (list[str]): A list of prompts to generate responses.
+
+        Returns:
+            A list of openai.Completion.
+        """
+        responses = await chat_api.generate_batch_openai_chat_completion(
+            prompts,
+            temperature=self.temperature,
+            responses_per_request=self.responses_per_request,
+            requests_per_minute=self.requests_per_minute,
+        )
+        return responses
 
     def generate_dataset_split(
         self,
@@ -266,17 +286,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             try:
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
                     logging.warning("Maximum number of API calls reached.")
-                    return Dataset.from_dict(
-                        {
-                            "input_col": [
-                                example.input_col for example in self.generated_examples
-                            ],
-                            "output_col": [
-                                example.output_col
-                                for example in self.generated_examples
-                            ],
-                        }
-                    )
+                    break
                 else:
                     batch_size = (
                         min(
@@ -316,19 +326,10 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         for _ in range(batch_size)
                     ]
 
-                    async def generate_responses():
-                        responses = (
-                            await chat_api.generate_batch_openai_chat_completion(
-                                prompts,
-                                temperature=self.temperature,
-                                responses_per_request=self.responses_per_request,
-                                requests_per_minute=self.requests_per_minute,
-                            )
-                        )
-                        return responses
-
                     loop = asyncio.get_event_loop()
-                    responses = loop.run_until_complete(generate_responses())
+                    responses = loop.run_until_complete(
+                        self.generate_responses(chat_api, prompts)
+                    )
                     self.extract_responses(responses)
                     pbar.update(len(self.generated_examples))
             except OPENAI_ERRORS as e:
