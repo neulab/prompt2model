@@ -31,8 +31,8 @@ class ValidationCallback(TrainerCallback):
                 make predictions.
             tokenizer_max_length: The maximum number of tokens that
                 tokenizer is allowed to generate.
-            sequence_max_length: The maximum number of tokens to generate.
-                This includes the input and output tokens.
+            sequence_max_length: The maximum number of tokens in
+                the input and output.
         """
         super().__init__()
         self.trainer = trainer
