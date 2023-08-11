@@ -304,7 +304,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         )
         return generated_dataset
 
-    def creat_all_exmaples_dataset_and_generated_dataset(
+    def create_all_examples_dataset_and_generated_dataset(
         self, generated_examples: list[Example]
     ) -> Dataset:
         """Converts generated_examples into generated_dataset.
