@@ -1,5 +1,6 @@
 """Testing Seq2SeqEvaluator."""
 
+import gc
 from unittest.mock import patch
 
 import evaluate
@@ -59,6 +60,7 @@ def test_t5_evaluator_with_default_metrics():
     assert round(metric_values["chr_f++"], 2) == 78.30
     assert round(metric_values["exact_match"], 2) == 0.50
     assert round(metric_values["average_bert_score"], 2) == 0.97
+    gc.collect()
 
 
 def test_gpt_evaluator_with_default_metrics():
@@ -84,6 +86,7 @@ def test_gpt_evaluator_with_default_metrics():
     assert round(metric_values["chr_f++"], 2) == 78.30
     assert round(metric_values["exact_match"], 2) == 0.50
     assert round(metric_values["average_bert_score"], 2) == 0.97
+    gc.collect()
 
 
 def test_t5_evaluator_with_selected_metrics():
@@ -113,6 +116,7 @@ def test_t5_evaluator_with_selected_metrics():
     assert len(metric_values.keys()) == 2
     assert round(metric_values["chr_f++"], 2) == 78.30
     assert round(metric_values["exact_match"], 2) == 0.50
+    gc.collect()
 
 
 def test_gpt_evaluator_with_selected_metrics():
@@ -142,6 +146,7 @@ def test_gpt_evaluator_with_selected_metrics():
     assert len(metric_values.keys()) == 2
     assert round(metric_values["chr_f++"], 2) == 78.30
     assert round(metric_values["exact_match"], 2) == 0.50
+    gc.collect()
 
 
 def test_evaluator_with_unsupported_metrics():
@@ -166,6 +171,7 @@ def test_evaluator_with_unsupported_metrics():
             str(exc_info.value)
             == "Metrics must be within chr_f exact_match and bert_score."
         )
+    gc.collect()
 
 
 def test_evaluator_handle_deficient_predictions():
@@ -186,6 +192,7 @@ def test_evaluator_handle_deficient_predictions():
             str(exc_info.value)
             == "The length of input dataset and predictions are not equal."
         )
+    gc.collect()
 
 
 def test_gpt_evaluator_without_model_input_column():
@@ -210,3 +217,4 @@ def test_gpt_evaluator_without_model_input_column():
     assert round(metric_values["chr_f++"], 2) == 53.36
     assert round(metric_values["exact_match"], 2) == 0.00
     assert round(metric_values["average_bert_score"], 2) == 0.85
+    gc.collect()

@@ -8,6 +8,7 @@ from unittest.mock import patch
 import datasets
 import pytest
 import transformers
+from datasets import concatenate_datasets
 
 from prompt2model.model_trainer.generate import GenerationModelTrainer
 
@@ -31,7 +32,7 @@ def test_t5_trainer_with_get_right_padding_length():
     gc.collect()
 
 
-def test_t5_model_trainer_tokenize():
+def test_t5_trainer_tokenize():
     """Test the Trainer for T5 mode correctly tokenize dataset."""
     trainer = GenerationModelTrainer(
         "patrickvonplaten/t5-tiny-random", has_encoder=True, tokenizer_max_length=64
@@ -218,7 +219,7 @@ def test_t5_trainer_without_tokenizer_max_length():
             mock_warning.assert_called_once_with(
                 "Set the tokenizer_max_length is preferable for finetuning model, which saves the cost of training."  # noqa 501
             )
-    gc.collect()
+        gc.collect()
 
 
 def test_t5_trainer_with_epoch_evaluation():
@@ -270,14 +271,21 @@ def test_t5_trainer_with_epoch_evaluation():
             assert mock_info.call_count == 3 * num_train_epochs
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
-                info_list.count("Conduct evaluation after each epoch ends.")
-                == info_list.count(
+                info_list.count(
                     "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
-            # The other logging.info is the `metric_values` in `evaluate_model`.
-            # Check if logging.warning was not called.
+            # The other two kind of logging.info in `on_epoch_end` of
+            # `ValidationCallback`are logging the epoch num wtih the
+            # val_dataset_size and logging the `metric_values`.
+
+            assert trainer.validation_callback.epoch_count == num_train_epochs
+            assert (
+                trainer.validation_callback.val_dataset_size == len(validation_datasets)
+                and len(validation_datasets) != 0
+            )
+
             mock_warning.assert_not_called()
     gc.collect()
 
@@ -328,13 +336,32 @@ def test_t5_trainer_without_validation_datasets():
             assert mock_info.call_count == 3 * num_train_epochs
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
-                info_list.count("Conduct evaluation after each epoch ends.")
-                == info_list.count(
+                info_list.count(
                     "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
-            # The other logging.info is the `metric_values` in `evaluate_model`.
+            # The other two kind of logging.info in `on_epoch_end` of
+            # `ValidationCallback`are logging the epoch num wtih the
+            # val_dataset_size and logging the `metric_values`.
+
+            assert trainer.validation_callback.epoch_count == num_train_epochs
+
+            concatenated_training_dataset = concatenate_datasets(training_datasets)
+            splited_dataset = concatenated_training_dataset.train_test_split(
+                test_size=0.15, seed=trainer.training_seed
+            )
+            val_dataset = splited_dataset["test"]
+            assert trainer.validation_callback.val_dataset is not None
+            assert len(trainer.validation_callback.val_dataset.features) == 2
+            assert (
+                trainer.validation_callback.val_dataset["model_input"]
+                == val_dataset["model_input"]
+            )
+            assert (
+                trainer.validation_callback.val_dataset["model_output"]
+                == val_dataset["model_output"]
+            )
 
             # The evaluation_strategy is set to epoch, but validation
             # datasets are not provided. So the training dataset will
@@ -401,18 +428,26 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
             assert mock_info.call_count == 3 * num_train_epochs
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
-                info_list.count("Conduct evaluation after each epoch ends.")
-                == info_list.count(
+                info_list.count(
                     "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
-            # The other logging.info is the `metric_values` in `evaluate_model`.
+            # The other two kind of logging.info in `on_epoch_end` of
+            # `ValidationCallback`are logging the epoch num wtih the
+            # val_dataset_size and logging the `metric_values`.
+
+            assert trainer.validation_callback.epoch_count == num_train_epochs
+            assert (
+                trainer.validation_callback.val_dataset_size == len(validation_datasets)
+                and len(validation_datasets) != 0
+            )
 
             # Check if logging.warning was called once
             mock_warning.assert_called_once_with(
                 "Only `epoch` evaluation strategy is supported, the evaluation strategy will be set to evaluate_after_epoch."  # noqa E501
             )
+    gc.collect()
 
 
 def test_t5_trainer_with_unsupported_parameter():
