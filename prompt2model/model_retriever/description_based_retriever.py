@@ -69,7 +69,8 @@ class DescriptionModelRetriever(ModelRetriever):
             search_index_path: Where to store the search index (e.g. encoded vectors).
             search_depth: The number of most-relevant models to retrieve.
             first_stage_depth: The number of models to retrieve purely by similarity,
-                before reranking by scaling with model size and number of downloads.
+                before reranking by scaling with model size and all-time number of
+                downloads.
             encoder_model_name: The name of the model to use for the dual-encoder.
             model_descriptions_index_path: The directory of models to search against.
             device: The device to use for encoding text for our dual-encoder model.
@@ -132,13 +133,17 @@ class DescriptionModelRetriever(ModelRetriever):
             model_dict = json.load(
                 open(os.path.join(self.model_descriptions_index_path, f))
             )
+            if model_dict.get("size_bytes", 0) == 0:
+                continue
+            if "description" not in model_dict:
+                continue
             model_name = model_dict["pretrained_model_name"]
             model_info = ModelInfo(
                 name=model_name,
                 description=model_dict["description"],
                 score=None,
                 size_in_bytes=model_dict["size_bytes"],
-                num_downloads=model_dict["downloads"],
+                num_downloads=model_dict.get("downloads", 0),
             )
             self.model_infos.append(model_info)
 
@@ -153,7 +158,7 @@ class DescriptionModelRetriever(ModelRetriever):
         )
         return model_vectors
 
-    def scaled_similarity_score(
+    def scale_similarity_score(
         self, model_info: ModelInfo, model_score: float
     ) -> float:
         """Adjust the search score using the model size and number of downloads.
@@ -163,9 +168,9 @@ class DescriptionModelRetriever(ModelRetriever):
             model_score: The similarity score of this model for this particular query.
         """
         num_downloads = int(model_info.num_downloads)
-        log_num_downloads = np.log10(num_downloads + 1)
+        log_num_downloads = np.log10(num_downloads + 2)
         model_size_bytes = int(model_info.size_in_bytes)
-        if model_size_bytes > self.model_size_limit_bytes or model_size_bytes == 0:
+        if model_size_bytes > self.model_size_limit_bytes:
             return -np.inf
         return model_score * log_num_downloads
 
@@ -226,7 +231,7 @@ class DescriptionModelRetriever(ModelRetriever):
         top_models_list = []
         for model_name, model_score in ranked_list:
             model_info = model_name_to_model_info[model_name]
-            scaled_model_score = self.scaled_similarity_score(model_info, model_score)
+            scaled_model_score = self.scale_similarity_score(model_info, model_score)
             model_info.score = scaled_model_score
             top_models_list.append(model_info)
 

@@ -68,14 +68,16 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
     retrieved_dataset_dicts = retriever.retrieve_dataset_dict(prompt_spec)
 
     generator = MockDatasetGenerator()
-    num_examples = {
+    expected_num_examples = {
         DatasetSplit.TRAIN: 40,
         DatasetSplit.VAL: 5,
         DatasetSplit.TEST: 5,
     }
-    generated_dataset_dicts = generator.generate_dataset_dict(prompt_spec, num_examples)
+    generated_dataset_dicts = generator.generate_dataset_dict(
+        prompt_spec, expected_num_examples
+    )
 
-    processor = MockProcessor(has_encoder=True)
+    processor = MockProcessor(has_encoder=True, eos_token="")
     retrieved_dataset_dicts, generated_dataset_dicts = processor.process_dataset_dict(
         instruction="", dataset_dicts=[retrieved_dataset_dicts, generated_dataset_dicts]
     )
@@ -98,8 +100,8 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
         all_training, validation, {}
     )
 
-    model_executor = MockModelExecutor(model, tokenizer, testing, "input_col")
-    predictions = model_executor.make_prediction()
+    model_executor = MockModelExecutor(model, tokenizer)
+    predictions = model_executor.make_prediction(testing, "input_col")
 
     evaluator = MockEvaluator()
     metrics_dict = evaluator.evaluate_model(
