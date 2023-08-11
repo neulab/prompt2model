@@ -23,13 +23,21 @@ Here are some exmaples you can refer to:
 
 {example_4}
 --------------------------------------------------------------------------------------------
+Here is the requirement for the generation of a new example:
 
 [new instruction]:
 {instruction}
+---------------------------------------------------------------------------------------------
+Here are some [high-quality examples] for the [new instruction]. These examples can provide you with very strict format requirements. You should pay extreme attention to them!!!
 
-[few-shot examples]:
-{few_shot_example_string}
+[high-quality examples]:
+{high_quality_example_string}
+---------------------------------------------------------------------------------------------
+These are some [low-quality examples]Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
 
+[low-quality examples]:
+{low_quality_example_string}
+---------------------------------------------------------------------------------------------
 [new example (in JSON)]:"""  # noqa: E501
 
 MIDDLE_PROMPT_TEMPLATE = """
@@ -49,13 +57,21 @@ Here are some exmaples you can refer to:
 
 {example_3}
 --------------------------------------------------------------------------------------------
+Here is the requirement for the generation of a new example:
 
 [new instruction]:
 {instruction}
+---------------------------------------------------------------------------------------------
+Here are some [high-quality examples] for the [new instruction]. These examples can provide you with very strict format requirements. You should pay extreme attention to them!!!
 
-[few-shot examples]:
-{few_shot_example_string}
+[high-quality examples]:
+{high_quality_example_string}
+---------------------------------------------------------------------------------------------
+These are some [low-quality examples]Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
 
+[low-quality examples]:
+{low_quality_example_string}
+---------------------------------------------------------------------------------------------
 [new example (in JSON)]:"""  # noqa: E501
 
 SIMPLE_PROMPT_TEMPLATE = """
@@ -71,13 +87,21 @@ Here are some exmaples you can refer to:
 
 {example_2}
 --------------------------------------------------------------------------------------------
+Here is the requirement for the generation of a new example:
 
 [new instruction]:
 {instruction}
+---------------------------------------------------------------------------------------------
+Here are some [high-quality examples] for the [new instruction]. These examples can provide you with very strict format requirements. You should pay extreme attention to them!!!
 
-[few-shot examples]:
-{few_shot_example_string}
+[high-quality examples]:
+{high_quality_example_string}
+---------------------------------------------------------------------------------------------
+These are some [low-quality examples]Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
 
+[low-quality examples]:
+{low_quality_example_string}
+---------------------------------------------------------------------------------------------
 [new example (in JSON)]:"""  # noqa: E501
 
 # String templates for the prompt. Can be modified by the users.
@@ -91,7 +115,7 @@ As a DatasetGenerator, your task is to generate a new example (`input` and `outp
 
 Try you best to ensure that the input and output you generate are distinct from the provided examples while maintaining a diverse, detailed, precise, comprehensive, and high-quality response.
 
-Avoid generate examples that are similar to the provided examples.
+Avoid generate examples that are the same to the provided examples.
 """  # noqa 501
 
 
@@ -215,14 +239,16 @@ Your Name\"""",  # noqa: E501
 
 def construct_meta_prompt(
     instruction: str = None,
-    few_shot_example_string: str = None,
+    low_quality_example_string: str = None,
+    high_quality_example_string: str = None,
     template_type: str = "SIMPLE",
 ) -> str:
     """Constructs a prompt template for the dataset generator.
 
     Args:
         instruction: The natural language instruction for the prompt.
-        examples_string: A string representing the few-shot examples.
+        low_quality_example_string: A string representing the low quality examples.
+        high_quality_example_string: A string representing the high quality examples.
         template_type: If template_type is COMPLEX, uses the
         COMPLEX_PROMPT_TEMPLATE, if template_type is MIDDLE, uses the
         MIDDLE_PROMPT_TEMPLATE, and if template_type is SIMPLE,
@@ -248,7 +274,8 @@ def construct_meta_prompt(
             example_3=example_3,
             example_4=example_4,
             instruction=instruction,
-            few_shot_example_string=few_shot_example_string,
+            high_quality_example_string=high_quality_example_string,
+            low_quality_example_string=low_quality_example_string,
         )
     elif template_type == "MIDDLE":
         return MIDDLE_PROMPT_TEMPLATE.format(
@@ -257,7 +284,8 @@ def construct_meta_prompt(
             example_2=example_2,
             example_3=example_3,
             instruction=instruction,
-            few_shot_example_string=few_shot_example_string,
+            high_quality_example_string=high_quality_example_string,
+            low_quality_example_string=low_quality_example_string,
         )
     else:
         return SIMPLE_PROMPT_TEMPLATE.format(
@@ -265,5 +293,6 @@ def construct_meta_prompt(
             example_1=example_1,
             example_2=example_2,
             instruction=instruction,
-            few_shot_example_string=few_shot_example_string,
+            high_quality_example_string=high_quality_example_string,
+            low_quality_example_string=low_quality_example_string,
         )
