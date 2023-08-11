@@ -379,7 +379,7 @@ def test_t5_trainer_without_validation_datasets():
         trained_model.save_pretrained(cache_dir)
         trained_tokenizer.save_pretrained(cache_dir)
         assert isinstance(trained_model, transformers.T5ForConditionalGeneration)
-        assert isinstance(trained_tokenizer, transformers.T5Tokenizer)
+        assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
     gc.collect()
 
 

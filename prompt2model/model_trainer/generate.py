@@ -52,10 +52,10 @@ class GenerationModelTrainer(BaseTrainer):
                 )
             )
         if self.has_encoder:
-            self.model = transformers.T5ForConditionalGeneration.from_pretrained(
+            self.model = transformers.AutoModelForSeq2SeqLM.from_pretrained(
                 pretrained_model_name
             )
-            self.tokenizer = transformers.T5Tokenizer.from_pretrained(
+            self.tokenizer = transformers.AutoTokenizer.from_pretrained(
                 pretrained_model_name
             )
         else:

@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import datasets
 import pytest
-from transformers import T5Tokenizer
+from transformers import AutoTokenizer
 
 from prompt2model.dataset_processor.textualize import TextualizeProcessor
 from test_helpers import are_dataset_dicts_identical, create_gpt2_model_and_tokenizer
@@ -87,7 +87,7 @@ UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS = [
 
 def test_the_logging_for_provide_unnecessary_eos_token_for_t5():
     """Test the logging.info for unnecessary eos token for T5 model is logged."""
-    t5_tokenizer = T5Tokenizer.from_pretrained("t5-small")
+    t5_tokenizer = AutoTokenizer.from_pretrained("t5-small")
 
     with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
         _ = TextualizeProcessor(has_encoder=True, eos_token=t5_tokenizer.eos_token)
@@ -111,7 +111,7 @@ def test_the_logging_for_eos_token_required_for_gpt():
 
 def test_dataset_processor_t5_style():
     """Test the `process_dataset_dict` function of T5-type `TextualizeProcessor`."""
-    t5_tokenizer = T5Tokenizer.from_pretrained("t5-small")
+    t5_tokenizer = AutoTokenizer.from_pretrained("t5-small")
     t5_processor = TextualizeProcessor(
         has_encoder=True, eos_token=t5_tokenizer.eos_token
     )
