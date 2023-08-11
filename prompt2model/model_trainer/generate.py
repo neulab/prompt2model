@@ -14,7 +14,7 @@ from datasets import concatenate_datasets
 from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 
 from prompt2model.model_trainer.base import BaseTrainer
-from prompt2model.model_trainer.callback import EvaluationCallback
+from prompt2model.model_trainer.callback import ValidationCallback
 from prompt2model.utils import seed_generator
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -69,7 +69,11 @@ class GenerationModelTrainer(BaseTrainer):
             self.tokenizer.pad_token = self.tokenizer.eos_token
         if self.model.config.pad_token_id is None:
             self.model.config.pad_token_id = self.tokenizer.eos_token_id
-            # Save the pad_id to the model's config instead of the function
+
+        # self.validation_callback is used for evaluate the model on
+        # the validation dataset after each epoch.
+        self.validation_callback = None
+        self.training_seed = seed_generator.get_seed()
 
     def get_left_padding_length(cls, input_list, padding_token_id):
         """Get the left prefix length of the input list.
@@ -350,9 +354,10 @@ class GenerationModelTrainer(BaseTrainer):
 
         if evaluate_after_epoch:
             assert val_dataset is not None, "Validation dataset is None"
-            trainer.add_callback(
-                EvaluationCallback(trainer, self.tokenizer, val_dataset)
+            self.validation_callback = ValidationCallback(
+                trainer, self.tokenizer, val_dataset
             )
+            trainer.add_callback(self.validation_callback)
 
         # Train the model
         trainer.train()

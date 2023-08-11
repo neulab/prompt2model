@@ -1,5 +1,6 @@
 """Testing TextualizeProcessor."""
 
+import gc
 from unittest.mock import patch
 
 import datasets
@@ -94,6 +95,7 @@ def test_the_logging_for_provide_unnecessary_eos_token_for_t5():
             "The T5 tokenizer automatically adds eos token in the end of sequence in when tokenizing. So the eos_token of encoder-decoder model tokenizer is unnecessary."  # noqa E501
         )
         mock_warning.assert_not_called()
+    gc.collect()
 
 
 def test_the_logging_for_eos_token_required_for_gpt():
@@ -104,6 +106,7 @@ def test_the_logging_for_eos_token_required_for_gpt():
         mock_warning.assert_called_once_with(
             "The autoregressive model tokenizer does not automatically add eos token in the end of the sequence. So the `eos_token` of the autoregressive model is required."  # noqa E501
         )
+    gc.collect()
 
 
 def test_dataset_processor_t5_style():
@@ -189,6 +192,7 @@ def test_dataset_processor_t5_style():
                 dataset_dict[dataset_split]["model_output"]
                 == t5_expected_dataset_dicts[index][dataset_split]["model_output"]
             )
+    gc.collect()
 
 
 def test_dataset_processor_decoder_only_style():
@@ -276,6 +280,7 @@ def test_dataset_processor_decoder_only_style():
                 dataset_dict[dataset_split]["model_output"]
                 == gpt_expected_dataset_dicts[index][dataset_split]["model_output"]
             )
+    gc.collect()
 
 
 def test_unexpected_dataset_split():
@@ -289,6 +294,7 @@ def test_unexpected_dataset_split():
             INSTRUCTION, UNEXPECTED_DATASET_DICTS_WITH_WRONG_SPLIT
         )
         assert str(exc_info.value) == ("Datset split must be in train/val/test.")
+    gc.collect()
 
 
 def test_unexpected_columns():
@@ -304,3 +310,4 @@ def test_unexpected_columns():
         assert str(exc_info.value) == (
             "Example dictionary must have 'input_col' and 'output_col' keys."
         )
+    gc.collect()
