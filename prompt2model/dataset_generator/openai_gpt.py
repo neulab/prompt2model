@@ -331,7 +331,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         self.generate_responses(chat_api, prompts)
                     )
                     self.extract_responses(responses)
-                    pbar.update(len(self.generated_examples))
+                    pbar.update(len(self.generated_examples) - pbar.n)
             except OPENAI_ERRORS as e:
                 self.api_call_counter = handle_openai_error(e, self.api_call_counter)
         # Each API call will return `responses_per_request` completion
