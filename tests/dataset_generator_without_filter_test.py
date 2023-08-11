@@ -764,7 +764,7 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
         cached_examples.save_to_disk(examples_cache_path)
         # The generate_dataset_split would first load the cached
         # dataset into generated_examples. Then in the while
-        # loop, ccreate_all_examples_dataset_and_generated_dataset
+        # loop, create_all_examples_dataset_and_generated_dataset
         # would be called to construct the generated_dataset.
         # Note that filter_duplicated_examples is False, so the
         # generated_examples won't be filtered. And since the
@@ -830,7 +830,7 @@ def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_gene
         cached_dataset.save_to_disk(examples_cache_path)
         # The generate_dataset_split would first load the cached
         # dataset into generated_examples. Then in the while
-        # loop, ccreate_all_examples_dataset_and_generated_dataset
+        # loop, create_all_examples_dataset_and_generated_dataset
         # would be called to construct the generated_dataset.
         # Note that filter_duplicated_examples is False, so the
         # generated_examples won't be filtered. And since the
@@ -890,13 +890,6 @@ def test_extract_responses():
     mock_completion_4 = MockCompletion()
     mock_completion_4.choices = None
 
-    def are_example_lists_identical(example_list_1, example_list_2):
-        return all(
-            example_1.input_col == example_2.input_col
-            and example_1.output_col == example_2.output_col
-            for example_1, example_2 in zip(example_list_1, example_list_2)
-        )
-
     with tempfile.TemporaryDirectory() as cache_dir:
         os.environ["OPENAI_API_KEY"] = "fake_api_key"
         data_generator = OpenAIDatasetGenerator(
@@ -953,6 +946,98 @@ def test_extract_responses():
                 Example(input_col="1", output_col="a"),
                 Example(input_col="1", output_col="b"),
                 Example(input_col="1", output_col="a"),
+                Example(input_col="3", output_col="a"),
+                Example(input_col="3", output_col="b"),
+                Example(input_col="4", output_col="c"),
+                Example(input_col="4", output_col="c"),
+                Example(input_col="5", output_col="a"),
+            ]
+    gc.collect()
+
+
+def test_extract_some_empty_responses():
+    """Test the extract_responses function correctly handle empty responses."""
+    mock_completion_1 = MockCompletion()
+    mock_completion_1.choices = [
+        # Note that this choice's input is empty. So it should be discarded.
+        {"message": {"content": '{"input": "", "output": "a"}'}},
+        {"message": {"content": '{"input": "5", "output": "b"}'}},
+        # Note that this choice's output is empty. So it should be discarded.
+        {"message": {"content": '{"input": "1", "output": ""}'}},
+    ]
+    mock_completion_2 = MockCompletion()
+    mock_completion_2.choices = [
+        {"message": {"content": '{"input": "3", "output": "a"}'}},
+        # Note that the following choice misses the right quote of JSON.
+        # So it should be discarded. And will log a warning.
+        {"message": {"content": '{"input": "3", "output": "a}'}},
+        {"message": {"content": '{"input": "3", "output": "b"}'}},
+    ]
+    mock_completion_3 = MockCompletion()
+    mock_completion_3.choices = [
+        {"message": {"content": '{"input": "4", "output": "c"}'}},
+        {"message": {"content": '{"input": "4", "output": "c"}'}},
+        {"message": {"content": '{"input": "5", "output": "a"}'}},
+    ]
+    # choices should be list of dicts. So mock_completion_4
+    # is invalid. Which will be discarded and log a warning.
+    mock_completion_4 = MockCompletion()
+    mock_completion_4.choices = None
+
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        data_generator = OpenAIDatasetGenerator(
+            cache_root=cache_dir, filter_duplicated_examples=True
+        )
+        generated_examples = []
+        with patch("logging.info") as mock_info, patch(
+            "logging.warning"
+        ) as mock_warning:
+            generated_examples = data_generator.extract_responses(
+                [mock_completion_1, mock_completion_2], generated_examples
+            )
+            mock_warning.assert_called_once_with(
+                'Error happened parsing API choice: {\'message\': {\'content\': \'{"input": "3", "output": "a}\'}}'  # noqa E501
+            )
+            # There are 3 valid examples in [mock_completion_1,
+            # mock_completion_2] Each input
+            # and output will be logged once as info.
+            # And there are 2 exmaples with empty
+            # input or output, which should be discarded
+            # and be logged as info.
+            assert mock_info.call_count == 3 * 2 + 2
+
+        # The second choice in mock_completion_2
+        # is invalid. So it should be discarded.
+        assert generated_examples == [
+            Example(input_col="5", output_col="b"),
+            Example(input_col="3", output_col="a"),
+            Example(input_col="3", output_col="b"),
+        ]
+        generated_examples = data_generator.extract_responses(
+            [mock_completion_3], generated_examples
+        )
+        assert generated_examples == [
+            Example(input_col="5", output_col="b"),
+            Example(input_col="3", output_col="a"),
+            Example(input_col="3", output_col="b"),
+            Example(input_col="4", output_col="c"),
+            Example(input_col="4", output_col="c"),
+            Example(input_col="5", output_col="a"),
+        ]
+        with patch("logging.info") as mock_info, patch(
+            "logging.warning"
+        ) as mock_warning:
+            generated_examples = data_generator.extract_responses(
+                [mock_completion_4], generated_examples
+            )
+            mock_warning.assert_called_once_with(
+                "Error happened when parsing API completion: <MockObject choices=None>"
+            )
+            mock_info.assert_not_called()
+            # The generated_examples should be the same.
+            assert generated_examples == [
+                Example(input_col="5", output_col="b"),
                 Example(input_col="3", output_col="a"),
                 Example(input_col="3", output_col="b"),
                 Example(input_col="4", output_col="c"),
