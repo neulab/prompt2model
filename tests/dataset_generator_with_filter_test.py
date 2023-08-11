@@ -3,7 +3,7 @@
 import gc
 import os
 import tempfile
-from collections import Counter, namedtuple
+from collections import Counter
 from functools import partial
 from pathlib import Path
 from unittest.mock import patch
@@ -13,45 +13,36 @@ import pytest
 from datasets import Dataset
 
 from prompt2model.dataset_generator.base import DatasetSplit
-from prompt2model.dataset_generator.openai_gpt import OpenAIDatasetGenerator
+from prompt2model.dataset_generator.openai_gpt import Example, OpenAIDatasetGenerator
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from test_helpers import (
+    MockBatchDifferentCompletions,
+    UnknownGpt3Exception,
     are_datasets_identical,
-    mock_batch_openai_response_with_different_completions,
-    mock_batch_openai_response_with_identical_completions,
-    reset_mock_batch_openai_response_with_different_completions,
+    mock_batch_openai_response_identical_completions,
 )
 
 # Create partial functions to simulate different API responses.
 # MOCK_EXAMPLE: Represents a mock example with identical completions.
 # The content contains an input ("6") and the corresponding output ("f").
 MOCK_EXAMPLE = partial(
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
     content='{"input": "6", "output": "f"}',
 )
 
 # MOCK_WRONG_KEY_EXAMPLE: Represents a mock example with identical completions,
 # but the content contains an incorrect key "label" instead of "output".
 MOCK_WRONG_KEY_EXAMPLE = partial(
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
     content='{"input": "This is a great movie!", "label": "1"}',
 )
 
 # MOCK_INVALID_JSON: Represents a mock example with an invalid JSON content.
 # The content is missing a closing double-quote for the "output" value.
 MOCK_INVALID_JSON = partial(
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
     content='{"input": "This is a great movie!", "output": "1}',
 )
-
-# Define a namedtuple to represent an example with 'input_col' and 'output_col' fields.
-Example = namedtuple("Example", ["input_col", "output_col"])
-
-
-class UNKNOWN_GPT3_EXCEPTION(Exception):
-    """This is a newly-defined exception for testing purposes."""
-
-    pass
 
 
 @patch(
@@ -65,9 +56,6 @@ def test_wrong_key_example(mocked_generate_example):
     when the ChatGPTAgent returns a dictionary with a wrong key, i.e., "label" instead
     of "output".
 
-    The @patch decorator replaces the 'generate_batch_openai_chat_completion'
-    function with the 'MOCK_WRONG_KEY_EXAMPLE' side effect.
-
     Args:
         mocked_generate_example: The function represents the @patch function and
         provides the mocked behavior for API calls.
@@ -76,8 +64,6 @@ def test_wrong_key_example(mocked_generate_example):
     which represents a mock example with identical completions but an incorrect key
     in the content.
 
-    Attributes:
-        api_key: The fake API key used for testing.
     """
     api_key = "fake_api_key"
 
@@ -128,8 +114,6 @@ def test_invalid_json_response(mocked_generate_example):
     Note: The test function assumes the existence of 'MOCK_INVALID_JSON',
     which represents a mock example with an invalid JSON content.
 
-    Attributes:
-        api_key: The fake API key used for testing.
     """
     api_key = "fake_api_key"
 
@@ -163,25 +147,23 @@ def test_invalid_json_response(mocked_generate_example):
 
 @patch(
     "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
-    side_effect=UNKNOWN_GPT3_EXCEPTION(),
+    side_effect=UnknownGpt3Exception(),
 )
-def test_unexpected_examples_of_GPT(mocked_generate_example):
+def test_unexpected_examples_of_gpt(mocked_generate_example):
     """Test OpenAIDatasetGenerator when the agent returns an unknown GPT-3 exception.
 
     This test case is designed to verify the behavior of OpenAIDatasetGenerator
     when the ChatGPTAgent returns an unknown GPT-3 exception. The @patch decorator
     replaces the 'generate_batch_openai_chat_completion' function with the
-    'UNKNOWN_GPT3_EXCEPTION' side effect, simulating an unexpected exception.
+    'UnknownGpt3Exception' side effect, simulating an unexpected exception.
 
     Args:
         mocked_generate_example: The function represents the @patch function and
         provides the mocked behavior for API calls.
 
-    Note: The test function assumes the existence of 'UNKNOWN_GPT3_EXCEPTION',
+    Note: The test function assumes the existence of 'UnknownGpt3Exception',
     which represents an unknown GPT-3 exception raised during API calls.
 
-    Attributes:
-        api_key: The fake API key used for testing.
     """
     api_key = "fake_api_key"
 
@@ -189,9 +171,9 @@ def test_unexpected_examples_of_GPT(mocked_generate_example):
     os.environ["OPENAI_API_KEY"] = api_key
 
     # Initialize the OpenAIDatasetGenerator with `max_api_calls = 3`.
-    # Use pytest.raises() to assert that an UNKNOWN_GPT3_EXCEPTION is raised.
+    # Use pytest.raises() to assert that an UnknownGpt3Exception is raised.
     with pytest.raises(
-        UNKNOWN_GPT3_EXCEPTION
+        UnknownGpt3Exception
     ), tempfile.TemporaryDirectory() as cache_dir:
         dataset_generator = OpenAIDatasetGenerator(
             max_api_calls=3, filter_duplicated_examples=True, cache_root=cache_dir
@@ -225,8 +207,6 @@ def test_openai_key_init():
     setting the API key through the environment variable, and explicitly providing
     the API key as an argument during initialization.
 
-    Attributes:
-        api_key: The fake API key used for testing.
     """
     api_key = None
 
@@ -297,7 +277,7 @@ def test_construct_map_with_duplicate_inputs_unique_outputs():
         )
 
         # Create a list of generated examples with duplicate inputs and unique outputs.
-        data_generator.generated_examples = [
+        generated_examples = [
             Example(input_col="apple", output_col="A"),
             Example(input_col="banana", output_col="B"),
             Example(input_col="apple", output_col="E"),
@@ -307,7 +287,7 @@ def test_construct_map_with_duplicate_inputs_unique_outputs():
 
         # Call the construct_input_output_map()
         # method to create the input-output map.
-        data_generator.construct_input_output_map()
+        input_output_map = data_generator.construct_input_output_map(generated_examples)
 
         # The expected input-output map afte
         # r constructing it from the generated examples.
@@ -319,7 +299,7 @@ def test_construct_map_with_duplicate_inputs_unique_outputs():
 
         # Assertions to verify that the input-output
         # map matches the expected output.
-        assert data_generator.input_output_map == expected_output
+        assert input_output_map == expected_output
 
     # Collect garbage to release memory
     # resources after the test.
@@ -348,7 +328,7 @@ def test_construct_map_with_duplicate_inputs_duplicate_outputs():
 
         # Create a list of generated examples with
         # duplicate inputs and duplicate outputs.
-        data_generator.generated_examples = [
+        generated_examples = [
             Example(input_col="apple", output_col="A"),
             Example(input_col="banana", output_col="C"),
             Example(input_col="apple", output_col="A"),
@@ -363,7 +343,7 @@ def test_construct_map_with_duplicate_inputs_duplicate_outputs():
 
         # Call the construct_input_output_map()
         # method to create the input-output map.
-        data_generator.construct_input_output_map()
+        input_output_map = data_generator.construct_input_output_map(generated_examples)
 
         # The expected input-output map after
         # constructing it from the generated examples.
@@ -375,7 +355,7 @@ def test_construct_map_with_duplicate_inputs_duplicate_outputs():
 
         # Assertions to verify that the input-output
         # map matches the expected output.
-        assert data_generator.input_output_map == expected_output
+        assert input_output_map == expected_output
 
     # Collect garbage to release memory
     # resources after the test.
@@ -403,7 +383,7 @@ def test_construct_map_with_unique_inputs_outputs():
         )
 
         # Create a list of generated examples with unique inputs and outputs.
-        data_generator.generated_examples = [
+        generated_examples = [
             Example(input_col="apple", output_col="A"),
             Example(input_col="banana", output_col="B"),
             Example(input_col="orange", output_col="O"),
@@ -411,7 +391,7 @@ def test_construct_map_with_unique_inputs_outputs():
 
         # Call the construct_input_output_map()
         # method to create the input-output map.
-        data_generator.construct_input_output_map()
+        input_output_map = data_generator.construct_input_output_map(generated_examples)
 
         # The expected input-output map after
         # constructing it from the generated examples.
@@ -423,7 +403,7 @@ def test_construct_map_with_unique_inputs_outputs():
 
         # Assertions to verify that the input-output
         # map matches the expected output.
-        assert data_generator.input_output_map == expected_output
+        assert input_output_map == expected_output
 
     # Collect garbage to release memory
     # resources after the test.
@@ -449,15 +429,15 @@ def test_construct_map_with_empty_examples_list():
         )
 
         # Create an empty list of generated examples.
-        data_generator.generated_examples = []
+        generated_examples = []
 
         # Call the construct_input_output_map()
         # method to create the input-output map.
-        data_generator.construct_input_output_map()
+        input_output_map = data_generator.construct_input_output_map(generated_examples)
 
         # The input-output map should be empty
         # when there are no generated examples.
-        assert data_generator.input_output_map == {}
+        assert input_output_map == {}
 
     # Collect garbage to release memory
     # resources after the test.
@@ -485,14 +465,18 @@ def test_multi_vote_with_duplicate_inputs_unique_outputs():
         )
 
         # Provide an input-output map with duplicate inputs but unique outputs.
-        data_generator.input_output_map = {
+        input_output_map = {
             "apple": Counter({"A": 1, "E": 1, "D": 1}),
             "banana": Counter({"B": 1}),
             "orange": Counter({"O": 1}),
         }
 
         # Apply multi-voting mechanism to construct the generated dataset.
-        data_generator.apply_multi_vote_to_construct_generated_dataset()
+        generated_dataset = (
+            data_generator.apply_multi_vote_to_construct_generated_dataset(
+                input_output_map
+            )
+        )
 
         # Define the expected dataset after multi-voting.
         expected_dataset = Dataset.from_dict(
@@ -500,9 +484,7 @@ def test_multi_vote_with_duplicate_inputs_unique_outputs():
         )
 
         # Verify that the generated dataset matches the expected dataset.
-        assert are_datasets_identical(
-            data_generator.generated_dataset, expected_dataset
-        )
+        assert are_datasets_identical(generated_dataset, expected_dataset)
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
@@ -529,14 +511,18 @@ def test_multi_vote_with_duplicate_inputs_duplicate_outputs():
         )
 
         # Provide an input-output map with duplicate inputs and duplicate outputs.
-        data_generator.input_output_map = {
+        input_output_map = {
             "apple": Counter({"A": 3, "D": 1, "G": 1}),
             "banana": Counter({"B": 2, "C": 1}),
             "orange": Counter({"O": 1, "F": 1}),
         }
 
         # Apply multi-voting mechanism to construct the generated dataset.
-        data_generator.apply_multi_vote_to_construct_generated_dataset()
+        generated_dataset = (
+            data_generator.apply_multi_vote_to_construct_generated_dataset(
+                input_output_map
+            )
+        )
 
         # Define the expected dataset after multi-voting.
         expected_dataset = Dataset.from_dict(
@@ -544,9 +530,7 @@ def test_multi_vote_with_duplicate_inputs_duplicate_outputs():
         )
 
         # Verify that the generated dataset matches the expected dataset.
-        assert are_datasets_identical(
-            data_generator.generated_dataset, expected_dataset
-        )
+        assert are_datasets_identical(generated_dataset, expected_dataset)
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
@@ -571,14 +555,18 @@ def test_multi_vote_with_unique_inputs_outputs():
         data_generator = OpenAIDatasetGenerator(cache_root=cache_dir)
 
         # Provide an input-output map with unique inputs and outputs.
-        data_generator.input_output_map = {
+        input_output_map = {
             "apple": Counter({"A": 1}),
             "banana": Counter({"B": 1}),
             "orange": Counter({"O": 1}),
         }
 
         # Apply multi-voting mechanism to construct the generated dataset.
-        data_generator.apply_multi_vote_to_construct_generated_dataset()
+        generated_dataset = (
+            data_generator.apply_multi_vote_to_construct_generated_dataset(
+                input_output_map
+            )
+        )
 
         # Define the expected dataset after multi-voting.
         expected_dataset = Dataset.from_dict(
@@ -586,9 +574,7 @@ def test_multi_vote_with_unique_inputs_outputs():
         )
 
         # Verify that the generated dataset matches the expected dataset.
-        assert are_datasets_identical(
-            data_generator.generated_dataset, expected_dataset
-        )
+        assert are_datasets_identical(generated_dataset, expected_dataset)
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
@@ -612,25 +598,27 @@ def test_multi_vote_with_empty_examples_list():
         )
 
         # Set the input-output map to be empty.
-        data_generator.input_output_map = {}
+        input_output_map = {}
 
         # Apply multi-voting mechanism to construct the generated dataset.
-        data_generator.apply_multi_vote_to_construct_generated_dataset()
+        generated_dataset = (
+            data_generator.apply_multi_vote_to_construct_generated_dataset(
+                input_output_map
+            )
+        )
 
         # Define the expected dataset after multi-voting (empty dataset).
         expected_dataset = Dataset.from_dict({})
 
         # Verify that the generated dataset matches
         # the expected dataset (empty dataset).
-        assert are_datasets_identical(
-            data_generator.generated_dataset, expected_dataset
-        )
+        assert are_datasets_identical(generated_dataset, expected_dataset)
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
 
 
-def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_unique_outputs():  # noqa 501
+def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_unique_outputs():  # noqa 501
     """Test constructing generated dataset with duplicate inputs but unique outputs.
 
     This test case verifies the construction of the generated dataset with duplicate
@@ -647,18 +635,8 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_u
             filter_duplicated_examples=True, cache_root=cache_dir
         )
 
-        data_generator.generating_split = DatasetSplit.TEST
-        data_generator.examples_cache_path = (
-            Path(cache_dir)
-            / f"generated_examples_{data_generator.generating_split.value}"
-        )
-        data_generator.dataset_cache_path = (
-            Path(cache_dir)
-            / f"generated_dataset_{data_generator.generating_split.value}"
-        )
-
         # Provide generated examples with duplicate inputs but unique outputs.
-        data_generator.generated_examples = [
+        generated_examples = [
             Example(input_col="apple", output_col="A"),
             Example(input_col="banana", output_col="B"),
             Example(input_col="apple", output_col="E"),
@@ -667,23 +645,36 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_u
         ]
 
         # Convert the generated examples to the generated dataset.
-        data_generator.convert_generated_examples_to_generated_dataset()
+        (
+            all_generated_examples_dataset,
+            generated_dataset,
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
+            generated_examples
+        )
 
         # Define the expected dataset after conversion (duplicates are filtered).
         expected_dataset = Dataset.from_dict(
             {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
         )
 
+        expected_all_generated_examples_dataset = Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in generated_examples],
+                "output_col": [example.output_col for example in generated_examples],
+            }
+        )
+
         # Verify that the generated dataset matches the expected dataset.
+        assert are_datasets_identical(generated_dataset, expected_dataset)
         assert are_datasets_identical(
-            data_generator.generated_dataset, expected_dataset
+            all_generated_examples_dataset, expected_all_generated_examples_dataset
         )
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
 
 
-def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_duplicate_outputs():  # noqa 501
+def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_duplicate_outputs():  # noqa 501
     """Test constructing a map with duplicate inputs and duplicate outputs.
 
     This test case verifies the construction of the generated dataset with duplicate
@@ -700,18 +691,8 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_d
             filter_duplicated_examples=True, cache_root=cache_dir
         )
 
-        data_generator.generating_split = DatasetSplit.TEST
-        data_generator.examples_cache_path = (
-            Path(cache_dir)
-            / f"generated_examples_{data_generator.generating_split.value}"
-        )
-        data_generator.dataset_cache_path = (
-            Path(cache_dir)
-            / f"generated_dataset_{data_generator.generating_split.value}"
-        )
-
         # Provide generated examples with duplicate inputs and duplicate outputs.
-        data_generator.generated_examples = [
+        generated_examples = [
             Example(input_col="apple", output_col="A"),
             Example(input_col="banana", output_col="C"),
             Example(input_col="apple", output_col="A"),
@@ -725,23 +706,36 @@ def test_convert_generated_examples_to_generated_dataset_with_duplicate_inputs_d
         ]
 
         # Convert the generated examples to the generated dataset.
-        data_generator.convert_generated_examples_to_generated_dataset()
+        (
+            all_generated_examples_dataset,
+            generated_dataset,
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
+            generated_examples
+        )
 
         # Define the expected dataset after conversion (duplicates are filtered).
         expected_dataset = Dataset.from_dict(
             {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
         )
 
+        expected_all_generated_examples_dataset = Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in generated_examples],
+                "output_col": [example.output_col for example in generated_examples],
+            }
+        )
+
         # Verify that the generated dataset matches the expected dataset.
+        assert are_datasets_identical(generated_dataset, expected_dataset)
         assert are_datasets_identical(
-            data_generator.generated_dataset, expected_dataset
+            all_generated_examples_dataset, expected_all_generated_examples_dataset
         )
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
 
 
-def test_convert_generated_examples_to_generated_dataset_with_unique_inputs_outputs():
+def test_create_all_examples_dataset_and_generated_dataset_with_unique_inputs_outputs():
     """Test constructing a map with unique inputs and outputs.
 
     This test case verifies the construction of the generated dataset with unique
@@ -758,41 +752,44 @@ def test_convert_generated_examples_to_generated_dataset_with_unique_inputs_outp
             filter_duplicated_examples=True, cache_root=cache_dir
         )
 
-        data_generator.generating_split = DatasetSplit.TEST
-        data_generator.examples_cache_path = (
-            Path(cache_dir)
-            / f"generated_examples_{data_generator.generating_split.value}"
-        )
-        data_generator.dataset_cache_path = (
-            Path(cache_dir)
-            / f"generated_dataset_{data_generator.generating_split.value}"
-        )
-
         # Provide generated examples with unique inputs and outputs.
-        data_generator.generated_examples = [
+        generated_examples = [
             Example(input_col="apple", output_col="A"),
             Example(input_col="banana", output_col="B"),
             Example(input_col="orange", output_col="O"),
         ]
 
         # Convert the generated examples to the generated dataset.
-        data_generator.convert_generated_examples_to_generated_dataset()
+        (
+            all_generated_examples_dataset,
+            generated_dataset,
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
+            generated_examples
+        )
 
         # Define the expected dataset after conversion (no duplicates to filter).
         expected_dataset = Dataset.from_dict(
             {"input_col": ["apple", "banana", "orange"], "output_col": ["A", "B", "O"]}
         )
 
+        expected_all_generated_examples_dataset = Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in generated_examples],
+                "output_col": [example.output_col for example in generated_examples],
+            }
+        )
+
         # Verify that the generated dataset matches the expected dataset.
+        assert are_datasets_identical(generated_dataset, expected_dataset)
         assert are_datasets_identical(
-            data_generator.generated_dataset, expected_dataset
+            all_generated_examples_dataset, expected_all_generated_examples_dataset
         )
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
 
 
-def test_convert_generated_examples_to_generated_dataset_with_empty_examples_list():
+def test_create_all_examples_dataset_and_generated_dataset_with_empty_examples_list():
     """Test constructing a map with empty inputs and outputs.
 
     This test case verifies the construction of the generated dataset when the
@@ -809,29 +806,31 @@ def test_convert_generated_examples_to_generated_dataset_with_empty_examples_lis
             filter_duplicated_examples=True, cache_root=cache_dir
         )
 
-        data_generator.generating_split = DatasetSplit.TEST
-        data_generator.examples_cache_path = (
-            Path(cache_dir)
-            / f"generated_examples_{data_generator.generating_split.value}"
-        )
-        data_generator.dataset_cache_path = (
-            Path(cache_dir)
-            / f"generated_dataset_{data_generator.generating_split.value}"
-        )
-
         # Provide an empty list of generated examples.
-        data_generator.generated_examples = []
+        generated_examples = []
 
         # Convert the empty generated examples to the generated dataset.
-        data_generator.convert_generated_examples_to_generated_dataset()
+        (
+            all_generated_examples_dataset,
+            generated_dataset,
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
+            generated_examples
+        )
 
         # Define the expected dataset (empty dataset when there are no examples).
         expected_dataset = Dataset.from_dict({})
 
-        # Verify that the generated dataset matches
-        # the expected dataset (empty dataset).
+        expected_all_generated_examples_dataset = Dataset.from_dict(
+            {
+                "input_col": [example.input_col for example in generated_examples],
+                "output_col": [example.output_col for example in generated_examples],
+            }
+        )
+
+        # Verify that the generated dataset matches the expected dataset.
+        assert are_datasets_identical(generated_dataset, expected_dataset)
         assert are_datasets_identical(
-            data_generator.generated_dataset, expected_dataset
+            all_generated_examples_dataset, expected_all_generated_examples_dataset
         )
 
     # Collect garbage to release memory resources after the test.
@@ -855,30 +854,30 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
             cache_root=cache_dir, filter_duplicated_examples=True
         )
 
-        # Create cached examples and save them to the disk.
-        examples_cache_path = (
-            Path(cache_dir) / f"generated_examples_{DatasetSplit.TEST.value}"
+        # Create a cached dataset and save it to the disk.
+        examples_cache_path = Path(
+            data_generator.cache_root / f"generated_examples_{DatasetSplit.TEST.value}"
         )
-        cached_examples = Dataset.from_dict(
+        cached_dataset = Dataset.from_dict(
             {
                 "input_col": ["1", "1", "1", "1", "2", "3"],
                 "output_col": ["a", "a", "b", "c", "a", "d"],
             }
         )
-        cached_examples.save_to_disk(examples_cache_path)
+        cached_dataset.save_to_disk(examples_cache_path)
 
-        # The generate_dataset_split would first load the cached examples
-        # into self.generated_examples. Then, in the while loop,
-        # convert_generated_examples_to_generated_dataset would be called to
-        # construct the self.generated_dataset. Note that filter_duplicated_examples
-        # is True, so the self.generated_examples will be filtered to 3 examples
-        # in self.generated_dataset. Since expected_num_examples is 3, the while loop
-        # would exit immediately. So the self.generated_dataset would be the filtered
+        # The generate_dataset_split would first load the cached dataset into
+        # generated_examples. Then, in the while loop,
+        # create_all_examples_dataset_and_generated_dataset would be called to
+        # construct the generated_dataset. Note that filter_duplicated_examples
+        # is True, so the generated_examples will be filtered to 3 examples
+        # in generated_dataset. Since expected_num_examples is 3, the while loop
+        # would exit immediately. So the generated_dataset would be the filtered
         # cached dataset.
         with patch("logging.info") as mock_info, patch(
             "logging.warning"
         ) as mock_warning:
-            data_generator.generate_dataset_split(
+            generated_dataset = data_generator.generate_dataset_split(
                 expected_num_examples=3,
                 prompt_spec=MockPromptSpec,
                 split=DatasetSplit.TEST,
@@ -899,40 +898,7 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
         )
 
         # Verify that the generated dataset matches the expected filtered dataset.
-        assert are_datasets_identical(
-            data_generator.generated_dataset, excepted_generated_dataset
-        )
-
-        # Verify the generated_examples list after loading the cache.
-        assert data_generator.generated_examples == [
-            Example("1", "a"),
-            Example("1", "a"),
-            Example("1", "b"),
-            Example("1", "c"),
-            Example("2", "a"),
-            Example("3", "d"),
-        ]
-
-        # Verify the input_output_map after loading the cache.
-        assert data_generator.input_output_map == {
-            "1": Counter({"a": 2, "b": 1, "c": 1}),
-            "2": Counter({"a": 1}),
-            "3": Counter({"d": 1}),
-        }
-
-        # Verify that the directly constructed dataset from the generated_examples
-        # matches the original cached dataset.
-        directly_constructed_dataset = Dataset.from_dict(
-            {
-                "input_col": [
-                    example.input_col for example in data_generator.generated_examples
-                ],
-                "output_col": [
-                    example.output_col for example in data_generator.generated_examples
-                ],
-            }
-        )
-        assert are_datasets_identical(directly_constructed_dataset, cached_examples)
+        assert are_datasets_identical(generated_dataset, excepted_generated_dataset)
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
@@ -974,18 +940,18 @@ def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generat
         )
         cached_examples.save_to_disk(examples_cache_path)
 
-        # The generate_dataset_split would first load the cached examples
-        # into self.generated_examples. Then, in the while loop,
-        # convert_generated_examples_to_generated_dataset would be called to
-        # construct the self.generated_dataset. Note that filter_duplicated_examples
-        # is True, so the self.generated_examples will be filtered to 3 examples
-        # in self.generated_dataset. Since expected_num_examples is 4, the generation
-        # would continue, and the batch_size = 1. After one batch of API calls,
-        # self.generated_dataset meets the requirement and stop generation.
+        # The generate_dataset_split would first load the cached dataset into
+        # generated_examples. Then, in the while loop,
+        # create_all_examples_dataset_and_generated_dataset would be called to
+        # construct the generated_dataset. Note that filter_duplicated_examples
+        # is True, so the generated_examples will be filtered to 3 examples
+        # in generated_dataset. Since expected_num_examples is 4, the generation
+        # would continue, and the max_batch_size = 1. After one batch of API calls,
+        # generated_dataset meets the requirement and stop generation.
         with patch("logging.info") as mock_info, patch(
             "logging.warning"
         ) as mock_warning:
-            data_generator.generate_dataset_split(
+            generated_dataset = data_generator.generate_dataset_split(
                 expected_num_examples=4,
                 prompt_spec=MockPromptSpec,
                 split=DatasetSplit.TEST,
@@ -1009,32 +975,7 @@ def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generat
         )
 
         # Verify that the generated dataset matches the expected dataset.
-        assert are_datasets_identical(
-            data_generator.generated_dataset, excepted_generated_dataset
-        )
-
-        # Verify the generated_examples list after continuing generation.
-        assert data_generator.generated_examples == [
-            Example("1", "a"),
-            Example("1", "a"),
-            Example("1", "b"),
-            Example("1", "c"),
-            Example("2", "a"),
-            Example("3", "d"),
-            Example("6", "f"),
-            Example("6", "f"),
-            Example("6", "f"),
-            Example("6", "f"),
-            Example("6", "f"),
-        ]
-
-        # Verify the input_output_map after continuing generation.
-        assert data_generator.input_output_map == {
-            "1": Counter({"a": 2, "b": 1, "c": 1}),
-            "2": Counter({"a": 1}),
-            "3": Counter({"d": 1}),
-            "6": Counter({"f": 5}),
-        }
+        assert are_datasets_identical(generated_dataset, excepted_generated_dataset)
 
         # Verify that the API was called once to generate responses.
         assert mocked_generate_example.call_count == 1
@@ -1046,12 +987,12 @@ def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generat
 """
 These tests validate the generation process with `filter_duplicated_examples=True`.
 
-These tests collaborate with the `mock_batch_openai_response_with_different_completions`
+These tests collaborate with the `MockBatchDifferentCompletions().mock_completions`
 function to imitate the generation process of the OpenAIDataSetGenerator.
 
 The first five tests check the generation of a single dataset split using
 a shared OpenAIDataSetGenerator with the following settings:
-    - batch_size = 2
+    - max_batch_size = 2
     - responses_per_request = 3
     - filter_duplicated_examples = True
     - expected_num_examples = 5
@@ -1064,10 +1005,10 @@ After filtering duplicates, the generated_dataset will be:
         "output_col": ["a", "a"],
     })
 
-batch_size = (expected_num_examples - len(generated_dataset))
+max_batch_size = (expected_num_examples - len(generated_dataset))
 / responses_per_request = (5 - 2) / 3 = 1.
 
-The second API call reduces batch_size to 1 and generates 3 more responses.
+The second API call reduces max_batch_size to 1 and generates 3 more responses.
 After filtering duplicates, the generated_dataset will be:
     Dataset.from_dict(
     {
@@ -1075,7 +1016,7 @@ After filtering duplicates, the generated_dataset will be:
         "output_col": ["a", "a", "a"],
     })
 
-The third API call again uses batch_size = 1 and generates another 3 responses.
+The third API call again uses max_batch_size = 1 and generates another 3 responses.
 After filtering duplicates, the generated_dataset will be:
     Dataset.from_dict(
     {
@@ -1083,7 +1024,7 @@ After filtering duplicates, the generated_dataset will be:
         "output_col": ["b", "a", "a"],
     })
 
-The fourth API call also uses batch_size = 1 and generates 3 responses.
+The fourth API call also uses max_batch_size = 1 and generates 3 responses.
 After filtering duplicates, the generated_dataset will be:
     Dataset.from_dict(
     {
@@ -1092,7 +1033,7 @@ After filtering duplicates, the generated_dataset will be:
     })
 
 The test suite contains five test cases, each using a different OpenAIDataSetGenerator.
-These generators have the same settings (batch_size = 2, responses_per_request = 3,
+These generators have the same settings (max_batch_size = 2, responses_per_request = 3,
 expected_num_examples = 5, filter_duplicated_examples = True), but their max_api_calls
 attribute is set to 2, 3, 4, 5, and unlimited, respectively.
 
@@ -1106,13 +1047,13 @@ prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
 split = DatasetSplit.TRAIN
 filter_duplicated_examples = True
 expected_num_examples = 5
-batch_size = 2
+max_batch_size = 2
 responses_per_request = 3
 
 
 @patch(
     "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
-    side_effect=mock_batch_openai_response_with_different_completions,
+    side_effect=MockBatchDifferentCompletions().mock_completions,
 )
 def test_generator_with_filter_first_batch(mocked_generate_example):
     """Test OpenAIDatasetGenerator with filter methods in the first batch.
@@ -1125,23 +1066,20 @@ def test_generator_with_filter_first_batch(mocked_generate_example):
     result after the second API call. The test also ensures that the
     number of calls to the API mock matches the expected number.
 
-    Note: The first API call's batch_size is 2, generating 6 responses.
+    Note: The first API call's max_batch_size is 2, generating 6 responses.
 
     Args:
         mocked_generate_example (MagicMock): The patched function representing the
             @patch decorator for generating example responses.
     """
     with tempfile.TemporaryDirectory() as cache_dir:
-        # Reset the mock responses to ensure predictable behavior.
-        reset_mock_batch_openai_response_with_different_completions()
-
         # Initialize the OpenAIDatasetGenerator with specific settings.
         dataset_generator = OpenAIDatasetGenerator(
             api_key,
             max_api_calls=2,
             filter_duplicated_examples=filter_duplicated_examples,
             cache_root=cache_dir,
-            batch_size=batch_size,
+            max_batch_size=max_batch_size,
             responses_per_request=responses_per_request,
         )
 
@@ -1164,22 +1102,6 @@ def test_generator_with_filter_first_batch(mocked_generate_example):
 
         # Verify the generated dataset matches the expected dataset.
         assert are_datasets_identical(generated_dataset, expected_dataset)
-        assert are_datasets_identical(
-            dataset_generator.generated_dataset, expected_dataset
-        )
-
-        # Define the expected generated examples based on the given mock responses.
-        expected_examples = [
-            Example(input_col="1", output_col="a"),
-            Example(input_col="1", output_col="b"),
-            Example(input_col="1", output_col="a"),
-            Example(input_col="1", output_col="c"),
-            Example(input_col="2", output_col="a"),
-            Example(input_col="2", output_col="b"),
-        ]
-
-        # Verify the generated_examples list matches the expected examples.
-        assert dataset_generator.generated_examples == expected_examples
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
@@ -1187,7 +1109,7 @@ def test_generator_with_filter_first_batch(mocked_generate_example):
 
 @patch(
     "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
-    side_effect=mock_batch_openai_response_with_different_completions,
+    side_effect=MockBatchDifferentCompletions().mock_completions,
 )
 def test_generator_with_filter_second_batch(mocked_generate_example):
     """Test OpenAIDatasetGenerator with filter methods in the second batch.
@@ -1200,24 +1122,21 @@ def test_generator_with_filter_second_batch(mocked_generate_example):
     second API call. The test also ensures that the number of calls to the
     API mock matches the expected number.
 
-    Note: The first API call's batch_size is 2, generating 6 responses.
-    The second API call's batch_size is 1, generating 3 responses.
+    Note: The first API call's max_batch_size is 2, generating 6 responses.
+    The second API call's max_batch_size is 1, generating 3 responses.
 
     Args:
         mocked_generate_example (MagicMock): The patched function representing the
             @patch decorator for generating example responses.
     """
     with tempfile.TemporaryDirectory() as cache_dir:
-        # Reset the mock responses to ensure predictable behavior.
-        reset_mock_batch_openai_response_with_different_completions()
-
         # Initialize the OpenAIDatasetGenerator with specific settings.
         dataset_generator = OpenAIDatasetGenerator(
             api_key,
             max_api_calls=3,
             filter_duplicated_examples=filter_duplicated_examples,
             cache_root=cache_dir,
-            batch_size=batch_size,
+            max_batch_size=max_batch_size,
             responses_per_request=responses_per_request,
         )
 
@@ -1240,25 +1159,6 @@ def test_generator_with_filter_second_batch(mocked_generate_example):
 
         # Verify the generated dataset matches the expected dataset.
         assert are_datasets_identical(generated_dataset, expected_dataset)
-        assert are_datasets_identical(
-            dataset_generator.generated_dataset, expected_dataset
-        )
-
-        # Define the expected generated examples based on the given mock responses.
-        expected_examples = [
-            Example(input_col="1", output_col="a"),
-            Example(input_col="1", output_col="b"),
-            Example(input_col="1", output_col="a"),
-            Example(input_col="1", output_col="c"),
-            Example(input_col="2", output_col="a"),
-            Example(input_col="2", output_col="b"),
-            Example(input_col="3", output_col="a"),
-            Example(input_col="3", output_col="a"),
-            Example(input_col="3", output_col="b"),
-        ]
-
-        # Verify the generated_examples list matches the expected examples.
-        assert dataset_generator.generated_examples == expected_examples
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
@@ -1266,7 +1166,7 @@ def test_generator_with_filter_second_batch(mocked_generate_example):
 
 @patch(
     "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
-    side_effect=mock_batch_openai_response_with_different_completions,
+    side_effect=MockBatchDifferentCompletions().mock_completions,
 )
 def test_generator_with_filter_third_batch(mocked_generate_example):
     """Test OpenAIDatasetGenerator with filter methods in the third batch.
@@ -1279,9 +1179,9 @@ def test_generator_with_filter_third_batch(mocked_generate_example):
     result after the third API call. The test also ensures that the
     number of calls to the API mock matches the expected number.
 
-    Note: The first API call's batch_size is 2, generating 6 responses.
-    The second API call's batch_size is 1, generating 3 responses.
-    The third API call's batch_size is 1, generating 3 responses.
+    Note: The first API call's max_batch_size is 2, generating 6 responses.
+    The second API call's max_batch_size is 1, generating 3 responses.
+    The third API call's max_batch_size is 1, generating 3 responses.
 
     Args:
         mocked_generate_example (MagicMock): The patched function representing the
@@ -1289,7 +1189,6 @@ def test_generator_with_filter_third_batch(mocked_generate_example):
     """
     with tempfile.TemporaryDirectory() as cache_dir:
         # Reset the mock responses to ensure predictable behavior.
-        reset_mock_batch_openai_response_with_different_completions()
 
         # Initialize the OpenAIDatasetGenerator with specific settings.
         dataset_generator = OpenAIDatasetGenerator(
@@ -1297,7 +1196,7 @@ def test_generator_with_filter_third_batch(mocked_generate_example):
             max_api_calls=4,
             filter_duplicated_examples=filter_duplicated_examples,
             cache_root=cache_dir,
-            batch_size=batch_size,
+            max_batch_size=max_batch_size,
             responses_per_request=responses_per_request,
         )
 
@@ -1320,28 +1219,6 @@ def test_generator_with_filter_third_batch(mocked_generate_example):
 
         # Verify the generated dataset matches the expected dataset.
         assert are_datasets_identical(generated_dataset, expected_dataset)
-        assert are_datasets_identical(
-            dataset_generator.generated_dataset, expected_dataset
-        )
-
-        # Define the expected generated examples based on the given mock responses.
-        expected_examples = [
-            Example(input_col="1", output_col="a"),
-            Example(input_col="1", output_col="b"),
-            Example(input_col="1", output_col="a"),
-            Example(input_col="1", output_col="c"),
-            Example(input_col="2", output_col="a"),
-            Example(input_col="2", output_col="b"),
-            Example(input_col="3", output_col="a"),
-            Example(input_col="3", output_col="a"),
-            Example(input_col="3", output_col="b"),
-            Example(input_col="1", output_col="b"),
-            Example(input_col="1", output_col="b"),
-            Example(input_col="1", output_col="b"),
-        ]
-
-        # Verify the generated_examples list matches the expected examples.
-        assert dataset_generator.generated_examples == expected_examples
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
@@ -1349,7 +1226,7 @@ def test_generator_with_filter_third_batch(mocked_generate_example):
 
 @patch(
     "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
-    side_effect=mock_batch_openai_response_with_different_completions,
+    side_effect=MockBatchDifferentCompletions().mock_completions,
 )
 def test_generator_with_filter_forth_batch(mocked_generate_example):
     """Test OpenAIDatasetGenerator with filter methods in the forth batch.
@@ -1362,10 +1239,10 @@ def test_generator_with_filter_forth_batch(mocked_generate_example):
     forth API call. The test also ensures that the number of calls to the
     API mock matches the expected number.
 
-    Note: The first API call's batch_size is 2, generating 6 responses.
-    The second API call's batch_size is 1, generating 3 responses.
-    The third API call's batch_size is 1, generating 3 responses.
-    The forth and last API call's batch_size is 1, generating 3 responses.
+    Note: The first API call's max_batch_size is 2, generating 6 responses.
+    The second API call's max_batch_size is 1, generating 3 responses.
+    The third API call's max_batch_size is 1, generating 3 responses.
+    The forth and last API call's max_batch_size is 1, generating 3 responses.
 
     Args:
         mocked_generate_example (MagicMock): The patched function representing the
@@ -1373,7 +1250,6 @@ def test_generator_with_filter_forth_batch(mocked_generate_example):
     """
     with tempfile.TemporaryDirectory() as cache_dir:
         # Reset the mock responses to ensure predictable behavior.
-        reset_mock_batch_openai_response_with_different_completions()
 
         # Initialize the OpenAIDatasetGenerator with specific settings.
         dataset_generator = OpenAIDatasetGenerator(
@@ -1381,7 +1257,7 @@ def test_generator_with_filter_forth_batch(mocked_generate_example):
             max_api_calls=5,
             filter_duplicated_examples=filter_duplicated_examples,
             cache_root=cache_dir,
-            batch_size=batch_size,
+            max_batch_size=max_batch_size,
             responses_per_request=responses_per_request,
         )
 
@@ -1404,31 +1280,6 @@ def test_generator_with_filter_forth_batch(mocked_generate_example):
 
         # Verify the generated dataset matches the expected dataset.
         assert are_datasets_identical(generated_dataset, expected_dataset)
-        assert are_datasets_identical(
-            dataset_generator.generated_dataset, expected_dataset
-        )
-
-        # Define the expected generated examples based on the given mock responses.
-        expected_examples = [
-            Example(input_col="1", output_col="a"),
-            Example(input_col="1", output_col="b"),
-            Example(input_col="1", output_col="a"),
-            Example(input_col="1", output_col="c"),
-            Example(input_col="2", output_col="a"),
-            Example(input_col="2", output_col="b"),
-            Example(input_col="3", output_col="a"),
-            Example(input_col="3", output_col="a"),
-            Example(input_col="3", output_col="b"),
-            Example(input_col="1", output_col="b"),
-            Example(input_col="1", output_col="b"),
-            Example(input_col="1", output_col="b"),
-            Example(input_col="4", output_col="c"),
-            Example(input_col="4", output_col="c"),
-            Example(input_col="5", output_col="a"),
-        ]
-
-        # Verify the generated_examples list matches the expected examples.
-        assert dataset_generator.generated_examples == expected_examples
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
@@ -1436,7 +1287,7 @@ def test_generator_with_filter_forth_batch(mocked_generate_example):
 
 @patch(
     "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
-    side_effect=mock_batch_openai_response_with_different_completions,
+    side_effect=MockBatchDifferentCompletions().mock_completions,
 )
 def test_generator_with_filter_unlimited_api_calls(mocked_generate_example):
     """Test OpenAIDatasetGenerator with filter methods and unlimited API calls.
@@ -1449,10 +1300,10 @@ def test_generator_with_filter_unlimited_api_calls(mocked_generate_example):
     final API call. The test also ensures that the number of calls
     to the API mock matches the expected number.
 
-    Note: The first API call's batch_size is 2, generating 6 responses.
-    The second API call's batch_size is 1, generating 3 responses.
-    The third API call's batch_size is 1, generating 3 responses.
-    The forth and last API call's batch_size is 1, generating 3 responses.
+    Note: The first API call's max_batch_size is 2, generating 6 responses.
+    The second API call's max_batch_size is 1, generating 3 responses.
+    The third API call's max_batch_size is 1, generating 3 responses.
+    The forth and last API call's max_batch_size is 1, generating 3 responses.
     After the forth batch, the generation ends. No further API calls are required.
 
     Args:
@@ -1461,7 +1312,6 @@ def test_generator_with_filter_unlimited_api_calls(mocked_generate_example):
     """
     with tempfile.TemporaryDirectory() as cache_dir:
         # Reset the mock responses to ensure predictable behavior.
-        reset_mock_batch_openai_response_with_different_completions()
 
         # Initialize the OpenAIDatasetGenerator with
         # specific settings and unlimited API calls.
@@ -1469,7 +1319,7 @@ def test_generator_with_filter_unlimited_api_calls(mocked_generate_example):
             api_key,
             filter_duplicated_examples=filter_duplicated_examples,
             cache_root=cache_dir,
-            batch_size=batch_size,
+            max_batch_size=max_batch_size,
             responses_per_request=responses_per_request,
         )
 
@@ -1492,31 +1342,6 @@ def test_generator_with_filter_unlimited_api_calls(mocked_generate_example):
 
         # Verify the generated dataset matches the expected dataset.
         assert are_datasets_identical(generated_dataset, expected_dataset)
-        assert are_datasets_identical(
-            dataset_generator.generated_dataset, expected_dataset
-        )
-
-        # Define the expected generated examples based on the given mock responses.
-        expected_examples = [
-            Example(input_col="1", output_col="a"),
-            Example(input_col="1", output_col="b"),
-            Example(input_col="1", output_col="a"),
-            Example(input_col="1", output_col="c"),
-            Example(input_col="2", output_col="a"),
-            Example(input_col="2", output_col="b"),
-            Example(input_col="3", output_col="a"),
-            Example(input_col="3", output_col="a"),
-            Example(input_col="3", output_col="b"),
-            Example(input_col="1", output_col="b"),
-            Example(input_col="1", output_col="b"),
-            Example(input_col="1", output_col="b"),
-            Example(input_col="4", output_col="c"),
-            Example(input_col="4", output_col="c"),
-            Example(input_col="5", output_col="a"),
-        ]
-
-        # Verify the generated_examples list matches the expected examples.
-        assert dataset_generator.generated_examples == expected_examples
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
@@ -1524,7 +1349,7 @@ def test_generator_with_filter_unlimited_api_calls(mocked_generate_example):
 
 @patch(
     "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
-    side_effect=mock_batch_openai_response_with_different_completions,
+    side_effect=MockBatchDifferentCompletions(length=5).mock_completions,
 )
 def test_generator_with_filter_to_generate_datasetdict(mocked_generate_example):
     """Test OpenAIDatasetGenerator with filter methods to generate a DatasetDict.
@@ -1545,7 +1370,6 @@ def test_generator_with_filter_to_generate_datasetdict(mocked_generate_example):
     """
     with tempfile.TemporaryDirectory() as cache_dir:
         # Reset the mock responses to ensure predictable behavior.
-        reset_mock_batch_openai_response_with_different_completions()
 
         # Initialize the OpenAIDatasetGenerator with
         # specific settings and limited API calls.
@@ -1553,7 +1377,7 @@ def test_generator_with_filter_to_generate_datasetdict(mocked_generate_example):
             api_key,
             filter_duplicated_examples=filter_duplicated_examples,
             cache_root=cache_dir,
-            batch_size=batch_size,
+            max_batch_size=max_batch_size,
             responses_per_request=responses_per_request,
             max_api_calls=7,
         )

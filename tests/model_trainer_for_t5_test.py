@@ -36,7 +36,7 @@ def test_t5_trainer_with_get_right_padding_length():
 
 
 def test_t5_trainer_tokenize():
-    """Test that the Trainer for T5 model correctly tokenizes a dataset."""
+    """Test that the T5 Model Trainer correctly tokenizes a dataset."""
     trainer = GenerationModelTrainer(
         "patrickvonplaten/t5-tiny-random", has_encoder=True, tokenizer_max_length=64
     )
@@ -90,7 +90,7 @@ def test_t5_trainer_tokenize():
             input_id, trainer.model.config.pad_token_id
         ) == trainer.get_left_padding_length(attention_mask, 0)
         # The length of right padding tokens in output_encoding_id
-        # equals to the length of right padding IGNORE_INDEX of label.
+        # equals the length of right padding IGNORE_INDEX of label.
         length_of_right_padding_in_label = trainer.get_right_padding_length(
             label, IGNORE_INDEX
         )
@@ -164,10 +164,10 @@ def test_t5_trainer_with_tokenizer_max_length():
             )
 
             # Though we did not pass in validation dataset, we set
-            # evaluation_strategy to `no`. Check if logging.info was
+            # evaluation_strategy to no. Check if logging.info was
             # called once for not setting the evaluation strategy.
             mock_info.assert_called_once_with(
-                "The training doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
+                "The trainer doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
 
             # Check if logging.warning wasn't called.
@@ -217,7 +217,7 @@ def test_t5_trainer_without_tokenizer_max_length():
                 training_datasets,
             )
             mock_info.assert_called_once_with(
-                "The training doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
+                "The trainer doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
 
             # Check if logging.warning was called once for
@@ -278,7 +278,7 @@ def test_t5_trainer_with_epoch_evaluation():
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
                 info_list.count(
-                    "Using default metrics of chrf, exact_match and bert_score."
+                    "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
@@ -343,7 +343,7 @@ def test_t5_trainer_without_validation_datasets():
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
                 info_list.count(
-                    "Using default metrics of chrf, exact_match and bert_score."
+                    "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
@@ -435,7 +435,7 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
                 info_list.count(
-                    "Using default metrics of chrf, exact_match and bert_score."
+                    "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
@@ -458,7 +458,8 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
 
 def test_t5_trainer_with_unsupported_parameter():
     """Test the error handler with an unsupported hyperparameter with T5 Trainer."""
-    # We do support per_device_train_batch_size, but this test case uses batch_size.
+    # In this test case we provide an unsupported parameter called `batch_size` to
+    # `trainer.train_model`. The supported parameter is `per_device_train_batch_size`.
     with pytest.raises(AssertionError) as exc_info:
         with tempfile.TemporaryDirectory() as cache_dir:
             trainer = GenerationModelTrainer(
@@ -516,11 +517,12 @@ def test_t5_trainer_with_truncation_warning():
             "model_output": ["pomme"] * 2,
         }
     )
+    # The `model_input` is longer than 32 tokens. So it will trigger truncation warning.
     with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
         trainer.tokenize_dataset(training_dataset)
         # logging.warning was called for truncation.
         mock_warning.assert_called_once_with(
-            "Truncation happened when tokenizing dataset. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
+            "Truncation happened when tokenizing dataset. Consider increasing the tokenizer_max_length if possible. Otherwise, truncation may lead to unexpected results."  # noqa: E501
         )
         mock_info.assert_not_called()
     gc.collect()
