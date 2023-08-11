@@ -1,7 +1,6 @@
 """A base class for dataset processor."""
 
 from abc import ABC, abstractmethod
-from copy import deepcopy
 from functools import partial
 
 import datasets
@@ -64,8 +63,6 @@ class BaseProcessor(ABC):
             it will be discarded.
         """
         modified_dataset_dicts = []
-        raw_dataset_dicts = deepcopy(dataset_dicts)
-        # Use deepcopy to avoid modifying the original dataset_dicts
 
         def filter_empty_strings(example: dict) -> bool:
             """Filter to exclude examples with empty 'input_col' or 'output_col'.
@@ -86,7 +83,8 @@ class BaseProcessor(ABC):
             # Check if 'input_col' and 'output_col' are both non-empty strings
             return bool(example["input_col"]) and bool(example["output_col"])
 
-        for task_id, dataset_dict in enumerate(raw_dataset_dicts):
+        for task_id, dataset_dict in enumerate(dataset_dicts):
+            modified_dataset_dict = {}
             for dataset_split in list(dataset_dict.keys()):
                 mapping_function = partial(
                     self.post_process_example,
@@ -96,10 +94,11 @@ class BaseProcessor(ABC):
                     dataset_split=dataset_split,
                     eos_token=self.eos_token,
                 )
-                dataset_dict[dataset_split] = (
+                modified_dataset_dict[dataset_split] = (
                     dataset_dict[dataset_split]
                     .filter(filter_empty_strings)
                     .map(mapping_function)
                 )
-            modified_dataset_dicts.append(dataset_dict)
+            modified_dataset_dict = datasets.DatasetDict(modified_dataset_dict)
+            modified_dataset_dicts.append(modified_dataset_dict)
         return modified_dataset_dicts

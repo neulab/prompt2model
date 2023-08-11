@@ -1045,3 +1045,45 @@ def test_extract_some_empty_responses():
                 Example(input_col="5", output_col="a"),
             ]
     gc.collect()
+
+
+def test_initialize_dataset_generator_with_dynamic_temperature():
+    """Test the correct initialization of the dynamic temperature strategy."""
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        with patch("logging.info") as mock_info, patch(
+            "logging.warning"
+        ) as mock_warning:
+            data_generator = OpenAIDatasetGenerator(
+                cache_root=cache_dir, initial_temperature=-0.2
+            )
+            mock_info.assert_not_called()
+            mock_warning.assert_called_once_with(
+                "The lowest temperature for GPT-3.5 API is 0. So the initial_temperature is set to 0."  # noqa E501
+            )
+            assert data_generator.initial_temperature == 0
+
+        with patch("logging.info") as mock_info, patch(
+            "logging.warning"
+        ) as mock_warning:
+            data_generator = OpenAIDatasetGenerator(
+                cache_root=cache_dir, max_temperature=2.3
+            )
+            mock_info.assert_not_called()
+            mock_warning.assert_called_once_with(
+                "The highest temperature for GPT-3.5 API is 2. So the max_temperature is set to 2."  # noqa E501
+            )
+            assert data_generator.max_temperature == 2
+
+        with patch("logging.info") as mock_info, patch(
+            "logging.warning"
+        ) as mock_warning:
+            data_generator = OpenAIDatasetGenerator(
+                cache_root=cache_dir, max_temperature=1.2, initial_temperature=1.5
+            )
+            mock_info.assert_not_called()
+            mock_warning.assert_called_once_with(
+                "The generator gradually increases the temperature from a lower value to a higher value. So the initial_temperature and the max_temperature are switched."  # noqa E501
+            )
+            assert data_generator.initial_temperature == 1.2
+            assert data_generator.max_temperature == 1.5

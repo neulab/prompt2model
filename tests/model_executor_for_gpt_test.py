@@ -97,7 +97,7 @@ def test_make_single_prediction_gpt2_without_length_constraints():
 
 
 def test_sequence_max_length_init_for_gpt2():
-    """Test the sequence_max_length is correctly set for gpt2."""
+    """Test that the sequence_max_length is correctly set for gpt2."""
     gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
     gpt2_model = gpt2_model_and_tokenizer.model
     gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer

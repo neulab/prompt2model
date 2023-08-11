@@ -1,6 +1,7 @@
 """Testing TextualizeProcessor."""
 
 import gc
+from copy import deepcopy
 from unittest.mock import patch
 
 import datasets
@@ -112,9 +113,13 @@ def test_the_logging_for_eos_token_required_for_gpt():
 def test_dataset_processor_t5_style():
     """Test the `process_dataset_dict` function of T5-type `TextualizeProcessor`."""
     t5_processor = TextualizeProcessor(has_encoder=True)
+    raw_dataset_dicts = deepcopy(DATASET_DICTS)
     t5_modified_dataset_dicts = t5_processor.process_dataset_dict(
         INSTRUCTION, DATASET_DICTS
     )
+    # Ensure the dataset_dicts themselves are the same after processing.
+    for idx, each in enumerate(raw_dataset_dicts):
+        assert are_dataset_dicts_identical(raw_dataset_dicts[idx], DATASET_DICTS[idx])
     t5_expected_dataset_dicts = [
         datasets.DatasetDict(
             {
@@ -182,10 +187,13 @@ def test_dataset_processor_decoder_only_style():
     gpt_processor = TextualizeProcessor(
         has_encoder=False, eos_token=gpt2_tokenizer.eos_token
     )
+    raw_dataset_dicts = deepcopy(DATASET_DICTS)
     gpt_modified_dataset_dicts = gpt_processor.process_dataset_dict(
         INSTRUCTION, DATASET_DICTS
     )
-
+    # Ensure the dataset_dicts themselves are the same after processing.
+    for idx, each in enumerate(raw_dataset_dicts):
+        assert are_dataset_dicts_identical(raw_dataset_dicts[idx], DATASET_DICTS[idx])
     # Check that the modified dataset dicts have the expected content
     gpt_expected_dataset_dicts = [
         datasets.DatasetDict(
