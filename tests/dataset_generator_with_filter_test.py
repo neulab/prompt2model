@@ -5,6 +5,7 @@ import os
 import tempfile
 from collections import Counter
 from functools import partial
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -829,6 +830,153 @@ def test_create_all_examples_dataset_and_generated_dataset_with_empty_examples_l
         assert are_datasets_identical(
             all_generated_examples_dataset, expected_all_generated_examples_dataset
         )
+
+    # Collect garbage to release memory resources after the test.
+    gc.collect()
+
+
+def test_load_cache_dataset_with_filter_duplicated_examples():
+    """Test the cached dataset loading with filtering duplicated examples.
+
+    This test case verifies the loading of the cached dataset and its filtering
+    to eliminate duplicated examples. The OpenAIDatasetGenerator object is
+    initialized with `filter_duplicated_examples=True`.
+
+    Attributes:
+        api_key (str): The fake API key used for testing.
+    """
+    # Set up a temporary directory for cache.
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        data_generator = OpenAIDatasetGenerator(
+            cache_root=cache_dir, filter_duplicated_examples=True
+        )
+
+        # Create a cached dataset and save it to the disk.
+        dataset_cache_path = Path(
+            data_generator.cache_root / f"{DatasetSplit.TEST.value}"
+        )
+        cached_dataset = Dataset.from_dict(
+            {
+                "input_col": ["1", "1", "1", "1", "2", "3"],
+                "output_col": ["a", "a", "b", "c", "a", "d"],
+            }
+        )
+        cached_dataset.save_to_disk(dataset_cache_path)
+
+        # The generate_dataset_split would first load the cached dataset into
+        # generated_examples. Then, in the while loop,
+        # convert_generated_examples_to_generated_dataset would be called to
+        # construct the self.generated_dataset. Note that filter_duplicated_examples
+        # is True, so the generated_examples will be filtered to 3 examples
+        # in self.generated_dataset. Since expected_num_examples is 3, the while loop
+        # would exit immediately. So the self.generated_dataset would be the filtered
+        # cached dataset.
+        with patch("logging.info") as mock_info, patch(
+            "logging.warning"
+        ) as mock_warning:
+            generated_dataset = data_generator.generate_dataset_split(
+                expected_num_examples=3,
+                prompt_spec=MockPromptSpec,
+                split=DatasetSplit.TEST,
+            )
+
+            # Verify that logging.info was called with the correct message.
+            mock_info.assert_called_once_with(
+                f"Loading cache from {str(dataset_cache_path)}."
+            )
+            mock_warning.assert_not_called()
+
+        # Define the expected filtered dataset after loading the cache.
+        excepted_generated_dataset = Dataset.from_dict(
+            {
+                "input_col": ["1", "2", "3"],
+                "output_col": ["a", "a", "d"],
+            }
+        )
+
+        # Verify that the generated dataset matches the expected filtered dataset.
+        assert are_datasets_identical(generated_dataset, excepted_generated_dataset)
+
+    # Collect garbage to release memory resources after the test.
+    gc.collect()
+
+
+@patch(
+    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    side_effect=MOCK_EXAMPLE,
+)
+def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generation(
+    mocked_generate_example,
+):
+    """Test OpenAIDatasetGenerator can load cache and continue generation.
+
+    This test case verifies the ability of OpenAIDatasetGenerator to
+    load a cached dataset and continue generation when
+    `filter_duplicated_examples` is True. The OpenAIDatasetGenerator
+    object is initialized with `filter_duplicated_examples=True`.
+
+    Attributes:
+        api_key (str): The fake API key used for testing.
+    """
+    # Set up a temporary directory for cache.
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        data_generator = OpenAIDatasetGenerator(
+            cache_root=cache_dir, filter_duplicated_examples=True
+        )
+
+        # Create a cached dataset and save it to the disk.
+        dataset_cache_path = Path(
+            data_generator.cache_root / f"{DatasetSplit.TEST.value}"
+        )
+        cached_dataset = Dataset.from_dict(
+            {
+                "input_col": ["1", "1", "1", "1", "2", "3"],
+                "output_col": ["a", "a", "b", "c", "a", "d"],
+            }
+        )
+        cached_dataset.save_to_disk(dataset_cache_path)
+
+        # The generate_dataset_split would first load the cached dataset into
+        # generated_examples. Then, in the while loop,
+        # convert_generated_examples_to_generated_dataset would be called to
+        # construct the self.generated_dataset. Note that filter_duplicated_examples
+        # is True, so the generated_examples will be filtered to 3 examples
+        # in self.generated_dataset. Since expected_num_examples is 4, the generation
+        # would continue, and the batch_size = 1. After one batch of API calls,
+        # self.generated_dataset meets the requirement and stop generation.
+        with patch("logging.info") as mock_info, patch(
+            "logging.warning"
+        ) as mock_warning:
+            generated_dataset = data_generator.generate_dataset_split(
+                expected_num_examples=4,
+                prompt_spec=MockPromptSpec,
+                split=DatasetSplit.TEST,
+            )
+
+            # Verify that logging.info was called with
+            # the correct message for loading cache.
+            info_list = [each.args[0] for each in mock_info.call_args_list]
+            assert info_list[0] == f"Loading cache from {str(dataset_cache_path)}."
+            # The first logging.info is for loading cache, and there are
+            # 5 * 2 additional logging.info messages in extract_responses.
+            assert len(info_list) == 1 + 5 * 2
+            mock_warning.assert_not_called()
+
+        # Define the expected generated dataset after continuing generation.
+        excepted_generated_dataset = Dataset.from_dict(
+            {
+                "input_col": ["1", "2", "3", "6"],
+                "output_col": ["a", "a", "d", "f"],
+            }
+        )
+
+        # Verify that the generated dataset matches the expected dataset.
+        assert are_datasets_identical(generated_dataset, excepted_generated_dataset)
+
+        # Verify that the API was called once to generate responses.
+        assert mocked_generate_example.call_count == 1
 
     # Collect garbage to release memory resources after the test.
     gc.collect()

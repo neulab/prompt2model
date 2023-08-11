@@ -737,7 +737,7 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
         cached_dataset.save_to_disk(dataset_cache_path)
         # The generate_dataset_split would first load the cached
         # dataset into generated_examples. Then in the while
-        # loop, ccreate_all_examples_dataset_and_generated_dataset
+        # loop, create_all_examples_dataset_and_generated_dataset
         # would be called to construct the generated_dataset.
         # Note that filter_duplicated_examples is False, so the
         # generated_examples won't be filtered. And since the
@@ -803,7 +803,7 @@ def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_gene
         cached_dataset.save_to_disk(dataset_cache_path)
         # The generate_dataset_split would first load the cached
         # dataset into generated_examples. Then in the while
-        # loop, ccreate_all_examples_dataset_and_generated_dataset
+        # loop, create_all_examples_dataset_and_generated_dataset
         # would be called to construct the generated_dataset.
         # Note that filter_duplicated_examples is False, so the
         # generated_examples won't be filtered. And since the
