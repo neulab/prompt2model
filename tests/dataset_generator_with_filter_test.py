@@ -373,7 +373,7 @@ def test_multi_vote_with_empty_examples_list():
     gc.collect()
 
 
-def test_creat_all_exmaples_dataset_and_generated_dataset_with_duplicate_inputs_unique_outputs():  # noqa 501
+def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_unique_outputs():  # noqa 501
     """Test constructing generated dataset with duplicate inputs but unique outputs.
 
     This test case verifies the construction of the generated dataset with duplicate
@@ -403,7 +403,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_duplicate_inputs_
         (
             all_generated_examples_dataset,
             generated_dataset,
-        ) = data_generator.creat_all_exmaples_dataset_and_generated_dataset(
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
             generated_examples
         )
 
@@ -429,7 +429,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_duplicate_inputs_
     gc.collect()
 
 
-def test_creat_all_exmaples_dataset_and_generated_dataset_with_duplicate_inputs_duplicate_outputs():  # noqa 501
+def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_duplicate_outputs():  # noqa 501
     """Test constructing a map with duplicate inputs and duplicate outputs.
 
     This test case verifies the construction of the generated dataset with duplicate
@@ -464,7 +464,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_duplicate_inputs_
         (
             all_generated_examples_dataset,
             generated_dataset,
-        ) = data_generator.creat_all_exmaples_dataset_and_generated_dataset(
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
             generated_examples
         )
 
@@ -490,7 +490,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_duplicate_inputs_
     gc.collect()
 
 
-def test_creat_all_exmaples_dataset_and_generated_dataset_with_unique_inputs_outputs():
+def test_create_all_examples_dataset_and_generated_dataset_with_unique_inputs_outputs():
     """Test constructing a map with unique inputs and outputs.
 
     This test case verifies the construction of the generated dataset with unique
@@ -518,7 +518,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_unique_inputs_out
         (
             all_generated_examples_dataset,
             generated_dataset,
-        ) = data_generator.creat_all_exmaples_dataset_and_generated_dataset(
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
             generated_examples
         )
 
@@ -544,7 +544,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_unique_inputs_out
     gc.collect()
 
 
-def test_creat_all_exmaples_dataset_and_generated_dataset_with_empty_examples_list():
+def test_create_all_examples_dataset_and_generated_dataset_with_empty_examples_list():
     """Test constructing a map with empty inputs and outputs.
 
     This test case verifies the construction of the generated dataset when the
@@ -568,7 +568,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_empty_examples_li
         (
             all_generated_examples_dataset,
             generated_dataset,
-        ) = data_generator.creat_all_exmaples_dataset_and_generated_dataset(
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
             generated_examples
         )
 

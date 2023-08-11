@@ -17,7 +17,6 @@ __all__ = (
     "MockCompletion",
     "create_gpt2_model_and_tokenizer",
     "create_t5_model_and_tokenizer",
-    "MockOneOpenAIResponse",
     "mock_batch_openai_response_identical_completions",
     "are_dataset_dicts_identical",
     "are_datasets_identical",
