@@ -164,7 +164,7 @@ def test_t5_trainer_with_tokenizer_max_length():
             )
 
             # Though we did not pass in validation dataset, we set
-            # evaluation_strategy to `no`. Check if logging.info was
+            # evaluation_strategy to no. Check if logging.info was
             # called once for not setting the evaluation strategy.
             mock_info.assert_called_once_with(
                 "The training doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
@@ -278,7 +278,7 @@ def test_t5_trainer_with_epoch_evaluation():
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
                 info_list.count(
-                    "Using default metrics of chrf, exact_match and bert_score."
+                    "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
@@ -343,7 +343,7 @@ def test_t5_trainer_without_validation_datasets():
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
                 info_list.count(
-                    "Using default metrics of chrf, exact_match and bert_score."
+                    "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
@@ -354,10 +354,10 @@ def test_t5_trainer_without_validation_datasets():
             assert trainer.validation_callback.epoch_count == num_train_epochs
 
             concatenated_training_dataset = concatenate_datasets(training_datasets)
-            splitted_dataset = concatenated_training_dataset.train_test_split(
+            splited_dataset = concatenated_training_dataset.train_test_split(
                 test_size=0.15, seed=trainer.training_seed
             )
-            val_dataset = splitted_dataset["test"]
+            val_dataset = splited_dataset["test"]
             assert trainer.validation_callback.val_dataset is not None
             assert len(trainer.validation_callback.val_dataset.features) == 2
             assert (
@@ -435,7 +435,7 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
                 info_list.count(
-                    "Using default metrics of chrf, exact_match and bert_score."
+                    "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
@@ -516,11 +516,12 @@ def test_t5_trainer_with_truncation_warning():
             "model_output": ["pomme"] * 2,
         }
     )
+    # The `model_input` is longer than 32 tokens. So it will trigger truncation warning.
     with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
         trainer.tokenize_dataset(training_dataset)
         # logging.warning was called for truncation.
         mock_warning.assert_called_once_with(
-            "Truncation happened when tokenizing dataset. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
+            "Truncation happened when tokenizing dataset. Consider increasing the tokenizer_max_length if possible. Otherwise, truncation may lead to unexpected results."  # noqa: E501
         )
         mock_info.assert_not_called()
     gc.collect()

@@ -1,22 +1,21 @@
-"""Testing integration of components locally."""
+"""Tests for the prompt_parser module."""
 
 import gc
 import os
-from functools import partial
 from unittest.mock import patch
 
 import openai
 import pytest
 
 from prompt2model.prompt_parser import OpenAIInstructionParser, TaskType
-from test_helpers import UnknownGpt3Exception, mock_one_openai_response
+from test_helpers import MockCompletion, UnknownGpt3Exception
 
-GPT3_RESPONSE_WITH_DEMONSTRATIONS = (
+GPT3_RESPONSE_WITH_DEMONSTRATIONS = MockCompletion(
     '{"Instruction": "Convert each date from an informal description into a'
     ' MM/DD/YYYY format.", "Demonstrations": "Fifth of November 2024 ->'
     ' 11/05/2024\nJan. 9 2023 -> 01/09/2023\nChristmas 2016 -> 12/25/2016"}'
 )
-GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS = (
+GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS = MockCompletion(
     '{"Instruction": "Turn the given fact into a question by a simple rearrangement'
     " of words. This typically involves replacing some part of the given fact with a"
     " WH word. For example, replacing the subject of the provided fact with the word"
@@ -28,25 +27,14 @@ GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS = (
     " You can also form a question without any WH words. For example, 'A radio"
     ' converts electricity into?\'", "Demonstrations": "N/A"}'
 )
-GPT3_RESPONSE_WITH_INVALID_JSON = (
+GPT3_RESPONSE_WITH_INVALID_JSON = MockCompletion(
     '{"Instruction": "A", "Demonstrations": "B}'  # Missing final quotation mark
-)
-
-
-mock_prompt_parsing_example_with_demonstrations = partial(
-    mock_one_openai_response, content=GPT3_RESPONSE_WITH_DEMONSTRATIONS
-)
-mock_prompt_parsing_example_without_demonstrations = partial(
-    mock_one_openai_response, content=GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS
-)
-mock_prompt_parsing_example_with_invalid_json = partial(
-    mock_one_openai_response, content=GPT3_RESPONSE_WITH_INVALID_JSON
 )
 
 
 @patch(
     "prompt2model.utils.ChatGPTAgent.generate_one_openai_chat_completion",
-    side_effect=mock_prompt_parsing_example_with_demonstrations,
+    side_effect=[GPT3_RESPONSE_WITH_DEMONSTRATIONS],
 )
 def test_instruction_parser_with_demonstration(mocked_parsing_method):
     """Test a prompt-based instruction (with the LLM call mocked).
@@ -85,7 +73,7 @@ Christmas 2016 -> 12/25/2016"""
 
 @patch(
     "prompt2model.utils.ChatGPTAgent.generate_one_openai_chat_completion",
-    side_effect=mock_prompt_parsing_example_without_demonstrations,
+    side_effect=[GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS],
 )
 def test_instruction_parser_without_demonstration(mocked_parsing_method):
     """Test a prompt-based instruction (with the LLM call mocked).
@@ -112,7 +100,7 @@ def test_instruction_parser_without_demonstration(mocked_parsing_method):
 
 @patch(
     "prompt2model.utils.ChatGPTAgent.generate_one_openai_chat_completion",
-    side_effect=mock_prompt_parsing_example_with_invalid_json,
+    side_effect=[GPT3_RESPONSE_WITH_INVALID_JSON] * 3,
 )
 def test_instruction_parser_with_invalid_json(mocked_parsing_method):
     """Verify that we handle when the API returns a invalid JSON response.

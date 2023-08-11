@@ -17,19 +17,32 @@ from test_helpers import (
     MockCompletion,
     UnknownGpt3Exception,
     are_datasets_identical,
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
 )
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
     content='{"input": "This is a great movie!", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
     content='{"input": "This is a great movie!", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "This is a great movie!", "output": "1}',
+)
+
+MOCK_CLASSIFICATION_EXAMPLE = partial(
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "This is a great movie!", "output": "1"}',
+)
+MOCK_WRONG_KEY_EXAMPLE = partial(
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "This is a great movie!", "label": "1"}',
+)
+MOCK_INVALID_JSON = partial(
+    mock_batch_openai_response_identical_completions,
     content='{"input": "This is a great movie!", "output": "1}',
 )
 
@@ -68,13 +81,14 @@ def check_generate_dataset(dataset_generator: OpenAIDatasetGenerator):
 def check_generate_dataset_dict(dataset_generator: OpenAIDatasetGenerator):
     """Test the `generate_dataset_dict()` function of `OpenAIDatasetGenerator`.
 
-    This function generates movie comments datasets by creating a specified number of
-    examples for each split of the data, which includes train, validation, and test.
-    It uses a simple prompt specification and saves the generated datasets to a
-    temporary directory. Afterward, the function checks whether the dataset dictionary
-    contains all the expected keys, each split has the anticipated number of examples,
-    every dataset has the anticipated columns, each example is not empty, and whether
-    the dataset dictionary is saved to the output directory.
+        This function generates movie comments datasets by creating a specified
+        number of examples for each split of the data, which includes train,
+        validation, and test. It uses a simple prompt specification and saves the
+        generated datasets to a temporary directory. Afterward, the function
+        checks whether the dataset dictionary contains all the expected keys,
+        each split has the anticipated number of examples, every dataset has
+        the anticipated columns, each example is not empty, and whether
+        the dataset dictionary is saved to the output directory.
 
     Args:
         dataset_generator: The dataset_generator will be tested
@@ -281,9 +295,8 @@ def test_invalid_json_response(mocked_generate_example):
             prompt_spec, expected_num_examples, split
         )
         assert mocked_generate_example.call_count == 3
-        assert (
-            dataset["input_col"] == dataset["output_col"] and dataset["input_col"] == []
-        )
+        expected_dataset = Dataset.from_dict({"input_col": [], "output_col": []})
+        assert are_datasets_identical(dataset, expected_dataset)
     gc.collect()
 
 
@@ -371,7 +384,7 @@ def test_openai_key_init():
     gc.collect()
 
 
-def test_creat_all_exmaples_dataset_and_generated_dataset_with_duplicate_inputs_unique_outputs():  # noqa: 501
+def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_unique_outputs():  # noqa: 501
     """Test constructing the generated dataset with duplicate inputs but unique outputs.
 
     This function tests the scenario when the generator has generated examples with
@@ -383,7 +396,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_duplicate_inputs_
     The `generating_split` attribute of the generator is set to `DatasetSplit.TEST`,
     and the `generated_examples` list contains examples with some duplicate inputs but
     unique outputs. The function then calls the
-    `creat_all_exmaples_dataset_and_generated_dataset()` method to create the generated
+    `create_all_examples_dataset_and_generated_dataset()` method to create the generated
     dataset.
 
     Finally, the function checks whether the generated dataset matches the expected
@@ -410,7 +423,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_duplicate_inputs_
         (
             all_generated_examples_dataset,
             generated_dataset,
-        ) = data_generator.creat_all_exmaples_dataset_and_generated_dataset(
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
             generated_examples
         )
         expected_dataset = Dataset.from_dict(
@@ -424,7 +437,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_duplicate_inputs_
     gc.collect()
 
 
-def test_creat_all_exmaples_dataset_and_generated_dataset_with_duplicate_inputs_duplicate_outputs():  # noqa: 501
+def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_duplicate_outputs():  # noqa: 501
     """Test constructing a map with duplicate inputs and duplicate outputs.
 
     This function tests the scenario when the generator has generated examples with
@@ -436,7 +449,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_duplicate_inputs_
     The `generating_split` attribute of the generator is set to `DatasetSplit.TEST`,
     and the `generated_examples` list contains examples with both duplicate inputs and
     duplicate outputs. The function then calls the
-    `creat_all_exmaples_dataset_and_generated_dataset()` method to create the generated
+    `create_all_examples_dataset_and_generated_dataset()` method to create the generated
     dataset.
 
     Finally, the function checks whether the generated dataset matches the expected
@@ -468,7 +481,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_duplicate_inputs_
         (
             all_generated_examples_dataset,
             generated_dataset,
-        ) = data_generator.creat_all_exmaples_dataset_and_generated_dataset(
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
             generated_examples
         )
         expected_dataset = Dataset.from_dict(
@@ -482,7 +495,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_duplicate_inputs_
     gc.collect()
 
 
-def test_creat_all_exmaples_dataset_and_generated_dataset_with_unique_inputs_outputs():
+def test_create_all_examples_dataset_and_generated_dataset_with_unique_inputs_outputs():
     """Test constructing a map with unique inputs and outputs.
 
     This function tests the scenario when the generator has generated examples with
@@ -494,7 +507,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_unique_inputs_out
     The `generating_split` attribute of the generator is set to `DatasetSplit.TEST`,
     and the `generated_examples` list contains examples with unique inputs and
     unique outputs. The function then calls the
-    `creat_all_exmaples_dataset_and_generated_dataset()` method to create the generated
+    `create_all_examples_dataset_and_generated_dataset()` method to create the generated
     dataset.
 
     Finally, the function checks whether the generated dataset matches the expected
@@ -519,7 +532,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_unique_inputs_out
         (
             all_generated_examples_dataset,
             generated_dataset,
-        ) = data_generator.creat_all_exmaples_dataset_and_generated_dataset(
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
             generated_examples
         )
         expected_dataset = Dataset.from_dict(
@@ -533,7 +546,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_unique_inputs_out
     gc.collect()
 
 
-def test_creat_all_exmaples_dataset_and_generated_dataset_with_empty_examples_list():
+def test_create_all_examples_dataset_and_generated_dataset_with_empty_examples_list():
     """Test constructing a map with empty inputs and outputs.
 
     This function tests the scenario when the generator has an empty list of generated
@@ -543,7 +556,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_empty_examples_li
     The test uses the `OpenAIDatasetGenerator` with `filter_duplicated_examples=False`.
     The `generating_split` attribute of the generator is set to `DatasetSplit.TEST`,
     and the `generated_examples` list is empty. The function then calls the
-    `creat_all_exmaples_dataset_and_generated_dataset()` method to create the generated
+    `create_all_examples_dataset_and_generated_dataset()` method to create the generated
     dataset.
 
     Finally, the function checks whether the generated dataset is empty.
@@ -563,7 +576,7 @@ def test_creat_all_exmaples_dataset_and_generated_dataset_with_empty_examples_li
         (
             all_generated_examples_dataset,
             generated_dataset,
-        ) = data_generator.creat_all_exmaples_dataset_and_generated_dataset(
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
             generated_examples
         )
         expected_dataset = Dataset.from_dict(
@@ -737,7 +750,7 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
         cached_dataset.save_to_disk(dataset_cache_path)
         # The generate_dataset_split would first load the cached
         # dataset into generated_examples. Then in the while
-        # loop, ccreat_all_exmaples_dataset_and_generated_dataset
+        # loop, create_all_examples_dataset_and_generated_dataset
         # would be called to construct the generated_dataset.
         # Note that filter_duplicated_examples is False, so the
         # generated_examples won't be filtered. And since the
@@ -803,7 +816,7 @@ def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_gene
         cached_dataset.save_to_disk(dataset_cache_path)
         # The generate_dataset_split would first load the cached
         # dataset into generated_examples. Then in the while
-        # loop, ccreat_all_exmaples_dataset_and_generated_dataset
+        # loop, create_all_examples_dataset_and_generated_dataset
         # would be called to construct the generated_dataset.
         # Note that filter_duplicated_examples is False, so the
         # generated_examples won't be filtered. And since the

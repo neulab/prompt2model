@@ -29,14 +29,14 @@ class GenerationModelExecutor(ModelExecutor):
         Returns:
             A list of model output tensors, one for each element in input_ids.
         """
-        generate_strategy = hyperparameter_choices.get("generate_strategy", "beam")
+        generate_strategy = hyperparameter_choices.get("generate_strategy", "greedy")
         assert generate_strategy in [
             "beam",  # beam search.
             "top_k",  # top_k sampling.
             "top_p",  # top_p sampling.
             "greedy",  # greedy search.
             "intersect",  # If both top_k and top_p are set, the model will
-            # Sample from the intersection of the top-k tokens and the top-p tokens.
+            # sample from the intersection of the top-k tokens and the top-p tokens.
         ], "Only support top_k/top_p/intersect sampling and beam/greedy search for inference."  # noqa 501
         if generate_strategy == "greedy":
             output = self.model.generate(
@@ -45,7 +45,9 @@ class GenerationModelExecutor(ModelExecutor):
                 max_length=self.sequence_max_length,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
-                repetition_penalty=2.0,
+                repetition_penalty=hyperparameter_choices.get(
+                    "repetition_penalty", 2.0
+                ),
             )
         elif generate_strategy == "beam":
             output = self.model.generate(
@@ -54,9 +56,11 @@ class GenerationModelExecutor(ModelExecutor):
                 max_length=self.sequence_max_length,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
-                repetition_penalty=2.0,
-                num_beams=hyperparameter_choices.get("num_beams", 3),
                 do_sample=False,
+                repetition_penalty=hyperparameter_choices.get(
+                    "repetition_penalty", 2.0
+                ),
+                num_beams=hyperparameter_choices.get("num_beams", 3),
             )
         elif generate_strategy == "top_k":
             output = self.model.generate(
@@ -65,8 +69,10 @@ class GenerationModelExecutor(ModelExecutor):
                 max_length=self.sequence_max_length,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
-                repetition_penalty=2.0,
                 do_sample=True,
+                repetition_penalty=hyperparameter_choices.get(
+                    "repetition_penalty", 2.0
+                ),
                 top_k=hyperparameter_choices.get("top_k", 20),
             )
         elif generate_strategy == "top_p":
@@ -76,8 +82,10 @@ class GenerationModelExecutor(ModelExecutor):
                 max_length=self.sequence_max_length,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
-                repetition_penalty=2.0,
                 do_sample=True,
+                repetition_penalty=hyperparameter_choices.get(
+                    "repetition_penalty", 2.0
+                ),
                 top_p=hyperparameter_choices.get("top_p", 0.95),
             )
         else:
@@ -88,8 +96,10 @@ class GenerationModelExecutor(ModelExecutor):
                 max_length=self.sequence_max_length,
                 eos_token_id=self.model.config.eos_token_id,
                 early_stopping=True,
-                repetition_penalty=2.0,
                 do_sample=True,
+                repetition_penalty=hyperparameter_choices.get(
+                    "repetition_penalty", 2.0
+                ),
                 top_k=hyperparameter_choices.get("top_k", 20),
                 top_p=hyperparameter_choices.get("top_p", 0.95),
             )
@@ -99,7 +109,7 @@ class GenerationModelExecutor(ModelExecutor):
         self,
         test_set: datasets.Dataset,
         input_column: str,
-        hyperparameter_choices: dict[str, Any] | None = None,
+        hyperparameter_choices: dict[str, Any] = {},
     ) -> list[ModelOutput]:
         """Make predictions with a T5-type or GPT-type model on a test set.
 
@@ -143,11 +153,6 @@ class GenerationModelExecutor(ModelExecutor):
             device = self.model.device
             input_ids = encoded_inputs["input_ids"].to(device)
             attention_mask = encoded_inputs["attention_mask"].to(device)
-            hyperparameter_choices = (
-                hyperparameter_choices
-                if hyperparameter_choices is not None
-                else {"generate_strategy": "greedy"}
-            )
             output = self.generate(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
@@ -169,13 +174,13 @@ class GenerationModelExecutor(ModelExecutor):
         return model_outputs
 
     def make_single_prediction(
-        self, model_input: str, hyperparameter_choices: dict[str, Any] | None = None
+        self, model_input: str, hyperparameter_choices: dict[str, Any] = {}
     ) -> ModelOutput:
         """Mock evaluation on one example.
 
         Args:
             model_input: The input string to the model.
-            hyperparameter_choices: A dictionary of hyperparameters for inference.
+            hyperparameter_choices: A dictionary of hyperparameter for inference.
 
         Returns:
             A single model output, useful for exposing a model to a user interface.
