@@ -19,28 +19,28 @@ from test_helpers import (
     MockBatchDifferentCompletions,
     UnknownGpt3Exception,
     are_datasets_identical,
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
 )
 
 # Create partial functions to simulate different API responses.
 # MOCK_EXAMPLE: Represents a mock example with identical completions.
 # The content contains an input ("6") and the corresponding output ("f").
 MOCK_EXAMPLE = partial(
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
     content='{"input": "6", "output": "f"}',
 )
 
 # MOCK_WRONG_KEY_EXAMPLE: Represents a mock example with identical completions,
 # but the content contains an incorrect key "label" instead of "output".
 MOCK_WRONG_KEY_EXAMPLE = partial(
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
     content='{"input": "This is a great movie!", "label": "1"}',
 )
 
 # MOCK_INVALID_JSON: Represents a mock example with an invalid JSON content.
 # The content is missing a closing double-quote for the "output" value.
 MOCK_INVALID_JSON = partial(
-    mock_batch_openai_response_with_identical_completions,
+    mock_batch_openai_response_identical_completions,
     content='{"input": "This is a great movie!", "output": "1}',
 )
 
@@ -618,7 +618,7 @@ def test_multi_vote_with_empty_examples_list():
     gc.collect()
 
 
-def test_creat_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_unique_outputs():  # noqa 501
+def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_unique_outputs():  # noqa 501
     """Test constructing generated dataset with duplicate inputs but unique outputs.
 
     This test case verifies the construction of the generated dataset with duplicate
@@ -648,7 +648,7 @@ def test_creat_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_
         (
             all_generated_examples_dataset,
             generated_dataset,
-        ) = data_generator.creat_all_examples_dataset_and_generated_dataset(
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
             generated_examples
         )
 
@@ -674,7 +674,7 @@ def test_creat_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_
     gc.collect()
 
 
-def test_creat_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_duplicate_outputs():  # noqa 501
+def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_duplicate_outputs():  # noqa 501
     """Test constructing a map with duplicate inputs and duplicate outputs.
 
     This test case verifies the construction of the generated dataset with duplicate
@@ -709,7 +709,7 @@ def test_creat_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_
         (
             all_generated_examples_dataset,
             generated_dataset,
-        ) = data_generator.creat_all_examples_dataset_and_generated_dataset(
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
             generated_examples
         )
 
@@ -735,7 +735,7 @@ def test_creat_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_
     gc.collect()
 
 
-def test_creat_all_examples_dataset_and_generated_dataset_with_unique_inputs_outputs():
+def test_create_all_examples_dataset_and_generated_dataset_with_unique_inputs_outputs():
     """Test constructing a map with unique inputs and outputs.
 
     This test case verifies the construction of the generated dataset with unique
@@ -763,7 +763,7 @@ def test_creat_all_examples_dataset_and_generated_dataset_with_unique_inputs_out
         (
             all_generated_examples_dataset,
             generated_dataset,
-        ) = data_generator.creat_all_examples_dataset_and_generated_dataset(
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
             generated_examples
         )
 
@@ -789,7 +789,7 @@ def test_creat_all_examples_dataset_and_generated_dataset_with_unique_inputs_out
     gc.collect()
 
 
-def test_creat_all_examples_dataset_and_generated_dataset_with_empty_examples_list():
+def test_create_all_examples_dataset_and_generated_dataset_with_empty_examples_list():
     """Test constructing a map with empty inputs and outputs.
 
     This test case verifies the construction of the generated dataset when the
@@ -813,7 +813,7 @@ def test_creat_all_examples_dataset_and_generated_dataset_with_empty_examples_li
         (
             all_generated_examples_dataset,
             generated_dataset,
-        ) = data_generator.creat_all_examples_dataset_and_generated_dataset(
+        ) = data_generator.create_all_examples_dataset_and_generated_dataset(
             generated_examples
         )
 
@@ -854,21 +854,21 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
             cache_root=cache_dir, filter_duplicated_examples=True
         )
 
-        # Create cached examples and save them to the disk.
-        examples_cache_path = (
-            Path(cache_dir) / f"generated_examples_{DatasetSplit.TEST.value}"
+        # Create a cached dataset and save it to the disk.
+        examples_cache_path = Path(
+            data_generator.cache_root / f"generated_examples_{DatasetSplit.TEST.value}"
         )
-        cached_examples = Dataset.from_dict(
+        cached_dataset = Dataset.from_dict(
             {
                 "input_col": ["1", "1", "1", "1", "2", "3"],
                 "output_col": ["a", "a", "b", "c", "a", "d"],
             }
         )
-        cached_examples.save_to_disk(examples_cache_path)
+        cached_dataset.save_to_disk(examples_cache_path)
 
         # The generate_dataset_split would first load the cached dataset into
         # generated_examples. Then, in the while loop,
-        # convert_generated_examples_to_generated_dataset would be called to
+        # create_all_examples_dataset_and_generated_dataset would be called to
         # construct the generated_dataset. Note that filter_duplicated_examples
         # is True, so the generated_examples will be filtered to 3 examples
         # in generated_dataset. Since expected_num_examples is 3, the while loop
@@ -942,7 +942,7 @@ def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generat
 
         # The generate_dataset_split would first load the cached dataset into
         # generated_examples. Then, in the while loop,
-        # convert_generated_examples_to_generated_dataset would be called to
+        # create_all_examples_dataset_and_generated_dataset would be called to
         # construct the generated_dataset. Note that filter_duplicated_examples
         # is True, so the generated_examples will be filtered to 3 examples
         # in generated_dataset. Since expected_num_examples is 4, the generation
