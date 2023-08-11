@@ -1,4 +1,4 @@
-"""Testing autoregressive GenerationModelExecutor with different configurations."""
+"""Testing the autoregressive GenerationModelExecutor with different configurations."""
 
 import gc
 from unittest.mock import patch
@@ -11,12 +11,12 @@ from test_helpers import create_gpt2_model_and_tokenizer
 
 def test_make_prediction_gpt2():
     """Test the `make_prediction` method with a GPT-2 model."""
-    # Create GPT2 model and tokenizer.
+    # Create a GPT-2 model and tokenizer.
     gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
     gpt2_model = gpt2_model_and_tokenizer.model
     gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
 
-    # Create test dataset.
+    # Create a test dataset.
     test_dataset = Dataset.from_dict(
         {
             "model_input": [
@@ -27,10 +27,10 @@ def test_make_prediction_gpt2():
         }
     )
 
-    # Create GenerationModelExecutor.
+    # Create a GenerationModelExecutor.
     model_executor = GenerationModelExecutor(gpt2_model, gpt2_tokenizer)
 
-    # Test GPT-2 model.
+    # Test the GPT-2 model.
     gpt2_outputs = model_executor.make_prediction(test_dataset, "model_input")
     assert isinstance(gpt2_outputs, list)
     assert len(gpt2_outputs) == len(test_dataset)
@@ -48,15 +48,15 @@ def test_make_prediction_gpt2():
 
 def test_make_single_prediction_gpt2():
     """Test the `make_single_prediction` with a GPT-2 model."""
-    # Create GPT-2 model and tokenizer.
+    # Create a GPT-2 model and tokenizer.
     gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
     gpt2_model = gpt2_model_and_tokenizer.model
     gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
 
-    # Create GenerationModelExecutor.
+    # Create a GenerationModelExecutor.
     model_executor = GenerationModelExecutor(gpt2_model, gpt2_tokenizer)
 
-    # Test GPT-2 model single prediction.
+    # Test making a single prediction from the GPT-2 model.
     test_input = "What's your name? Please reply in 10 words."
     gpt2_output = model_executor.make_single_prediction(test_input)
     assert isinstance(gpt2_output, ModelOutput)
@@ -70,7 +70,7 @@ def test_make_single_prediction_gpt2():
 
 def test_make_single_prediction_gpt2_without_length_constraints():
     """Test GenerationModelExecutor for a GPT2 model without length constraints."""
-    # Create GPT2 model and tokenizer.
+    # Create a GPT-2 model and tokenizer.
     gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
     gpt2_model = gpt2_model_and_tokenizer.model
     gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
@@ -148,15 +148,15 @@ def test_truncation_warning_for_gpt2_executor():
 
 def test_beam_search_for_gpt2_executor():
     """Test the beam search for GPT2 ModelExecutor."""
-    # Create GPT-2 model and tokenizer.
+    # Create a GPT-2 model and tokenizer.
     gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
     gpt2_model = gpt2_model_and_tokenizer.model
     gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
 
-    # Create GenerationModelExecutor.
+    # Create a GenerationModelExecutor.
     model_executor = GenerationModelExecutor(gpt2_model, gpt2_tokenizer)
     hyperparameter_choices = {"generate_strategy": "beam", "num_beams": 4}
-    # Test GPT-2 model single prediction.
+    # Test making a single prediction from the GPT-2 model.
     test_input = "What's your name? Please reply in 10 words."
     model_output = model_executor.make_single_prediction(
         test_input, hyperparameter_choices
@@ -173,17 +173,17 @@ def test_beam_search_for_gpt2_executor():
 
 def test_greedy_search_for_gpt2_executor():
     """Test the greedy search for GPT2 ModelExecutor."""
-    # Create GPT-2 model and tokenizer.
+    # Create a GPT-2 model and tokenizer.
     gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
     gpt2_model = gpt2_model_and_tokenizer.model
     gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
 
-    # Create GenerationModelExecutor.
+    # Create a GenerationModelExecutor.
     model_executor = GenerationModelExecutor(gpt2_model, gpt2_tokenizer)
     hyperparameter_choices = {
         "generate_strategy": "greedy",
     }
-    # Test GPT-2 model single prediction.
+    # Test making a single prediction from the GPT-2 model.
     test_input = "What's your name? Please reply in 10 words."
     model_output = model_executor.make_single_prediction(
         test_input, hyperparameter_choices
@@ -199,18 +199,18 @@ def test_greedy_search_for_gpt2_executor():
 
 def test_top_k_sampling_for_gpt2_executor():
     """Test the top_k sampling for GPT2 ModelExecutor."""
-    # Create GPT-2 model and tokenizer.
+    # Create a GPT-2 model and tokenizer.
     gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
     gpt2_model = gpt2_model_and_tokenizer.model
     gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
 
-    # Create GenerationModelExecutor.
+    # Create a GenerationModelExecutor.
     model_executor = GenerationModelExecutor(gpt2_model, gpt2_tokenizer)
     hyperparameter_choices = {
         "generate_strategy": "top_k",
         "top_k": 20,
     }
-    # Test GPT-2 model single prediction.
+    # Test making a single prediction from the GPT-2 model.
     test_input = "What's your name? Please reply in 10 words."
     model_output = model_executor.make_single_prediction(
         test_input, hyperparameter_choices
@@ -227,18 +227,18 @@ def test_top_k_sampling_for_gpt2_executor():
 
 def test_top_p_sampling_for_gpt2_executor():
     """Test the top_p sampling for GPT2 ModelExecutor."""
-    # Create GPT-2 model and tokenizer.
+    # Create a GPT-2 model and tokenizer.
     gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
     gpt2_model = gpt2_model_and_tokenizer.model
     gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
 
-    # Create GenerationModelExecutor.
+    # Create a GenerationModelExecutor.
     model_executor = GenerationModelExecutor(gpt2_model, gpt2_tokenizer)
     hyperparameter_choices = {
         "generate_strategy": "top_p",
         "top_p": 0.7,
     }
-    # Test GPT-2 model single prediction.
+    # Test making a single prediction from the GPT-2 model.
     test_input = "What's your name? Please reply in 10 words."
     model_output = model_executor.make_single_prediction(
         test_input, hyperparameter_choices
@@ -254,19 +254,19 @@ def test_top_p_sampling_for_gpt2_executor():
 
 def test_intersect_sampling_for_gpt2_executor():
     """Test the intersect sampling for GPT2 ModelExecutor."""
-    # Create GPT-2 model and tokenizer.
+    # Create a GPT-2 model and tokenizer.
     gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
     gpt2_model = gpt2_model_and_tokenizer.model
     gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
 
-    # Create GenerationModelExecutor.
+    # Create a GenerationModelExecutor.
     model_executor = GenerationModelExecutor(gpt2_model, gpt2_tokenizer)
     hyperparameter_choices = {
         "generate_strategy": "intersect",
         "top_p": 0.7,
         "top_k": 20,
     }
-    # Test GPT-2 model single prediction.
+    # Test making a single prediction from the GPT-2 model.
     test_input = "What's your name? Please reply in 10 words."
     model_output = model_executor.make_single_prediction(
         test_input, hyperparameter_choices

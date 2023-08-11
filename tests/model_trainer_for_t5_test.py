@@ -7,16 +7,19 @@ from unittest.mock import patch
 
 import datasets
 import pytest
+import torch.nn as nn
 import transformers
 from datasets import concatenate_datasets
 
 from prompt2model.model_trainer.generate import GenerationModelTrainer
 
 os.environ["WANDB_MODE"] = "dryrun"
+loss_function = nn.CrossEntropyLoss()
+IGNORE_INDEX = loss_function.ignore_index
 
 
 def test_t5_trainer_with_get_right_padding_length():
-    """Test the get_right_padding_length function of T5 Trainer."""
+    """Test the get_right_padding_length function of the T5 Trainer."""
     trainer = GenerationModelTrainer(
         "patrickvonplaten/t5-tiny-random", has_encoder=True
     )
@@ -33,7 +36,7 @@ def test_t5_trainer_with_get_right_padding_length():
 
 
 def test_t5_trainer_tokenize():
-    """Test the Trainer for T5 mode correctly tokenize dataset."""
+    """Test that the T5 Model Trainer  correctly tokenizes a dataset."""
     trainer = GenerationModelTrainer(
         "patrickvonplaten/t5-tiny-random", has_encoder=True, tokenizer_max_length=64
     )
@@ -64,10 +67,11 @@ def test_t5_trainer_tokenize():
     )
 
     # For T5 model, the label of tokenized_dataset is the modified input_id
-    # of output_encodings, where all the padding tokens are replaced by -100.
+    # of output_encodings, where all the padding tokens are replaced by -IGNORE_INDEX.
+    assert IGNORE_INDEX == -100
     modified_labels = [
         [
-            -100 if element == trainer.tokenizer.pad_token_id else element
+            IGNORE_INDEX if element == trainer.tokenizer.pad_token_id else element
             for element in sublist
         ]
         for sublist in output_encodings["input_ids"]
@@ -86,8 +90,10 @@ def test_t5_trainer_tokenize():
             input_id, trainer.model.config.pad_token_id
         ) == trainer.get_left_padding_length(attention_mask, 0)
         # The length of right padding tokens in output_encoding_id
-        # equals to the length of right padding -100 of label.
-        length_of_right_padding_in_label = trainer.get_right_padding_length(label, -100)
+        # equals the length of right padding IGNORE_INDEX of label.
+        length_of_right_padding_in_label = trainer.get_right_padding_length(
+            label, IGNORE_INDEX
+        )
         length_of_right_padding_in_input_id = trainer.get_right_padding_length(
             output_encoding_id, trainer.tokenizer.pad_token_id
         )
@@ -161,7 +167,7 @@ def test_t5_trainer_with_tokenizer_max_length():
             # evaluation_strategy to no. Check if logging.info was
             # called once for not setting the evaluation strategy.
             mock_info.assert_called_once_with(
-                "The traning doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
+                "The trainer doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
 
             # Check if logging.warning wasn't called.
@@ -211,7 +217,7 @@ def test_t5_trainer_without_tokenizer_max_length():
                 training_datasets,
             )
             mock_info.assert_called_once_with(
-                "The traning doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
+                "The trainer doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
 
             # Check if logging.warning was called once for
@@ -219,7 +225,7 @@ def test_t5_trainer_without_tokenizer_max_length():
             mock_warning.assert_called_once_with(
                 "Set the tokenizer_max_length is preferable for finetuning model, which saves the cost of training."  # noqa 501
             )
-        gc.collect()
+    gc.collect()
 
 
 def test_t5_trainer_with_epoch_evaluation():
@@ -365,9 +371,9 @@ def test_t5_trainer_without_validation_datasets():
 
             # The evaluation_strategy is set to epoch, but validation
             # datasets are not provided. So the training dataset will
-            # be splited to generate validation dataset.
+            # be splitted to obtain the validation dataset.
             mock_warning.assert_called_once_with(
-                "The validation split for encoder-decoder model is missed. The training dataset will be split to create the validation dataset."  # noqa E501
+                "The validation split for encoder-decoder model is missing. The training dataset will be split to create the validation dataset."  # noqa E501
             )
 
         trained_model.save_pretrained(cache_dir)
@@ -452,7 +458,8 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
 
 def test_t5_trainer_with_unsupported_parameter():
     """Test the error handler with an unsupported hyperparameter with T5 Trainer."""
-    # We actually support per_device_train_batch_size, but the testcase uses batch_size.
+    # In this test case we provide an unsupported parameter called `batch_size` to
+    # `trainer.train_model`. The supported parameter is `per_device_train_batch_size`.
     with pytest.raises(AssertionError) as exc_info:
         with tempfile.TemporaryDirectory() as cache_dir:
             trainer = GenerationModelTrainer(

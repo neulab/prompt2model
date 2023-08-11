@@ -7,15 +7,18 @@ from unittest.mock import patch
 
 import datasets
 import pytest
+import torch.nn as nn
 import transformers
 
 from prompt2model.model_trainer.generate import GenerationModelTrainer
 
 os.environ["WANDB_MODE"] = "dryrun"
+loss_function = nn.CrossEntropyLoss()
+IGNORE_INDEX = loss_function.ignore_index
 
 
 def test_gpt_trainer_with_get_left_padding_length():
-    """Test the get_left_padding_length function of GPT Trainer."""
+    """Test the get_left_padding_length function of the GPT Trainer."""
     trainer = GenerationModelTrainer("sshleifer/tiny-gpt2", has_encoder=False)
     test_cases = [
         ([1, 1, 1, 3, 1], 1, 3),  # There is 3 `1` in the prefix.
@@ -24,13 +27,13 @@ def test_gpt_trainer_with_get_left_padding_length():
         ([0, 0, 1, 1, 1], 1, 0),  # There is 0 `1` in the prefix.
     ]
     for each in test_cases:
-        # GPT tokenizer uses left padding.
+        # The GPT tokenizer uses left padding.
         assert trainer.get_left_padding_length(each[0], each[1]) == each[2]
     gc.collect()
 
 
 def test_gpt_model_trainer_tokenize():
-    """Test the Trainer for GPT model correctly tokenize dataset."""
+    """Test that the Trainer for GPT model correctly tokenizes a dataset."""
     trainer = GenerationModelTrainer(
         "sshleifer/tiny-gpt2", has_encoder=False, tokenizer_max_length=64
     )
@@ -85,11 +88,12 @@ def test_gpt_model_trainer_tokenize():
             output_encoding_id, trainer.model.config.pad_token_id
         )
 
-        # The index -100 is the ignored index of cross-entropy loss.
-        # length_of_compute_loss_label is the length of labels that
-        # are taken into account by the loss function.
+        # The IGNORE_INDEX is the ignored index of cross-entropy
+        # loss. length_of_compute_loss_label is the length of labels
+        # that are taken into account by the loss function.
+        assert IGNORE_INDEX == -100
         length_of_compute_loss_label = len(label) - trainer.get_left_padding_length(
-            label, -100
+            label, IGNORE_INDEX
         )
 
         # So length_of_output_encoding_id_without_padding
@@ -109,7 +113,7 @@ def test_gpt_model_trainer_tokenize():
         # The end of the `model_input` is the `model_output`. And the end of
         # `model_output` is the eos_token. So the last token of input_id
         #  and output_encoding_id should both be the eos_token.
-        # Since we set the padding_token as eos_token, so the
+        # Since we set the padding_token as eos_token, the
         # pad_token_id should equal to eos_token_id.
         assert (
             output_encoding_id[-1]
@@ -118,7 +122,7 @@ def test_gpt_model_trainer_tokenize():
             == trainer.model.config.eos_token_id
             == trainer.model.config.pad_token_id
         )
-        # For GPT model, length of input_id, atattention_mask, label is the same.
+        # For the GPT model, len(input_id) = len(atattention_mask) = len(label).
         assert len(input_id) == len(attentent_mask) == len(label)
     gc.collect()
 
@@ -162,10 +166,10 @@ def test_gpt_trainer_with_tokenizer_max_length():
                 training_datasets,
             )
             # Though we did not pass in validation dataset, we set
-            # evaluation_strategy to no. Check if logging.info was
+            # evaluation_strategy to `no`. Check if logging.info was
             # called once for not setting the evaluation strategy.
             mock_info.assert_called_once_with(
-                "The traning doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
+                "The trainer doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
 
             # Check if logging.warning wasn't called.
@@ -180,7 +184,7 @@ def test_gpt_trainer_with_tokenizer_max_length():
 
 def test_gpt_trainer_without_tokenizer_max_length():
     """Test GPT Trainer without a specified tokenizer_max_length."""
-    # Test auto-regressive GenerationModelTrainer implementation
+    # Test the autoregressive GenerationModelTrainer implementation.
     with tempfile.TemporaryDirectory() as cache_dir:
         training_datasets = [
             datasets.Dataset.from_dict(
@@ -219,10 +223,10 @@ def test_gpt_trainer_without_tokenizer_max_length():
             )
 
             # Though we did not pass in validation dataset, we set
-            # evaluation_strategy to no. Check if logging.info was
+            # evaluation_strategy to `no`. Check if logging.info was
             # called once for not setting the evaluation strategy.
             mock_info.assert_called_once_with(
-                "The traning doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
+                "The trainer doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
 
             # Check if logging.warning was called once for
@@ -347,7 +351,7 @@ def test_gpt_trainer_without_validation_datasets():
 
             # Check if logging.warning was called once
             mock_warning.assert_called_once_with(
-                "The validation split for autoregressive model is missed, which should not contain labels as the training spilt. Thus this evaluation will be skipped."  # noqa 501
+                "The validation split for autoregressive model is missing, which should not contain labels as the training spilt. Thus this evaluation will be skipped."  # noqa 501
             )
 
         trained_model.save_pretrained(cache_dir)
@@ -439,7 +443,8 @@ def test_gpt_trainer_with_unsupported_evaluation_strategy():
 
 def test_gpt_trainer_with_unsupported_parameter():
     """Test the error handler with an unsupported hyperparameter with GPT Trainer."""
-    # We actually support per_device_train_batch_size, but the testcase uses batch_size.
+    # In this test case we provide an unsupported parameter called `batch_size` to
+    # `trainer.train_model`. The supported parameter is `per_device_train_batch_size`.
     with pytest.raises(AssertionError) as exc_info:
         with tempfile.TemporaryDirectory() as cache_dir:
             trainer = GenerationModelTrainer(
