@@ -159,7 +159,7 @@ class DescriptionModelRetriever(ModelRetriever):
             model_score: The similarity score of this model for this particular query.
         """
         num_downloads = int(model_info.num_downloads)
-        log_num_downloads = np.log10(num_downloads + 1)
+        log_num_downloads = np.log10(num_downloads + 2)
         model_size_bytes = int(model_info.size_in_bytes)
         if model_size_bytes > self.model_size_limit_bytes:
             return -np.inf
