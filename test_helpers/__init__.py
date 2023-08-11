@@ -4,8 +4,9 @@ from test_helpers.dataset_tools import (
     are_datasets_identical,
 )
 from test_helpers.mock_openai import (
-    MockBatchResponseDifferentCompletions,
+    MockBatchDifferentCompletions,
     MockCompletion,
+    UnknownGpt3Exception,
     mock_batch_openai_response_identical_completions,
 )
 from test_helpers.model_and_tokenizer import (
@@ -15,6 +16,8 @@ from test_helpers.model_and_tokenizer import (
 
 __all__ = (
     "MockCompletion",
+    "UnknownGpt3Exception",
+    "MockBatchDifferentCompletions",
     "create_gpt2_model_and_tokenizer",
     "create_t5_model_and_tokenizer",
     "mock_batch_openai_response_identical_completions",

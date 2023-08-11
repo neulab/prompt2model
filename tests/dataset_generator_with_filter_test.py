@@ -4,11 +4,253 @@ import gc
 import os
 import tempfile
 from collections import Counter
+from functools import partial
+from unittest.mock import patch
 
+import pytest
 from datasets import Dataset
 
+from prompt2model.dataset_generator.base import DatasetSplit
 from prompt2model.dataset_generator.openai_gpt import Example, OpenAIDatasetGenerator
-from test_helpers import are_datasets_identical
+from prompt2model.prompt_parser import MockPromptSpec, TaskType
+from test_helpers import (
+    UnknownGpt3Exception,
+    are_datasets_identical,
+    mock_batch_openai_response_identical_completions,
+)
+
+# Create partial functions to simulate different API responses.
+# MOCK_EXAMPLE: Represents a mock example with identical completions.
+# The content contains an input ("6") and the corresponding output ("f").
+MOCK_EXAMPLE = partial(
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "6", "output": "f"}',
+)
+
+# MOCK_WRONG_KEY_EXAMPLE: Represents a mock example with identical completions,
+# but the content contains an incorrect key "label" instead of "output".
+MOCK_WRONG_KEY_EXAMPLE = partial(
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "This is a great movie!", "label": "1"}',
+)
+
+# MOCK_INVALID_JSON: Represents a mock example with an invalid JSON content.
+# The content is missing a closing double-quote for the "output" value.
+MOCK_INVALID_JSON = partial(
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "This is a great movie!", "output": "1}',
+)
+
+
+@patch(
+    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    side_effect=MOCK_WRONG_KEY_EXAMPLE,
+)
+def test_wrong_key_example(mocked_generate_example):
+    """Test OpenAIDatasetGenerator when the agent returns a wrong key dictionary.
+
+    This test case is designed to verify the behavior of OpenAIDatasetGenerator
+    when the ChatGPTAgent returns a dictionary with a wrong key, i.e., "label" instead
+    of "output".
+
+    Args:
+        mocked_generate_example: The function represents the @patch function and
+        provides the mocked behavior for API calls.
+
+    Note: The test function assumes the existence of 'MOCK_WRONG_KEY_EXAMPLE',
+    which represents a mock example with identical completions but an incorrect key
+    in the content.
+
+    """
+    api_key = "fake_api_key"
+
+    # Initialize the OpenAIDatasetGenerator with `max_api_calls = 3`.
+    with tempfile.TemporaryDirectory() as cache_dir:
+        dataset_generator = OpenAIDatasetGenerator(
+            api_key, 3, filter_duplicated_examples=True, cache_root=cache_dir
+        )
+
+        # Create a mock prompt specification.
+        prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
+
+        # Set the expected number of examples and dataset split for testing.
+        expected_num_examples = 1
+        split = DatasetSplit.TRAIN
+
+        # Generate the dataset split using OpenAIDatasetGenerator.
+        dataset = dataset_generator.generate_dataset_split(
+            prompt_spec, expected_num_examples, split
+        )
+
+        # Assertions to verify the test results.
+        assert mocked_generate_example.call_count == 3
+        assert (
+            dataset["input_col"] == dataset["output_col"] and dataset["input_col"] == []
+        )
+
+    # Collect garbage to release memory resources after the test.
+    gc.collect()
+
+
+@patch(
+    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    side_effect=MOCK_INVALID_JSON,
+)
+def test_invalid_json_response(mocked_generate_example):
+    """Test OpenAIDatasetGenerator when the agent returns an invalid JSON response.
+
+    This test case is designed to verify the behavior of OpenAIDatasetGenerator
+    when the ChatGPTAgent returns a response with invalid JSON content. The @patch
+    decorator replaces the 'generate_batch_openai_chat_completion' function with
+    the 'MOCK_INVALID_JSON' side effect.
+
+    Args:
+        mocked_generate_example: The function represents the @patch function and
+        provides the mocked behavior for API calls.
+
+    Note: The test function assumes the existence of 'MOCK_INVALID_JSON',
+    which represents a mock example with an invalid JSON content.
+
+    """
+    api_key = "fake_api_key"
+
+    # Initialize the OpenAIDatasetGenerator with `max_api_calls = 3`.
+    with tempfile.TemporaryDirectory() as cache_dir:
+        dataset_generator = OpenAIDatasetGenerator(
+            api_key, 3, filter_duplicated_examples=True, cache_root=cache_dir
+        )
+
+        # Create a mock prompt specification.
+        prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
+
+        # Set the expected number of examples and dataset split for testing.
+        expected_num_examples = 1
+        split = DatasetSplit.VAL
+
+        # Generate the dataset split using OpenAIDatasetGenerator.
+        dataset = dataset_generator.generate_dataset_split(
+            prompt_spec, expected_num_examples, split
+        )
+
+        # Assertions to verify the test results.
+        assert mocked_generate_example.call_count == 3
+        assert (
+            dataset["input_col"] == dataset["output_col"] and dataset["input_col"] == []
+        )
+
+    # Collect garbage to release memory resources after the test.
+    gc.collect()
+
+
+@patch(
+    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    side_effect=UnknownGpt3Exception(),
+)
+def test_unexpected_examples_of_gpt(mocked_generate_example):
+    """Test OpenAIDatasetGenerator when the agent returns an unknown GPT-3 exception.
+
+    This test case is designed to verify the behavior of OpenAIDatasetGenerator
+    when the ChatGPTAgent returns an unknown GPT-3 exception. The @patch decorator
+    replaces the 'generate_batch_openai_chat_completion' function with the
+    'UnknownGpt3Exception' side effect, simulating an unexpected exception.
+
+    Args:
+        mocked_generate_example: The function represents the @patch function and
+        provides the mocked behavior for API calls.
+
+    Note: The test function assumes the existence of 'UnknownGpt3Exception',
+    which represents an unknown GPT-3 exception raised during API calls.
+
+    """
+    api_key = "fake_api_key"
+
+    # Set the fake API key in the environment variable for testing purposes.
+    os.environ["OPENAI_API_KEY"] = api_key
+
+    # Initialize the OpenAIDatasetGenerator with `max_api_calls = 3`.
+    # Use pytest.raises() to assert that an UnknownGpt3Exception is raised.
+    with pytest.raises(
+        UnknownGpt3Exception
+    ), tempfile.TemporaryDirectory() as cache_dir:
+        dataset_generator = OpenAIDatasetGenerator(
+            max_api_calls=3, filter_duplicated_examples=True, cache_root=cache_dir
+        )
+
+        # Create a mock prompt specification.
+        prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
+
+        # Set the expected number of examples and dataset split for testing.
+        expected_num_examples = 1
+        split = DatasetSplit.TEST
+
+        # Generate the dataset split using OpenAIDatasetGenerator and expect the
+        # unknown GPT-3 exception to be raised.
+        _ = dataset_generator.generate_dataset_split(
+            prompt_spec, expected_num_examples, split
+        )
+
+    # Assertions to verify the test results.
+    assert mocked_generate_example.call_count == 1
+
+    # Collect garbage to release memory resources after the test.
+    gc.collect()
+
+
+def test_openai_key_init():
+    """Test OpenAIDatasetGenerator API key initialization.
+
+    This test case verifies the behavior of OpenAIDatasetGenerator when initializing
+    the API key. It checks different scenarios, including the absence of the API key,
+    setting the API key through the environment variable, and explicitly providing
+    the API key as an argument during initialization.
+
+    """
+    api_key = None
+
+    # Test case when the API key is not provided or set in the environment variable.
+    os.environ["OPENAI_API_KEY"] = ""
+    with pytest.raises(
+        AssertionError
+    ) as exc_info, tempfile.TemporaryDirectory() as cache_dir:
+        _ = OpenAIDatasetGenerator(
+            filter_duplicated_examples=True, cache_root=cache_dir
+        )
+        assert str(exc_info.value) == (
+            "API key must be provided or set the environment variable"
+            + " with `export OPENAI_API_KEY=<your key>`"
+        )
+
+    # Set a fake API key in the environment variable for testing purposes.
+    os.environ["OPENAI_API_KEY"] = "fake_api_key"
+
+    # Test case when the API key is provided through the environment variable.
+    with tempfile.TemporaryDirectory() as cache_dir:
+        environment_key_generator = OpenAIDatasetGenerator(
+            filter_duplicated_examples=False, cache_root=cache_dir
+        )
+
+    # Assertions to verify that the API key is
+    # initialized from the environment variable.
+    assert environment_key_generator.api_key == os.environ["OPENAI_API_KEY"]
+
+    # Reset the API key in the environment variable.
+    os.environ["OPENAI_API_KEY"] = ""
+
+    # Set a fake API key explicitly for testing purposes.
+    api_key = "qwertwetyriutytwreytuyrgtwetrueytttr"
+
+    # Test case when the API key is provided
+    # explicitly as an argument during initialization.
+    with tempfile.TemporaryDirectory() as cache_dir:
+        explicit_api_key_generator = OpenAIDatasetGenerator(
+            api_key, cache_root=cache_dir
+        )
+
+    # Assertions to verify that the API key is initialized explicitly.
+    assert explicit_api_key_generator.api_key == api_key
+
+    # Collect garbage to release memory resources after the test.
+    gc.collect()
 
 
 def test_construct_map_with_duplicate_inputs_unique_outputs():

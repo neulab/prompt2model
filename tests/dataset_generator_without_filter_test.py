@@ -15,6 +15,7 @@ from prompt2model.dataset_generator.openai_gpt import Example, OpenAIDatasetGene
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from test_helpers import (
     MockCompletion,
+    UnknownGpt3Exception,
     are_datasets_identical,
     mock_batch_openai_response_identical_completions,
 )
@@ -31,12 +32,6 @@ MOCK_INVALID_JSON = partial(
     mock_batch_openai_response_identical_completions,
     content='{"input": "This is a great movie!", "output": "1}',
 )
-
-
-class UNKNOWN_GPT3_EXCEPTION(Exception):
-    """A custom exception for testing purposes."""
-
-    pass
 
 
 def check_generate_dataset(dataset_generator: OpenAIDatasetGenerator):
@@ -294,12 +289,12 @@ def test_invalid_json_response(mocked_generate_example):
 
 @patch(
     "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
-    side_effect=UNKNOWN_GPT3_EXCEPTION(),
+    side_effect=UnknownGpt3Exception(),
 )
-def test_unexpected_examples_of_GPT(mocked_generate_example):
+def test_unexpected_examples_of_gpt(mocked_generate_example):
     """Test OpenAIDatasetGenerator when the agent returns unexpected examples.
 
-    This function tests the scenario when the agent raises an UNKNOWN_GPT3_EXCEPTION
+    This function tests the scenario when the agent raises an UnknownGpt3Exception
     during dataset generation. The test ensures that the exception is correctly raised.
 
     Args:
@@ -308,7 +303,7 @@ def test_unexpected_examples_of_GPT(mocked_generate_example):
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
     with pytest.raises(
-        UNKNOWN_GPT3_EXCEPTION
+        UnknownGpt3Exception
     ), tempfile.TemporaryDirectory() as cache_dir:
         dataset_generator = OpenAIDatasetGenerator(
             max_api_calls=3, filter_duplicated_examples=False, cache_root=cache_dir
