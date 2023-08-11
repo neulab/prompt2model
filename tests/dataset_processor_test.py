@@ -8,7 +8,7 @@ import pytest
 from transformers import T5Tokenizer
 
 from prompt2model.dataset_processor.textualize import TextualizeProcessor
-from test_helpers import create_gpt2_model_and_tokenizer
+from test_helpers import are_dataset_dicts_identical, create_gpt2_model_and_tokenizer
 
 DATASET_DICTS = [
     datasets.DatasetDict(
@@ -172,26 +172,10 @@ def test_dataset_processor_t5_style():
             }
         ),
     ]
-    for index in range(len(t5_modified_dataset_dicts)):
-        dataset_dict = t5_modified_dataset_dicts[index]
-        dataset_splits = list(dataset_dict.keys())
-        for dataset_split in dataset_splits:
-            assert (
-                dataset_dict[dataset_split]["input_col"]
-                == t5_expected_dataset_dicts[index][dataset_split]["input_col"]
-            )
-            assert (
-                dataset_dict[dataset_split]["model_input"]
-                == t5_expected_dataset_dicts[index][dataset_split]["model_input"]
-            )
-            assert (
-                dataset_dict[dataset_split]["output_col"]
-                == t5_expected_dataset_dicts[index][dataset_split]["output_col"]
-            )
-            assert (
-                dataset_dict[dataset_split]["model_output"]
-                == t5_expected_dataset_dicts[index][dataset_split]["model_output"]
-            )
+    for idx in range(len(t5_expected_dataset_dicts)):
+        assert are_dataset_dicts_identical(
+            t5_expected_dataset_dicts[idx], t5_modified_dataset_dicts[idx]
+        )
     gc.collect()
 
 
@@ -260,26 +244,10 @@ def test_dataset_processor_decoder_only_style():
             }
         ),
     ]
-    for index in range(len(gpt_modified_dataset_dicts)):
-        dataset_dict = gpt_modified_dataset_dicts[index]
-        dataset_splits = list(dataset_dict.keys())
-        for dataset_split in dataset_splits:
-            assert (
-                dataset_dict[dataset_split]["input_col"]
-                == gpt_expected_dataset_dicts[index][dataset_split]["input_col"]
-            )
-            assert (
-                dataset_dict[dataset_split]["model_input"]
-                == gpt_expected_dataset_dicts[index][dataset_split]["model_input"]
-            )
-            assert (
-                dataset_dict[dataset_split]["output_col"]
-                == gpt_expected_dataset_dicts[index][dataset_split]["output_col"]
-            )
-            assert (
-                dataset_dict[dataset_split]["model_output"]
-                == gpt_expected_dataset_dicts[index][dataset_split]["model_output"]
-            )
+    for idx in range(len(gpt_expected_dataset_dicts)):
+        assert are_dataset_dicts_identical(
+            gpt_expected_dataset_dicts[idx], gpt_modified_dataset_dicts[idx]
+        )
     gc.collect()
 
 

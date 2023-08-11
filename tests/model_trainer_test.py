@@ -281,7 +281,7 @@ def test_gpt_trainer_with_tokenizer_max_length():
             # Check if logging.warning was called once
             assert mock_warning.call_count == 1
             mock_warning.assert_called_once_with(
-                "The validation split for autoregressive model is missed, which should not contain labels as the training spilt. Thus this evaluation will be skipped."  # noqa 501
+                "The validation split for autoregressive model is missing, which should not contain labels as the training spilt. Thus this evaluation will be skipped."  # noqa 501
             )
 
         trained_model.save_pretrained(cache_dir)

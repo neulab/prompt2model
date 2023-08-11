@@ -33,6 +33,19 @@ MOCK_INVALID_JSON = partial(
     content='{"input": "This is a great movie!", "output": "1}',
 )
 
+MOCK_CLASSIFICATION_EXAMPLE = partial(
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "This is a great movie!", "output": "1"}',
+)
+MOCK_WRONG_KEY_EXAMPLE = partial(
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "This is a great movie!", "label": "1"}',
+)
+MOCK_INVALID_JSON = partial(
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "This is a great movie!", "output": "1}',
+)
+
 
 def check_generate_dataset(dataset_generator: OpenAIDatasetGenerator):
     """Test the `generate_dataset_split()` function of `OpenAIDatasetGenerator`.

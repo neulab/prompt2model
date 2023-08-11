@@ -9,6 +9,7 @@ from typing import Any
 
 import datasets
 import torch
+import torch.nn as nn
 import transformers
 from datasets import concatenate_datasets
 from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
@@ -122,6 +123,12 @@ class GenerationModelTrainer(BaseTrainer):
                     [-100, 0, ..., config.vocab_size - 1]. All labels set to -100 are
                     ignored (masked), the loss is only computed for labels in
                     [0, ..., config.vocab_size - 1].
+
+                Note that -100 is the default ignore index for labels when computing
+                    loss. You can check it by:
+                    from torch import nn
+                    loss_function = nn.CrossEntropyLoss()
+                    IGNORE_INDEX = loss_function.ignore_index
         """
         if shuffle:
             dataset = dataset.shuffle(seed=seed_generator.get_seed())
@@ -154,6 +161,8 @@ class GenerationModelTrainer(BaseTrainer):
         )
 
         labels = []
+        loss_function = nn.CrossEntropyLoss()
+        IGNORE_INDEX = loss_function.ignore_index
         if not self.has_encoder:
             length_of_input_encoding_ids_with_padding = len(
                 input_encodings["input_ids"][0]
@@ -166,7 +175,7 @@ class GenerationModelTrainer(BaseTrainer):
                 length_of_padding_in_output_encoding_id = self.get_left_padding_length(
                     output_encoding_id, self.model.config.pad_token_id
                 )
-                # The index -100 is ignored for loss compute in Autoregressive model.
+                # The IGNORE_INDEX is ignored for loss compute in Autoregressive model.
                 # Reference: https://huggingface.co/docs/transformers/model_doc/gpt2#transformers.GPT2DoubleHeadsModel.forward.labels # noqa E501
                 length_of_output_encoding_id_without_padding = (
                     length_of_output_encoding_ids_with_padding
@@ -186,10 +195,10 @@ class GenerationModelTrainer(BaseTrainer):
                 )
                 labels.append(label)
         else:
-            # For T5 model,  the right padding token id should not be taken into
-            # account by the loss function. In PyTorch and Tensorflow, this can
-            # be done by replacing them with -100, which is the ignore_index
-            # of the CrossEntropyLoss.
+            # For T5 model, right padding token id should ignored by the loss
+            # function. In PyTorch and Tensorflow, this can be done by replacing
+            # them with IGNORE_INDEX, which is the ignore_index of the
+            # CrossEntropyLoss as demonstrated before.
             # Reference: https://huggingface.co/docs/transformers/v4.30.0/en/model_doc/t5#training # noqa E501
             for output_encoding_id in output_encodings["input_ids"]:
                 length_of_right_padding_in_output_encoding_id = (
@@ -202,7 +211,7 @@ class GenerationModelTrainer(BaseTrainer):
                         output_encoding_id[
                             :-length_of_right_padding_in_output_encoding_id
                         ]
-                        + [-100] * length_of_right_padding_in_output_encoding_id
+                        + [IGNORE_INDEX] * length_of_right_padding_in_output_encoding_id
                     )
                     if length_of_right_padding_in_output_encoding_id != 0
                     else output_encoding_id
@@ -270,7 +279,7 @@ class GenerationModelTrainer(BaseTrainer):
             evaluate_after_epoch = True
         elif evaluation_strategy == "no":
             logging.info(
-                "The traning doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
+                "The trainer doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
             evaluate_after_epoch = False
         else:
@@ -287,11 +296,11 @@ class GenerationModelTrainer(BaseTrainer):
         if evaluate_after_epoch is True:
             if validation_datasets is None:
                 if not self.has_encoder:
-                    # The validation dataset for autoregressive model is missed.
+                    # The validation dataset for autoregressive model is missing.
                     logging.warning(
                         (
                             (
-                                "The validation split for autoregressive model is missed"  # noqa E501
+                                "The validation split for autoregressive model is missing"  # noqa E501
                                 + ", which should not contain labels as the training spilt."  # noqa E501
                                 + " Thus this evaluation will be skipped."
                             )
@@ -301,10 +310,10 @@ class GenerationModelTrainer(BaseTrainer):
                     val_dataset = None
                     evaluate_after_epoch = False
                 else:
-                    # The validation dataset for encoder-decoder model is missed.
+                    # The validation dataset for encoder-decoder model is missing.
                     logging.warning(
                         (
-                            "The validation split for encoder-decoder model is missed."  # noqa E501
+                            "The validation split for encoder-decoder model is missing."  # noqa E501
                             + " The training dataset will be split to create the validation dataset."  # noqa E501
                         )
                     )
