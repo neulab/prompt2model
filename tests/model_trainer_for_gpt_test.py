@@ -78,9 +78,8 @@ def test_gpt_model_trainer_tokenize():
         # Test that the last token of input_id is an eos_token.
         assert input_id[-1] == trainer.model.config.eos_token_id
 
-        # We are using teaching forcing for training the decoder-only model.
-        # The end of the `model_input` is the `model_output`, which only
-        # should be used by the loss function.
+        # The end of the `model_input` is the `model_output`, only which
+        # should be taken into account by the loss function.
         # length_of_output_encoding_id_without_padding is the length
         # of raw tokenized `model_output` without padding.
         length_of_output_encoding_id_without_padding = len(
@@ -170,7 +169,7 @@ def test_gpt_trainer_with_tokenizer_max_length():
             # evaluation_strategy to `no`. Check if logging.info was
             # called once for not setting the evaluation strategy.
             mock_info.assert_called_once_with(
-                "The training doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
+                "The trainer doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
 
             # Check if logging.warning wasn't called.
@@ -227,7 +226,7 @@ def test_gpt_trainer_without_tokenizer_max_length():
             # evaluation_strategy to `no`. Check if logging.info was
             # called once for not setting the evaluation strategy.
             mock_info.assert_called_once_with(
-                "The training doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
+                "The trainer doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
 
             # Check if logging.warning was called once for
@@ -293,7 +292,7 @@ def test_gpt_trainer_with_epoch_evaluation():
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
                 info_list.count(
-                    "Using default metrics of chrf, exact_match and bert_score."
+                    "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
@@ -352,7 +351,7 @@ def test_gpt_trainer_without_validation_datasets():
 
             # Check if logging.warning was called once
             mock_warning.assert_called_once_with(
-                "The validation split for autoregressive model is missed, which should not contain labels as the training spilt. Thus this evaluation will be skipped."  # noqa 501
+                "The validation split for autoregressive model is missing, which should not contain labels as the training spilt. Thus this evaluation will be skipped."  # noqa 501
             )
 
         trained_model.save_pretrained(cache_dir)
@@ -414,7 +413,7 @@ def test_gpt_trainer_with_unsupported_evaluation_strategy():
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert (
                 info_list.count(
-                    "Using default metrics of chrf, exact_match and bert_score."
+                    "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
@@ -444,7 +443,8 @@ def test_gpt_trainer_with_unsupported_evaluation_strategy():
 
 def test_gpt_trainer_with_unsupported_parameter():
     """Test the error handler with an unsupported hyperparameter with GPT Trainer."""
-    # We do support per_device_train_batch_size, but this test case uses batch_size.
+    # In this test case we provide an unsupported parameter called `batch_size` to
+    # `trainer.train_model`. The supported parameter is `per_device_train_batch_size`.
     with pytest.raises(AssertionError) as exc_info:
         with tempfile.TemporaryDirectory() as cache_dir:
             trainer = GenerationModelTrainer(
@@ -505,7 +505,7 @@ def test_gpt_trainer_with_truncation_warning():
         trainer.tokenize_dataset(training_dataset)
         # logging.warning was called for truncation.
         mock_warning.assert_called_once_with(
-            "Truncation happened when tokenizing dataset. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
+            "Truncation happened when tokenizing dataset. Consider increasing the tokenizer_max_length if possible. Otherwise, truncation may lead to unexpected results."  # noqa: E501
         )
         mock_info.assert_not_called()
     gc.collect()
