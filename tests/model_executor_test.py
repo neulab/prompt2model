@@ -267,6 +267,7 @@ def test_truncation_warning_for_gpt_executor():
     gpt2_model_and_tokenizer = create_gpt2_model_and_tokenizer()
     gpt2_model = gpt2_model_and_tokenizer.model
     gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
+    #  The test_input is much longer than default tokenizer_max_length, 256.
     test_input = "In the shimmering golden hues of a breathtaking sunset, as the radiant orb of the sun slowly descends beyond the distant horizon, casting its warm and ethereal glow upon the rippling surface of the tranquil ocean, a myriad of vibrant colors dance and intertwine, painting a mesmerizing tableau that captivates the senses, evoking a profound sense of wonder and awe, while the gentle breeze whispers its melodious secrets through the swaying branches of towering trees, carrying with it the fragrant scent of blooming flowers, creating a symphony of nature that envelops the very essence of existence, reminding us of the boundless beauty that surrounds us, beckoning us to embrace the fleeting moments of life's ephemeral tapestry and find solace in the profound interconnectedness of all living things. In the shimmering golden hues of a breathtaking sunset, as the radiant orb of the sun slowly descends beyond the distant horizon, casting its warm and ethereal glow upon the rippling surface of the tranquil ocean, a myriad of vibrant colors dance and intertwine, painting a mesmerizing tableau that captivates the senses, evoking a profound sense of wonder and awe, while the gentle breeze whispers its melodious secrets through the swaying branches of towering trees, carrying with it the fragrant scent of blooming flowers, creating a symphony of nature that envelops the very essence of existence, reminding us of the boundless beauty that surrounds us, beckoning us to embrace the fleeting moments of life's ephemeral tapestry and find solace in the profound interconnectedness of all living things."  # noqa: E501
     with patch("logging.warning") as mock_warning:
         gpt2_executor = GenerationModelExecutor(
@@ -275,7 +276,7 @@ def test_truncation_warning_for_gpt_executor():
         )
         gpt2_executor.make_single_prediction(test_input)
         mock_warning.assert_called_once_with(
-            "Truncation happened when tokenizing dataset / input string. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
+            "Truncation happened when tokenizing dataset / input string. Consider increasing the tokenizer_max_length if possible. Otherwise, truncation may lead to unexpected results."  # noqa: E501
         )
 
 
@@ -293,5 +294,5 @@ def test_truncation_warning_for_t5_executor():
         )
         t5_executor.make_single_prediction(test_input)
         mock_warning.assert_called_once_with(
-            "Truncation happened when tokenizing dataset / input string. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
+            "Truncation happened when tokenizing dataset / input string. Consider increasing the tokenizer_max_length if possible. Otherwise, truncation may lead to unexpected results."  # noqa: E501
         )

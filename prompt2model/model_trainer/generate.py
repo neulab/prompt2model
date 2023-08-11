@@ -132,8 +132,8 @@ class GenerationModelTrainer(BaseTrainer):
             logging.warning(
                 (
                     "Truncation happened when tokenizing dataset."
-                    " You should consider increasing the tokenizer_max_length."
-                    " Otherwise the truncation may lead to unexpected results."
+                    " Consider increasing the tokenizer_max_length if possible."
+                    " Otherwise, truncation may lead to unexpected results."
                 )
             )
         input_encodings = self.tokenizer.batch_encode_plus(
@@ -171,7 +171,7 @@ class GenerationModelTrainer(BaseTrainer):
                 )
                 assert (
                     length_of_output_encoding_id_without_padding != 0
-                ), "One of the model_output is empty."
+                ), "One of the model's outputs is empty."
                 label = [-100] * (
                     length_of_input_encoding_ids_with_padding
                     - length_of_output_encoding_id_without_padding
@@ -183,7 +183,7 @@ class GenerationModelTrainer(BaseTrainer):
                 )
                 labels.append(label)
         else:
-            # For T5 model, right padding token id should not be taken into
+            # For T5 model,  the right padding token id should not be taken into
             # account by the loss function. In PyTorch and Tensorflow, this can
             # be done by replacing them with -100, which is the ignore_index
             # of the CrossEntropyLoss.
