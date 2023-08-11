@@ -23,7 +23,7 @@ class MockModelExecutor(ModelExecutor):
             An object containing model outputs.
         """
         predictions = []
-        for _ in range(len(test_set[input_column])):
+        for _ in test_set[input_column]:
             model_output = ModelOutput(prediction="", auxiliary_info={})
             predictions.append(model_output)
         return predictions

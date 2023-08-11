@@ -30,7 +30,8 @@ class MockEvaluator(ModelEvaluator):
             dataset: The dataset to evaluate metrics on.
             gt_column: The dataset column to use as ground truth.
             predictions: Corresponding model outputs to evaluate.
-            metrics: (Optional) The metrics to use.
+            metrics: (Optional) The metrics to use, defaults to using
+                chr_f, exact_match, and bert_score.
             prompt_spec: (Optional) A PromptSpec to infer the metrics from.
 
         Returns:
