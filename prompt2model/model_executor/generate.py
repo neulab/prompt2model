@@ -1,19 +1,15 @@
 """Model executor for generative models, including T5-type and GPT-type."""
 from __future__ import annotations  # noqa FI58
 
-import logging
 from typing import Any
 
 import datasets
 import torch
 
 from prompt2model.model_executor import ModelExecutor, ModelOutput
+from prompt2model.utils import get_formatted_logger
 
-logger = logging.getLogger("ModelExecutor")
-ch = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-ch.setFormatter(formatter)
-logger.addHandler(ch)
+logger = get_formatted_logger("ModelExecutor")
 
 
 class GenerationModelExecutor(ModelExecutor):

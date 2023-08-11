@@ -1,4 +1,5 @@
 """Import utility functions."""
+from prompt2model.utils.logging_utils import get_formatted_logger
 from prompt2model.utils.openai_tools import (
     OPENAI_ERRORS,
     ChatGPTAgent,
@@ -16,4 +17,5 @@ __all__ = (  # noqa: F401
     "retrieve_objects",
     "seed_generator",
     "count_tokens_from_string",
+    "get_formatted_logger",
 )

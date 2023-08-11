@@ -181,10 +181,8 @@ def test_dataset_processor_t5_style():
             }
         ),
     ]
-    for idx in range(len(t5_expected_dataset_dicts)):
-        assert are_dataset_dicts_identical(
-            t5_expected_dataset_dicts[idx], t5_modified_dataset_dicts[idx]
-        )
+    for exp, act in zip(t5_expected_dataset_dicts, t5_modified_dataset_dicts):
+        assert are_dataset_dicts_identical(exp, act)
     gc.collect()
 
 
@@ -373,10 +371,8 @@ def test_empty_filter_t5_type():
             }
         ),
     ]
-    for idx in range(len(t5_expected_dataset_dicts)):
-        assert are_dataset_dicts_identical(
-            t5_expected_dataset_dicts[idx], t5_modified_dataset_dicts[idx]
-        )
+    for exp, act in zip(t5_expected_dataset_dicts, t5_modified_dataset_dicts):
+        assert are_dataset_dicts_identical(exp, act)
     gc.collect()
 
 
