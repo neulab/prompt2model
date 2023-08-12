@@ -1,6 +1,7 @@
 """Testing DatasetGenerator through OpenAIDatasetGenerator."""
 
 import gc
+import logging
 import os
 import tempfile
 from collections import Counter
@@ -22,6 +23,8 @@ from test_helpers import (
     are_datasets_identical,
     mock_batch_openai_response_identical_completions,
 )
+
+logger = logging.getLogger("DatasetGenerator")
 
 # Create partial functions to simulate different API responses.
 # MOCK_EXAMPLE: Represents a mock example with identical completions.
@@ -875,8 +878,8 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
         # in generated_dataset. Since expected_num_examples is 3, the while loop
         # would exit immediately. So the generated_dataset would be the filtered
         # cached dataset.
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             generated_dataset = data_generator.generate_dataset_split(
                 expected_num_examples=3,
@@ -884,7 +887,7 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
                 split=DatasetSplit.TEST,
             )
 
-            # Verify that logging.info was called with the correct message.
+            # Verify that logger.info was called with the correct message.
             mock_info.assert_called_once_with(
                 f"Loading cache from {str(examples_cache_path)}."
             )
@@ -949,8 +952,8 @@ def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generat
         # in generated_dataset. Since expected_num_examples is 4, the generation
         # would continue, and the max_batch_size = 1. After one batch of API calls,
         # generated_dataset meets the requirement and stop generation.
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             generated_dataset = data_generator.generate_dataset_split(
                 expected_num_examples=4,
@@ -958,12 +961,12 @@ def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generat
                 split=DatasetSplit.TEST,
             )
 
-            # Verify that logging.info was called with
+            # Verify that logger.info was called with
             # the correct message for loading cache.
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert info_list[0] == f"Loading cache from {str(examples_cache_path)}."
-            # The first logging.info is for loading cache, and there are
-            # 5 * 2 additional logging.info messages in extract_responses.
+            # The first logger.info is for loading cache, and there are
+            # 5 * 2 additional logger.info messages in extract_responses.
             assert len(info_list) == 1 + 5 * 2
             mock_warning.assert_not_called()
 

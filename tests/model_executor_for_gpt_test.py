@@ -1,12 +1,15 @@
 """Testing the autoregressive GenerationModelExecutor with different configurations."""
 
 import gc
+import logging
 from unittest.mock import patch
 
 from datasets import Dataset
 
 from prompt2model.model_executor import GenerationModelExecutor, ModelOutput
 from test_helpers import create_gpt2_model_and_tokenizer
+
+logger = logging.getLogger("ModelExecutor")
 
 
 def test_make_prediction_gpt2():
@@ -75,7 +78,9 @@ def test_make_single_prediction_gpt2_without_length_constraints():
     gpt2_model = gpt2_model_and_tokenizer.model
     gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
 
-    with patch("logging.warning") as mock_warning:
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
         model_executor = GenerationModelExecutor(
             gpt2_model,
             gpt2_tokenizer,
@@ -86,6 +91,7 @@ def test_make_single_prediction_gpt2_without_length_constraints():
         expected_warining = "The `max_length` in `self.model.generate` will default to `self.model.config.max_length` (20) if `sequence_max_length` is `None`."  # noqa: E501
         gpt2_output = model_executor.make_single_prediction(test_input)
         mock_warning.assert_called_once_with(expected_warining)
+        mock_info.assert_not_called()
     assert isinstance(gpt2_output, ModelOutput)
     assert gpt2_output.prediction is not None
     assert list(gpt2_output.auxiliary_info.keys()) == [
@@ -103,7 +109,9 @@ def test_sequence_max_length_init_for_gpt2():
     gpt2_tokenizer = gpt2_model_and_tokenizer.tokenizer
     test_input = "What's your name? Please reply in 10 words."
     # The max_seq_length is 1024, and test_input is 3 tokens.
-    with patch("logging.warning") as mock_warning:
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
         gpt2_executor = GenerationModelExecutor(
             gpt2_model,
             gpt2_tokenizer,
@@ -117,6 +125,7 @@ def test_sequence_max_length_init_for_gpt2():
                 " So the sequence_max_length will be set to 1024."
             )
         )
+        mock_info.assert_not_called()
         # The max_position_embeddings is 1024, so the
         # sequence_max_length will be scaled to 1024.
         assert (
@@ -138,11 +147,14 @@ def test_truncation_warning_for_gpt2_executor():
         gpt2_model,
         gpt2_tokenizer,
     )
-    with patch("logging.warning") as mock_warning:
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
         gpt2_executor.make_single_prediction(test_input)
         mock_warning.assert_called_once_with(
             "Truncation happened when tokenizing dataset / input string. You should consider increasing the tokenizer_max_length. Otherwise the truncation may lead to unexpected results."  # noqa: E501
         )
+        mock_info.assert_not_called()
     gc.collect()
 
 

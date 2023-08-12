@@ -1,6 +1,7 @@
 """Testing DatasetGenerator through OpenAIDatasetGenerator."""
 
 import gc
+import logging
 import os
 import tempfile
 from functools import partial
@@ -19,6 +20,8 @@ from test_helpers import (
     are_datasets_identical,
     mock_batch_openai_response_identical_completions,
 )
+
+logger = logging.getLogger("DatasetGenerator")
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
     mock_batch_openai_response_identical_completions,
@@ -771,8 +774,8 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
         # expected_num_examples is 110, the while loop would exit
         # immediately. So the generated_dataset would be the
         # same as the cached dataset.
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             generated_dataset = data_generator.generate_dataset_split(
                 expected_num_examples=110,
@@ -838,8 +841,8 @@ def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_gene
         # continue and the batch_size = 2. After one batch of API
         # calls, generated_dataset meets the requirement and
         # stop generation.
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             generated_dataset = data_generator.generate_dataset_split(
                 expected_num_examples=117,
@@ -848,8 +851,8 @@ def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_gene
             )
             info_list = [each.args[0] for each in mock_info.call_args_list]
             assert info_list[0] == f"Loading cache from {str(examples_cache_path)}."
-            # The first logging.info is loaded cache, and there is
-            # another 2 * 5 * 2 logging.info in extract_responses.
+            # The first logger.info is loaded cache, and there is
+            # another 2 * 5 * 2 logger.info in extract_responses.
             assert len(info_list) == 1 + 2 * 5 * 2
             mock_warning.assert_not_called()
         excepted_generated_dataset = Dataset.from_dict(
@@ -896,8 +899,8 @@ def test_extract_responses():
             cache_root=cache_dir, filter_duplicated_examples=True
         )
         generated_examples = []
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             generated_examples = data_generator.extract_responses(
                 [mock_completion_1, mock_completion_2], generated_examples
@@ -931,8 +934,8 @@ def test_extract_responses():
             Example(input_col="4", output_col="c"),
             Example(input_col="5", output_col="a"),
         ]
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             generated_examples = data_generator.extract_responses(
                 [mock_completion_4], generated_examples
@@ -990,8 +993,8 @@ def test_extract_some_empty_responses():
             cache_root=cache_dir, filter_duplicated_examples=True
         )
         generated_examples = []
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             generated_examples = data_generator.extract_responses(
                 [mock_completion_1, mock_completion_2], generated_examples
@@ -1025,8 +1028,8 @@ def test_extract_some_empty_responses():
             Example(input_col="4", output_col="c"),
             Example(input_col="5", output_col="a"),
         ]
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             generated_examples = data_generator.extract_responses(
                 [mock_completion_4], generated_examples

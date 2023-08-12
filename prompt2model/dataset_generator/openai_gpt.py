@@ -4,7 +4,6 @@ from __future__ import annotations  # noqa FI58
 
 import asyncio
 import json
-import logging
 import math
 import os
 import random
@@ -23,8 +22,11 @@ from prompt2model.utils import (
     OPENAI_ERRORS,
     ChatGPTAgent,
     count_tokens_from_string,
+    get_formatted_logger,
     handle_openai_error,
 )
+
+logger = get_formatted_logger("DatasetGenerator")
 
 
 @dataclass(frozen=True)
@@ -216,7 +218,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     else instruction
                 )
                 if count_tokens_from_string(orginal_input_string) > 3500:
-                    logging.warning(
+                    logger.warning(
                         "The original input prompt is too long. Consider writing a shorter prompt."  # noqa 501
                     )
                 continue
@@ -513,7 +515,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     try:
                         response_json = json.loads(choice["message"]["content"])
                     except Exception:
-                        logging.warning(f"Error happened parsing API choice: {choice}")
+                        logger.warning(f"Error happened parsing API choice: {choice}")
                         continue
                         # If the response is not a valid JSON object, discard it.
                     required_keys = ["input", "output"]
@@ -521,7 +523,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         key for key in required_keys if key not in response_json
                     ]
                     if len(missing_keys) != 0:
-                        logging.warning(
+                        logger.warning(
                             f'API response must contain {", ".join(required_keys)} keys'
                         )
                         continue
@@ -530,14 +532,14 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     if input != "" and output != "":
                         generated_examples.append(Example(input, output))
                     else:
-                        logging.info(
-                            "Empty input or output detected. Discard this example."
+                        logger.info(
+                            "Empty input or output ditected. Discard this example."
                         )
                         continue
-                    logging.info(f"input: \n\n{input}\n\n")
-                    logging.info(f"output: \n\n{output}\n\n")
+                    logger.info(f"input: \n\n{input}\n\n")
+                    logger.info(f"output: \n\n{output}\n\n")
             except Exception:
-                logging.warning(
+                logger.warning(
                     f"Error happened when parsing API completion: {completion}"
                 )
                 continue
@@ -622,7 +624,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
         if examples_cache_path.exists():
             # If cache exists, load generated examples from disk.
-            logging.info(f"Loading cache from {str(examples_cache_path)}.")
+            logger.info(f"Loading cache from {str(examples_cache_path)}.")
             all_generated_examples_dataset = Dataset.load_from_disk(examples_cache_path)
             generated_examples = [
                 Example(input_col=ex["input_col"], output_col=ex["output_col"])
@@ -653,7 +655,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 pbar.update(len(generated_dataset))
 
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
-                    logging.warning("Maximum number of API calls reached.")
+                    logger.warning("Maximum number of API calls reached.")
                     break
                 elif len(generated_dataset) >= expected_num_examples:
                     break
