@@ -37,6 +37,7 @@ dependencies = [
     "mdtex2html==1.2.0",
     "scikit-learn==1.2.2",
     "tiktoken==0.4.0",
+    "aiolimiter==1.1.0",
 ]
 
 dynamic = ["version"]
