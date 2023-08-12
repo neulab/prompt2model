@@ -2,13 +2,16 @@
 
 from __future__ import annotations  # noqa FI58
 
-import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
 
 import datasets
 import transformers
+
+from prompt2model.utils import get_formatted_logger
+
+logger = get_formatted_logger("ModelExecutor")
 
 
 @dataclass(frozen=True)
@@ -43,14 +46,14 @@ class ModelExecutor(ABC):
             batch_size: The batch size to use when making predictions.
             tokenizer_max_length: The maximum number of tokens that
                 tokenizer is allowed to generate.
-            sequence_max_length: The maximum number of tokens to generate.
-                This includes the input and output tokens.
+            sequence_max_length: The maximum number of tokens in
+                the input and output.
         """
         self.model = model
         self.tokenizer = tokenizer
         self.batch_size = batch_size
         if self.tokenizer.pad_token is None:
-            logging.warning(
+            logger.warning(
                 "Trying to init an ModelExecutor's tokenizer without pad_token."
             )
             self.tokenizer.pad_token = self.tokenizer.eos_token
@@ -58,7 +61,7 @@ class ModelExecutor(ABC):
         self.tokenizer_max_length = tokenizer_max_length
         self.sequence_max_length = sequence_max_length
         if self.sequence_max_length is None:
-            logging.warning(
+            logger.warning(
                 (
                     "The `max_length` in `self.model.generate` will default to "
                     f"`self.model.config.max_length` ({self.model.config.max_length})"
@@ -68,7 +71,7 @@ class ModelExecutor(ABC):
         if hasattr(self.model.config, "max_position_embeddings"):
             max_embeddings = self.model.config.max_position_embeddings
             if sequence_max_length is not None and sequence_max_length > max_embeddings:
-                logging.warning(
+                logger.warning(
                     (
                         f"The sequence_max_length ({sequence_max_length})"
                         f" is larger than the max_position_embeddings ({max_embeddings})."  # noqa: E501
