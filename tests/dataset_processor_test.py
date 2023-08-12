@@ -1,7 +1,6 @@
 """Testing TextualizeProcessor."""
 
 import gc
-import logging
 from copy import deepcopy
 from unittest.mock import patch
 
@@ -197,7 +196,11 @@ def test_dataset_processor_decoder_only_style():
         INSTRUCTION, DATASET_DICTS
     )
     # Ensure the dataset_dicts themselves are the same after processing.
-    for idx, each in enumerate(raw_dataset_dicts):
+    for idx, 
+    
+    
+    
+    in enumerate(raw_dataset_dicts):
         assert are_dataset_dicts_identical(raw_dataset_dicts[idx], DATASET_DICTS[idx])
     # Check that the modified dataset dicts have the expected content
     gpt_expected_dataset_dicts = [
