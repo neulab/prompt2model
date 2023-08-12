@@ -1,13 +1,15 @@
 """Model executor for generative models, including T5-type and GPT-type."""
 from __future__ import annotations  # noqa FI58
 
-import logging
 from typing import Any
 
 import datasets
 import torch
 
 from prompt2model.model_executor import ModelExecutor, ModelOutput
+from prompt2model.utils import get_formatted_logger
+
+logger = get_formatted_logger("ModelExecutor")
 
 
 class GenerationModelExecutor(ModelExecutor):
@@ -130,7 +132,7 @@ class GenerationModelExecutor(ModelExecutor):
             self.tokenizer_max_length is not None
             and len(self.tokenizer.tokenize(longest_input)) > self.tokenizer_max_length
         ):
-            logging.warning(
+            logger.warning(
                 (
                     "Truncation happened when tokenizing dataset / input string."
                     " You should consider increasing the tokenizer_max_length."
@@ -185,7 +187,6 @@ class GenerationModelExecutor(ModelExecutor):
         Returns:
             A single model output, useful for exposing a model to a user interface.
         """
-        logging.info("Making single prediction for DemoCreator.")
         expected_num_examples = 1
         inference_dataset = datasets.Dataset.from_dict({"model_input": [model_input]})
         inference_column = "model_input"
