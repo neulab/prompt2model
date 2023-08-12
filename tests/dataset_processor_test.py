@@ -199,12 +199,10 @@ def test_dataset_processor_decoder_only_style():
         INSTRUCTION, DATASET_DICTS
     )
     # Ensure the dataset_dicts themselves are the same after processing.
-    for raw, modified in zip(raw_dataset_dicts, DATASET_DICTS):
-        assert all(
-            are_dataset_dicts_identical(
-                raw,
-            )
-        )
+    assert all(
+        are_dataset_dicts_identical(raw, origin)
+        for raw, origin in zip(raw_dataset_dicts, DATASET_DICTS)
+    )
     # Check that the modified dataset dicts have the expected content
     gpt_expected_dataset_dicts = [
         datasets.DatasetDict(
@@ -260,10 +258,12 @@ def test_dataset_processor_decoder_only_style():
             }
         ),
     ]
-    for idx in range(len(gpt_expected_dataset_dicts)):
-        assert are_dataset_dicts_identical(
-            gpt_expected_dataset_dicts[idx], gpt_modified_dataset_dicts[idx]
+    assert all(
+        are_dataset_dicts_identical(exp, modified)
+        for (exp, modified) in zip(
+            gpt_expected_dataset_dicts, gpt_modified_dataset_dicts
         )
+    )
     gc.collect()
 
 
@@ -377,8 +377,10 @@ def test_empty_filter_t5_type():
             }
         ),
     ]
-    for exp, act in zip(t5_expected_dataset_dicts, t5_modified_dataset_dicts):
-        assert are_dataset_dicts_identical(exp, act)
+    assert all(
+        are_dataset_dicts_identical(exp, act)
+        for exp, act in zip(t5_expected_dataset_dicts, t5_modified_dataset_dicts)
+    )
     gc.collect()
 
 
@@ -431,8 +433,10 @@ def test_empty_filter_decoder_only_style():
             }
         ),
     ]
-    for idx in range(len(gpt_expected_dataset_dicts)):
-        assert are_dataset_dicts_identical(
-            gpt_expected_dataset_dicts[idx], gpt_modified_dataset_dicts[idx]
+    assert all(
+        are_dataset_dicts_identical(expected, modified)
+        for expected, modified in zip(
+            gpt_expected_dataset_dicts, gpt_modified_dataset_dicts
         )
+    )
     gc.collect()
