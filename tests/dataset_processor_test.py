@@ -1,10 +1,7 @@
 """Testing TextualizeProcessor."""
 
 import gc
-<<<<<<< HEAD
-=======
 import logging
->>>>>>> 85c8032a4423c3c3288b62877cf11b1f19b3d247
 from copy import deepcopy
 from unittest.mock import patch
 
@@ -128,12 +125,10 @@ def test_dataset_processor_t5_style():
         INSTRUCTION, DATASET_DICTS
     )
     # Ensure the dataset_dicts themselves are the same after processing.
-<<<<<<< HEAD
-    for idx, each in enumerate(raw_dataset_dicts):
-=======
-    for idx, _ in enumerate(raw_dataset_dicts):
->>>>>>> 85c8032a4423c3c3288b62877cf11b1f19b3d247
-        assert are_dataset_dicts_identical(raw_dataset_dicts[idx], DATASET_DICTS[idx])
+    assert all(
+        are_dataset_dicts_identical(raw, origin)
+        for (raw, origin) in zip(raw_dataset_dicts, DATASET_DICTS)
+    )
     t5_expected_dataset_dicts = [
         datasets.DatasetDict(
             {
@@ -204,8 +199,12 @@ def test_dataset_processor_decoder_only_style():
         INSTRUCTION, DATASET_DICTS
     )
     # Ensure the dataset_dicts themselves are the same after processing.
-    for idx, each in enumerate(raw_dataset_dicts):
-        assert are_dataset_dicts_identical(raw_dataset_dicts[idx], DATASET_DICTS[idx])
+    for raw, modified in zip(raw_dataset_dicts, DATASET_DICTS):
+        assert all(
+            are_dataset_dicts_identical(
+                raw,
+            )
+        )
     # Check that the modified dataset dicts have the expected content
     gpt_expected_dataset_dicts = [
         datasets.DatasetDict(
