@@ -43,8 +43,8 @@ class ModelExecutor(ABC):
             batch_size: The batch size to use when making predictions.
             tokenizer_max_length: The maximum number of tokens that
                 tokenizer is allowed to generate.
-            sequence_max_length: The maximum number of tokens to generate.
-                This includes the input and output tokens.
+            sequence_max_length: The maximum number of tokens in
+                the input and output.
         """
         self.model = model
         self.tokenizer = tokenizer
