@@ -22,7 +22,7 @@ classifiers = [
 dependencies = [
     "transformers==4.24.0",
     "datasets==2.11.0",
-    "pandas==2.0.3",
+    "pandas==1.5.3",
     "fastapi==0.100.0",
     "gradio==3.38.0",
     "torch==2.0.0",
@@ -37,8 +37,7 @@ dependencies = [
     "mdtex2html==1.2.0",
     "scikit-learn==1.2.2",
     "tiktoken==0.4.0",
-    "zeno_build==0.0.5",
-    "toml==0.10.2"
+    "aiolimiter==1.1.0",
 ]
 
 dynamic = ["version"]
