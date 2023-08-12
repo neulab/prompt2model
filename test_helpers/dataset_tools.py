@@ -26,6 +26,6 @@ def are_dataset_dicts_identical(
         return False
 
     return all(
-        dataset_dict1[split_name] == dataset_dict2[split_name]
+        are_datasets_identical(dataset_dict1[split_name], dataset_dict2[split_name])
         for split_name in dataset_dict1.keys()
     )

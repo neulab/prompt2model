@@ -1,6 +1,7 @@
 """Testing DatasetGenerator through OpenAIDatasetGenerator."""
 
 import gc
+import logging
 import os
 import tempfile
 from collections import Counter
@@ -18,9 +19,12 @@ from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from test_helpers import (
     MockBatchDifferentCompletions,
     UnknownGpt3Exception,
+    are_dataset_dicts_identical,
     are_datasets_identical,
     mock_batch_openai_response_identical_completions,
 )
+
+logger = logging.getLogger("DatasetGenerator")
 
 # Create partial functions to simulate different API responses.
 # MOCK_EXAMPLE: Represents a mock example with identical completions.
@@ -855,8 +859,8 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
         )
 
         # Create a cached dataset and save it to the disk.
-        dataset_cache_path = Path(
-            data_generator.cache_root / f"{DatasetSplit.TEST.value}"
+        examples_cache_path = Path(
+            data_generator.cache_root / f"generated_examples_{DatasetSplit.TEST.value}"
         )
         cached_dataset = Dataset.from_dict(
             {
@@ -864,18 +868,18 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
                 "output_col": ["a", "a", "b", "c", "a", "d"],
             }
         )
-        cached_dataset.save_to_disk(dataset_cache_path)
+        cached_dataset.save_to_disk(examples_cache_path)
 
         # The generate_dataset_split would first load the cached dataset into
         # generated_examples. Then, in the while loop,
-        # convert_generated_examples_to_generated_dataset would be called to
+        # create_all_examples_dataset_and_generated_dataset would be called to
         # construct the generated_dataset. Note that filter_duplicated_examples
         # is True, so the generated_examples will be filtered to 3 examples
         # in generated_dataset. Since expected_num_examples is 3, the while loop
         # would exit immediately. So the generated_dataset would be the filtered
         # cached dataset.
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             generated_dataset = data_generator.generate_dataset_split(
                 expected_num_examples=3,
@@ -883,9 +887,9 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
                 split=DatasetSplit.TEST,
             )
 
-            # Verify that logging.info was called with the correct message.
+            # Verify that logger.info was called with the correct message.
             mock_info.assert_called_once_with(
-                f"Loading cache from {str(dataset_cache_path)}."
+                f"Loading cache from {str(examples_cache_path)}."
             )
             mock_warning.assert_not_called()
 
@@ -928,28 +932,28 @@ def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generat
             cache_root=cache_dir, filter_duplicated_examples=True
         )
 
-        # Create a cached dataset and save it to the disk.
-        dataset_cache_path = Path(
-            data_generator.cache_root / f"{DatasetSplit.TEST.value}"
+        # Create cached examples and save them to the disk.
+        examples_cache_path = (
+            Path(cache_dir) / f"generated_examples_{DatasetSplit.TEST.value}"
         )
-        cached_dataset = Dataset.from_dict(
+        cached_examples = Dataset.from_dict(
             {
                 "input_col": ["1", "1", "1", "1", "2", "3"],
                 "output_col": ["a", "a", "b", "c", "a", "d"],
             }
         )
-        cached_dataset.save_to_disk(dataset_cache_path)
+        cached_examples.save_to_disk(examples_cache_path)
 
         # The generate_dataset_split would first load the cached dataset into
         # generated_examples. Then, in the while loop,
-        # convert_generated_examples_to_generated_dataset would be called to
+        # create_all_examples_dataset_and_generated_dataset would be called to
         # construct the generated_dataset. Note that filter_duplicated_examples
         # is True, so the generated_examples will be filtered to 3 examples
         # in generated_dataset. Since expected_num_examples is 4, the generation
         # would continue, and the max_batch_size = 1. After one batch of API calls,
         # generated_dataset meets the requirement and stop generation.
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             generated_dataset = data_generator.generate_dataset_split(
                 expected_num_examples=4,
@@ -957,12 +961,12 @@ def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generat
                 split=DatasetSplit.TEST,
             )
 
-            # Verify that logging.info was called with
+            # Verify that logger.info was called with
             # the correct message for loading cache.
             info_list = [each.args[0] for each in mock_info.call_args_list]
-            assert info_list[0] == f"Loading cache from {str(dataset_cache_path)}."
-            # The first logging.info is for loading cache, and there are
-            # 5 * 2 additional logging.info messages in extract_responses.
+            assert info_list[0] == f"Loading cache from {str(examples_cache_path)}."
+            # The first logger.info is for loading cache, and there are
+            # 5 * 2 additional logger.info messages in extract_responses.
             assert len(info_list) == 1 + 5 * 2
             mock_warning.assert_not_called()
 
@@ -1423,7 +1427,9 @@ def test_generator_with_filter_to_generate_datasetdict(mocked_generate_example):
         )
 
         # Verify the generated DatasetDict matches the expected DatasetDict.
-        assert are_datasets_identical(generated_dataset_dict, expected_dataset_dict)
+        assert are_dataset_dicts_identical(
+            generated_dataset_dict, expected_dataset_dict
+        )
 
     # Collect garbage to release memory resources after the test.
     gc.collect()

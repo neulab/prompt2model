@@ -1,6 +1,7 @@
 """Testing DatasetGenerator through OpenAIDatasetGenerator."""
 
 import gc
+import logging
 import os
 import tempfile
 from functools import partial
@@ -18,6 +19,34 @@ from test_helpers import (
     UnknownGpt3Exception,
     are_datasets_identical,
     mock_batch_openai_response_identical_completions,
+)
+
+logger = logging.getLogger("DatasetGenerator")
+
+MOCK_CLASSIFICATION_EXAMPLE = partial(
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "This is a great movie!", "output": "1"}',
+)
+MOCK_WRONG_KEY_EXAMPLE = partial(
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "This is a great movie!", "label": "1"}',
+)
+MOCK_INVALID_JSON = partial(
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "This is a great movie!", "output": "1}',
+)
+
+MOCK_CLASSIFICATION_EXAMPLE = partial(
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "This is a great movie!", "output": "1"}',
+)
+MOCK_WRONG_KEY_EXAMPLE = partial(
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "This is a great movie!", "label": "1"}',
+)
+MOCK_INVALID_JSON = partial(
+    mock_batch_openai_response_identical_completions,
+    content='{"input": "This is a great movie!", "output": "1}',
 )
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
@@ -382,9 +411,10 @@ def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs
     The test uses the `OpenAIDatasetGenerator` with `filter_duplicated_examples=False`.
     The `generating_split` attribute of the generator is set to `DatasetSplit.TEST`,
     and the `generated_examples` list contains examples with some duplicate inputs but
-    unique outputs. The function then calls the
-    `create_all_examples_dataset_and_generated_dataset()` method to create the generated
-    dataset.
+    unique outputs.
+
+    The function then calls the `create_all_examples_dataset_and_generated_dataset()`
+    method to create the generated dataset.
 
     Finally, the function checks whether the generated dataset matches the expected
     dataset constructed from the input examples.
@@ -725,16 +755,16 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
         data_generator = OpenAIDatasetGenerator(
             cache_root=cache_dir, filter_duplicated_examples=False
         )
-        dataset_cache_path = Path(
-            data_generator.cache_root / f"{DatasetSplit.TEST.value}"
+        examples_cache_path = Path(
+            data_generator.cache_root / f"generated_examples_{DatasetSplit.TEST.value}"
         )
-        cached_dataset = Dataset.from_dict(
+        cached_examples = Dataset.from_dict(
             {
                 "input_col": ["1"] * 110,
                 "output_col": ["2"] * 110,
             }
         )
-        cached_dataset.save_to_disk(dataset_cache_path)
+        cached_examples.save_to_disk(examples_cache_path)
         # The generate_dataset_split would first load the cached
         # dataset into generated_examples. Then in the while
         # loop, create_all_examples_dataset_and_generated_dataset
@@ -744,8 +774,8 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
         # expected_num_examples is 110, the while loop would exit
         # immediately. So the generated_dataset would be the
         # same as the cached dataset.
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             generated_dataset = data_generator.generate_dataset_split(
                 expected_num_examples=110,
@@ -753,10 +783,10 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
                 split=DatasetSplit.TEST,
             )
             mock_info.assert_called_once_with(
-                f"Loading cache from {str(dataset_cache_path)}."
+                f"Loading cache from {str(examples_cache_path)}."
             )
             mock_warning.assert_not_called()
-        assert are_datasets_identical(generated_dataset, cached_dataset)
+        assert are_datasets_identical(generated_dataset, cached_examples)
     gc.collect()
 
 
@@ -791,8 +821,8 @@ def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_gene
         data_generator = OpenAIDatasetGenerator(
             cache_root=cache_dir, filter_duplicated_examples=False
         )
-        dataset_cache_path = Path(
-            data_generator.cache_root / f"{DatasetSplit.TEST.value}"
+        examples_cache_path = Path(
+            data_generator.cache_root / f"generated_examples_{DatasetSplit.TEST.value}"
         )
         cached_dataset = Dataset.from_dict(
             {
@@ -800,7 +830,7 @@ def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_gene
                 "output_col": ["2"] * 110,
             }
         )
-        cached_dataset.save_to_disk(dataset_cache_path)
+        cached_dataset.save_to_disk(examples_cache_path)
         # The generate_dataset_split would first load the cached
         # dataset into generated_examples. Then in the while
         # loop, create_all_examples_dataset_and_generated_dataset
@@ -811,8 +841,8 @@ def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_gene
         # continue and the batch_size = 2. After one batch of API
         # calls, generated_dataset meets the requirement and
         # stop generation.
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             generated_dataset = data_generator.generate_dataset_split(
                 expected_num_examples=117,
@@ -820,9 +850,9 @@ def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_gene
                 split=DatasetSplit.TEST,
             )
             info_list = [each.args[0] for each in mock_info.call_args_list]
-            assert info_list[0] == f"Loading cache from {str(dataset_cache_path)}."
-            # The first logging.info is loaded cache, and there is
-            # another 2 * 5 * 2 logging.info in extract_responses.
+            assert info_list[0] == f"Loading cache from {str(examples_cache_path)}."
+            # The first logger.info is loaded cache, and there is
+            # another 2 * 5 * 2 logger.info in extract_responses.
             assert len(info_list) == 1 + 2 * 5 * 2
             mock_warning.assert_not_called()
         excepted_generated_dataset = Dataset.from_dict(
@@ -863,21 +893,14 @@ def test_extract_responses():
     mock_completion_4 = MockCompletion()
     mock_completion_4.choices = None
 
-    def are_example_lists_identical(example_list_1, example_list_2):
-        return all(
-            example_1.input_col == example_2.input_col
-            and example_1.output_col == example_2.output_col
-            for example_1, example_2 in zip(example_list_1, example_list_2)
-        )
-
     with tempfile.TemporaryDirectory() as cache_dir:
         os.environ["OPENAI_API_KEY"] = "fake_api_key"
         data_generator = OpenAIDatasetGenerator(
             cache_root=cache_dir, filter_duplicated_examples=True
         )
         generated_examples = []
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             generated_examples = data_generator.extract_responses(
                 [mock_completion_1, mock_completion_2], generated_examples
@@ -911,8 +934,8 @@ def test_extract_responses():
             Example(input_col="4", output_col="c"),
             Example(input_col="5", output_col="a"),
         ]
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             generated_examples = data_generator.extract_responses(
                 [mock_completion_4], generated_examples
@@ -933,3 +956,125 @@ def test_extract_responses():
                 Example(input_col="5", output_col="a"),
             ]
     gc.collect()
+
+
+def test_extract_some_empty_responses():
+    """Test the extract_responses function correctly handle empty responses."""
+    mock_completion_1 = MockCompletion()
+    mock_completion_1.choices = [
+        # Note that this choice's input is empty. So it should be discarded.
+        {"message": {"content": '{"input": "", "output": "a"}'}},
+        {"message": {"content": '{"input": "5", "output": "b"}'}},
+        # Note that this choice's output is empty. So it should be discarded.
+        {"message": {"content": '{"input": "1", "output": ""}'}},
+    ]
+    mock_completion_2 = MockCompletion()
+    mock_completion_2.choices = [
+        {"message": {"content": '{"input": "3", "output": "a"}'}},
+        # Note that the following choice misses the right quote of JSON.
+        # So it should be discarded. And will log a warning.
+        {"message": {"content": '{"input": "3", "output": "a}'}},
+        {"message": {"content": '{"input": "3", "output": "b"}'}},
+    ]
+    mock_completion_3 = MockCompletion()
+    mock_completion_3.choices = [
+        {"message": {"content": '{"input": "4", "output": "c"}'}},
+        {"message": {"content": '{"input": "4", "output": "c"}'}},
+        {"message": {"content": '{"input": "5", "output": "a"}'}},
+    ]
+    # choices should be list of dicts. So mock_completion_4
+    # is invalid. Which will be discarded and log a warning.
+    mock_completion_4 = MockCompletion()
+    mock_completion_4.choices = None
+
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        data_generator = OpenAIDatasetGenerator(
+            cache_root=cache_dir, filter_duplicated_examples=True
+        )
+        generated_examples = []
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
+        ) as mock_warning:
+            generated_examples = data_generator.extract_responses(
+                [mock_completion_1, mock_completion_2], generated_examples
+            )
+            mock_warning.assert_called_once_with(
+                'Error happened parsing API choice: {\'message\': {\'content\': \'{"input": "3", "output": "a}\'}}'  # noqa E501
+            )
+            # There are 3 valid examples in [mock_completion_1,
+            # mock_completion_2] Each input
+            # and output will be logged once as info.
+            # And there are 2 exmaples with empty
+            # input or output, which should be discarded
+            # and be logged as info.
+            assert mock_info.call_count == 3 * 2 + 2
+
+        # The second choice in mock_completion_2
+        # is invalid. So it should be discarded.
+        assert generated_examples == [
+            Example(input_col="5", output_col="b"),
+            Example(input_col="3", output_col="a"),
+            Example(input_col="3", output_col="b"),
+        ]
+        generated_examples = data_generator.extract_responses(
+            [mock_completion_3], generated_examples
+        )
+        assert generated_examples == [
+            Example(input_col="5", output_col="b"),
+            Example(input_col="3", output_col="a"),
+            Example(input_col="3", output_col="b"),
+            Example(input_col="4", output_col="c"),
+            Example(input_col="4", output_col="c"),
+            Example(input_col="5", output_col="a"),
+        ]
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
+        ) as mock_warning:
+            generated_examples = data_generator.extract_responses(
+                [mock_completion_4], generated_examples
+            )
+            mock_warning.assert_called_once_with(
+                "Error happened when parsing API completion: <MockObject choices=None>"
+            )
+            mock_info.assert_not_called()
+            # The generated_examples should be the same.
+            assert generated_examples == [
+                Example(input_col="5", output_col="b"),
+                Example(input_col="3", output_col="a"),
+                Example(input_col="3", output_col="b"),
+                Example(input_col="4", output_col="c"),
+                Example(input_col="4", output_col="c"),
+                Example(input_col="5", output_col="a"),
+            ]
+    gc.collect()
+
+
+def test_initialize_dataset_generator_with_dynamic_temperature():
+    """Test the correct initialization of the dynamic temperature strategy."""
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        with pytest.raises(ValueError) as exc_info:
+            _ = OpenAIDatasetGenerator(cache_root=cache_dir, initial_temperature=-0.2)
+        error_info = exc_info.value.args[0]
+        assert (
+            error_info
+            == "initial_temperature must be >= 0, but self.initial_temperature=-0.2"
+        )
+        with pytest.raises(ValueError) as exc_info:
+            _ = OpenAIDatasetGenerator(cache_root=cache_dir, max_temperature=2.3)
+            error_info = exc_info.value.args[0]
+            assert (
+                error_info
+                == "max_temperature must be <= 2,0, but self.max_temperature=2.3"
+            )
+
+        with pytest.raises(ValueError) as exc_info:
+            _ = OpenAIDatasetGenerator(
+                cache_root=cache_dir, max_temperature=1.2, initial_temperature=1.5
+            )
+            error_info = exc_info.value.args[0]
+            assert (
+                error_info
+                == "self.initial_temperature=1.5 must be <= self.max_temperature=1.2"
+            )

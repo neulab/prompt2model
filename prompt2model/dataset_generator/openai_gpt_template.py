@@ -5,7 +5,7 @@ import random
 COMPLEX_PROMPT_TEMPLATE = """
 {META_PROMPT}
 --------------------------------------------------------------------------------------------
-Here are some exmaples you can refer to:
+Here are some examples you can refer to:
 
 - Example 1
 
@@ -33,17 +33,19 @@ Here are some [high-quality examples] for the [new instruction]. These examples 
 [high-quality examples]:
 {high_quality_example_string}
 ---------------------------------------------------------------------------------------------
-These are some [low-quality examples]Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
+These are some [low-quality examples]. Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
 
 [low-quality examples]:
 {low_quality_example_string}
 ---------------------------------------------------------------------------------------------
-[new example (in JSON)]:"""  # noqa: E501
+Before generating a new example, ensure that you strictly adhere to the rules mentioned in the [new instruction] and follow the format of the [high-quality examples]. Even if there are conflicts between [low-quality examples] and [new instruction], prioritize the [new instruction] guidelines to maintain consistency and quality. Think twice before generating a new example.
+
+[new example (in JSON)]:"""  # noqa 501
 
 MIDDLE_PROMPT_TEMPLATE = """
 {META_PROMPT}
 --------------------------------------------------------------------------------------------
-Here are some exmaples you can refer to:
+Here are some examples you can refer to:
 
 - Example 1
 
@@ -67,17 +69,19 @@ Here are some [high-quality examples] for the [new instruction]. These examples 
 [high-quality examples]:
 {high_quality_example_string}
 ---------------------------------------------------------------------------------------------
-These are some [low-quality examples]Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
+These are some [low-quality examples]. Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
 
 [low-quality examples]:
 {low_quality_example_string}
 ---------------------------------------------------------------------------------------------
-[new example (in JSON)]:"""  # noqa: E501
+Before generating a new example, ensure that you strictly adhere to the rules mentioned in the [new instruction] and follow the format of the [high-quality examples]. Even if there are conflicts between [low-quality examples] and [new instruction], prioritize the [new instruction] guidelines to maintain consistency and quality. Think twice before generating a new example.
+
+[new example (in JSON)]:"""  # noqa 501
 
 SIMPLE_PROMPT_TEMPLATE = """
 {META_PROMPT}
 --------------------------------------------------------------------------------------------
-Here are some exmaples you can refer to:
+Here are some examples you can refer to:
 
 - Example 1
 
@@ -97,12 +101,14 @@ Here are some [high-quality examples] for the [new instruction]. These examples 
 [high-quality examples]:
 {high_quality_example_string}
 ---------------------------------------------------------------------------------------------
-These are some [low-quality examples]Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
+These are some [low-quality examples]. Their formats and contents may not be accurate. Please strictly follow the format of the [high-quality examples], but you may also refer to the content of the [low-quality examples].
 
 [low-quality examples]:
 {low_quality_example_string}
 ---------------------------------------------------------------------------------------------
-[new example (in JSON)]:"""  # noqa: E501
+Before generating a new example, ensure that you strictly adhere to the rules mentioned in the [new instruction] and follow the format of the [high-quality examples]. Even if there are conflicts between [low-quality examples] and [new instruction], prioritize the [new instruction] guidelines to maintain consistency and quality. Think twice before generating a new example.
+
+[new example (in JSON)]:"""  # noqa 501
 
 # String templates for the prompt. Can be modified by the users.
 # Prompt_template must contains `instruction` and `examples` fields.
