@@ -1045,3 +1045,33 @@ def test_extract_some_empty_responses():
                 Example(input_col="5", output_col="a"),
             ]
     gc.collect()
+
+
+def test_initialize_dataset_generator_with_dynamic_temperature():
+    """Test the correct initialization of the dynamic temperature strategy."""
+    with tempfile.TemporaryDirectory() as cache_dir:
+        os.environ["OPENAI_API_KEY"] = "fake_api_key"
+        with pytest.raises(ValueError) as exc_info:
+            _ = OpenAIDatasetGenerator(cache_root=cache_dir, initial_temperature=-0.2)
+        error_info = exc_info.value.args[0]
+        assert (
+            error_info
+            == "initial_temperature must be >= 0, but self.initial_temperature=-0.2"
+        )
+        with pytest.raises(ValueError) as exc_info:
+            _ = OpenAIDatasetGenerator(cache_root=cache_dir, max_temperature=2.3)
+            error_info = exc_info.value.args[0]
+            assert (
+                error_info
+                == "max_temperature must be <= 2,0, but self.max_temperature=2.3"
+            )
+
+        with pytest.raises(ValueError) as exc_info:
+            _ = OpenAIDatasetGenerator(
+                cache_root=cache_dir, max_temperature=1.2, initial_temperature=1.5
+            )
+            error_info = exc_info.value.args[0]
+            assert (
+                error_info
+                == "self.initial_temperature=1.5 must be <= self.max_temperature=1.2"
+            )

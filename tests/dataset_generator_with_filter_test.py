@@ -18,6 +18,7 @@ from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from test_helpers import (
     MockBatchDifferentCompletions,
     UnknownGpt3Exception,
+    are_dataset_dicts_identical,
     are_datasets_identical,
     mock_batch_openai_response_identical_completions,
 )
@@ -1423,7 +1424,9 @@ def test_generator_with_filter_to_generate_datasetdict(mocked_generate_example):
         )
 
         # Verify the generated DatasetDict matches the expected DatasetDict.
-        assert are_datasets_identical(generated_dataset_dict, expected_dataset_dict)
+        assert are_dataset_dicts_identical(
+            generated_dataset_dict, expected_dataset_dict
+        )
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
