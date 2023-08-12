@@ -1,14 +1,18 @@
 """Testing TextualizeProcessor."""
 
 import gc
+import logging
+from copy import deepcopy
 from unittest.mock import patch
 
 import datasets
 import pytest
-from transformers import T5Tokenizer
+from transformers import AutoTokenizer
 
 from prompt2model.dataset_processor.textualize import TextualizeProcessor
-from test_helpers import create_gpt2_model_and_tokenizer
+from test_helpers import are_dataset_dicts_identical, create_gpt2_model_and_tokenizer
+
+logger = logging.getLogger("DatasetProcessor")
 
 DATASET_DICTS = [
     datasets.DatasetDict(
@@ -86,21 +90,25 @@ UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS = [
 
 
 def test_the_logging_for_provide_unnecessary_eos_token_for_t5():
-    """Test the logging.info for unnecessary eos token for T5 model is logged."""
-    t5_tokenizer = T5Tokenizer.from_pretrained("t5-small")
+    """Test the logger.info for unnecessary eos token for T5 model is logged."""
+    t5_tokenizer = AutoTokenizer.from_pretrained("t5-small")
 
-    with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
         _ = TextualizeProcessor(has_encoder=True, eos_token=t5_tokenizer.eos_token)
         mock_info.assert_called_once_with(
-            "The T5 tokenizer automatically adds eos token in the end of sequence in when tokenizing. So the eos_token of encoder-decoder model tokenizer is unnecessary."  # noqa E501
+            "The T5 tokenizer automatically adds eos token in the end of sequence when tokenizing. So the eos_token of encoder-decoder model tokenizer is unnecessary."  # noqa E501
         )
         mock_warning.assert_not_called()
     gc.collect()
 
 
 def test_the_logging_for_eos_token_required_for_gpt():
-    """Test the logging.warning for requiring eos token for GPT model is logged."""
-    with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
+    """Test the logger.warning for requiring eos token for GPT model is logged."""
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
         _ = TextualizeProcessor(has_encoder=False)
         mock_info.assert_not_called()
         mock_warning.assert_called_once_with(
@@ -111,12 +119,15 @@ def test_the_logging_for_eos_token_required_for_gpt():
 
 def test_dataset_processor_t5_style():
     """Test the `process_dataset_dict` function of T5-type `TextualizeProcessor`."""
-    t5_tokenizer = T5Tokenizer.from_pretrained("t5-small")
-    t5_processor = TextualizeProcessor(
-        has_encoder=True, eos_token=t5_tokenizer.eos_token
-    )
+    t5_processor = TextualizeProcessor(has_encoder=True)
+    raw_dataset_dicts = deepcopy(DATASET_DICTS)
     t5_modified_dataset_dicts = t5_processor.process_dataset_dict(
         INSTRUCTION, DATASET_DICTS
+    )
+    # Ensure the dataset_dicts themselves are the same after processing.
+    assert all(
+        are_dataset_dicts_identical(raw, origin)
+        for (raw, origin) in zip(raw_dataset_dicts, DATASET_DICTS)
     )
     t5_expected_dataset_dicts = [
         datasets.DatasetDict(
@@ -172,26 +183,8 @@ def test_dataset_processor_t5_style():
             }
         ),
     ]
-    for index in range(len(t5_modified_dataset_dicts)):
-        dataset_dict = t5_modified_dataset_dicts[index]
-        dataset_splits = list(dataset_dict.keys())
-        for dataset_split in dataset_splits:
-            assert (
-                dataset_dict[dataset_split]["input_col"]
-                == t5_expected_dataset_dicts[index][dataset_split]["input_col"]
-            )
-            assert (
-                dataset_dict[dataset_split]["model_input"]
-                == t5_expected_dataset_dicts[index][dataset_split]["model_input"]
-            )
-            assert (
-                dataset_dict[dataset_split]["output_col"]
-                == t5_expected_dataset_dicts[index][dataset_split]["output_col"]
-            )
-            assert (
-                dataset_dict[dataset_split]["model_output"]
-                == t5_expected_dataset_dicts[index][dataset_split]["model_output"]
-            )
+    for exp, act in zip(t5_expected_dataset_dicts, t5_modified_dataset_dicts):
+        assert are_dataset_dicts_identical(exp, act)
     gc.collect()
 
 
@@ -201,10 +194,15 @@ def test_dataset_processor_decoder_only_style():
     gpt_processor = TextualizeProcessor(
         has_encoder=False, eos_token=gpt2_tokenizer.eos_token
     )
+    raw_dataset_dicts = deepcopy(DATASET_DICTS)
     gpt_modified_dataset_dicts = gpt_processor.process_dataset_dict(
         INSTRUCTION, DATASET_DICTS
     )
-
+    # Ensure the dataset_dicts themselves are the same after processing.
+    assert all(
+        are_dataset_dicts_identical(raw, origin)
+        for raw, origin in zip(raw_dataset_dicts, DATASET_DICTS)
+    )
     # Check that the modified dataset dicts have the expected content
     gpt_expected_dataset_dicts = [
         datasets.DatasetDict(
@@ -260,26 +258,12 @@ def test_dataset_processor_decoder_only_style():
             }
         ),
     ]
-    for index in range(len(gpt_modified_dataset_dicts)):
-        dataset_dict = gpt_modified_dataset_dicts[index]
-        dataset_splits = list(dataset_dict.keys())
-        for dataset_split in dataset_splits:
-            assert (
-                dataset_dict[dataset_split]["input_col"]
-                == gpt_expected_dataset_dicts[index][dataset_split]["input_col"]
-            )
-            assert (
-                dataset_dict[dataset_split]["model_input"]
-                == gpt_expected_dataset_dicts[index][dataset_split]["model_input"]
-            )
-            assert (
-                dataset_dict[dataset_split]["output_col"]
-                == gpt_expected_dataset_dicts[index][dataset_split]["output_col"]
-            )
-            assert (
-                dataset_dict[dataset_split]["model_output"]
-                == gpt_expected_dataset_dicts[index][dataset_split]["model_output"]
-            )
+    assert all(
+        are_dataset_dicts_identical(exp, modified)
+        for (exp, modified) in zip(
+            gpt_expected_dataset_dicts, gpt_modified_dataset_dicts
+        )
+    )
     gc.collect()
 
 
@@ -310,4 +294,149 @@ def test_unexpected_columns():
         assert str(exc_info.value) == (
             "Example dictionary must have 'input_col' and 'output_col' keys."
         )
+    gc.collect()
+
+
+DATASET_DICTS_WITH_EMPTY_COLUMNS = [
+    datasets.DatasetDict(
+        {
+            "train": datasets.Dataset.from_dict(
+                {
+                    "input_col": ["foo", "", "test"],
+                    "output_col": ["", "qux", "key"],
+                }
+            ),
+            "test": datasets.Dataset.from_dict(
+                {
+                    "input_col": ["foo", ""],
+                    "output_col": ["baz", "qux"],
+                }
+            ),
+        }
+    ),
+    datasets.DatasetDict(
+        {
+            "train": datasets.Dataset.from_dict(
+                {
+                    "input_col": ["", ""],
+                    "output_col": ["ham", "sau"],
+                }
+            ),
+        }
+    ),
+]
+
+
+def test_empty_filter_t5_type():
+    """Test that examples with empty input_col or output_col are discarded."""
+    t5_processor = TextualizeProcessor(has_encoder=True)
+    t5_modified_dataset_dicts = t5_processor.process_dataset_dict(
+        INSTRUCTION, DATASET_DICTS_WITH_EMPTY_COLUMNS
+    )
+    t5_expected_dataset_dicts = [
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 0>convert to text2text\nExample:\ntest\nLabel:\n",
+                        ],
+                        "input_col": ["test"],
+                        "output_col": ["key"],
+                        "model_output": ["key"],
+                    }
+                ),
+                "test": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
+                        ],
+                        "input_col": [
+                            "foo",
+                        ],
+                        "output_col": [
+                            "baz",
+                        ],
+                        "model_output": [
+                            "baz",
+                        ],
+                    }
+                ),
+            }
+        ),
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [],
+                        "input_col": [],
+                        "output_col": [],
+                        "model_output": [],
+                    }
+                ),
+            }
+        ),
+    ]
+    assert all(
+        are_dataset_dicts_identical(exp, act)
+        for exp, act in zip(t5_expected_dataset_dicts, t5_modified_dataset_dicts)
+    )
+    gc.collect()
+
+
+def test_empty_filter_decoder_only_style():
+    """Test the `process_dataset_dict` function of a GPT-type `TextualizeProcessor`."""
+    _, gpt2_tokenizer = create_gpt2_model_and_tokenizer()
+    gpt_processor = TextualizeProcessor(
+        has_encoder=False, eos_token=gpt2_tokenizer.eos_token
+    )
+    gpt_modified_dataset_dicts = gpt_processor.process_dataset_dict(
+        INSTRUCTION, DATASET_DICTS_WITH_EMPTY_COLUMNS
+    )
+
+    # Check that the modified dataset dicts have the expected content
+    gpt_expected_dataset_dicts = [
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 0>convert to text2text\nExample:\ntest\nLabel:\nkey<|endoftext|>",  # noqa: E501
+                        ],
+                        "input_col": ["test"],
+                        "output_col": ["key"],
+                        "model_output": ["key<|endoftext|>"],
+                    }
+                ),
+                "test": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
+                        ],
+                        "input_col": ["foo"],
+                        "output_col": ["baz"],
+                        "model_output": ["baz"],
+                    }
+                ),
+            }
+        ),
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [],
+                        "input_col": [],
+                        "output_col": [],
+                        "model_output": [],
+                    }
+                ),
+            }
+        ),
+    ]
+    assert all(
+        are_dataset_dicts_identical(expected, modified)
+        for expected, modified in zip(
+            gpt_expected_dataset_dicts, gpt_modified_dataset_dicts
+        )
+    )
     gc.collect()

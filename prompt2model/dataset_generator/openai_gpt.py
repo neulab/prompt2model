@@ -4,7 +4,6 @@ from __future__ import annotations  # noqa FI58
 
 import asyncio
 import json
-import logging
 import math
 import os
 import random
@@ -23,8 +22,11 @@ from prompt2model.utils import (
     OPENAI_ERRORS,
     ChatGPTAgent,
     count_tokens_from_string,
+    get_formatted_logger,
     handle_openai_error,
 )
+
+logger = get_formatted_logger("DatasetGenerator")
 
 
 @dataclass(frozen=True)
@@ -42,7 +44,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self,
         api_key: str | None = None,
         max_api_calls: int = None,
-        temperature: float = 2.0,
+        initial_temperature: float = 0.5,
+        max_temperature: float = 1.7,
         presence_penalty: float = 0,
         frequency_penalty: float = 0,
         max_batch_size: int = 5,
@@ -58,9 +61,10 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 variable OPENAI_API_KEY is used.
             max_api_calls: The maximum number of API calls allowed,
                 or None for unlimited.
-            temperature: The sampling temperature to use, ranging from 0 to 2.
-                Higher values yield more random outputs, while lower values produce
-                more deterministic outputs.
+            initial_temperature: The sampling temperature to use when initializing
+                the generation.
+            max_temperature: The sampling temperature to use when the generation
+                is about to terminate.
             presence_penalty: Value between -2.0 and 2.0 to penalize new tokens
                 based on their presence in the text so far. Positive values increase
                 the model's likelihood to discuss new topics in generated examples.
@@ -77,6 +81,20 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         Raises:
             AssertionError: If an API key is not provided and set as an environment
             variable, or if the 'max_api_calls' value is not greater than 0.
+
+        Note:
+            For the OpenAI GPT-3.5 API, Temperature ranges from 0 to 2. Higher
+            values yield more random/diverse outputs with lower quality, while
+            lower values produce more deterministic outputs with higher quality.
+            We use a strategy to dynamically adjust the temperature from
+            initial_temperature to max_temperature during generation.
+
+            We incorporate random few-shot generated examples into the prompt
+            to the OpenAI GPT-3.5 API. The initial temperature is set lower to obtain
+            high-quality, low-diversity examples. As the number of generated examples
+            increases, we gradually have more high-quality examples for in-context
+            learning during generation. This allows us to achieve high-quality,
+            high-diversity examples later on by using a higher temperature.
         """
         self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
         assert self.api_key is not None and self.api_key != "", (
@@ -87,7 +105,20 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             assert max_api_calls > 0, "max_api_calls must be > 0"
         self.max_api_calls = max_api_calls
         self.api_call_counter = 0
-        self.temperature = temperature
+        self.initial_temperature = initial_temperature
+        self.max_temperature = max_temperature
+        if self.initial_temperature < 0:
+            raise ValueError(
+                f"initial_temperature must be >= 0, but {self.initial_temperature=}"
+            )
+        if self.max_temperature > 2.0:
+            raise ValueError(
+                "max_temperature must be <= 2.0 but {self.max_temperature=}"
+            )
+        if self.initial_temperature > self.max_temperature:
+            raise ValueError(
+                f"{self.initial_temperature=} must be <= {self.max_temperature=}"
+            )
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
         self.max_batch_size = max_batch_size
@@ -103,6 +134,15 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         generated_examples: list[Example],
     ) -> str:
         """Generates a prompt string.
+
+        The function generates a prompt string using the provided instruction and
+        few_shot_example_string. It also selects random examples from the generated
+        dataset to provide additional context for the prompt. At the start of dataset
+        generation, it defaults to using the few_shot_example_string.
+
+        The function uses different prompt templates based on the number of selected
+        examples from the generated dataset. If the total length of the prompt exceeds
+        3500 tokens, repeat the prompt generation process to generate a shorter one.
 
         Args:
             instruction: The natural language instruction for the prompt.
@@ -172,6 +212,15 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             if count_tokens_from_string(prompt) < 3500:
                 return prompt
             else:
+                orginal_input_string = (
+                    instruction + few_shot_example_string
+                    if few_shot_example_string
+                    else instruction
+                )
+                if count_tokens_from_string(orginal_input_string) > 3500:
+                    logger.warning(
+                        "The original input prompt is too long. Consider writing a shorter prompt."  # noqa 501
+                    )
                 continue
 
     def construct_input_output_map(
@@ -417,10 +466,10 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         then checks for the presence of `input` and `output` keys in the JSON
         object. If either is missing, the completion is discarded.
 
-        For valid completions, the function creates a namedtuple `example`
+        For valid completions, the function instantiates a class
         with `input_col` and `output_col` fields, representing the generated
         example and label strings respectively. The `example` is then added
-        to self.generated_examples.
+        to generated_examples.
 
         Note: The function process `batch_size * responses_per_request`
         responses at a time.
@@ -447,7 +496,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             Example(input_col="2", output_col="a")
             Example(input_col="2", output_col="b")
 
-            And append them to self.generated_examples.
+            It will then append them to generated_examples.
 
         Returns:
             A list of `Example` objects.
@@ -466,7 +515,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     try:
                         response_json = json.loads(choice["message"]["content"])
                     except Exception:
-                        logging.warning(f"Error happened parsing API choice: {choice}")
+                        logger.warning(f"Error happened parsing API choice: {choice}")
                         continue
                         # If the response is not a valid JSON object, discard it.
                     required_keys = ["input", "output"]
@@ -474,37 +523,66 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         key for key in required_keys if key not in response_json
                     ]
                     if len(missing_keys) != 0:
-                        logging.warning(
+                        logger.warning(
                             f'API response must contain {", ".join(required_keys)} keys'
                         )
                         continue
                     input = str(response_json["input"]).strip()
                     output = str(response_json["output"]).strip()
-                    generated_examples.append(Example(input, output))
-                    logging.info(f"input: \n\n{input}\n\n")
-                    logging.info(f"output: \n\n{output}\n\n")
+                    if input != "" and output != "":
+                        generated_examples.append(Example(input, output))
+                    else:
+                        logger.info(
+                            "Empty input or output ditected. Discard this example."
+                        )
+                        continue
+                    logger.info(f"input: \n\n{input}\n\n")
+                    logger.info(f"output: \n\n{output}\n\n")
             except Exception:
-                logging.warning(
+                logger.warning(
                     f"Error happened when parsing API completion: {completion}"
                 )
                 continue
         return generated_examples
 
     async def generate_responses(
-        self, chat_api: ChatGPTAgent, prompts: list[str]
+        self,
+        chat_api: ChatGPTAgent,
+        generated_dataset: Dataset,
+        expected_num_examples: int,
+        prompts: list[str],
     ) -> list[openai.Completion]:
-        """Generates async responses using OpenAI API.
+        """Asynchronously generates responses using the GPT-3.5 API.
 
         Args:
-            chat_api (ChatGPTAgent): ChatGPTAgent to generate responses.
-            prompts (list[str]): A list of prompts to generate responses.
+            chat_api: ChatGPTAgent to generate responses.
+            generated_dataset: Currently generated dataset.
+            expected_num_examples: The number of examples expected
+                to be generated.
+            prompts: A list of prompts to generate responses.
+
+        The temperature for generating responses dynamically adjusts
+        based on the size of the generated dataset. As the dataset
+        grows, the dynamic temperature gradually increases,
+        approaching the max_temperature.
+
+        To prevent potential round-off errors in Python, the dynamic
+        temperature is rounded within the range [0, 2.0].
 
         Returns:
             A list of openai.Completion.
         """
+        # Calculate the dynamic temperature based
+        # on the size of the generated dataset
+        dynamic_temperature = (self.max_temperature - self.initial_temperature) * len(
+            generated_dataset
+        ) / expected_num_examples + self.initial_temperature
+
+        # Ensure the dynamic temperature is within the range [0, 2.0]
+        clipped_temperature = max(0.0, min(2.0, dynamic_temperature))
         responses = await chat_api.generate_batch_openai_chat_completion(
             prompts,
-            temperature=self.temperature,
+            temperature=clipped_temperature,
             responses_per_request=self.responses_per_request,
             requests_per_minute=self.requests_per_minute,
         )
@@ -539,23 +617,25 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         """
         # Refresh the relevant data structures for the new split.
         self.cache_root.mkdir(parents=True, exist_ok=True)
-        exmaples_cache_path = Path(self.cache_root / f"{split.value}")
+        examples_cache_path = Path(
+            self.cache_root / f"generated_examples_{split.value}"
+        )
+        dataset_cache_path = Path(self.cache_root / f"generated_dataset_{split.value}")
 
-        if exmaples_cache_path.exists():
+        if examples_cache_path.exists():
             # If cache exists, load generated examples from disk.
-            logging.info(f"Loading cache from {str(exmaples_cache_path)}.")
-            all_generated_examples_dataset = Dataset.load_from_disk(exmaples_cache_path)
+            logger.info(f"Loading cache from {str(examples_cache_path)}.")
+            all_generated_examples_dataset = Dataset.load_from_disk(examples_cache_path)
             generated_examples = [
                 Example(input_col=ex["input_col"], output_col=ex["output_col"])
                 for ex in all_generated_examples_dataset
             ]
-
         else:
             # Initialize data structures for a new split.
             generated_examples = []
 
-        chat_api = ChatGPTAgent(self.api_key)
         pbar = tqdm(total=expected_num_examples, desc="Generating examples")
+        chat_api = ChatGPTAgent(self.api_key)
 
         while True:
             # Each API call will return `responses_per_request` completion
@@ -570,11 +650,12 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 ) = self.create_all_examples_dataset_and_generated_dataset(
                     generated_examples
                 )
-                all_generated_examples_dataset.save_to_disk(exmaples_cache_path)
+                all_generated_examples_dataset.save_to_disk(examples_cache_path)
+                generated_dataset.save_to_disk(dataset_cache_path)
                 pbar.update(len(generated_dataset))
 
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
-                    logging.warning("Maximum number of API calls reached.")
+                    logger.warning("Maximum number of API calls reached.")
                     break
                 elif len(generated_dataset) >= expected_num_examples:
                     break
@@ -590,15 +671,27 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                         self.construct_prompt(
                             instruction=prompt_spec.instruction,
                             few_shot_example_string=prompt_spec.examples,
-                            generated_examples=generated_examples,
+                            generated_examples=generated_examples
+                            if not self.filter_duplicated_examples
+                            else [
+                                Example(each["input_col"], each["output_col"])
+                                for each in generated_dataset
+                            ],
                         )
                         for _ in range(batch_size)
                     ]
 
                     loop = asyncio.get_event_loop()
                     responses = loop.run_until_complete(
-                        self.generate_responses(chat_api, prompts)
+                        self.generate_responses(
+                            chat_api=chat_api,
+                            generated_dataset=generated_dataset,
+                            expected_num_examples=expected_num_examples,
+                            prompts=prompts,
+                        )
                     )
+
+                    # Extract the responses and add new examples to the dataset.
                     generated_examples = self.extract_responses(
                         responses, generated_examples
                     )

@@ -2,9 +2,10 @@
 
 from __future__ import annotations  # noqa FI58
 
-import logging
-
 from prompt2model.dataset_processor.base import BaseProcessor
+from prompt2model.utils.logging_utils import get_formatted_logger
+
+logger = get_formatted_logger("DatasetProcessor")
 
 
 class TextualizeProcessor(BaseProcessor):
@@ -25,14 +26,14 @@ class TextualizeProcessor(BaseProcessor):
         """
         super().__init__(has_encoder, eos_token)
         if has_encoder and eos_token is not None:
-            logging.info(
+            logger.info(
                 (
-                    "The T5 tokenizer automatically adds eos token in the end of sequence in when tokenizing."  # noqa E501
+                    "The T5 tokenizer automatically adds eos token in the end of sequence when tokenizing."  # noqa E501
                     " So the eos_token of encoder-decoder model tokenizer is unnecessary."  # noqa E501
                 )
             )
         elif not has_encoder and eos_token is None:
-            logging.warning(
+            logger.warning(
                 (
                     "The autoregressive model tokenizer does not automatically add eos token in the end of the sequence."  # noqa E501
                     " So the `eos_token` of the autoregressive model is required."  # noqa E501
@@ -63,9 +64,6 @@ class TextualizeProcessor(BaseProcessor):
             A dictionary with `model_input` as the input to models
             and `model_output` as the expected output of models.
         """
-        assert (
-            "input_col" in example and "output_col" in example
-        ), "Example dictionary must have 'input_col' and 'output_col' keys."
         assert dataset_split in (
             "train",
             "val",

@@ -1,22 +1,27 @@
 """Testing T5 (encoder-decoder) ModelTrainer with different configurations."""
 
 import gc
+import logging
 import os
 import tempfile
 from unittest.mock import patch
 
 import datasets
 import pytest
+import torch.nn as nn
 import transformers
 from datasets import concatenate_datasets
 
 from prompt2model.model_trainer.generate import GenerationModelTrainer
 
 os.environ["WANDB_MODE"] = "dryrun"
+loss_function = nn.CrossEntropyLoss()
+IGNORE_INDEX = loss_function.ignore_index
+logger = logging.getLogger("ModelTrainer")
 
 
 def test_t5_trainer_with_get_right_padding_length():
-    """Test the get_right_padding_length function of T5 Trainer."""
+    """Test the get_right_padding_length function of the T5 Trainer."""
     trainer = GenerationModelTrainer(
         "patrickvonplaten/t5-tiny-random", has_encoder=True
     )
@@ -33,7 +38,7 @@ def test_t5_trainer_with_get_right_padding_length():
 
 
 def test_t5_trainer_tokenize():
-    """Test the Trainer for T5 mode correctly tokenize dataset."""
+    """Test that the T5 Model Trainer correctly tokenizes a dataset."""
     trainer = GenerationModelTrainer(
         "patrickvonplaten/t5-tiny-random", has_encoder=True, tokenizer_max_length=64
     )
@@ -64,10 +69,11 @@ def test_t5_trainer_tokenize():
     )
 
     # For T5 model, the label of tokenized_dataset is the modified input_id
-    # of output_encodings, where all the padding tokens are replaced by -100.
+    # of output_encodings, where all the padding tokens are replaced by -IGNORE_INDEX.
+    assert IGNORE_INDEX == -100
     modified_labels = [
         [
-            -100 if element == trainer.tokenizer.pad_token_id else element
+            IGNORE_INDEX if element == trainer.tokenizer.pad_token_id else element
             for element in sublist
         ]
         for sublist in output_encodings["input_ids"]
@@ -86,8 +92,10 @@ def test_t5_trainer_tokenize():
             input_id, trainer.model.config.pad_token_id
         ) == trainer.get_left_padding_length(attention_mask, 0)
         # The length of right padding tokens in output_encoding_id
-        # equals to the length of right padding -100 of label.
-        length_of_right_padding_in_label = trainer.get_right_padding_length(label, -100)
+        # equals the length of right padding IGNORE_INDEX of label.
+        length_of_right_padding_in_label = trainer.get_right_padding_length(
+            label, IGNORE_INDEX
+        )
         length_of_right_padding_in_input_id = trainer.get_right_padding_length(
             output_encoding_id, trainer.tokenizer.pad_token_id
         )
@@ -138,8 +146,8 @@ def test_t5_trainer_with_tokenizer_max_length():
             ),
         ]
 
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             trainer = GenerationModelTrainer(
                 "patrickvonplaten/t5-tiny-random",
@@ -158,13 +166,13 @@ def test_t5_trainer_with_tokenizer_max_length():
             )
 
             # Though we did not pass in validation dataset, we set
-            # evaluation_strategy to no. Check if logging.info was
+            # evaluation_strategy to `no`. Check if logger.info was
             # called once for not setting the evaluation strategy.
             mock_info.assert_called_once_with(
-                "The traning doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
+                "The trainer doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
 
-            # Check if logging.warning wasn't called.
+            # Check if logger.warning wasn't called.
             mock_warning.assert_not_called()
     gc.collect()
 
@@ -192,8 +200,8 @@ def test_t5_trainer_without_tokenizer_max_length():
             ),
         ]
 
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
         ) as mock_warning:
             trainer = GenerationModelTrainer(
                 "patrickvonplaten/t5-tiny-random",
@@ -211,15 +219,15 @@ def test_t5_trainer_without_tokenizer_max_length():
                 training_datasets,
             )
             mock_info.assert_called_once_with(
-                "The traning doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
+                "The trainer doesn't set the evaluation strategy, the evaluation will be skipped."  # noqa E501
             )
 
-            # Check if logging.warning was called once for
+            # Check if logger.warning was called once for
             # not setting the tokenizer_max_length.
             mock_warning.assert_called_once_with(
                 "Set the tokenizer_max_length is preferable for finetuning model, which saves the cost of training."  # noqa 501
             )
-        gc.collect()
+    gc.collect()
 
 
 def test_t5_trainer_with_epoch_evaluation():
@@ -246,10 +254,11 @@ def test_t5_trainer_with_epoch_evaluation():
                 }
             ),
         ]
-
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
-        ) as mock_warning:
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
+        ) as mock_warning, patch.object(
+            logging.getLogger("ModelEvaluator"), "info"
+        ) as mock_evaluator_info:
             trainer = GenerationModelTrainer(
                 "patrickvonplaten/t5-tiny-random",
                 has_encoder=True,
@@ -265,18 +274,19 @@ def test_t5_trainer_with_epoch_evaluation():
                 training_datasets,
                 validation_datasets,
             )
-            # Check if logging.info was called correctly.
+            # Check if logger.info was called correctly.
             # Eech epoch will log 3 times, twice in `on_epoch_end`
             # and once in `evaluate_model`.
-            assert mock_info.call_count == 3 * num_train_epochs
-            info_list = [each.args[0] for each in mock_info.call_args_list]
+            assert mock_info.call_count == 2 * num_train_epochs
+            assert mock_evaluator_info.call_count == 1 * num_train_epochs
+            info_list = [each.args[0] for each in mock_evaluator_info.call_args_list]
             assert (
                 info_list.count(
                     "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
-            # The other two kind of logging.info in `on_epoch_end` of
+            # The other two kind of logger.info in `on_epoch_end` of
             # `ValidationCallback`are logging the epoch num wtih the
             # val_dataset_size and logging the `metric_values`.
 
@@ -312,9 +322,11 @@ def test_t5_trainer_without_validation_datasets():
             ),
         ]
 
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
-        ) as mock_warning:
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
+        ) as mock_warning, patch.object(
+            logging.getLogger("ModelEvaluator"), "info"
+        ) as mock_evaluator_info:
             trainer = GenerationModelTrainer(
                 "patrickvonplaten/t5-tiny-random",
                 has_encoder=True,
@@ -330,28 +342,29 @@ def test_t5_trainer_without_validation_datasets():
                 },
                 training_datasets,
             )
-            # Check if logging.info was called correctly.
+            # Check if logger.info was called correctly.
             # Eech epoch will log 3 times, twice in `on_epoch_end`
             # and once in `evaluate_model`.
-            assert mock_info.call_count == 3 * num_train_epochs
-            info_list = [each.args[0] for each in mock_info.call_args_list]
+            assert mock_info.call_count == 2 * num_train_epochs
+            assert mock_evaluator_info.call_count == 1 * num_train_epochs
+            info_list = [each.args[0] for each in mock_evaluator_info.call_args_list]
             assert (
                 info_list.count(
                     "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
-            # The other two kind of logging.info in `on_epoch_end` of
+            # The other two kind of logger.info in `on_epoch_end` of
             # `ValidationCallback`are logging the epoch num wtih the
             # val_dataset_size and logging the `metric_values`.
 
             assert trainer.validation_callback.epoch_count == num_train_epochs
 
             concatenated_training_dataset = concatenate_datasets(training_datasets)
-            splited_dataset = concatenated_training_dataset.train_test_split(
+            splitted_dataset = concatenated_training_dataset.train_test_split(
                 test_size=0.15, seed=trainer.training_seed
             )
-            val_dataset = splited_dataset["test"]
+            val_dataset = splitted_dataset["test"]
             assert trainer.validation_callback.val_dataset is not None
             assert len(trainer.validation_callback.val_dataset.features) == 2
             assert (
@@ -365,15 +378,15 @@ def test_t5_trainer_without_validation_datasets():
 
             # The evaluation_strategy is set to epoch, but validation
             # datasets are not provided. So the training dataset will
-            # be splited to generate validation dataset.
+            # be splitted to obtain the validation dataset.
             mock_warning.assert_called_once_with(
-                "The validation split for encoder-decoder model is missed. The training dataset will be split to create the validation dataset."  # noqa E501
+                "The validation split for encoder-decoder model is missing. The training dataset will be split to create the validation dataset."  # noqa E501
             )
 
         trained_model.save_pretrained(cache_dir)
         trained_tokenizer.save_pretrained(cache_dir)
         assert isinstance(trained_model, transformers.T5ForConditionalGeneration)
-        assert isinstance(trained_tokenizer, transformers.T5Tokenizer)
+        assert isinstance(trained_tokenizer, transformers.PreTrainedTokenizerFast)
     gc.collect()
 
 
@@ -408,9 +421,11 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
             ),
         ]
 
-        with patch("logging.info") as mock_info, patch(
-            "logging.warning"
-        ) as mock_warning:
+        with patch.object(logger, "info") as mock_info, patch.object(
+            logger, "warning"
+        ) as mock_warning, patch.object(
+            logging.getLogger("ModelEvaluator"), "info"
+        ) as mock_evaluator_info:
             num_train_epochs = 1
             trainer.train_model(
                 {
@@ -423,17 +438,18 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
                 validation_datasets,
             )
 
-            # Check if logging.info was called correctly.
+            # Check if logger.info was called correctly.
             # Eech epoch will log 3 times, in `on_epoch_end`, `evaluate_model`
-            assert mock_info.call_count == 3 * num_train_epochs
-            info_list = [each.args[0] for each in mock_info.call_args_list]
+            assert mock_info.call_count == 2 * num_train_epochs
+            assert mock_evaluator_info.call_count == 1 * num_train_epochs
+            info_list = [each.args[0] for each in mock_evaluator_info.call_args_list]
             assert (
                 info_list.count(
                     "Using default metrics of chr_f, exact_match and bert_score."
                 )
                 == num_train_epochs
             )
-            # The other two kind of logging.info in `on_epoch_end` of
+            # The other two kind of logger.info in `on_epoch_end` of
             # `ValidationCallback`are logging the epoch num wtih the
             # val_dataset_size and logging the `metric_values`.
 
@@ -443,7 +459,7 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
                 and len(validation_datasets) != 0
             )
 
-            # Check if logging.warning was called once
+            # Check if logger.warning was called once
             mock_warning.assert_called_once_with(
                 "Only `epoch` evaluation strategy is supported, the evaluation strategy will be set to evaluate_after_epoch."  # noqa E501
             )
@@ -452,7 +468,8 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
 
 def test_t5_trainer_with_unsupported_parameter():
     """Test the error handler with an unsupported hyperparameter with T5 Trainer."""
-    # We actually support per_device_train_batch_size, but the testcase uses batch_size.
+    # In this test case we provide an unsupported parameter called `batch_size` to
+    # `trainer.train_model`. The supported parameter is `per_device_train_batch_size`.
     with pytest.raises(AssertionError) as exc_info:
         with tempfile.TemporaryDirectory() as cache_dir:
             trainer = GenerationModelTrainer(
@@ -510,10 +527,11 @@ def test_t5_trainer_with_truncation_warning():
             "model_output": ["pomme"] * 2,
         }
     )
-    # The `model_input` is longer than 32 tokens. So it will trigger truncation warning.
-    with patch("logging.info") as mock_info, patch("logging.warning") as mock_warning:
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
         trainer.tokenize_dataset(training_dataset)
-        # logging.warning was called for truncation.
+        # logger.warning was called for truncation.
         mock_warning.assert_called_once_with(
             "Truncation happened when tokenizing dataset. Consider increasing the tokenizer_max_length if possible. Otherwise, truncation may lead to unexpected results."  # noqa: E501
         )
