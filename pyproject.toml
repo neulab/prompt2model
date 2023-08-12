@@ -38,6 +38,7 @@ dependencies = [
     "scikit-learn==1.2.2",
     "tiktoken==0.4.0",
     "zeno_build==0.0.5",
+    "toml==0.10.2"
 ]
 
 dynamic = ["version"]
