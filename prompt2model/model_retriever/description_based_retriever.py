@@ -67,8 +67,8 @@ class DescriptionModelRetriever(ModelRetriever):
             search_index_path: Where to store the search index (e.g. encoded vectors).
             search_depth: The number of most-relevant models to retrieve.
             first_stage_depth: The number of models to retrieve purely by similarity,
-                before reranking by scaling with model size and all-time number of
-                downloads.
+                before reranking by scaling with model size and number of downloads
+                in the past month.
             encoder_model_name: The name of the model to use for the dual-encoder.
             model_descriptions_index_path: The directory of models to search against.
             device: The device to use for encoding text for our dual-encoder model.
