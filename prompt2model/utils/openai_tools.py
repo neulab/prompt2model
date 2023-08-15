@@ -72,7 +72,7 @@ class ChatGPTAgent:
                 model's likelihood to talk about new topics.
             frequency_penalty: Float between -2.0 and 2.0. Positive values penalize new
                 tokens based on their existing frequency in the text so far, decreasing
-                the model's likelih<ood to repeat the same line verbatim.
+                the model's likelihood of repeating the same line verbatim.
 
         Returns:
             A response object.
@@ -176,24 +176,6 @@ class ChatGPTAgent:
         # Note: will never be none because it's set, but mypy doesn't know that.
         await openai.aiosession.get().close()
         return responses
-
-
-def generate_batch_completion(self, prompt: str) -> openai.Completion:
-    """Generate a chat completion using OpenAI's gpt-3.5-turbo.
-
-    Args:
-        prompt: A prompt asking for a response.
-
-    Returns:
-        A response object.
-    """
-    response = openai.ChatCompletion.create(
-        model=self.model_name,
-        messages=[
-            {"role": "user", "content": f"{prompt}"},
-        ],
-    )
-    return response
 
 
 def handle_openai_error(e, api_call_counter):
