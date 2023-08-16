@@ -439,7 +439,7 @@ def generate_hypothetical_model_description(
         try:
             chatgpt_completion = openai_api_agent.generate_one_openai_chat_completion(
                 chatgpt_prompt,
-                temperature=1.0,
+                temperature=0.0,
                 presence_penalty=0.0,
                 frequency_penalty=0.0,
             )

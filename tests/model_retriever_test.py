@@ -153,8 +153,8 @@ def test_retrieve_model_with_hyde(mock_generate_hypothetical_doc, mock_encode_te
     with tempfile.NamedTemporaryFile(mode="w", suffix=".pkl") as f:
         retriever = DescriptionModelRetriever(
             search_index_path=f.name,
-            first_stage_depth=3,
             search_depth=3,
+            first_stage_depth=3,
             encoder_model_name=TINY_MODEL_NAME,
             model_descriptions_index_path="test_helpers/model_info_tiny/",
             use_HyDE=True,
