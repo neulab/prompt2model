@@ -34,7 +34,8 @@ def test_encode_model_retriever():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".pkl") as f:
         retriever = DescriptionModelRetriever(
             search_index_path=f.name,
-            search_depth=5,
+            first_stage_depth=3,
+            search_depth=3,
             encoder_model_name=TINY_MODEL_NAME,
             model_descriptions_index_path="test_helpers/model_info_tiny/",
             device=torch.device("cpu"),
@@ -64,6 +65,7 @@ def test_retrieve_model_from_query(mock_encode_text):
     with tempfile.NamedTemporaryFile(mode="w", suffix=".pkl") as f:
         retriever = DescriptionModelRetriever(
             search_index_path=f.name,
+            first_stage_depth=3,
             search_depth=3,
             encoder_model_name=TINY_MODEL_NAME,
             model_descriptions_index_path="test_helpers/model_info_tiny/",
@@ -103,6 +105,7 @@ def test_retrieve_model_when_no_search_index_is_found(mock_encode_text):
         temporary_file = os.path.join(tempdir, "search_index.pkl")
         retriever = DescriptionModelRetriever(
             search_index_path=temporary_file,
+            first_stage_depth=3,
             search_depth=3,
             encoder_model_name=TINY_MODEL_NAME,
             model_descriptions_index_path="test_helpers/model_info_tiny/",
@@ -151,6 +154,7 @@ def test_retrieve_model_with_hyde(mock_generate_hypothetical_doc, mock_encode_te
         retriever = DescriptionModelRetriever(
             search_index_path=f.name,
             search_depth=3,
+            first_stage_depth=3,
             encoder_model_name=TINY_MODEL_NAME,
             model_descriptions_index_path="test_helpers/model_info_tiny/",
             use_HyDE=True,
