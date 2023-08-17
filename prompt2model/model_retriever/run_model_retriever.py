@@ -9,8 +9,9 @@ if __name__ == "__main__":
     prompt_spec._instruction = prompt
 
     retriever = DescriptionModelRetriever(
+        search_index_path="huggingface_data/huggingface_models/bm25_search_index.pkl",
         model_descriptions_index_path="huggingface_data/huggingface_models/model_info/",
         use_bm25=True,
-        use_HyDE=True,
+        use_HyDE=False,
     )
     top_model_name = retriever.retrieve(prompt_spec)
