@@ -70,7 +70,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
         Args:
             search_index_path: Where to store the search index (e.g. encoded vectors).
-            first_stage_search_depth: The number of datasets to retrieve before filtering.
+            first_stage_search_depth: The # of datasets to retrieve before filtering.
             max_search_depth: The number of most-relevant datasets to retrieve.
             encoder_model_name: The name of the model to use for the dual-encoder.
             dataset_info_file: The file containing dataset names and descriptions.
@@ -258,22 +258,34 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         )
         dataset_names = [dataset_info.name for dataset_info in self.dataset_infos]
         ranked_list = retrieve_objects(
-            query_vector, self.search_index_path, dataset_names, self.first_stage_search_depth
+            query_vector,
+            self.search_index_path,
+            dataset_names,
+            self.first_stage_search_depth,
         )
         top_dataset_infos = []
-        dataset_name_to_dataset_idx = {d.name: i for i, d in enumerate(self.dataset_infos)}
+        dataset_name_to_dataset_idx = {
+            d.name: i for i, d in enumerate(self.dataset_infos)
+        }
         for dataset_name, dataset_score in ranked_list:
             dataset_idx = dataset_name_to_dataset_idx[dataset_name]
             self.dataset_infos[dataset_idx].score = dataset_score
             blocklisted = False
             for blocklist_string in blocklist:
-                if blocklist_string.lower() in self.dataset_infos[dataset_idx].name.lower() or blocklist_string.lower() in self.dataset_infos[dataset_idx].description.lower():
+                if (
+                    blocklist_string.lower()
+                    in self.dataset_infos[dataset_idx].name.lower()
+                    or blocklist_string.lower()
+                    in self.dataset_infos[dataset_idx].description.lower()
+                ):
                     blocklisted = True
                     break
             if not blocklisted:
                 top_dataset_infos.append(self.dataset_infos[dataset_idx])
 
-        ranked_list = sorted(top_dataset_infos, key=lambda x: x.score, reverse=True)[:self.max_search_depth]
+        ranked_list = sorted(top_dataset_infos, key=lambda x: x.score, reverse=True)[
+            : self.max_search_depth
+        ]
         assert len(ranked_list) > 0, "No datasets retrieved from search index."
         top_dataset_name = self.choose_dataset(ranked_list)
         if top_dataset_name is None:

@@ -2,8 +2,10 @@
 
 from __future__ import annotations  # noqa FI58
 
+import logging
+
 from prompt2model.prompt_parser import PromptSpec
-from prompt2model.utils import ChatGPTAgent
+from prompt2model.utils import OPENAI_ERRORS, ChatGPTAgent, handle_openai_error
 
 PROMPT_PREFIX = '''HuggingFace contains models, which are each given a user-generated description. The first section of the description, delimited with two "---" lines, consists of a YAML description of the model. This may contain fields like "language" (supported by model), "datasets" (used to train the model), "tags" (e.g. tasks relevant to the model), and "metrics" (used to evaluate the model). Create a hypothetical HuggingFace model description that would satisfy a given user instruction. Here are some examples:
 
@@ -408,7 +410,7 @@ The authors use the following Stanford Sentiment Treebank([sst2](https://hugging
 
 
 def generate_hypothetical_model_description(
-    prompt: PromptSpec, openai_api_key: str | None = None
+    prompt: PromptSpec, openai_api_key: str | None = None, max_api_calls: int = None
 ) -> str:
     """Generate a hypothetical model description for the user's instruction.
 
@@ -422,6 +424,10 @@ def generate_hypothetical_model_description(
     Returns:
         a hypothetical model description for the user's instruction.
     """
+    if max_api_calls:
+        assert max_api_calls > 0, "max_api_calls must be > 0"
+    api_call_counter = 0
+
     instruction = prompt.instruction
     openai_api_agent = ChatGPTAgent(openai_api_key, "gpt-3.5-turbo-16k")
     chatgpt_prompt = (
@@ -429,7 +435,17 @@ def generate_hypothetical_model_description(
         + "\n"
         + f'Instruction: "{instruction}"\nHypothetical model description:\n'
     )
-    chatgpt_completion = openai_api_agent.generate_openai_chat_completion(
-        chatgpt_prompt
-    )
-    return chatgpt_completion.choices[0]["message"]["content"]
+    while True:
+        try:
+            chatgpt_completion = openai_api_agent.generate_one_openai_chat_completion(
+                chatgpt_prompt,
+                temperature=0.0,
+                presence_penalty=0.0,
+                frequency_penalty=0.0,
+            )
+            return chatgpt_completion.choices[0]["message"]["content"]
+        except OPENAI_ERRORS as e:
+            api_call_counter = handle_openai_error(e, api_call_counter)
+            if max_api_calls and api_call_counter >= max_api_calls:
+                logging.error("Maximum number of API calls reached.")
+                raise ValueError("Maximum number of API calls reached.") from e

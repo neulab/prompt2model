@@ -1,22 +1,23 @@
-"""Testing integration of components locally."""
+"""Tests for the prompt_parser module."""
 
-import json
+import gc
+import logging
 import os
-from functools import partial
 from unittest.mock import patch
 
 import openai
 import pytest
 
 from prompt2model.prompt_parser import OpenAIInstructionParser, TaskType
-from test_helpers import mock_openai_response
+from test_helpers import MockCompletion, UnknownGpt3Exception
 
-GPT3_RESPONSE_WITH_DEMONSTRATIONS = (
+logger = logging.getLogger("PromptParser")
+GPT3_RESPONSE_WITH_DEMONSTRATIONS = MockCompletion(
     '{"Instruction": "Convert each date from an informal description into a'
     ' MM/DD/YYYY format.", "Demonstrations": "Fifth of November 2024 ->'
     ' 11/05/2024\nJan. 9 2023 -> 01/09/2023\nChristmas 2016 -> 12/25/2016"}'
 )
-GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS = (
+GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS = MockCompletion(
     '{"Instruction": "Turn the given fact into a question by a simple rearrangement'
     " of words. This typically involves replacing some part of the given fact with a"
     " WH word. For example, replacing the subject of the provided fact with the word"
@@ -28,31 +29,14 @@ GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS = (
     " You can also form a question without any WH words. For example, 'A radio"
     ' converts electricity into?\'", "Demonstrations": "N/A"}'
 )
-GPT3_RESPONSE_WITH_INVALID_JSON = (
+GPT3_RESPONSE_WITH_INVALID_JSON = MockCompletion(
     '{"Instruction": "A", "Demonstrations": "B}'  # Missing final quotation mark
 )
 
 
-class UNKNOWN_GPT3_EXCEPTION(Exception):
-    """This is a newly-defined exception for testing purposes."""
-
-    pass
-
-
-mock_prompt_parsing_example_with_demonstrations = partial(
-    mock_openai_response, content=GPT3_RESPONSE_WITH_DEMONSTRATIONS
-)
-mock_prompt_parsing_example_without_demonstrations = partial(
-    mock_openai_response, content=GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS
-)
-mock_prompt_parsing_example_with_invalid_json = partial(
-    mock_openai_response, content=GPT3_RESPONSE_WITH_INVALID_JSON
-)
-
-
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_openai_chat_completion",
-    side_effect=mock_prompt_parsing_example_with_demonstrations,
+    "prompt2model.utils.ChatGPTAgent.generate_one_openai_chat_completion",
+    side_effect=[GPT3_RESPONSE_WITH_DEMONSTRATIONS],
 )
 def test_instruction_parser_with_demonstration(mocked_parsing_method):
     """Test a prompt-based instruction (with the LLM call mocked).
@@ -90,8 +74,8 @@ Christmas 2016 -> 12/25/2016"""
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_openai_chat_completion",
-    side_effect=mock_prompt_parsing_example_without_demonstrations,
+    "prompt2model.utils.ChatGPTAgent.generate_one_openai_chat_completion",
+    side_effect=[GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS],
 )
 def test_instruction_parser_without_demonstration(mocked_parsing_method):
     """Test a prompt-based instruction (with the LLM call mocked).
@@ -113,11 +97,12 @@ def test_instruction_parser_without_demonstration(mocked_parsing_method):
     assert prompt_spec.examples == "N/A"
     assert prompt_spec.examples == "N/A"
     assert mocked_parsing_method.call_count == 1
+    gc.collect()
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_openai_chat_completion",
-    side_effect=mock_prompt_parsing_example_with_invalid_json,
+    "prompt2model.utils.ChatGPTAgent.generate_one_openai_chat_completion",
+    side_effect=[GPT3_RESPONSE_WITH_INVALID_JSON] * 3,
 )
 def test_instruction_parser_with_invalid_json(mocked_parsing_method):
     """Verify that we handle when the API returns a invalid JSON response.
@@ -127,24 +112,27 @@ def test_instruction_parser_with_invalid_json(mocked_parsing_method):
     """
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     prompt = """This prompt will be ignored by the parser in this test."""
-    with pytest.raises(ValueError) as exc_info:
-        prompt_spec = OpenAIInstructionParser(
-            task_type=TaskType.TEXT_GENERATION, max_api_calls=3
-        )
+    prompt_spec = OpenAIInstructionParser(
+        task_type=TaskType.TEXT_GENERATION, max_api_calls=3
+    )
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
         prompt_spec.parse_from_prompt(prompt)
-
+        mock_info.assert_not_called()
+        warning_list = [each.args[0] for each in mock_warning.call_args_list]
+        assert warning_list == ["API response was not a valid JSON"] * 3 + [
+            "Maximum number of API calls reached for PromptParser."
+        ]
     assert mocked_parsing_method.call_count == 3
-
-    # Check if the ValueError was raised
-    assert isinstance(exc_info.value, ValueError)
-    # Check if the original exception (e) is present as the cause
-    original_exception = exc_info.value.__cause__
-    assert isinstance(original_exception, json.decoder.JSONDecodeError)
+    assert prompt_spec._instruction is None
+    assert prompt_spec._examples is None
+    gc.collect()
 
 
 @patch("time.sleep")
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_openai_chat_completion",
+    "prompt2model.utils.ChatGPTAgent.generate_one_openai_chat_completion",
     side_effect=openai.error.Timeout("timeout"),
 )
 def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_method):
@@ -176,11 +164,12 @@ def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_met
     # Check if the original exception (e) is present as the cause
     original_exception = exc_info.value.__cause__
     assert isinstance(original_exception, openai.error.Timeout)
+    gc.collect()
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_openai_chat_completion",
-    side_effect=UNKNOWN_GPT3_EXCEPTION(),
+    "prompt2model.utils.ChatGPTAgent.generate_one_openai_chat_completion",
+    side_effect=UnknownGpt3Exception(),
 )
 def test_instruction_parser_with_unexpected_error(mocked_parsing_method):
     """Verify we don't retry the API call if an unexpected exception appears.
@@ -190,7 +179,7 @@ def test_instruction_parser_with_unexpected_error(mocked_parsing_method):
     """
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     prompt = """This prompt will be ignored by the parser in this test."""
-    with pytest.raises(UNKNOWN_GPT3_EXCEPTION):
+    with pytest.raises(UnknownGpt3Exception):
         prompt_spec = OpenAIInstructionParser(
             task_type=TaskType.TEXT_GENERATION, max_api_calls=3
         )
@@ -198,6 +187,7 @@ def test_instruction_parser_with_unexpected_error(mocked_parsing_method):
 
     # Check that we only tried calling the API once.
     assert mocked_parsing_method.call_count == 1
+    gc.collect()
 
 
 def test_openai_key_init():
@@ -222,3 +212,4 @@ def test_openai_key_init():
         task_type=TaskType.TEXT_GENERATION, api_key=api_key
     )
     assert explicit_api_key_paser.api_key == api_key and api_key is not None
+    gc.collect()

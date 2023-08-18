@@ -81,7 +81,7 @@ def encode_text(
         fp16: Whether or not to run inference in fp16 for more-efficient encoding.
 
     Returns:
-        A numpy array of shape `(num_examples, embedding_dim)` containing text
+        A numpy array of shape `(expected_num_examples, embedding_dim)` containing text
         encoded by the specified model.
     """
     model, tokenizer = load_tevatron_model(model_name_or_path, model_cache_dir)
