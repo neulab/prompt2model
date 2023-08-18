@@ -4,6 +4,7 @@ from __future__ import annotations  # noqa FI58
 
 import os
 import pickle
+import shutil
 import tempfile
 from unittest.mock import patch
 
@@ -24,6 +25,7 @@ def test_initialize_model_retriever():
             search_depth=3,
             encoder_model_name=TINY_MODEL_NAME,
             model_descriptions_index_path="test_helpers/model_info_tiny/",
+            use_bm25=False,
         )
         # This tiny directory of HuggingFace models contains 3 models.
         assert len(retriever.model_infos) == 3
@@ -39,6 +41,7 @@ def test_encode_model_retriever():
             encoder_model_name=TINY_MODEL_NAME,
             model_descriptions_index_path="test_helpers/model_info_tiny/",
             device=torch.device("cpu"),
+            use_bm25=False,
         )
         model_vectors = retriever.encode_model_descriptions(f.name)
         assert model_vectors.shape == (3, 128)
@@ -60,7 +63,7 @@ def create_test_search_index(index_file_name):
     "prompt2model.model_retriever.description_based_retriever.encode_text",
     return_value=np.array([[0, 0, 1]]),
 )
-def test_retrieve_model_from_query(mock_encode_text):
+def test_retrieve_model_from_query_dual_encoder(mock_encode_text):
     """Test loading a small Tevatron model."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".pkl") as f:
         retriever = DescriptionModelRetriever(
@@ -69,6 +72,8 @@ def test_retrieve_model_from_query(mock_encode_text):
             search_depth=3,
             encoder_model_name=TINY_MODEL_NAME,
             model_descriptions_index_path="test_helpers/model_info_tiny/",
+            use_bm25=False,
+            use_HyDE=False,
         )
         indexed_models = retriever.model_infos
         create_test_search_index(f.name)
@@ -109,6 +114,7 @@ def test_retrieve_model_when_no_search_index_is_found(mock_encode_text):
             search_depth=3,
             encoder_model_name=TINY_MODEL_NAME,
             model_descriptions_index_path="test_helpers/model_info_tiny/",
+            use_bm25=False,
         )
         indexed_models = retriever.model_infos
 
@@ -148,7 +154,9 @@ def mock_encode_text_for_hyde(
     + ".generate_hypothetical_model_description",
     return_value=MOCK_HYPOTHETICAL_DOCUMENT,
 )
-def test_retrieve_model_with_hyde(mock_generate_hypothetical_doc, mock_encode_text):
+def test_retrieve_model_with_hyde_dual_encoder(
+    mock_generate_hypothetical_doc, mock_encode_text
+):
     """Test loading a small Tevatron model."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".pkl") as f:
         retriever = DescriptionModelRetriever(
@@ -157,6 +165,7 @@ def test_retrieve_model_with_hyde(mock_generate_hypothetical_doc, mock_encode_te
             first_stage_depth=3,
             encoder_model_name=TINY_MODEL_NAME,
             model_descriptions_index_path="test_helpers/model_info_tiny/",
+            use_bm25=False,
             use_HyDE=True,
         )
         indexed_models = retriever.model_infos
@@ -174,3 +183,76 @@ def test_retrieve_model_with_hyde(mock_generate_hypothetical_doc, mock_encode_te
         # no particular order.
         assert indexed_models[0].name in top_model_names[1:]
         assert indexed_models[2].name in top_model_names[1:]
+
+
+def test_construct_bm25_index_when_no_index_exists():
+    """Test that construct_bm25_index creates a BM25 search index on disk."""
+    retriever = DescriptionModelRetriever(
+        first_stage_depth=3,
+        search_depth=3,
+        model_descriptions_index_path="test_helpers/model_info_tiny/",
+        use_bm25=True,
+        bm25_index_name="missing-index",
+        use_HyDE=False,
+    )
+    assert retriever.bm25_index_exists() is False
+    retriever.construct_bm25_index(retriever.model_infos)
+    assert retriever.bm25_index_exists() is True
+    # Clear search index from disk.
+    shutil.rmtree(retriever.search_index_path)
+
+
+def test_retrieve_bm25_when_index_exists():
+    """Test model retrieval with BM25 after manually constructing a search index."""
+    retriever = DescriptionModelRetriever(
+        first_stage_depth=3,
+        search_depth=3,
+        model_descriptions_index_path="test_helpers/model_info_tiny/",
+        use_bm25=True,
+        bm25_index_name="missing-index-2",
+        use_HyDE=False,
+    )
+    retriever.construct_bm25_index(retriever.model_infos)
+    assert retriever.bm25_index_exists() is True
+
+    mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
+    mock_prompt._instruction = "text generator"
+    # Retrieve models after constructing the search index.
+    top_model_names = retriever.retrieve(mock_prompt)
+
+    # This query only has term overlap with one model description - t5-base,
+    # who's model description is "text to text generator".
+    # Therefore that should be the only model we return.
+    assert len(top_model_names) == 1
+    assert top_model_names[0] == "t5-base"
+    # Clear search index from disk.
+    shutil.rmtree(retriever.search_index_path)
+
+
+def test_retrieve_bm25_when_no_index_exists():
+    """Test model retrieval with BM25 without a pre-existing search index."""
+    retriever = DescriptionModelRetriever(
+        first_stage_depth=3,
+        search_depth=3,
+        model_descriptions_index_path="test_helpers/model_info_tiny/",
+        use_bm25=True,
+        bm25_index_name="missing-index-3",
+        use_HyDE=False,
+    )
+    assert retriever.bm25_index_exists() is False
+
+    mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
+    mock_prompt._instruction = "text generator"
+    # Retrieve models without constructing the search index beforehand.
+    top_model_names = retriever.retrieve(mock_prompt)
+    # The index will be constructed after calling retriever.retrieve, even if
+    # no search index existed before.
+    assert retriever.bm25_index_exists() is True
+
+    # This query only has term overlap with one model description - t5-base,
+    # who's model description is "text to text generator".
+    # Therefore that should be the only model we return.
+    assert len(top_model_names) == 1
+    assert top_model_names[0] == "t5-base"
+    # Clear search index from disk.
+    shutil.rmtree(retriever.search_index_path)
