@@ -105,7 +105,7 @@ class DescriptionModelRetriever(ModelRetriever):
         if self.use_bm25:
             assert (
                 search_index_path is None
-            ), "BM25 does not accept a custom search index."
+            ), "BM25 expects a search index path with a particular format, so search_index_path should not be provided."  # noqa 501
             self.bm25_index_name = bm25_index_name
             self._search_index_path = retriv.paths.index_path(self.bm25_index_name)
         else:
@@ -198,10 +198,10 @@ class DescriptionModelRetriever(ModelRetriever):
             and len(os.listdir(self._search_index_path)) > 0
         )
 
-    def construct_bm25_index(self):
+    def construct_bm25_index(self, model_infos):
         """Construct a retriv BM25 index for model descriptions."""
         collection = []
-        for model in self.model_infos:
+        for model in model_infos:
             collection.append({"id": model.name, "text": model.description})
         if self.bm25_index_exists():
             search_engine = retriv.SparseRetriever.load(self._search_index_path)
@@ -237,7 +237,7 @@ class DescriptionModelRetriever(ModelRetriever):
             query_text = prompt.instruction
 
         if self.use_bm25:
-            search_engine = self.construct_bm25_index()
+            search_engine = self.construct_bm25_index(self.model_infos)
             results = search_engine.search(query_text, cutoff=self.first_stage_depth)
             ranked_list: list[tuple[str, float]] = []
             for result in results:
@@ -256,9 +256,9 @@ class DescriptionModelRetriever(ModelRetriever):
                 self.first_stage_depth,
             )
 
-        model_name_to_model_info = {}
-        for model_info in self.model_infos:
-            model_name_to_model_info[model_info.name] = model_info
+        model_name_to_model_info = {
+            model_info.name: model_info for model_info in self.model_infos
+        }
 
         top_models_list = []
         for model_name, model_score in ranked_list:

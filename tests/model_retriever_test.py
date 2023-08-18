@@ -196,7 +196,7 @@ def test_construct_bm25_index_when_no_index_exists():
         use_HyDE=False,
     )
     assert retriever.bm25_index_exists() is False
-    retriever.construct_bm25_index()
+    retriever.construct_bm25_index(retriever.model_infos)
     assert retriever.bm25_index_exists() is True
     # Clear search index from disk.
     shutil.rmtree(retriever.search_index_path)
@@ -212,7 +212,7 @@ def test_retrieve_bm25_when_index_exists():
         bm25_index_name="missing-index-2",
         use_HyDE=False,
     )
-    retriever.construct_bm25_index()
+    retriever.construct_bm25_index(retriever.model_infos)
     assert retriever.bm25_index_exists() is True
 
     mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
