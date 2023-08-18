@@ -2,6 +2,7 @@
 
 from __future__ import annotations  # noqa FI58
 
+import asyncio
 import json
 import logging
 import os
@@ -13,9 +14,6 @@ import openai.error
 import tiktoken
 from aiohttp import ClientSession
 from tqdm.asyncio import tqdm_asyncio
-from zeno_build.models.providers.openai_utils import (
-    _throttled_openai_chat_completion_acreate,
-)
 
 OPENAI_ERRORS = (
     openai.error.APIError,
@@ -27,27 +25,38 @@ OPENAI_ERRORS = (
     AssertionError,
 )
 
+ERROR_ERRORS_TO_MESSAGES = {
+    openai.error.InvalidRequestError: "OpenAI API Invalid Request: Prompt was filtered",  # noqa E501
+    openai.error.RateLimitError: "OpenAI API rate limit exceeded. Sleeping for 10 seconds.",  # noqa E501
+    openai.error.APIConnectionError: "OpenAI API Connection Error: Error Communicating with OpenAI",  # noqa E501
+    openai.error.Timeout: "OpenAI APITimeout Error: OpenAI Timeout",
+    openai.error.ServiceUnavailableError: "OpenAI service unavailable error: {e}",
+    openai.error.APIError: "OpenAI API error: {e}",
+}
+
 
 class ChatGPTAgent:
     """A class for accessing OpenAI's ChatCompletion API."""
 
-    def __init__(self, api_key: str | None = None):
+    def __init__(self, api_key: str | None, model_name: str = "gpt-3.5-turbo"):
         """Initialize ChatGPTAgent with an API key.
 
         Args:
             api_key: A valid OpenAI API key. Alternatively, set as None and set
                      the environment variable with `export OPENAI_API_KEY=<your key>`.
+            model_name: Name fo the OpenAI model to use (by default, gpt-3.5-turbo).
         """
         openai.api_key = api_key if api_key else os.environ["OPENAI_API_KEY"]
         assert openai.api_key is not None and openai.api_key != "", (
             "API key must be provided"
             + " or set the environment variable with `export OPENAI_API_KEY=<your key>`"
         )
+        self.model_name = model_name
 
     def generate_one_openai_chat_completion(
         self,
         prompt: str,
-        temperature: float = 1,
+        temperature: float = 0,
         presence_penalty: float = 0,
         frequency_penalty: float = 0,
     ) -> openai.Completion:
@@ -63,13 +72,13 @@ class ChatGPTAgent:
                 model's likelihood to talk about new topics.
             frequency_penalty: Float between -2.0 and 2.0. Positive values penalize new
                 tokens based on their existing frequency in the text so far, decreasing
-                the model's likelihood to repeat the same line verbatim.
+                the model's likelihood of repeating the same line verbatim.
 
         Returns:
             A response object.
         """
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model=self.model_name,
             messages=[
                 {"role": "user", "content": f"{prompt}"},
             ],
@@ -101,9 +110,54 @@ class ChatGPTAgent:
         """
         openai.aiosession.set(ClientSession())
         limiter = aiolimiter.AsyncLimiter(requests_per_minute)
-        # Create an API call for each prompt. Each API call will
-        # be throttled by the limiter then generate n responses.
-        # Totally there are 5 * len(prompts) responses.
+
+        async def _throttled_openai_chat_completion_acreate(
+            model: str,
+            messages: list[dict[str, str]],
+            temperature: float,
+            max_tokens: int,
+            n: int,
+            top_p: float,
+            limiter: aiolimiter.AsyncLimiter,
+        ):
+            async with limiter:
+                for _ in range(3):
+                    try:
+                        return await openai.ChatCompletion.acreate(
+                            model=model,
+                            messages=messages,
+                            temperature=temperature,
+                            max_tokens=max_tokens,
+                            n=n,
+                            top_p=top_p,
+                        )
+                    except tuple(ERROR_ERRORS_TO_MESSAGES.keys()) as e:
+                        if isinstance(
+                            e,
+                            (
+                                openai.error.ServiceUnavailableError,
+                                openai.error.APIError,
+                            ),
+                        ):
+                            logging.warning(
+                                ERROR_ERRORS_TO_MESSAGES[type(e)].format(e=e)
+                            )
+                        elif isinstance(e, openai.error.InvalidRequestError):
+                            logging.warning(ERROR_ERRORS_TO_MESSAGES[type(e)])
+                            return {
+                                "choices": [
+                                    {
+                                        "message": {
+                                            "content": "Invalid Request: Prompt was filtered"  # noqa E501
+                                        }
+                                    }
+                                ]
+                            }
+                        else:
+                            logging.warning(ERROR_ERRORS_TO_MESSAGES[type(e)])
+                        await asyncio.sleep(10)
+                return {"choices": [{"message": {"content": ""}}]}
+
         async_responses = [
             _throttled_openai_chat_completion_acreate(
                 model="gpt-3.5-turbo",

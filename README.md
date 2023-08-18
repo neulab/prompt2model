@@ -36,7 +36,7 @@ OpenAI API key.
  initialization function of the
    `DatasetGenerator` and `OpenAIInstructionParser`
   classes.
-  
+
 - Alternatively, you can set
   the environment variable
    `OPENAI_API_KEY` to your API key by running
@@ -57,6 +57,13 @@ import openai
 openai.api_key = os.environ["OPENAI_API_KEY"]
 ```
 
+To enable the model retriever, we need to untar the model_info.tgz file:
+
+```bash
+cd huggingface_models
+tar -xvf model_info.tgz
+```
+
 ## Components
 
 The `prompt2model` package is composed
@@ -73,7 +80,7 @@ instructions on maximizing the
 functionality and benefits of each
 component within the package.
 
-## Usage[TODO]
+## Usage
 
 The `prompt2model` pipeline is a versatile
 pipeline for task solving using a language
@@ -81,7 +88,7 @@ model. It covers stages including dataset retrieval,
 generation, processing, model retrieval,
 training, execution, evaluation, and
 interface creation. The
-`./prompt2model/run_skeleton.py`
+`.cli_demo.py`
 script executes the full pipeline.
 The pipeline utilizes
 mock components for demonstration, but
@@ -104,10 +111,3 @@ information tailored specifically
 
 There is more information for developers in the [CONTRIBUTING.md](CONTRIBUTING.md)
 file.
-
-To enable the model retriever, we need to untar the model_info.tgz file:
-
-```bash
-cd huggingface_models
-tar -xvf model_info.tgz
-```
