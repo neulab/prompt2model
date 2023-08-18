@@ -186,7 +186,7 @@ def test_retrieve_model_with_hyde_dual_encoder(
 
 
 def test_construct_bm25_index_when_no_index_exists():
-    """Test model retrieval with BM25."""
+    """Test that construct_bm25_index creates a BM25 search index on disk."""
     retriever = DescriptionModelRetriever(
         first_stage_depth=3,
         search_depth=3,
@@ -203,7 +203,7 @@ def test_construct_bm25_index_when_no_index_exists():
 
 
 def test_retrieve_bm25_when_index_exists():
-    """Test model retrieval with BM25."""
+    """Test model retrieval with BM25 after manually constructing a search index."""
     retriever = DescriptionModelRetriever(
         first_stage_depth=3,
         search_depth=3,
@@ -230,7 +230,7 @@ def test_retrieve_bm25_when_index_exists():
 
 
 def test_retrieve_bm25_when_no_index_exists():
-    """Test model retrieval with BM25."""
+    """Test model retrieval with BM25 without a pre-existing search index."""
     retriever = DescriptionModelRetriever(
         first_stage_depth=3,
         search_depth=3,
