@@ -1,4 +1,4 @@
-"""An dual-encoder dataset retriever using HuggingFace datasets descriptions."""
+"""An dual-encoder dataset retriever using HuggingFace dataset descriptions."""
 
 from __future__ import annotations  # noqa FI58
 
