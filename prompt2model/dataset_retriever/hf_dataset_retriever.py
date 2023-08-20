@@ -136,8 +136,8 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         print("\n-------------------------------------------------\n")  # noqa 501
         return chosen_dataset_name
 
+    @staticmethod
     def canonicalize_dataset_using_columns_for_split(
-        self,
         dataset_split: datasets.Dataset,
         input_columns: list[str],
         output_column: str,
