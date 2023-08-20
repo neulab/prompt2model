@@ -2,11 +2,15 @@
 
 from __future__ import annotations  # noqa FI58
 
+import numpy as np
+import pickle
 import tempfile
+from unittest.mock import patch
 
 from datasets import Dataset, DatasetDict
 
-from prompt2model.dataset_retriever import DescriptionDatasetRetriever
+from prompt2model.dataset_retriever import DescriptionDatasetRetriever, DatasetInfo
+from test_helpers import create_test_search_index, create_test_search_index_class_method
 
 TINY_MODEL_NAME = "google/bert_uncased_L-2_H-128_A-2"
 
@@ -77,3 +81,54 @@ def test_canonicalize_dataset_using_columns():
 context: Albany, the state capital, is the sixth-largest city in the State of New York."""  # noqa E501
             )
             assert row["output_col"] == "Albany"
+
+def create_test_search_index(index_file_name):
+    """Utility function to create a test search index.
+
+    This search index represents 3 models, each represented with a hand-written vector.
+    Given a query of [1, 0, 0], the 1st model will be the most similar.
+    """
+    mock_model_encodings = np.array([[0.6, 0, 0], [0, 0.7, 0], [0, 0, 0.8]])
+    mock_lookup_indices = [0, 1, 2]
+    with open(index_file_name, "wb") as f:
+        pickle.dump((mock_model_encodings, mock_lookup_indices), f)
+
+def mock_choose_dataset(self, top_datasets: list[DatasetInfo]) -> str | None:
+    return top_datasets[0].name    
+
+def mock_canonicalize_dataset(self, dataset_name: str) -> DatasetDict:
+    assert dataset_name == "TEST"
+    mock_dataset = Dataset.from_dict(
+        {
+            "premise": ["Pandas are bears."],
+            "hypothesis": [ "Pandas are mammals."],
+            "answer": ["entailment"],
+        }
+    )
+    # Create a mock DatasetDict consisting of the same example in each split.
+    dataset_splits = DatasetDict(
+        {"train": mock_dataset, "val": mock_dataset, "test": mock_dataset}
+    )
+    return dataset_splits
+
+@patch.object(
+    DescriptionDatasetRetriever,
+    "encode_dataset_descriptions",
+    new=mock_choose_dataset,
+)
+@patch.object(
+    DescriptionDatasetRetriever,
+    "choose_dataset",
+    new=mock_choose_dataset,
+)
+@patch.object(
+    DescriptionDatasetRetriever,
+    "choose_dataset",
+    new=mock_choose_dataset,
+)
+@patch.object(
+    DescriptionDatasetRetriever,
+    "canonicalize_dataset",
+    new=mock_canonicalize_dataset,
+)
+def test_retrieve_dataset_dict_without_existing_search_index(mock_choose_dataset):
