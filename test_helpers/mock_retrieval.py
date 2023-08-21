@@ -20,7 +20,7 @@ def create_test_search_index(index_file_name: str) -> None:
         pickle.dump((mock_model_encodings, mock_lookup_indices), f)
 
 
-def create_test_search_index_class_method(self, index_file_name):
+def create_test_search_index_class_method(self, index_file_name: str) -> None:
     """Utility function to create a test search index as a simulated class method."""
     _ = self
     create_test_search_index(index_file_name)
