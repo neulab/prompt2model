@@ -1,7 +1,9 @@
 """Tools for creating a mock search index."""
 
-import numpy as np
 import pickle
+
+import numpy as np
+
 
 def create_test_search_index(index_file_name):
     """Utility function to create a test search index.
@@ -13,6 +15,7 @@ def create_test_search_index(index_file_name):
     mock_lookup_indices = [0, 1, 2]
     with open(index_file_name, "wb") as f:
         pickle.dump((mock_model_encodings, mock_lookup_indices), f)
+
 
 def create_test_search_index_class_method(self, index_file_name):
     """Utility function to create a test search index as a simulated class method."""

@@ -1,9 +1,14 @@
 """Import DatasetRetriever classes."""
 from prompt2model.dataset_retriever.base import DatasetRetriever
 from prompt2model.dataset_retriever.hf_dataset_retriever import (
+    DatasetInfo,
     DescriptionDatasetRetriever,
-    DatasetInfo
 )
 from prompt2model.dataset_retriever.mock import MockRetriever
 
-__all__ = ("DatasetRetriever", "MockRetriever", "DescriptionDatasetRetriever", "DatasetInfo")
+__all__ = (
+    "DatasetRetriever",
+    "MockRetriever",
+    "DescriptionDatasetRetriever",
+    "DatasetInfo",
+)

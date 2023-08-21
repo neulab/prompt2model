@@ -65,7 +65,7 @@ def load_dataset_metadata(
         else:
             try:
                 dataset_metadata = get_eval_metadata(dataset)
-            except:
+            except:  # noqa E722
                 dataset_metadata = None
         if dataset_metadata is not None:
             filtered_task_metadata = []

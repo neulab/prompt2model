@@ -2,14 +2,14 @@
 
 from __future__ import annotations  # noqa FI58
 
-import numpy as np
 import os
 import tempfile
 from unittest.mock import patch
 
+import numpy as np
 from datasets import Dataset, DatasetDict
 
-from prompt2model.dataset_retriever import DescriptionDatasetRetriever, DatasetInfo
+from prompt2model.dataset_retriever import DatasetInfo, DescriptionDatasetRetriever
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from test_helpers import create_test_search_index, create_test_search_index_class_method
 
@@ -83,11 +83,17 @@ context: Albany, the state capital, is the sixth-largest city in the State of Ne
             )
             assert row["output_col"] == "Albany"
 
+
 def mock_choose_dataset(self, top_datasets: list[DatasetInfo]) -> str | None:
-    return top_datasets[0].name    
+    """Mock the choose_dataset by always choosing the first choice."""
+    # Given the max_search_depth of 3 used below, we should choose among 3 datasets.
+    assert len(top_datasets) == 3
+    return top_datasets[0].name
+
 
 def mock_canonicalize_dataset(self, dataset_name: str) -> DatasetDict:
-    # Given the dataset of 
+    """Mock the canonicalize_dataset function by constructing a mock dataset."""
+    # Given the dataset of
     # [ [0.9, 0, 0],
     #   [0, 0.9, 0],
     #   [0, 0, 0.9] ]
@@ -97,7 +103,9 @@ def mock_canonicalize_dataset(self, dataset_name: str) -> DatasetDict:
     assert dataset_name == "search_qa"
     mock_dataset = Dataset.from_dict(
         {
-            "input_col": ["question: What class of animals are pandas.\ncontext: Pandas are mammals."],
+            "input_col": [
+                "question: What class of animals are pandas.\ncontext: Pandas are mammals."  # noqa E501
+            ],
             "output_col": ["mammals"],
         }
     )
@@ -106,6 +114,7 @@ def mock_canonicalize_dataset(self, dataset_name: str) -> DatasetDict:
         {"train": mock_dataset, "val": mock_dataset, "test": mock_dataset}
     )
     return dataset_splits
+
 
 @patch(
     "prompt2model.dataset_retriever.hf_dataset_retriever.encode_text",
@@ -131,7 +140,11 @@ def test_retrieve_dataset_dict_when_search_index_exists(encode_text):
             encoder_model_name=TINY_MODEL_NAME,
             dataset_info_file="test_helpers/dataset_index_tiny.json",
         )
-        assert [info.name for info in retriever.dataset_infos] == ["search_qa", "squad", "trivia_qa"]
+        assert [info.name for info in retriever.dataset_infos] == [
+            "search_qa",
+            "squad",
+            "trivia_qa",
+        ]
         create_test_search_index(f.name)
 
         mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
@@ -141,8 +154,12 @@ def test_retrieve_dataset_dict_when_search_index_exists(encode_text):
             assert split_name in retrieved_dataset
             split = retrieved_dataset[split_name]
             assert len(split) == 1
-            assert split[0]["input_col"] == "question: What class of animals are pandas.\ncontext: Pandas are mammals."
+            assert (
+                split[0]["input_col"]
+                == "question: What class of animals are pandas.\ncontext: Pandas are mammals."  # noqa E501
+            )
             assert split[0]["output_col"] == "mammals"
+
 
 @patch.object(
     DescriptionDatasetRetriever,
@@ -174,7 +191,11 @@ def test_retrieve_dataset_dict_without_existing_search_index(encode_text):
             encoder_model_name=TINY_MODEL_NAME,
             dataset_info_file="test_helpers/dataset_index_tiny.json",
         )
-        assert [info.name for info in retriever.dataset_infos] == ["search_qa", "squad", "trivia_qa"]
+        assert [info.name for info in retriever.dataset_infos] == [
+            "search_qa",
+            "squad",
+            "trivia_qa",
+        ]
         mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
         retrieved_dataset = retriever.retrieve_dataset_dict(mock_prompt)
         assert encode_text.call_count == 1
@@ -182,5 +203,8 @@ def test_retrieve_dataset_dict_without_existing_search_index(encode_text):
             assert split_name in retrieved_dataset
             split = retrieved_dataset[split_name]
             assert len(split) == 1
-            assert split[0]["input_col"] == "question: What class of animals are pandas.\ncontext: Pandas are mammals."
+            assert (
+                split[0]["input_col"]
+                == "question: What class of animals are pandas.\ncontext: Pandas are mammals."  # noqa E501
+            )
             assert split[0]["output_col"] == "mammals"
