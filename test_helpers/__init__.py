@@ -9,6 +9,10 @@ from test_helpers.mock_openai import (
     UnknownGpt3Exception,
     mock_batch_openai_response_identical_completions,
 )
+from test_helpers.mock_retrieval import (
+    create_test_search_index,
+    create_test_search_index_class_method,
+)
 from test_helpers.model_and_tokenizer import (
     create_gpt2_model_and_tokenizer,
     create_t5_model_and_tokenizer,
@@ -20,6 +24,8 @@ __all__ = (
     "MockBatchDifferentCompletions",
     "create_gpt2_model_and_tokenizer",
     "create_t5_model_and_tokenizer",
+    "create_test_search_index",
+    "create_test_search_index_class_method",
     "mock_batch_openai_response_identical_completions",
     "are_dataset_dicts_identical",
     "are_datasets_identical",
