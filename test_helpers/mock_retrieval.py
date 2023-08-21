@@ -5,7 +5,7 @@ import pickle
 import numpy as np
 
 
-def create_test_search_index(index_file_name):
+def create_test_search_index(index_file_name: str) -> None:
     """Utility function to create a test search index.
 
     This search index represents 3 models, each represented with a hand-written vector.
