@@ -87,7 +87,14 @@ def mock_choose_dataset(self, top_datasets: list[DatasetInfo]) -> str | None:
     return top_datasets[0].name    
 
 def mock_canonicalize_dataset(self, dataset_name: str) -> DatasetDict:
-    assert dataset_name == "squad"
+    # Given the dataset of 
+    # [ [0.9, 0, 0],
+    #   [0, 0.9, 0],
+    #   [0, 0, 0.9] ]
+    # and the query
+    # [1, 0, 0]
+    # we should return the first dataset, which in our test index is search_qa.
+    assert dataset_name == "search_qa"
     mock_dataset = Dataset.from_dict(
         {
             "input_col": ["question: What class of animals are pandas.\ncontext: Pandas are mammals."],
@@ -99,6 +106,43 @@ def mock_canonicalize_dataset(self, dataset_name: str) -> DatasetDict:
         {"train": mock_dataset, "val": mock_dataset, "test": mock_dataset}
     )
     return dataset_splits
+
+@patch(
+    "prompt2model.dataset_retriever.hf_dataset_retriever.encode_text",
+    return_value=np.array([[1, 0, 0]]),
+)
+@patch.object(
+    DescriptionDatasetRetriever,
+    "choose_dataset",
+    new=mock_choose_dataset,
+)
+@patch.object(
+    DescriptionDatasetRetriever,
+    "canonicalize_dataset",
+    new=mock_canonicalize_dataset,
+)
+def test_retrieve_dataset_dict_when_search_index_exists(encode_text):
+    """Test retrieve dataset without an existing search index."""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".pkl") as f:
+        retriever = DescriptionDatasetRetriever(
+            search_index_path=f.name,
+            first_stage_search_depth=3,
+            max_search_depth=3,
+            encoder_model_name=TINY_MODEL_NAME,
+            dataset_info_file="test_helpers/dataset_index_tiny.json",
+        )
+        assert [info.name for info in retriever.dataset_infos] == ["search_qa", "squad", "trivia_qa"]
+        create_test_search_index(f.name)
+
+        mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
+        retrieved_dataset = retriever.retrieve_dataset_dict(mock_prompt)
+        assert encode_text.call_count == 1
+        for split_name in ["train", "val", "test"]:
+            assert split_name in retrieved_dataset
+            split = retrieved_dataset[split_name]
+            assert len(split) == 1
+            assert split[0]["input_col"] == "question: What class of animals are pandas.\ncontext: Pandas are mammals."
+            assert split[0]["output_col"] == "mammals"
 
 @patch.object(
     DescriptionDatasetRetriever,
@@ -130,6 +174,13 @@ def test_retrieve_dataset_dict_without_existing_search_index(encode_text):
             encoder_model_name=TINY_MODEL_NAME,
             dataset_info_file="test_helpers/dataset_index_tiny.json",
         )
+        assert [info.name for info in retriever.dataset_infos] == ["search_qa", "squad", "trivia_qa"]
         mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
         retrieved_dataset = retriever.retrieve_dataset_dict(mock_prompt)
         assert encode_text.call_count == 1
+        for split_name in ["train", "val", "test"]:
+            assert split_name in retrieved_dataset
+            split = retrieved_dataset[split_name]
+            assert len(split) == 1
+            assert split[0]["input_col"] == "question: What class of animals are pandas.\ncontext: Pandas are mammals."
+            assert split[0]["output_col"] == "mammals"
