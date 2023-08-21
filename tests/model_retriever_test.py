@@ -3,7 +3,6 @@
 from __future__ import annotations  # noqa FI58
 
 import os
-import pickle
 import shutil
 import tempfile
 from unittest.mock import patch
@@ -13,6 +12,7 @@ import torch
 
 from prompt2model.model_retriever import DescriptionModelRetriever
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
+from test_helpers import create_test_search_index, create_test_search_index_class_method
 
 TINY_MODEL_NAME = "google/bert_uncased_L-2_H-128_A-2"
 
@@ -47,18 +47,6 @@ def test_encode_model_retriever():
         assert model_vectors.shape == (3, 128)
 
 
-def create_test_search_index(index_file_name):
-    """Utility function to create a test search index.
-
-    This search index represents 3 models, each represented with a hand-written vector.
-    Given a query of [0, 0, 1], the 3rd model will be the most similar.
-    """
-    mock_model_encodings = np.array([[0.9, 0, 0], [0, 0.9, 0], [0, 0, 0.9]])
-    mock_lookup_indices = [0, 1, 2]
-    with open(index_file_name, "wb") as f:
-        pickle.dump((mock_model_encodings, mock_lookup_indices), f)
-
-
 @patch(
     "prompt2model.model_retriever.description_based_retriever.encode_text",
     return_value=np.array([[0, 0, 1]]),
@@ -87,12 +75,6 @@ def test_retrieve_model_from_query_dual_encoder(mock_encode_text):
         # no particular order.}")
         assert indexed_models[0].name in top_model_names[1:]
         assert indexed_models[1].name in top_model_names[1:]
-
-
-def create_test_search_index_class_method(self, index_file_name):
-    """Utility function to create a test search index as a simulated class method."""
-    _ = self
-    create_test_search_index(index_file_name)
 
 
 @patch.object(

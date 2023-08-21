@@ -247,6 +247,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             A list of relevant datasets dictionaries.
         """
         if not os.path.exists(self.search_index_path):
+            print("Creating dataset descriptions")
             self.encode_dataset_descriptions(self.search_index_path)
 
         query_text = prompt_spec.instruction

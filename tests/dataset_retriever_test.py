@@ -3,13 +3,14 @@
 from __future__ import annotations  # noqa FI58
 
 import numpy as np
-import pickle
+import os
 import tempfile
 from unittest.mock import patch
 
 from datasets import Dataset, DatasetDict
 
 from prompt2model.dataset_retriever import DescriptionDatasetRetriever, DatasetInfo
+from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from test_helpers import create_test_search_index, create_test_search_index_class_method
 
 TINY_MODEL_NAME = "google/bert_uncased_L-2_H-128_A-2"
@@ -82,27 +83,15 @@ context: Albany, the state capital, is the sixth-largest city in the State of Ne
             )
             assert row["output_col"] == "Albany"
 
-def create_test_search_index(index_file_name):
-    """Utility function to create a test search index.
-
-    This search index represents 3 models, each represented with a hand-written vector.
-    Given a query of [1, 0, 0], the 1st model will be the most similar.
-    """
-    mock_model_encodings = np.array([[0.6, 0, 0], [0, 0.7, 0], [0, 0, 0.8]])
-    mock_lookup_indices = [0, 1, 2]
-    with open(index_file_name, "wb") as f:
-        pickle.dump((mock_model_encodings, mock_lookup_indices), f)
-
 def mock_choose_dataset(self, top_datasets: list[DatasetInfo]) -> str | None:
     return top_datasets[0].name    
 
 def mock_canonicalize_dataset(self, dataset_name: str) -> DatasetDict:
-    assert dataset_name == "TEST"
+    assert dataset_name == "squad"
     mock_dataset = Dataset.from_dict(
         {
-            "premise": ["Pandas are bears."],
-            "hypothesis": [ "Pandas are mammals."],
-            "answer": ["entailment"],
+            "input_col": ["question: What class of animals are pandas.\ncontext: Pandas are mammals."],
+            "output_col": ["mammals"],
         }
     )
     # Create a mock DatasetDict consisting of the same example in each split.
@@ -114,12 +103,11 @@ def mock_canonicalize_dataset(self, dataset_name: str) -> DatasetDict:
 @patch.object(
     DescriptionDatasetRetriever,
     "encode_dataset_descriptions",
-    new=mock_choose_dataset,
+    new=create_test_search_index_class_method,
 )
-@patch.object(
-    DescriptionDatasetRetriever,
-    "choose_dataset",
-    new=mock_choose_dataset,
+@patch(
+    "prompt2model.dataset_retriever.hf_dataset_retriever.encode_text",
+    return_value=np.array([[1, 0, 0]]),
 )
 @patch.object(
     DescriptionDatasetRetriever,
@@ -131,4 +119,17 @@ def mock_canonicalize_dataset(self, dataset_name: str) -> DatasetDict:
     "canonicalize_dataset",
     new=mock_canonicalize_dataset,
 )
-def test_retrieve_dataset_dict_without_existing_search_index(mock_choose_dataset):
+def test_retrieve_dataset_dict_without_existing_search_index(encode_text):
+    """Test retrieve dataset without an existing search index."""
+    with tempfile.TemporaryDirectory() as tempdir:
+        temporary_file = os.path.join(tempdir, "search_index.pkl")
+        retriever = DescriptionDatasetRetriever(
+            search_index_path=temporary_file,
+            first_stage_search_depth=3,
+            max_search_depth=3,
+            encoder_model_name=TINY_MODEL_NAME,
+            dataset_info_file="test_helpers/dataset_index_tiny.json",
+        )
+        mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
+        retrieved_dataset = retriever.retrieve_dataset_dict(mock_prompt)
+        assert encode_text.call_count == 1
