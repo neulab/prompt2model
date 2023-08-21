@@ -23,5 +23,5 @@ class DatasetRetriever(ABC):
             prompt_spec: A prompt spec (containing a system description).
 
         Returns:
-            A  retrieved DatasetDict containing train/val/test splits.
+            A retrieved DatasetDict containing train/val/test splits.
         """
