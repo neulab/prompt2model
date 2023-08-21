@@ -177,25 +177,6 @@ class ChatGPTAgent:
         await openai.aiosession.get().close()
         return responses
 
-
-def generate_batch_completion(self, prompt: str) -> openai.Completion:
-    """Generate a chat completion using OpenAI's gpt-3.5-turbo.
-
-    Args:
-        prompt: A prompt asking for a response.
-
-    Returns:
-        A response object.
-    """
-    response = openai.ChatCompletion.create(
-        model=self.model_name,
-        messages=[
-            {"role": "user", "content": f"{prompt}"},
-        ],
-    )
-    return response
-
-
 def handle_openai_error(e, api_call_counter):
     """Handle OpenAI errors or related errors that the OpenAI API may raise.
 
