@@ -177,6 +177,7 @@ class ChatGPTAgent:
         await openai.aiosession.get().close()
         return responses
 
+
 def handle_openai_error(e, api_call_counter):
     """Handle OpenAI errors or related errors that the OpenAI API may raise.
 
