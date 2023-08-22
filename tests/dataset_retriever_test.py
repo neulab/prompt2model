@@ -40,7 +40,9 @@ def test_encode_model_retriever():
             encoder_model_name=TINY_MODEL_NAME,
             dataset_info_file="test_helpers/dataset_index_tiny.json",
         )
-        model_vectors = retriever.encode_dataset_descriptions(f.name)
+        model_vectors = retriever.encode_dataset_descriptions(
+            retriever.dataset_infos, f.name
+        )
         assert model_vectors.shape == (3, 128)
 
 
@@ -164,7 +166,9 @@ def test_retrieve_dataset_dict_when_search_index_exists(encode_text):
 @patch.object(
     DescriptionDatasetRetriever,
     "encode_dataset_descriptions",
-    new=lambda self, index_file_name: create_test_search_index(index_file_name),
+    new=lambda self, dataset_infos, index_file_name: create_test_search_index(
+        index_file_name
+    ),
 )
 @patch(
     "prompt2model.dataset_retriever.hf_dataset_retriever.encode_text",

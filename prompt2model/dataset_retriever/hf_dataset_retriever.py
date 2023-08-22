@@ -102,10 +102,12 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             search_index_path
         ), f"Search index must either be a valid file or not exist yet. But {search_index_path} is provided."  # noqa 501
 
-    def encode_dataset_descriptions(self, search_index_path) -> np.ndarray:
+    def encode_dataset_descriptions(
+        self, dataset_infos, search_index_path
+    ) -> np.ndarray:
         """Encode dataset descriptions into a vector for indexing."""
         dataset_descriptions = [
-            dataset_info.description for dataset_info in self.dataset_infos
+            dataset_info.description for dataset_info in dataset_infos
         ]
         dataset_vectors = encode_text(
             self.encoder_model_name,
@@ -254,7 +256,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         """
         if not os.path.exists(self.search_index_path):
             print("Creating dataset descriptions")
-            self.encode_dataset_descriptions(self.search_index_path)
+            self.encode_dataset_descriptions(self.dataset_infos, self.search_index_path)
 
         query_text = prompt_spec.instruction
 
