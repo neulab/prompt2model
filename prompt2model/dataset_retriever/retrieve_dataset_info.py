@@ -22,6 +22,15 @@ parser.add_argument(
     default="huggingface_data/huggingface_datasets/dataset_index.json",
 )
 
+SUPPORTED_TASKS = [
+    "text-classification",
+    "text2text-generation",
+    "question-answering",
+    "summarization",
+    "text-generation",
+    "token-classification",
+]
+
 
 def get_fully_supported_dataset_names():
     """Get the list of loadable datasets from HuggingFace."""
@@ -41,16 +50,6 @@ def get_eval_metadata(dataset):
         return None
     else:
         return dataset_metadata
-
-
-SUPPORTED_TASKS = [
-    "text-classification",
-    "text2text-generation",
-    "question-answering",
-    "summarization",
-    "text-generation",
-    "token-classification",
-]
 
 
 def load_dataset_metadata(
