@@ -58,7 +58,8 @@ def load_dataset_metadata(
 ):
     """Load the evaluation metadata for all datasets."""
     if os.path.exists(dataset_metadata_cache_file):
-        dataset_metadata_cache = pickle.load(open(dataset_metadata_cache_file, "rb"))
+        with open(dataset_metadata_cache_file, "rb") as f:
+            dataset_metadata_cache = pickle.load(f)
     else:
         dataset_metadata_cache = {}
     all_dataset_metadata = {}
