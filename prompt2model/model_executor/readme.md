@@ -1,116 +1,63 @@
-# ModelExecutor Usage
+# ModelExecutor
 
-## ModelExecutor
+## Overview
 
-The `ModelExecutor` is an abstract base class that is the interface for
-executing models to generate predictions. It provides a common interface for
-both the encoder-decoder and autoregressive models with the necessary
-methods for model execution.
+- **ModelExecutor**: An interface for executing predictions across
+various models.
+- **GenerationModelExecutor**: Tailored for generative models such as
+T5 (encoder-decoder) and GPT (autoregressive). It supports multiple
+generation strategies.
+- **ModelOutput**: Denotes the output from the model for a given
+example, consolidating the prediction and any auxiliary information.
 
-To create a model executor, you need to subclass the `ModelExecutor` and
-implement the following methods:
+## Getting Started
 
-- `make_prediction()`: Evaluates the model on a test set and returns a list of
-model outputs, one for each element in the test set.
-- `make_single_prediction()`: Makes a prediction on a single example
-and returns a single model output. This is usually used in `DemoCreator`.
-
-The `ModelExecutor` class can be subclassed to implement the specific model
-execution logic based on different types of models and their associated
-tokenizers.
-
-## ModelOutput
-
-The `ModelOutput` data class represents the output of a model for a single
-example. It contains the following attributes:
-
-- `prediction`: The prediction made by the model.
-- `auxiliary_info`: Any other auxiliary information provided by the model.
-
-The `ModelOutput` class is used to encapsulate the prediction and
-auxiliary information returned by the model.
-
-## GenerationModelExecutor
-
-The `GenerationModelExecutor` is a concrete implementation of the
-`ModelExecutor` that is specifically designed for generative models,
-including T5-type (encoder-decoder) and GPT-type (autoregressive)
-models. It extends the `ModelExecutor` class and provides
-the implementation for executing generation models with five generate
-strategies: "top_k sampling", "top_p sampling", "greedy search",
-"beam search" and "intersect between top_k and top_p sampling".
-
-The `GenerationModelExecutor` class includes the following methods:
-
-- `make_prediction()`: Evaluates a T5-type or GPT-type
-model on a test set or a single model input. If `single_model_input` is `None`,
-the model executor will make predictions on the test set. Otherwise,
-it will make a prediction on that single input.
-
-- `make_single_prediction(model_input)`: Makes a prediction on a single
-input.
-
-The `GenerationModelExecutor` class utilizes the model and tokenizer provided
-during initialization to make predictions. It handles batch processing of inputs
-and returns a list of `ModelOutput` objects representing the model's
-predictions.
-
-## Usage
-
-- Import the necessary modules:
+- **Import the Necessary Modules**:
 
 ```python
 from prompt2model.model_executor import GenerationModelExecutor, ModelOutput
 ```
 
-- Prepare the input dataset or example for the executor:
+- **Prepare the Input Data**:
 
 ```python
-input_dataset = Dataset.from_dict(
-  {
-    "model_input": [
-      "Translate French to English: cher",
-      "Translate French to English: Bonjour",
-      "Translate French to English: raisin",
-    ]
-  }
+input_dataset = ... # A dataset containing input examples.
+input_example = ... # A singular input in string format.
+```
+
+- **Initialize the ModelExecutor**:
+
+```python
+model = ... # A HuggingFace model instance.
+tokenizer = ... # A corresponding HuggingFace tokenizer.
+model_executor = GenerationModelExecutor(model, tokenizer)
+```
+
+- **Generate Predictions**:
+
+For multiple inputs:
+
+```python
+outputs = model_executor.make_prediction(
+  test_set=input_dataset, # A dataset object.
+  input_column="..."
+  # The input column is the name of the column containing the input in the input_dataset.
 )
-
-input_example = "Translate Chinese to English: 你好"
 ```
 
-- Create the model executor:
+For a single input:
 
 ```python
-t5_model = T5ForConditionalGeneration.from_pretrained("google/t5-efficient-tiny")
-t5_tokenizer = AutoTokenizer.from_pretrained("google/t5-efficient-tiny")
-model_executor = GenerationModelExecutor(t5_model, t5_tokenizer)
+test_input = "..."
+output = model_executor.make_single_prediction(test_input)
 ```
 
-This example directly creates a `ModelExecutor` with its `model` and `tokenizer`.
-You can also specify optional default parameters including `batch_size`,
-`tokenizer_max_length,` and `sequence_max_length`.
+- **Choose a Generation Strategy**:
 
-- Make predictions:
+Specify the desired decoding strategy. For more details, see the
+ document string `GenerationModelExecutor.generate`.
 
 ```python
-t5_outputs = model_executor.make_prediction(test_dataset, "model_input")
+hyperparameters = {"generate_strategy": "beam", "num_beams": 4}
+model_output = model_executor.make_single_prediction(test_input, hyperparameters)
 ```
-
-- Or you can make a prediction on a single input:
-
-```python
-test_input = "Translate French to English: cher"
-t5_output = model_executor.make_single_prediction(test_input)
-```
-
-- You can choose the generation strategy in the `generate` function:
-
-```python
-hyperparameter_choices = {"generate_strategy": "beam", "num_beams": 4}
-test_input = "Translate French to English: cher"
-model_output = model_executor.make_single_prediction(test_input, hyperparameter_choices)
-```
-
-Feel free adjust the code and configuration based on your specific
-generation requirements.
