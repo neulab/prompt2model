@@ -1,4 +1,7 @@
-"""Tools for retrieving dataset metadata from HuggingFace."""
+"""Tools for retrieving dataset metadata from HuggingFace.
+
+Before calling this script, set the HF_USER_ACCESS_TOKEN environment variable.
+"""
 
 import argparse
 import importlib
@@ -32,7 +35,7 @@ def get_fully_supported_dataset_names():
 def get_eval_metadata(dataset):
     """Load the evaluation metadata from HuggingFace."""
     dataset_metadata = hf_eval_utils.get_metadata(
-        dataset, "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"
+        dataset, os.environ["HF_USER_ACCESS_TOKEN"]
     )
     if dataset_metadata is None:
         return None
