@@ -117,16 +117,21 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         )
         return dataset_vectors
 
+    @staticmethod
+    def print_divider():
+        """Utility function to assist with the retriever's command line interface."""
+        print("\n-------------------------------------------------\n")
+
     def choose_dataset(self, top_datasets: list[DatasetInfo]) -> str | None:
         """Have the user choose an appropriate dataset from a list of top datasets."""
-        print("\n-------------------------------------------------\n")
+        self.print_divider()
         print("Here are the datasets I've retrieved for you:")
         print("#\tName\tDescription")
         for i, d in enumerate(top_datasets):
             description_no_spaces = d.description.replace("\n", " ")
             print(f"{i+1}):\t{d.name}\t{description_no_spaces}")
 
-        print("\n-------------------------------------------------\n")
+        self.print_divider()
         print(
             "If none of these are relevant to your prompt, we'll only use "
             + "generated data. Are any of these datasets relevant? (y/N)"
@@ -141,7 +146,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             chosen_dataset_name = top_datasets[dataset_idx - 1].name
         else:
             chosen_dataset_name = None
-        print("\n-------------------------------------------------\n")  # noqa 501
+        self.print_divider()  # noqa 501
         return chosen_dataset_name
 
     @staticmethod
@@ -185,7 +190,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         if len(configs) == 1:
             chosen_config = configs[0]
         else:
-            print("\n-------------------------------------------------\n")
+            self.print_divider()
             print(f"Multiple dataset configs available: {configs}")
             while chosen_config is None:
                 print("Which dataset config would you like to use for this?")
@@ -197,7 +202,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                         f"Invalid config provided: {user_response}. Please choose "
                         + "from {configs}\n\n"
                     )
-            print("\n-------------------------------------------------\n")
+            self.print_divider()
 
         dataset = datasets.load_dataset(dataset_name, chosen_config)
         assert "train" in dataset
@@ -207,7 +212,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         assert len(dataset["train"]) > 0
         example_rows = json.dumps(dataset["train"][0], indent=4)
 
-        print("\n-------------------------------------------------\n")
+        self.print_divider()
         print(f"Loaded dataset. Example row:\n{example_rows}\n")
 
         print(
@@ -233,7 +238,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                     + f"from {train_columns}\n\n"
                 )
         print(f'Will use the column "{output_column}" as our target.\n')
-        print("\n-------------------------------------------------\n")
+        self.print_divider()
 
         canonicalized_dataset = self.canonicalize_dataset_using_columns(
             dataset, input_columns, output_column
