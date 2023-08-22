@@ -243,13 +243,11 @@ class DescriptionDatasetRetriever(DatasetRetriever):
     def retrieve_dataset_dict(
         self,
         prompt_spec: PromptSpec,
-        blocklist: list[str] = [],
     ) -> datasets.DatasetDict | None:
         """Select a dataset from a prompt using a dual-encoder retriever.
 
         Args:
             prompt_spec: A prompt whose instruction field we use to retrieve datasets.
-            blocklist: A list of dataset names to exclude from the search.
 
         Return:
             A list of relevant datasets dictionaries.
@@ -279,18 +277,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         for dataset_name, dataset_score in ranked_list:
             dataset_idx = dataset_name_to_dataset_idx[dataset_name]
             self.dataset_infos[dataset_idx].score = dataset_score
-            blocklisted = False
-            for blocklist_string in blocklist:
-                if (
-                    blocklist_string.lower()
-                    in self.dataset_infos[dataset_idx].name.lower()
-                    or blocklist_string.lower()
-                    in self.dataset_infos[dataset_idx].description.lower()
-                ):
-                    blocklisted = True
-                    break
-            if not blocklisted:
-                top_dataset_infos.append(self.dataset_infos[dataset_idx])
+            top_dataset_infos.append(self.dataset_infos[dataset_idx])
 
         ranked_list = sorted(top_dataset_infos, key=lambda x: x.score, reverse=True)[
             : self.max_search_depth
