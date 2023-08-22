@@ -4,6 +4,7 @@ from __future__ import annotations  # noqa FI58
 
 import json
 import os
+import urllib.request
 
 import datasets
 import numpy as np
@@ -81,6 +82,12 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         self.max_search_depth = max_search_depth
         self.encoder_model_name = encoder_model_name
         self.dataset_infos: list[DatasetInfo] = []
+        if not os.path.exists(dataset_info_file):
+            # Download the dataset search index if one is not on disk already.
+            urllib.request.urlretrieve(
+                "http://phontron.com/data/prompt2model/dataset_index.json",
+                dataset_info_file,
+            )
         self.full_dataset_metadata = json.load(open(dataset_info_file, "r"))
         for dataset_name in sorted(self.full_dataset_metadata.keys()):
             self.dataset_infos.append(
