@@ -6,13 +6,10 @@ Before calling this script, set the HF_USER_ACCESS_TOKEN environment variable.
 from __future__ import annotations  # noqa FI58
 
 import argparse
-import importlib
 import json
 
 import requests
 from huggingface_hub import list_datasets
-
-hf_eval_utils = importlib.import_module("model-evaluator.utils")
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
