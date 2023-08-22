@@ -59,7 +59,8 @@ def load_dataset_metadata(
 ):
     """Load the evaluation metadata for all datasets."""
     if os.path.exists(dataset_metadata_cache_file):
-        dataset_metadata_cache = pickle.load(open(dataset_metadata_cache_file, "rb"))
+        with open(dataset_metadata_cache_file, "rb") as f:
+            dataset_metadata_cache = pickle.load(f)
     else:
         dataset_metadata_cache = {}
     all_dataset_metadata = {}
@@ -69,7 +70,8 @@ def load_dataset_metadata(
         else:
             try:
                 dataset_metadata = get_eval_metadata(dataset)
-            except:  # noqa E722
+            except Exception as e:
+                logging.warn(f"Could not load dataset {dataset}, with error: {e}")
                 dataset_metadata = None
         if dataset_metadata is not None:
             filtered_task_metadata = []
@@ -80,7 +82,8 @@ def load_dataset_metadata(
                 all_dataset_metadata[dataset] = filtered_task_metadata
         dataset_metadata_cache[dataset] = dataset_metadata
 
-    pickle.dump(dataset_metadata_cache, open(dataset_metadata_cache_file, "wb"))
+    with open(dataset_metadata_cache_file, "wb") as f:
+        pickle.dump(dataset_metadata_cache, f)
     return all_dataset_metadata
 
 
