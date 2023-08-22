@@ -3,6 +3,8 @@
 Before calling this script, set the HF_USER_ACCESS_TOKEN environment variable.
 """
 
+from __future__ import annotations  # noqa FI58
+
 import argparse
 import importlib
 import json
@@ -10,7 +12,7 @@ import os
 import pickle
 
 import requests
-from huggingface_hub import list_datasets
+from huggingface_hub import dataset_info, list_datasets
 from tqdm import tqdm
 
 hf_eval_utils = importlib.import_module("model-evaluator.utils")
@@ -41,15 +43,15 @@ def get_fully_supported_dataset_names():
     return fully_supported_datasets
 
 
-def get_eval_metadata(dataset):
+# Taken from https://github.com/huggingface/model-evaluator/blob/50c9898bb112f6d0473b683b235c5f0562760ea6/utils.py#L65-L70  # noqa E501
+def get_eval_metadata(dataset_name: str) -> dict | None:
     """Load the evaluation metadata from HuggingFace."""
-    dataset_metadata = hf_eval_utils.get_metadata(
-        dataset, os.environ["HF_USER_ACCESS_TOKEN"]
-    )
-    if dataset_metadata is None:
-        return None
+    hf_access_token = os.environ["HF_USER_ACCESS_TOKEN"]
+    data = dataset_info(dataset_name, token=hf_access_token)
+    if data.cardData is not None and "train-eval-index" in data.cardData.keys():
+        return data.cardData["train-eval-index"]
     else:
-        return dataset_metadata
+        return None
 
 
 def load_dataset_metadata(
@@ -115,17 +117,17 @@ if __name__ == "__main__":
     filtered_dataset_names, filtered_descriptions = construct_search_documents(
         dataset_names, dataset_descriptions, fully_supported_dataset_names
     )
-    dataset_info = {}
+    dataset_index = {}
     for name, description in zip(filtered_dataset_names, filtered_descriptions):
         if name in all_dataset_metadata:
             evaluation_metadata = all_dataset_metadata[name]
         else:
             evaluation_metadata = {}
 
-        dataset_info[name] = {
+        dataset_index[name] = {
             "name": name,
             "description": description,
             "evaluation_metadata": evaluation_metadata,
         }
 
-    json.dump(dataset_info, open(args.dataset_index_file, "w"))
+    json.dump(dataset_index, open(args.dataset_index_file, "w"))
