@@ -11,7 +11,7 @@ from datasets import Dataset, DatasetDict
 
 from prompt2model.dataset_retriever import DatasetInfo, DescriptionDatasetRetriever
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
-from test_helpers import create_test_search_index, create_test_search_index_class_method
+from test_helpers import create_test_search_index
 
 TINY_MODEL_NAME = "google/bert_uncased_L-2_H-128_A-2"
 
@@ -164,7 +164,7 @@ def test_retrieve_dataset_dict_when_search_index_exists(encode_text):
 @patch.object(
     DescriptionDatasetRetriever,
     "encode_dataset_descriptions",
-    new=create_test_search_index_class_method,
+    new=lambda self, index_file_name: create_test_search_index(index_file_name),
 )
 @patch(
     "prompt2model.dataset_retriever.hf_dataset_retriever.encode_text",
