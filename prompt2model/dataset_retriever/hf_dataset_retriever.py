@@ -47,7 +47,6 @@ def input_string():
 def input_y_n() -> bool:
     """Get a yes/no answer from the user via stdin."""
     y_n = str(input())
-    print(y_n)
     return not (y_n.strip() == "" or y_n.strip().lower() == "n")
 
 
