@@ -12,7 +12,7 @@ import torch
 
 from prompt2model.model_retriever import DescriptionModelRetriever
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
-from test_helpers import create_test_search_index, create_test_search_index_class_method
+from test_helpers import create_test_search_index
 
 TINY_MODEL_NAME = "google/bert_uncased_L-2_H-128_A-2"
 
@@ -80,7 +80,7 @@ def test_retrieve_model_from_query_dual_encoder(mock_encode_text):
 @patch.object(
     DescriptionModelRetriever,
     "encode_model_descriptions",
-    new=create_test_search_index_class_method,
+    new=lambda self, index_file_name: create_test_search_index(index_file_name),
 )
 @patch(
     "prompt2model.model_retriever.description_based_retriever.encode_text",

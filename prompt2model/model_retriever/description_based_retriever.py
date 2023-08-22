@@ -4,6 +4,8 @@ from __future__ import annotations  # noqa FI58
 
 import json
 import os
+import tarfile
+import urllib.request
 
 import numpy as np
 import retriv
@@ -127,6 +129,16 @@ class DescriptionModelRetriever(ModelRetriever):
         directory, filter out models from certain organizations, and initialize a list
         of ModelInfo objects corresponding to the models we want to search against.
         """
+        if not os.path.isdir(self.model_descriptions_index_path):
+            # If the model descriptions directory is not populated, then populate it.
+            urllib.request.urlretrieve(
+                "http://phontron.com/data/prompt2model/model_info.tgz",
+                "/tmp/model_info.tgz",
+            )
+            tar = tarfile.open("/tmp/model_info.tgz")
+            os.makedirs(self.model_descriptions_index_path)
+            tar.extractall(path=self.model_descriptions_index_path)
+
         description_files = os.listdir(self.model_descriptions_index_path)
         # We store model names and descriptions in a list of ModelInfo objects.
         self.model_infos: list[ModelInfo] = []
