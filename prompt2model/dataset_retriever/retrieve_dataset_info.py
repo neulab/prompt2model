@@ -69,7 +69,8 @@ def load_dataset_metadata(
         else:
             try:
                 dataset_metadata = get_eval_metadata(dataset)
-            except:  # noqa E722
+            except Exception as e:
+                logging.warn(f"Could not load dataset {dataset}, with error: {e}")
                 dataset_metadata = None
         if dataset_metadata is not None:
             filtered_task_metadata = []
