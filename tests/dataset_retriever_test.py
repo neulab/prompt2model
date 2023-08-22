@@ -13,7 +13,7 @@ from prompt2model.dataset_retriever import DatasetInfo, DescriptionDatasetRetrie
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from test_helpers import create_test_search_index
 
-TINY_MODEL_NAME = "google/bert_uncased_L-2_H-128_A-2"
+TINY_DUAL_ENCODER_NAME = "google/bert_uncased_L-2_H-128_A-2"
 
 
 def test_initialize_dataset_retriever():
@@ -23,7 +23,7 @@ def test_initialize_dataset_retriever():
             search_index_path=f.name,
             first_stage_search_depth=3,
             max_search_depth=3,
-            encoder_model_name=TINY_MODEL_NAME,
+            encoder_model_name=TINY_DUAL_ENCODER_NAME,
             dataset_info_file="test_helpers/dataset_index_tiny.json",
         )
         # This tiny dataset search index contains 3 datasets.
@@ -37,7 +37,7 @@ def test_encode_model_retriever():
             search_index_path=f.name,
             first_stage_search_depth=3,
             max_search_depth=3,
-            encoder_model_name=TINY_MODEL_NAME,
+            encoder_model_name=TINY_DUAL_ENCODER_NAME,
             dataset_info_file="test_helpers/dataset_index_tiny.json",
         )
         model_vectors = retriever.encode_dataset_descriptions(
@@ -53,7 +53,7 @@ def test_canonicalize_dataset_using_columns():
             search_index_path=f.name,
             first_stage_search_depth=3,
             max_search_depth=3,
-            encoder_model_name=TINY_MODEL_NAME,
+            encoder_model_name=TINY_DUAL_ENCODER_NAME,
             dataset_info_file="test_helpers/dataset_index_tiny.json",
         )
         mock_dataset = Dataset.from_dict(
@@ -139,7 +139,7 @@ def test_retrieve_dataset_dict_when_search_index_exists(encode_text):
             search_index_path=f.name,
             first_stage_search_depth=3,
             max_search_depth=3,
-            encoder_model_name=TINY_MODEL_NAME,
+            encoder_model_name=TINY_DUAL_ENCODER_NAME,
             dataset_info_file="test_helpers/dataset_index_tiny.json",
         )
         assert [info.name for info in retriever.dataset_infos] == [
@@ -192,7 +192,7 @@ def test_retrieve_dataset_dict_without_existing_search_index(encode_text):
             search_index_path=temporary_file,
             first_stage_search_depth=3,
             max_search_depth=3,
-            encoder_model_name=TINY_MODEL_NAME,
+            encoder_model_name=TINY_DUAL_ENCODER_NAME,
             dataset_info_file="test_helpers/dataset_index_tiny.json",
         )
         assert [info.name for info in retriever.dataset_infos] == [
