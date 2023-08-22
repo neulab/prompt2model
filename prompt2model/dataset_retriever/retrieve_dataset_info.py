@@ -81,7 +81,8 @@ def load_dataset_metadata(
                 all_dataset_metadata[dataset] = filtered_task_metadata
         dataset_metadata_cache[dataset] = dataset_metadata
 
-    pickle.dump(dataset_metadata_cache, open(dataset_metadata_cache_file, "wb"))
+    with open(dataset_metadata_cache_file, "wb") as f:
+        pickle.dump(dataset_metadata_cache, f)
     return all_dataset_metadata
 
 
