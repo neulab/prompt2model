@@ -14,6 +14,9 @@ easily convert your prompts into functional
 models, making it easier to utilize the
 power of general OpenAI LLMs in your projects.
 
+## Demo
+https://github.com/neulab/prompt2model/assets/2577384/a8781119-f518-4dbd-b497-cf1ee4a078a9
+
 ## Installation
 
 To install the necessary dependencies,
