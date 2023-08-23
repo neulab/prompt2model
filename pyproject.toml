@@ -8,6 +8,7 @@ build-backend = "hatchling.build"
 name = "prompt2model"
 authors = [
     {name = "Vijay Viswanathan", email = "vijayv@andrew.cmu.edu"},
+    {name = "Chenyang Zhao", email = "zhaochen20@mails.tsinghua.edu.cn"},
 ]
 description = "A library for distilling models from prompts."
 readme = "README.md"
