@@ -1,5 +1,6 @@
 """An commend line demo to run the whole system."""
 
+import json
 import logging
 import os
 import time
@@ -79,6 +80,8 @@ def print_logo():
 def main():
     """The main function running the whole system."""
     print_logo()
+    # Save the status of Prompt2Model for this session,
+    # in case the user wishes to stop and continue later.
     if os.path.isfile("status.yaml"):
         with open("status.yaml", "r") as f:
             status = yaml.safe_load(f)
@@ -92,6 +95,7 @@ def main():
             if os.path.isfile("status.yaml"):
                 with open("status.yaml", "r") as f:
                     status = yaml.safe_load(f)
+                    print(f"Current status:\n{json.dumps(status, indent=4)}")
                     break
             else:
                 status = {}
@@ -157,7 +161,7 @@ def main():
             TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
         )
         retriever = DescriptionModelRetriever(
-            model_descriptions_index_path="huggingface_data/huggingface_models/model_info/",  # noqa 501
+            model_descriptions_index_path="huggingface_data/huggingface_models/model_info/",  # noqa E501
             use_bm25=True,
             use_HyDE=True,
         )
@@ -216,7 +220,7 @@ def main():
                 break
             except Exception:
                 line_print(
-                    "Invalid initial temperature. Please enter a number (float) between 0 and 2."  # noqa 501
+                    "Invalid initial temperature. Please enter a number (float) between 0 and 2."  # noqa E501
                 )
         while True:
             line_print("Enter the max temperature (we suggest 1.4):")

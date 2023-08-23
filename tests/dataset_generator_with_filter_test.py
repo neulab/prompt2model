@@ -622,7 +622,7 @@ def test_multi_vote_with_empty_examples_list():
     gc.collect()
 
 
-def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_unique_outputs():  # noqa 501
+def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_unique_outputs():  # noqa E501
     """Test constructing generated dataset with duplicate inputs but unique outputs.
 
     This test case verifies the construction of the generated dataset with duplicate
@@ -678,7 +678,7 @@ def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs
     gc.collect()
 
 
-def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_duplicate_outputs():  # noqa 501
+def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_duplicate_outputs():  # noqa E501
     """Test constructing a map with duplicate inputs and duplicate outputs.
 
     This test case verifies the construction of the generated dataset with duplicate

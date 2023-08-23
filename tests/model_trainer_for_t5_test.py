@@ -131,7 +131,7 @@ def test_t5_trainer_with_tokenizer_max_length():
             datasets.Dataset.from_dict(
                 {
                     "model_input": [
-                        "<task 0>Given a product review, predict the sentiment score associated with it.\nExample:\nIt isn’t my fav lip balm, but it’s up there. It moisturises really well and the lemon isn’t strong or over powering.\nLabel:\n",  # noqa 501
+                        "<task 0>Given a product review, predict the sentiment score associated with it.\nExample:\nIt isn’t my fav lip balm, but it’s up there. It moisturises really well and the lemon isn’t strong or over powering.\nLabel:\n",  # noqa E501
                     ],
                     "model_output": ["4"],
                 }
@@ -139,7 +139,7 @@ def test_t5_trainer_with_tokenizer_max_length():
             datasets.Dataset.from_dict(
                 {
                     "model_input": [
-                        "<task 1>Given a product review, predict the sentiment score associated with it.\nExample:\nI have been using this every night for 6 weeks now. I do not see a change in my acne or blackheads. My skin is smoother and brighter. There is a glow. But that is it.\nLabel:\n",  # noqa 501
+                        "<task 1>Given a product review, predict the sentiment score associated with it.\nExample:\nI have been using this every night for 6 weeks now. I do not see a change in my acne or blackheads. My skin is smoother and brighter. There is a glow. But that is it.\nLabel:\n",  # noqa E501
                     ],
                     "model_output": ["3"],
                 }
@@ -185,7 +185,7 @@ def test_t5_trainer_without_tokenizer_max_length():
             datasets.Dataset.from_dict(
                 {
                     "model_input": [
-                        "<task 0>Given a product review, predict the sentiment score associated with it.\nExample:\nIt isn’t my fav lip balm, but it’s up there. It moisturises really well and the lemon isn’t strong or over powering.\nLabel:\n",  # noqa 501
+                        "<task 0>Given a product review, predict the sentiment score associated with it.\nExample:\nIt isn’t my fav lip balm, but it’s up there. It moisturises really well and the lemon isn’t strong or over powering.\nLabel:\n",  # noqa E501
                     ],
                     "model_output": ["4"],
                 }
@@ -193,7 +193,7 @@ def test_t5_trainer_without_tokenizer_max_length():
             datasets.Dataset.from_dict(
                 {
                     "model_input": [
-                        "<task 1>Given a product review, predict the sentiment score associated with it.\nExample:\nBeen using for a week and have noticed a huuge difference.\nLabel:\n",  # noqa 501
+                        "<task 1>Given a product review, predict the sentiment score associated with it.\nExample:\nBeen using for a week and have noticed a huuge difference.\nLabel:\n",  # noqa E501
                     ],
                     "model_output": ["5"],
                 }
@@ -225,7 +225,7 @@ def test_t5_trainer_without_tokenizer_max_length():
             # Check if logger.warning was called once for
             # not setting the tokenizer_max_length.
             mock_warning.assert_called_once_with(
-                "Set the tokenizer_max_length is preferable for finetuning model, which saves the cost of training."  # noqa 501
+                "Set the tokenizer_max_length is preferable for finetuning model, which saves the cost of training."  # noqa E501
             )
     gc.collect()
 
@@ -237,7 +237,7 @@ def test_t5_trainer_with_epoch_evaluation():
             datasets.Dataset.from_dict(
                 {
                     "model_input": [
-                        "<task 0>Given a product review, predict the sentiment score associated with it.\nExample:\nIt isn’t my fav lip balm, but it’s up there. It moisturises really well and the lemon isn’t strong or over powering.\nLabel:\n",  # noqa 501
+                        "<task 0>Given a product review, predict the sentiment score associated with it.\nExample:\nIt isn’t my fav lip balm, but it’s up there. It moisturises really well and the lemon isn’t strong or over powering.\nLabel:\n",  # noqa E501
                     ],
                     "model_output": ["4"],
                 }
@@ -248,7 +248,7 @@ def test_t5_trainer_with_epoch_evaluation():
             datasets.Dataset.from_dict(
                 {
                     "model_input": [
-                        "<task 0>Given a product review, predict the sentiment score associated with it.\nExample:\nBroke me out and gave me awful texture all over my face. I typically have clear skin and after using this product my skin HATED it. Could work for you though.\nLabel:\n",  # noqa 501
+                        "<task 0>Given a product review, predict the sentiment score associated with it.\nExample:\nBroke me out and gave me awful texture all over my face. I typically have clear skin and after using this product my skin HATED it. Could work for you though.\nLabel:\n",  # noqa E501
                     ],
                     "model_output": ["2"],
                 }
@@ -307,7 +307,7 @@ def test_t5_trainer_without_validation_datasets():
             datasets.Dataset.from_dict(
                 {
                     "model_input": [
-                        "<task 0>Given a product review, predict the sentiment score associated with it.\nExample:\nIt isn’t my fav lip balm, but it’s up there. It moisturises really well and the lemon isn’t strong or over powering.\nLabel:\n",  # noqa 501
+                        "<task 0>Given a product review, predict the sentiment score associated with it.\nExample:\nIt isn’t my fav lip balm, but it’s up there. It moisturises really well and the lemon isn’t strong or over powering.\nLabel:\n",  # noqa E501
                     ],
                     "model_output": ["4"],
                 }
@@ -315,7 +315,7 @@ def test_t5_trainer_without_validation_datasets():
             datasets.Dataset.from_dict(
                 {
                     "model_input": [
-                        "<task 1>Given a product review, predict the sentiment score associated with it.\nExample:\nBeen using for a week and have noticed a huuge difference.\nLabel:\n",  # noqa 501
+                        "<task 1>Given a product review, predict the sentiment score associated with it.\nExample:\nBeen using for a week and have noticed a huuge difference.\nLabel:\n",  # noqa E501
                     ],
                     "model_output": ["5"],
                 }
@@ -403,7 +403,7 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
             datasets.Dataset.from_dict(
                 {
                     "model_input": [
-                        "<task 0>Given a product review, predict the sentiment score associated with it.\nExample:\nIt isn’t my fav lip balm, but it’s up there. It moisturises really well and the lemon isn’t strong or over powering.\nLabel:\n",  # noqa 501
+                        "<task 0>Given a product review, predict the sentiment score associated with it.\nExample:\nIt isn’t my fav lip balm, but it’s up there. It moisturises really well and the lemon isn’t strong or over powering.\nLabel:\n",  # noqa E501
                     ],
                     "model_output": ["4"],
                 }
@@ -414,7 +414,7 @@ def test_t5_trainer_with_unsupported_evaluation_strategy():
             datasets.Dataset.from_dict(
                 {
                     "model_input": [
-                        "<task 1>Given a product review, predict the sentiment score associated with it.\nExample:\nBeen using for a week and have noticed a huuge difference.\nLabel:\n",  # noqa 501
+                        "<task 1>Given a product review, predict the sentiment score associated with it.\nExample:\nBeen using for a week and have noticed a huuge difference.\nLabel:\n",  # noqa E501
                     ],
                     "model_output": ["5"],
                 }
@@ -481,7 +481,7 @@ def test_t5_trainer_with_unsupported_parameter():
                 datasets.Dataset.from_dict(
                     {
                         "model_input": [
-                            "<task 0>Given a product review, predict the sentiment score associated with it.\nExample:\nIt isn’t my fav lip balm, but it’s up there. It moisturises really well and the lemon isn’t strong or over powering.\nLabel:\n",  # noqa 501
+                            "<task 0>Given a product review, predict the sentiment score associated with it.\nExample:\nIt isn’t my fav lip balm, but it’s up there. It moisturises really well and the lemon isn’t strong or over powering.\nLabel:\n",  # noqa E501
                         ],
                         "model_output": ["4"],
                     }
