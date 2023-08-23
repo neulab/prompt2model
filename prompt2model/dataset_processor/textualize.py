@@ -69,21 +69,21 @@ class TextualizeProcessor(BaseProcessor):
             "val",
             "test",
         ), "Datset split must be in train/val/test."
-
+        example["output_col"] = str(example["output_col"])
         if has_encoder:
             model_input = f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n"  # noqa E501
-            model_output = str(example["output_col"])
+            model_output = example["output_col"]
         else:
             # The T5 tokenizer automatically adds eos token in `add_eos_if_not_present`.
             # On the contrary, model_output of GPT model need eos token in the end.
             if dataset_split == "train":
-                model_output = str(example["output_col"]) + eos_token
+                model_output = example["output_col"] + eos_token
                 model_input = f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n{model_output}"  # noqa E501
             else:
                 # The val/test split is only used for evaluation. Since our decode
                 # method in the ModelExecutor set `skip_special_tokens=True`,
                 # we do not need to add eos token in the end.
-                model_output = str(example["output_col"])
+                model_output = example["output_col"]
                 model_input = f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n"  # noqa E501
         example["model_input"] = model_input
         example["model_output"] = model_output
