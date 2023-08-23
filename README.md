@@ -42,7 +42,8 @@ this script on a device with a GPU for training
 your model.
 
 ## Demo
-https://github.com/neulab/prompt2model/assets/2577384/8f0a31d0-ded1-4c81-841b-0fee41153256
+https://github.com/neulab/prompt2model/assets/2577384/8d73394b-3028-4a0b-bdc3-c127082868f2
+
 
 
 
