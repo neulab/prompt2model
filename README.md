@@ -1,5 +1,7 @@
 # prompt2model
 
+[![Video Thumbnail](thumbnail-image-url)](https://www.youtube.com/watch?v=LYYQ_EhGd-Q)
+
 ## What is this?
 
 `Prompt2model` is a powerful package designed
@@ -33,22 +35,21 @@ few configuration steps you need to complete:
 OpenAI API key.
 
 - Provide OpenAI API key in the
- initialization function of the
-   `DatasetGenerator` and `OpenAIInstructionParser`
-  classes.
+initialization function of the classes which
+rquires calling OpenAI Models.
 
 - Alternatively, you can set
-  the environment variable
-   `OPENAI_API_KEY` to your API key by running
-  the following command in your terminal:
+the environment variable
+`OPENAI_API_KEY` to your API key by running
+the following command in your terminal:
 
 ```bash
 export OPENAI_API_KEY=<your key>
 ```
 
 - After setting the environment
- Variable `OPENAI_API_KEY`, just
-  reference  load it in your Python:
+Variable `OPENAI_API_KEY`, just
+reference  load it in your Python:
 
 ```python
 import os
@@ -89,15 +90,16 @@ generation, processing, model retrieval,
 training, execution, evaluation, and
 interface creation. The
 `.cli_demo.py`
-script executes the full pipeline.
-The pipeline utilizes
-mock components for demonstration, but
-in real-world scenarios, actual implementations
-should replace them. By following
-this pipeline, users can efficiently
+By directly run `python cli_demo.py`,
+users can efficiently
 leverage language models for various tasks
 by customizing the components according to
 their specific requirements.
+
+## Customization
+
+If you want to customize a specific component,
+see the relevant doc page and class document string.
 
 ## Contribution
 
@@ -106,8 +108,3 @@ to the `prompt2model` project, please
 refer to the [CONTRIBUTING.md](CONTRIBUTING.md)
 file for detailed guidelines and
 information tailored specifically
-
-## for developers
-
-There is more information for developers in the [CONTRIBUTING.md](CONTRIBUTING.md)
-file.

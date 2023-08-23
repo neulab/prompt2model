@@ -136,12 +136,14 @@ def main():
         )
         line_print("Retrieving dataset...")
         retriever = DescriptionDatasetRetriever()
-        dataset_dict = retriever.retrieve_dataset_dict(prompt_spec)
-        retrieved_dataset_dict = dataset_dict
+        retrieved_dataset_dict = retriever.retrieve_dataset_dict(prompt_spec)
         dataset_has_been_retrieved = True
-        retrieved_dataset_dict.save_to_disk("retrieved_dataset_dict")
+        if retrieved_dataset_dict is not None:
+            retrieved_dataset_dict.save_to_disk("retrieved_dataset_dict")
+            status["retrieved_dataset_dict_root"] = "retrieved_dataset_dict"
+        else:
+            status["retrieved_dataset_dict_root"] = None
         status["dataset_has_been_retrieved"] = True
-        status["retrieved_dataset_dict_root"] = "retrieved_dataset_dict"
         with open("status.yaml", "w") as f:
             yaml.safe_dump(status, f)
 
@@ -275,27 +277,35 @@ def main():
         dataset_dict = datasets.DatasetDict(
             {"train": train_dataset, "val": val_dataset, "test": test_dataset}
         )
-        cached_retrieved_dataset_dict = datasets.load_from_disk(
-            status["retrieved_dataset_dict_root"]
-        )
-        validation_key = (
-            "validation" if "validation" in cached_retrieved_dataset_dict else "val"
-        )
-        retrieved_dataset_dict = datasets.DatasetDict(
-            {
-                "train": datasets.Dataset.from_dict(
-                    cached_retrieved_dataset_dict["train"][:3000]
-                ),
-                "val": datasets.Dataset.from_dict(
-                    cached_retrieved_dataset_dict[validation_key][:1000]
-                ),
-                "test": datasets.Dataset.from_dict(
-                    cached_retrieved_dataset_dict["test"][:1000]
-                ),
-            }
-        )
+        if status["retrieved_dataset_dict_root"] is not None:
+            cached_retrieved_dataset_dict = datasets.load_from_disk(
+                status["retrieved_dataset_dict_root"]
+            )
+            validation_key = (
+                "validation" if "validation" in cached_retrieved_dataset_dict else "val"
+            )
+            if "validation" in cached_retrieved_dataset_dict:
+                validation_key = "validation"
+            elif "val" in cached_retrieved_dataset_dict:
+                validation_key = "val"
+            retrieved_dataset_dict = datasets.DatasetDict(
+                {
+                    "train": datasets.Dataset.from_dict(
+                        cached_retrieved_dataset_dict["train"][:3000]
+                    ),
+                    "val": datasets.Dataset.from_dict(
+                        cached_retrieved_dataset_dict[validation_key][:1000]
+                    ),
+                    "test": datasets.Dataset.from_dict(
+                        cached_retrieved_dataset_dict["test"][:1000]
+                    ),
+                }
+            )
+            DATASET_DICTS = [dataset_dict, retrieved_dataset_dict]
+        else:
+            DATASET_DICTS = [dataset_dict]
+
         line_print("Processing datasets.")
-        DATASET_DICTS = [dataset_dict, retrieved_dataset_dict]
         instruction = status["instruction"]
         t5_processor = TextualizeProcessor(has_encoder=True)
         t5_modified_dataset_dicts = t5_processor.process_dataset_dict(
