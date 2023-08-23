@@ -107,14 +107,14 @@ class DescriptionModelRetriever(ModelRetriever):
         if self.use_bm25:
             assert (
                 search_index_path is None
-            ), "BM25 expects a search index path with a particular format, so search_index_path should not be provided."  # noqa 501
+            ), "BM25 expects a search index path with a particular format, so search_index_path should not be provided."  # noqa E501
             self.bm25_index_name = bm25_index_name
             self._search_index_path = retriv.paths.index_path(self.bm25_index_name)
         else:
             if search_index_path is not None:
                 assert not os.path.isdir(
                     search_index_path
-                ), f"Search index must either be a valid file or not exist yet. But {search_index_path} is provided."  # noqa 501
+                ), f"Search index must either be a valid file or not exist yet. But {search_index_path} is provided."  # noqa E501
                 self._search_index_path = search_index_path
 
     @property

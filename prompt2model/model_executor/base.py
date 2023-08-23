@@ -14,7 +14,7 @@ from prompt2model.utils import get_formatted_logger
 logger = get_formatted_logger("ModelExecutor")
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=False)
 class ModelOutput:
     """A model output for a single example.
 

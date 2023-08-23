@@ -69,7 +69,7 @@ class TextualizeProcessor(BaseProcessor):
             "val",
             "test",
         ), "Datset split must be in train/val/test."
-
+        example["output_col"] = str(example["output_col"])
         if has_encoder:
             model_input = f"<task {task_id}>{instruction}\nExample:\n{example['input_col']}\nLabel:\n"  # noqa E501
             model_output = example["output_col"]

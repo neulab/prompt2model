@@ -100,7 +100,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
         assert not os.path.isdir(
             search_index_path
-        ), f"Search index must either be a valid file or not exist yet. But {search_index_path} is provided."  # noqa 501
+        ), f"Search index must either be a valid file or not exist yet. But {search_index_path} is provided."  # noqa E501
 
     def encode_dataset_descriptions(
         self, dataset_infos, search_index_path
@@ -146,7 +146,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             chosen_dataset_name = top_datasets[dataset_idx - 1].name
         else:
             chosen_dataset_name = None
-        self.print_divider()  # noqa 501
+        self.print_divider()  # noqa E501
         return chosen_dataset_name
 
     @staticmethod

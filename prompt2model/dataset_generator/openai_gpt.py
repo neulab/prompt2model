@@ -219,7 +219,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 )
                 if count_tokens_from_string(orginal_input_string) > 3500:
                     logger.warning(
-                        "The original input prompt is too long. Consider writing a shorter prompt."  # noqa 501
+                        "The original input prompt is too long. Consider writing a shorter prompt."  # noqa E501
                     )
                 continue
 
