@@ -1,8 +1,10 @@
 __pycache__
 build
+dist
 prompt2model.egg-info
 .vscode
 .mypy_cache
+.pytest_cache
 *.pyc
 flagged
 wandb
