@@ -69,7 +69,7 @@ For example, `input=""` is better than breaking
 the line after `=`.
 3. Use `input` rather than `Input`, `ouput` is
 preferable likewise.
-4. Warp the `input` and `output` into a string with `“”`.
+4. Wrap the `input` and `output` into a string with `“”`.
 
 Though the examples are optional, we strongly
 suggest including them to guide the format and
