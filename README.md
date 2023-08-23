@@ -1,4 +1,4 @@
-# prompt2model
+# prompt2model - Generate Deployable Models from Instructions
 
 ## What is this?
 
