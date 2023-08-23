@@ -56,6 +56,13 @@ import openai
 openai.api_key = os.environ["OPENAI_API_KEY"]
 ```
 
+To enable the model retriever, we need to untar the model_info.tgz file:
+
+```bash
+cd huggingface_models
+tar -xvf model_info.tgz
+```
+
 ## Components
 
 The `prompt2model` package is composed
@@ -86,6 +93,41 @@ users can efficiently
 leverage language models for various tasks
 by customizing the components according to
 their specific requirements.
+
+## How to Write a Good Prompt
+
+A good prompt can make the generated dataset
+follow exactly the format of demonstrations.
+It contains the instruction and few-shot examples.
+
+The instruction should contain the following:
+
+1. The exact format description for the input
+and output, i.e., a string, a dictionary, or whatever.
+2. The exact contents of each part of the
+input and their relationship as possible as you can.
+3. The range of possible input. For example,
+"And the question can range from Math, Cultural,
+Social, Geometry, Biology, History, Sports, Technology,
+Science, and so on."
+
+The few-shot examples should contain the following:
+
+1. Use `=` rather than other ambiguous symbols like `:`.
+2. Avoid unnecessary line breaks at the beginning.
+For example, `input=""` is better than breaking
+the line after `=`.
+3. Use `input` rather than `Input`, `ouput` is
+preferable likewise.
+4. Warp the `input` and `output` into a string with `“”`.
+
+Though the examples are optional, we strongly
+suggest including them to guide the format and
+content for the generator.
+
+Also, we recommend providing several precise examples
+in the specified format and inquiring with ChatGPT
+about the format and scope of your examples.
 
 ## Customization
 

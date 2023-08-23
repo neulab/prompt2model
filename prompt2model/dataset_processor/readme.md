@@ -3,7 +3,8 @@
 ## Overview
 
 - `BaseProcessor`: The base class for dataset post-processing.
-- `TextualizeProcessor`: Transforms all datasets into a consistent text-to-text generation format.
+- `TextualizeProcessor`: Transforms all datasets into a consistent
+text-to-text generation format.
 
 ## Getting Started
 
