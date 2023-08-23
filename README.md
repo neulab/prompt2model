@@ -2,10 +2,12 @@
 
 ## What is this?
 
-`Prompt2model` is a system that takes a natural
+`Prompt2Model` is a system that takes a natural
 language task description (like the ones used for
 LLMs such as ChatGPT) to train a small
 special-purpose model that is conducive for deployment.
+
+<img width="360" alt="prompt2model_teaser" src="https://github.com/neulab/prompt2model/assets/2577384/7acc8ce4-4909-426f-a759-542a324d38d0">
 
 ## Quick Start
 ```bash
