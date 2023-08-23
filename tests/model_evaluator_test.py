@@ -83,7 +83,7 @@ def test_gpt_evaluator_with_default_metrics():
         info_list = [each.args[0] for each in mock_info.call_args_list]
         assert info_list == [
             "Using default metrics of chr_f, exact_match and bert_score.",
-            "The model_input_column is not None. The model input will be detached from predictions if necessary.",  # noqa 501
+            "The model_input_column is not None. The model input will be detached from predictions if necessary.",  # noqa E501
         ]
         mock_warning.assert_not_called()
     # Assert the expected metric values
@@ -116,7 +116,7 @@ def test_t5_evaluator_with_selected_metrics():
         info_list = [each.args[0] for each in mock_info.call_args_list]
         assert info_list == [
             "Using selected metrics: chr_f, exact_match.",
-            "The model_input_column is not None. The model input will be detached from predictions if necessary.",  # noqa 501
+            "The model_input_column is not None. The model input will be detached from predictions if necessary.",  # noqa E501
         ]
         mock_warning.assert_not_called()
     # Assert the expected metric values
@@ -148,7 +148,7 @@ def test_gpt_evaluator_with_selected_metrics():
         info_list = [each.args[0] for each in mock_info.call_args_list]
         assert info_list == [
             "Using selected metrics: chr_f, exact_match.",
-            "The model_input_column is not None. The model input will be detached from predictions if necessary.",  # noqa 501
+            "The model_input_column is not None. The model input will be detached from predictions if necessary.",  # noqa E501
         ]
         mock_warning.assert_not_called()
     # Assert the expected metric values

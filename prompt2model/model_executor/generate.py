@@ -39,7 +39,7 @@ class GenerationModelExecutor(ModelExecutor):
             "greedy",  # greedy search.
             "intersect",  # If both top_k and top_p are set, the model will
             # sample from the intersection of the top-k tokens and the top-p tokens.
-        ], "Only support top_k/top_p/intersect sampling and beam/greedy search for inference."  # noqa 501
+        ], "Only support top_k/top_p/intersect sampling and beam/greedy search for inference."  # noqa E501
         if generate_strategy == "greedy":
             output = self.model.generate(
                 input_ids=input_ids,

@@ -73,7 +73,7 @@ class Seq2SeqEvaluator(ModelEvaluator):
             # the input. So we need to delete the model input if it's in the
             # predictions when necessary.
             logger.info(
-                "The model_input_column is not None. The model input will be detached from predictions if necessary."  # noqa 501
+                "The model_input_column is not None. The model input will be detached from predictions if necessary."  # noqa E501
             )
             model_inputs = dataset[model_input_column]
             for idx, model_input in enumerate(model_inputs):
