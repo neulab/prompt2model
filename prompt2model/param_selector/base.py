@@ -23,10 +23,12 @@ class ParamSelector(ABC):
         hyperparameters: dict[str, list[Any]],
     ) -> tuple[transformers.PreTrainedModel, transformers.PreTrainedTokenizer]:
         """Select a model among a set of hyperparameters (given or inferred).
+
         Args:
             training_sets: One or more training datasets for the trainer.
             validation: A dataset for computing validation metrics.
             hyperparameters: A dictionary of hyperparameter choices.
+
         Return:
             A model and tokenizer (with hyperparameters from given range).
         """
@@ -39,10 +41,12 @@ class ParamSelector(ABC):
         prompt_spec: PromptSpec,
     ) -> tuple[transformers.PreTrainedModel, transformers.PreTrainedTokenizer]:
         """Select a model among a set of hyperparameters (given or inferred).
+
         Args:
             training_sets: One or more training datasets for the trainer.
             validation: A dataset for computing validation metrics.
             prompt_spec: A prompt to infer hyperparameters from.
+
         Return:
             A model and tokenizer (with hyperparameters from inferred range).
         """
