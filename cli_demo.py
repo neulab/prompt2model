@@ -35,7 +35,7 @@ def line_print(input_str: str) -> None:
     Args:
         input_str: The string to be printed.
     """
-    line_print(f"{input_str}")
+    print(f"{input_str}")
 
 
 def print_logo():
@@ -86,7 +86,7 @@ def main():
         status = {}
 
     while True:
-        line_print("Ready to start? (y/n)")
+        line_print("Do you want to start from scratch? (y/n)")
         answer = input()
         if answer.lower() == "n":
             if os.path.isfile("status.yaml"):
@@ -235,7 +235,6 @@ def main():
             initial_temperature=initial_temperature,
             max_temperature=max_temperature,
             responses_per_request=3,
-            batch_size=5,
         )
         generated_dataset = unlimited_dataset_generator.generate_dataset_split(
             prompt_spec, num_expected, split=DatasetSplit.TRAIN
@@ -288,6 +287,9 @@ def main():
                 validation_key = "validation"
             elif "val" in cached_retrieved_dataset_dict:
                 validation_key = "val"
+            else:
+                validation_key = None
+            test_key = "test" if "test" in cached_retrieved_dataset_dict else None
             retrieved_dataset_dict = datasets.DatasetDict(
                 {
                     "train": datasets.Dataset.from_dict(
@@ -295,10 +297,14 @@ def main():
                     ),
                     "val": datasets.Dataset.from_dict(
                         cached_retrieved_dataset_dict[validation_key][:1000]
-                    ),
+                    )
+                    if validation_key is not None
+                    else datasets.Dataset.from_dict({}),
                     "test": datasets.Dataset.from_dict(
                         cached_retrieved_dataset_dict["test"][:1000]
-                    ),
+                    )
+                    if test_key is not None
+                    else datasets.Dataset.from_dict({}),
                 }
             )
             DATASET_DICTS = [dataset_dict, retrieved_dataset_dict]
@@ -316,11 +322,10 @@ def main():
         training_datasets = []
         validation_datasets = []
         test_datasets = []
-        for idx, modified_dataaset_dict in enumerate(t5_modified_dataset_dicts):
-            modified_dataaset_dict.save_to_disk(f"./preprocessed/dataset_{idx}")
-            training_datasets.append(modified_dataaset_dict["train"])
-            validation_datasets.append(modified_dataaset_dict["val"])
-            test_datasets.append(modified_dataaset_dict["test"])
+        for idx, modified_dataset_dict in enumerate(t5_modified_dataset_dicts):
+            training_datasets.append(modified_dataset_dict["train"])
+            validation_datasets.append(modified_dataset_dict["val"])
+            test_datasets.append(modified_dataset_dict["test"])
         trainer_logger = get_formatted_logger("ModelTrainer")
         trainer_logger.setLevel(logging.INFO)
         evaluator_logger = get_formatted_logger("ModelEvaluator")
