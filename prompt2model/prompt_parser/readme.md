@@ -1,4 +1,4 @@
-# PromptParser
+# Prompt Parser
 
 ## Overview
 

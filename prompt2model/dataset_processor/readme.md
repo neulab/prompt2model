@@ -1,9 +1,9 @@
-# DatasetProcessor
+# Dataset Processor
 
 ## Overview
 
-- `BaseProcessor`: A foundational class for dataset post-processing.
-- `TextualizeProcessor`: Transforms datasets into a conditional generation format.
+- `BaseProcessor`: The base class for dataset post-processing.
+- `TextualizeProcessor`: Transforms all datasets into a consistent text-to-text generation format.
 
 ## Getting Started
 

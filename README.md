@@ -56,13 +56,6 @@ import openai
 openai.api_key = os.environ["OPENAI_API_KEY"]
 ```
 
-To enable the model retriever, we need to untar the model_info.tgz file:
-
-```bash
-cd huggingface_models
-tar -xvf model_info.tgz
-```
-
 ## Components
 
 The `prompt2model` package is composed

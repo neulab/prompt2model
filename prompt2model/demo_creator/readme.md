@@ -1,4 +1,4 @@
-# DemoCreator
+# Demo Creator
 
 ## Overview
 

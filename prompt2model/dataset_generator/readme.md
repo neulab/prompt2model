@@ -1,4 +1,4 @@
-# DatasetGenerator
+# Dataset Generator
 
 ## Overview
 
