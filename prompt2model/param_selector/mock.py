@@ -15,6 +15,7 @@ class MockParamSelector(ParamSelector):
 
     def __init__(self, trainer: BaseTrainer):
         """Initialize with train/val datasets and a prompt specification.
+
         Args:
             trainer: A trainer to use for training models during model selection.
         """
@@ -34,11 +35,13 @@ class MockParamSelector(ParamSelector):
         hyperparameters: dict[str, list[Any]],
     ) -> tuple[transformers.PreTrainedModel, transformers.PreTrainedTokenizer]:
         """Use a pre-defined default set of hyperparameters.
+
         Args:
             training_sets: One or more training datasets for the trainer.
             validation: A dataset for computing validation metrics.
             prompt_spec: (Optional) A prompt to infer hyperparameters from.
             hyperparameters: (Optional) A dictionary of hyperparameter choices.
+
         Return:
             A model and tokenizer (trained using default hyperparameters).
         """
@@ -54,6 +57,7 @@ class MockParamSelector(ParamSelector):
         prompt_spec: PromptSpec,
     ) -> tuple[transformers.PreTrainedModel, transformers.PreTrainedTokenizer]:
         """The MockParamSelector cannot infer hyperparameters from the spec.
+
         Args:
             training_sets: One or more training datasets for the trainer.
             validation: A dataset for computing validation metrics.
