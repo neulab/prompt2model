@@ -2,17 +2,10 @@
 
 ## What is this?
 
-`Prompt2model` is a powerful package designed
-to streamline the process of creating models
-based on prompts indicating a task for OpenAI
-models such as ChatGPT
-or GPT-4. This package takes a prompt
-as input and leverages it to generate a model
-that can effectively solve the task described
-in the prompt. With `prompt2model`, you can
-easily convert your prompts into functional
-models, making it easier to utilize the
-power of general OpenAI LLMs in your projects.
+`Prompt2model` is a system that takes a natural
+language task description (like the ones used for
+LLMs such as ChatGPT) to train a small
+special-purpose model that is conducive for deployment.
 
 ## Demo
 https://github.com/neulab/prompt2model/assets/2577384/a8781119-f518-4dbd-b497-cf1ee4a078a9
