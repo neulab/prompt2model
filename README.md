@@ -7,7 +7,7 @@ language task description (like the ones used for
 LLMs such as ChatGPT) to train a small
 special-purpose model that is conducive for deployment.
 
-<img width="360" alt="prompt2model_teaser" src="https://github.com/neulab/prompt2model/assets/2577384/7acc8ce4-4909-426f-a759-542a324d38d0">
+<img width="360" alt="prompt2model_teaser" src="https://github.com/neulab/prompt2model/assets/2577384/39ca466a-5355-4d82-8312-303e52ba2bca">
 
 ## Quick Start
 ```bash
@@ -42,7 +42,9 @@ this script on a device with a GPU for training
 your model.
 
 ## Demo
-https://github.com/neulab/prompt2model/assets/2577384/a8781119-f518-4dbd-b497-cf1ee4a078a9
+https://github.com/neulab/prompt2model/assets/2577384/8f0a31d0-ded1-4c81-841b-0fee41153256
+
+
 
 ## How to Write a Good Prompt
 
