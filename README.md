@@ -141,3 +141,18 @@ to the `prompt2model` project, please
 refer to the [CONTRIBUTING.md](CONTRIBUTING.md)
 file for detailed guidelines and
 information tailored specifically
+
+
+## Cite
+
+If you use Prompt2Model in your research, please cite
+```
+@misc{prompt2model,
+      title={Prompt2Model: Generating Deployable Models from Natural Language Instructions}, 
+      author={Vijay Viswanathan and Chenyang Zhao and Amanda Bertsch and Tongshuang Wu and Graham Neubig},
+      year={2023},
+      eprint={YYMM.XXXXX},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL}
+}
+```
