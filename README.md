@@ -1,7 +1,5 @@
 # prompt2model
 
-[![Video Thumbnail](thumbnail-image-url)](https://www.youtube.com/watch?v=LYYQ_EhGd-Q)
-
 ## What is this?
 
 `Prompt2model` is a powerful package designed
@@ -28,7 +26,7 @@ pip install .
 
 ## Configuration
 
-Before using `prompt2model`, there are a
+Before using `prompt2model`, there is a
 few configuration steps you need to complete:
 
 - Sign up on the OpenAI website and obtain an
@@ -36,7 +34,7 @@ OpenAI API key.
 
 - Provide OpenAI API key in the
 initialization function of the classes which
-rquires calling OpenAI Models.
+requires calling OpenAI Models.
 
 - Alternatively, you can set
 the environment variable
