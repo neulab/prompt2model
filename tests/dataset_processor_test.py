@@ -180,8 +180,8 @@ def test_dataset_processor_t5_style():
     gc.collect()
 
 
-def test_dataset_processor_non_numerical_column():
-    """Test the `process_dataset_dict` function of T5-type `TextualizeProcessor`."""
+def test_dataset_processor_with_numerical_column():
+    """Test process_dataset_dict with numerical column values."""
     t5_processor = TextualizeProcessor(has_encoder=True)
     raw_dataset_dicts = [
         datasets.DatasetDict(
