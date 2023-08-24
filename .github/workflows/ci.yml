@@ -19,6 +19,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
+          python-version-file: 'pyproject.toml'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
