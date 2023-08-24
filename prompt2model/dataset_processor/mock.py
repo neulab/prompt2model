@@ -23,7 +23,15 @@ class MockProcessor(BaseProcessor):
         _ = instruction
         return dataset_dicts
 
-    def post_process_example(example: dict, instruction: str, task_id: int) -> dict:
+    @staticmethod
+    def post_process_example(
+        example: dict,
+        instruction: str,
+        task_id: int,
+        has_encoder: bool,
+        dataset_split: str,
+        eos_token: str,
+    ) -> dict:
         """A mock function that modifies a given example dictionary.
 
         Args:

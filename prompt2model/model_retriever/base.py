@@ -13,12 +13,12 @@ class ModelRetriever(ABC):
     def retrieve(
         self,
         prompt: PromptSpec,
-    ) -> str:
+    ) -> list[str]:
         """Retrieve relevant models from HuggingFace.
 
         Args:
             prompt: A prompt to use to select relevant models.
 
         Return:
-            A relevant model's HuggingFace name.
+            A list of relevant models' HuggingFace names.
         """

@@ -83,7 +83,7 @@ class GenerationModelTrainer(BaseTrainer):
 
         # self.validation_callback is used for evaluate the model on
         # the validation dataset after each epoch.
-        self.validation_callback = None
+        self.validation_callback: ValidationCallback | None = None
         self.training_seed = seed_generator.get_seed()
 
     def get_left_padding_length(cls, input_list, padding_token_id):

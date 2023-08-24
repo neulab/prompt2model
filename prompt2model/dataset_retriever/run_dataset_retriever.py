@@ -8,6 +8,4 @@ if __name__ == "__main__":
     prompt_spec._instruction = prompt
 
     retriever = DescriptionDatasetRetriever()
-    retriever.retrieve_dataset_dict(
-        prompt_spec, blocklist=["squad", "stanford question answering"]
-    )
+    retriever.retrieve_dataset_dict(prompt_spec)

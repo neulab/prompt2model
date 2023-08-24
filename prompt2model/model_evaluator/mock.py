@@ -4,10 +4,10 @@ from __future__ import annotations  # noqa FI58
 from typing import Any
 
 import datasets
+import evaluate
 
 from prompt2model.model_evaluator.base import ModelEvaluator
 from prompt2model.model_executor import ModelOutput
-from prompt2model.prompt_parser import PromptSpec
 
 
 class MockEvaluator(ModelEvaluator):
@@ -21,8 +21,9 @@ class MockEvaluator(ModelEvaluator):
         dataset: datasets.Dataset,
         gt_column: str,
         predictions: list[ModelOutput],
-        metrics: list[datasets.Metric] | None = None,
-        prompt_spec: PromptSpec | None = None,
+        model_input_column: str | None = None,
+        metrics: list[evaluate.Metric] | None = None,
+        encoder_model_name: str = "xlm-roberta-base",
     ) -> dict[str, Any]:
         """Return empty metrics dictionary.
 

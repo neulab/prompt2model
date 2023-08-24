@@ -9,7 +9,7 @@ import datasets
 class BaseProcessor(ABC):
     """A base class for post-processing datasets."""
 
-    def __init__(self, has_encoder: bool, eos_token: str) -> None:
+    def __init__(self, has_encoder: bool, eos_token: str | None = None) -> None:
         """Initialize the `BaseProcessor`.
 
         Args:
