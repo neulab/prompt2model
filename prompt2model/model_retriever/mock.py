@@ -14,7 +14,7 @@ class MockModelRetriever(ModelRetriever):
     def retrieve(
         self,
         prompt: PromptSpec,
-    ) -> str:
+    ) -> list[str]:
         """Select an arbitrary, fixed model from HuggingFace.
 
         Args:
@@ -23,4 +23,4 @@ class MockModelRetriever(ModelRetriever):
         Return:
             A relevant model's HuggingFace name.
         """
-        return self.fixed_model_name
+        return [self.fixed_model_name]

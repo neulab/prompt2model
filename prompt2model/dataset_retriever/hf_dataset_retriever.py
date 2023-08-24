@@ -284,11 +284,11 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             self.dataset_infos[dataset_idx].score = dataset_score
             top_dataset_infos.append(self.dataset_infos[dataset_idx])
 
-        ranked_list = sorted(top_dataset_infos, key=lambda x: x.score, reverse=True)[
+        sorted_list = sorted(top_dataset_infos, key=lambda x: x.score, reverse=True)[
             : self.max_search_depth
         ]
-        assert len(ranked_list) > 0, "No datasets retrieved from search index."
-        top_dataset_name = self.choose_dataset(ranked_list)
+        assert len(sorted_list) > 0, "No datasets retrieved from search index."
+        top_dataset_name = self.choose_dataset(sorted_list)
         if top_dataset_name is None:
             return None
         return self.canonicalize_dataset(top_dataset_name)

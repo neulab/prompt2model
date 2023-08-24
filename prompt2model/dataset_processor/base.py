@@ -1,5 +1,7 @@
 """A base class for dataset processor."""
 
+from __future__ import annotations  # noqa FI58
+
 from abc import ABC, abstractmethod
 from functools import partial
 
@@ -9,7 +11,7 @@ import datasets
 class BaseProcessor(ABC):
     """A base class for post-processing datasets."""
 
-    def __init__(self, has_encoder: bool, eos_token: str) -> None:
+    def __init__(self, has_encoder: bool, eos_token: str | None = None) -> None:
         """Initialize the `BaseProcessor`.
 
         Args:
