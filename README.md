@@ -53,7 +53,7 @@ your model.
 ## Tips and Examples to Write a Good Prompt
 
 You can see the tips and examples to write
-a good prompt in [prompt_exmaples](./prompt_exmaples.md).
+a good prompt in [prompt_examples](./prompt_examples.md).
 
 ## Components
 

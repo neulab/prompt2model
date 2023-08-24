@@ -373,7 +373,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         of self.filter_duplicated_examples, into a Dataset on the disk.
 
         Returns:
-            A dataset of all the generated exmaples and the currently generated
+            A dataset of all the generated examples and the currently generated
             dataset. If filter_duplicated_examples is True, multi-vote filtering is
             performed. Else, the generated examples are directly converted into
             a Dataset.
