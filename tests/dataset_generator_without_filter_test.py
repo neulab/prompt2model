@@ -1005,7 +1005,7 @@ def test_extract_some_empty_responses():
             # There are 3 valid examples in [mock_completion_1,
             # mock_completion_2] Each input
             # and output will be logged once as info.
-            # And there are 2 exmaples with empty
+            # And there are 2 examples with empty
             # input or output, which should be discarded
             # and be logged as info.
             assert mock_info.call_count == 3 * 2 + 2
