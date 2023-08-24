@@ -94,7 +94,7 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
     model_retriever = MockModelRetriever("cardiffnlp/twitter-roberta-base-sentiment")
     retrieved_model_name = model_retriever.retrieve(prompt_spec)
 
-    trainer = MockTrainer(retrieved_model_name)
+    trainer = MockTrainer(retrieved_model_name[0])
     selector = MockParamSelector(trainer)
     model, tokenizer = selector.select_from_hyperparameters(
         all_training, validation, {}
@@ -105,7 +105,7 @@ def run_skeleton(prompt_tokens: list[str], metrics_output_path: str) -> None:
 
     evaluator = MockEvaluator()
     metrics_dict = evaluator.evaluate_model(
-        testing, "output_col", predictions, [], prompt_spec
+        testing, "output_col", predictions, "input_col", []
     )
     evaluator.write_metrics(metrics_dict, metrics_output_path)
     mock_gradio_create(model_executor, prompt_spec)
