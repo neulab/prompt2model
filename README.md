@@ -76,11 +76,11 @@ component within the package.
 
 If you're interested in contributing to the `prompt2model` project, please
 
-- refer to [CONTRIBUTING.md](CONTRIBUTING.md),
+- refer to [CONTRIBUTING.md](CONTRIBUTING.md)
 - open an [issue](https://github.com/neulab/prompt2model/issues) or submit a PR
 - join us on [discord](https://discord.gg/UCy9csEmFc)
 - or reach out to [@vijaytarian](https://twitter.com/vijaytarian)
-  and [@Chenan3_Zhao](https://twitter.com/Chenan3_Zhao) on Twitter.
+  and [@Chenan3_Zhao](https://twitter.com/Chenan3_Zhao) on Twitter
 
 ## Cite
 
