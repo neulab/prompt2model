@@ -14,7 +14,7 @@ special-purpose model that is conducive for deployment.
 ## Quick Start
 
 ```bash
-pip install .
+pip install prompt2model
 ```
 
 Our current `prompt2model` implementation uses
