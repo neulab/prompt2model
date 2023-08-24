@@ -1,9 +1,11 @@
 # prompt2model
 
-## What is this?
+[![PyPI version](https://badge.fury.io/py/prompt2model.svg)](https://badge.fury.io/py/prompt2model)
+![Github Actions CI tests](https://github.com/neulab/prompt2model/actions/workflows/ci.yml/badge.svg)
+[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
 
 `Prompt2Model` is a system that takes a natural
-language task description (like the ones used for
+language task description (like the prompts used for
 LLMs such as ChatGPT) to train a small
 special-purpose model that is conducive for deployment.
 
