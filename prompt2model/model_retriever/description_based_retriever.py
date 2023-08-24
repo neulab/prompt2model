@@ -139,16 +139,14 @@ class DescriptionModelRetriever(ModelRetriever):
             os.makedirs(self.model_descriptions_index_path)
             tar.extractall(path=self.model_descriptions_index_path)
 
-        model_info_dir_path = os.path.join(
-            self.model_descriptions_index_path, "model_info"
-        )
-        description_files = os.listdir(model_info_dir_path)
+        description_files = os.listdir(self.model_descriptions_index_path)
         # We store model names and descriptions in a list of ModelInfo objects.
         self.model_infos: list[ModelInfo] = []
         for f in tqdm(description_files):
             if (
                 f.startswith(".")
-                or len(open(os.path.join(model_info_dir_path, f)).read()) == 0
+                or len(open(os.path.join(self.model_descriptions_index_path, f)).read())
+                == 0
             ):
                 continue
             block = False
@@ -158,7 +156,9 @@ class DescriptionModelRetriever(ModelRetriever):
                     break
             if block:
                 continue
-            model_dict = json.load(open(os.path.join(model_info_dir_path, f)))
+            model_dict = json.load(
+                open(os.path.join(self.model_descriptions_index_path, f))
+            )
             if model_dict.get("size_bytes", 0) == 0:
                 continue
             if "description" not in model_dict:
