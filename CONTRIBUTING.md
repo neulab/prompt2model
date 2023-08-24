@@ -26,19 +26,13 @@ pytest
 
 ## Contribution Guide
 
-There are multiple ways you can contribute to
-prompt2model:
+To contribute to prompt2model, or if you have any questions,
+please reach out to us!
 
-1. Browse the existing issues and select one to
-work on.
-2. Create a new issue to discuss a feature or
-improvement you would like to contribute.
-3. Submit a pull request (PR) directly.
-
-We recommend the first two options to increase
-the chances of your PR being accepted. However,
-if you're confident in your contribution, you can
-proceed with submitting a PR directly.
+- open an [issue](https://github.com/neulab/prompt2model/issues) or submit a PR
+- join us on [discord](https://discord.gg/UCy9csEmFc)
+- or reach out to [@vijaytarian](https://twitter.com/vijaytarian)
+  and [@Chenan3_Zhao](https://twitter.com/Chenan3_Zhao) on Twitter.
 
 ## Making a Release
 
