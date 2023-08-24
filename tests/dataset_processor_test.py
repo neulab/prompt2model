@@ -180,6 +180,104 @@ def test_dataset_processor_t5_style():
     gc.collect()
 
 
+
+
+def test_dataset_processor_non_numerical_column():
+    """Test the `process_dataset_dict` function of T5-type `TextualizeProcessor`."""
+    t5_processor = TextualizeProcessor(has_encoder=True)
+    raw_dataset_dicts = [
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "input_col": ["foo", "bar"],
+                        "output_col": [0, 1],
+                    }
+                ),
+                "test": datasets.Dataset.from_dict(
+                    {
+                        "input_col": ["foo", "bar"],
+                        "output_col": [0, 1],
+                    }
+                ),
+            }
+        ),
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "input_col": ["spam", "eggs"],
+                        "output_col": [1, 2],
+                    }
+                ),
+                "val": datasets.Dataset.from_dict(
+                    {
+                        "input_col": ["spam", "eggs"],
+                        "output_col": [1, 2],
+                    }
+                ),
+            }
+        ),
+    ]
+    t5_modified_dataset_dicts = t5_processor.process_dataset_dict(
+        INSTRUCTION, DATASET_DICTS
+    )
+    # Ensure the dataset_dicts themselves are the same after processing.
+    assert all(
+        are_dataset_dicts_identical(raw, origin)
+        for (raw, origin) in zip(raw_dataset_dicts, DATASET_DICTS)
+    )
+    t5_expected_dataset_dicts = [
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
+                            "<task 0>convert to text2text\nExample:\nbar\nLabel:\n",
+                        ],
+                        "model_output": ["0", "1"],
+                    }
+                ),
+                "test": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
+                            "<task 0>convert to text2text\nExample:\nbar\nLabel:\n",
+                        ],
+                        "model_output": ["0", "1"],
+                    }
+                ),
+            }
+        ),
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 1>convert to text2text\nExample:\nspam\nLabel:\n",
+                            "<task 1>convert to text2text\nExample:\neggs\nLabel:\n",
+                        ],
+                        "model_output": ["1", "2"],
+                    }
+                ),
+                "val": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 1>convert to text2text\nExample:\nspam\nLabel:\n",
+                            "<task 1>convert to text2text\nExample:\neggs\nLabel:\n",
+                        ],
+                        "model_output": ["1", "2"],
+                    }
+                ),
+            }
+        ),
+    ]
+    for exp, act in zip(t5_expected_dataset_dicts, t5_modified_dataset_dicts):
+        assert are_dataset_dicts_identical(exp, act)
+    gc.collect()
+
+
 def test_dataset_processor_decoder_only_style():
     """Test the `process_dataset_dict` function of a GPT-type `TextualizeProcessor`."""
     _, gpt2_tokenizer = create_gpt2_model_and_tokenizer()
