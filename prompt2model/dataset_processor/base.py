@@ -99,7 +99,7 @@ class BaseProcessor(ABC):
                 modified_dataset_dict[dataset_split] = (
                     dataset_dict[dataset_split]
                     .filter(filter_empty_strings)
-                    .map(mapping_function)
+                    .map(mapping_function, remove_columns=["input_col", "output_col"])
                 )
             modified_dataset_dict = datasets.DatasetDict(modified_dataset_dict)
             modified_dataset_dicts.append(modified_dataset_dict)
