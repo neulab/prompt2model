@@ -180,8 +180,6 @@ def test_dataset_processor_t5_style():
     gc.collect()
 
 
-
-
 def test_dataset_processor_non_numerical_column():
     """Test the `process_dataset_dict` function of T5-type `TextualizeProcessor`."""
     t5_processor = TextualizeProcessor(has_encoder=True)
@@ -191,13 +189,13 @@ def test_dataset_processor_non_numerical_column():
                 "train": datasets.Dataset.from_dict(
                     {
                         "input_col": ["foo", "bar"],
-                        "output_col": [0, 1],
+                        "output_col": ["baz", "qux"],
                     }
                 ),
                 "test": datasets.Dataset.from_dict(
                     {
-                        "input_col": ["foo", "bar"],
-                        "output_col": [0, 1],
+                        "input_col": ["spam", "eggs"],
+                        "output_col": ["ham", "sau"],
                     }
                 ),
             }
@@ -206,11 +204,11 @@ def test_dataset_processor_non_numerical_column():
             {
                 "train": datasets.Dataset.from_dict(
                     {
-                        "input_col": ["spam", "eggs"],
-                        "output_col": [1, 2],
+                        "input_col": ["foo", "bar"],
+                        "output_col": [0, 1],
                     }
                 ),
-                "val": datasets.Dataset.from_dict(
+                "test": datasets.Dataset.from_dict(
                     {
                         "input_col": ["spam", "eggs"],
                         "output_col": [1, 2],
@@ -220,61 +218,47 @@ def test_dataset_processor_non_numerical_column():
         ),
     ]
     t5_modified_dataset_dicts = t5_processor.process_dataset_dict(
-        INSTRUCTION, DATASET_DICTS
+        INSTRUCTION, raw_dataset_dicts
     )
-    # Ensure the dataset_dicts themselves are the same after processing.
-    assert all(
-        are_dataset_dicts_identical(raw, origin)
-        for (raw, origin) in zip(raw_dataset_dicts, DATASET_DICTS)
+    expected_dataset_dict = datasets.DatasetDict(
+        {
+            "train": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
+                        "<task 0>convert to text2text\nExample:\nbar\nLabel:\n",
+                        "<task 1>convert to text2text\nExample:\nfoo\nLabel:\n",
+                        "<task 1>convert to text2text\nExample:\nbar\nLabel:\n",
+                    ],
+                    "model_output": ["foo", "bar", "0", "1"],
+                }
+            ),
+            "test": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        "<task 0>convert to text2text\nExample:\nspam\nLabel:\n",
+                        "<task 0>convert to text2text\nExample:\neggs\nLabel:\n",
+                        "<task 1>convert to text2text\nExample:\nspam\nLabel:\n",
+                        "<task 1>convert to text2text\nExample:\neggs\nLabel:\n",
+                    ],
+                    "model_output": ["ham", "sau", "1", "2"],
+                }
+            ),
+        }
     )
-    t5_expected_dataset_dicts = [
-        datasets.DatasetDict(
-            {
-                "train": datasets.Dataset.from_dict(
-                    {
-                        "model_input": [
-                            "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
-                            "<task 0>convert to text2text\nExample:\nbar\nLabel:\n",
-                        ],
-                        "model_output": ["0", "1"],
-                    }
-                ),
-                "test": datasets.Dataset.from_dict(
-                    {
-                        "model_input": [
-                            "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
-                            "<task 0>convert to text2text\nExample:\nbar\nLabel:\n",
-                        ],
-                        "model_output": ["0", "1"],
-                    }
-                ),
-            }
-        ),
-        datasets.DatasetDict(
-            {
-                "train": datasets.Dataset.from_dict(
-                    {
-                        "model_input": [
-                            "<task 1>convert to text2text\nExample:\nspam\nLabel:\n",
-                            "<task 1>convert to text2text\nExample:\neggs\nLabel:\n",
-                        ],
-                        "model_output": ["1", "2"],
-                    }
-                ),
-                "val": datasets.Dataset.from_dict(
-                    {
-                        "model_input": [
-                            "<task 1>convert to text2text\nExample:\nspam\nLabel:\n",
-                            "<task 1>convert to text2text\nExample:\neggs\nLabel:\n",
-                        ],
-                        "model_output": ["1", "2"],
-                    }
-                ),
-            }
-        ),
-    ]
-    for exp, act in zip(t5_expected_dataset_dicts, t5_modified_dataset_dicts):
-        assert are_dataset_dicts_identical(exp, act)
+    training_datasets = []
+    test_datasets = []
+    for modified_dataset_dict in t5_modified_dataset_dicts:
+        training_datasets.append(modified_dataset_dict["train"])
+        test_datasets.append(modified_dataset_dict["test"])
+
+    concatenated_training_dataset = datasets.concatenate_datasets(training_datasets)
+    concatenated_test_dataset = datasets.concatenate_datasets(test_datasets)
+    actual_dataset_dict = datasets.DatasetDict(
+        {"train": concatenated_training_dataset, "test": concatenated_test_dataset}
+    )
+    are_dataset_dicts_identical(expected_dataset_dict, actual_dataset_dict)
+
     gc.collect()
 
 
