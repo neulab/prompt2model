@@ -7,7 +7,7 @@ language task description (like the ones used for
 LLMs such as ChatGPT) to train a small
 special-purpose model that is conducive for deployment.
 
-<img width="360" alt="prompt2model_teaser" src="https://github.com/neulab/prompt2model/assets/2577384/39ca466a-5355-4d82-8312-303e52ba2bca">  {{< mdl-disable "<!-- markdownlint-disable MD033 -->" >}} {{< mdl-disable "<!-- markdownlint-disable MD013 -->" >}}
+<img width="360" alt="prompt2model_teaser" src="https://github.com/neulab/prompt2model/assets/2577384/39ca466a-5355-4d82-8312-303e52ba2bca">
 
 ## Quick Start
 
