@@ -109,7 +109,7 @@ and [@ChenytangZhao](https://twitter.com/ChenytangZhao).
 
 ## Cite
 
-We have [written a paper describing Prompt2Model in detail](https://arxiv.org/abs/YYMM.XXXXX).
+We have [written a paper describing Prompt2Model in detail](https://arxiv.org/abs/2308.12261).
 
 If you use Prompt2Model in your research, please cite our paper:
 
@@ -118,7 +118,7 @@ If you use Prompt2Model in your research, please cite our paper:
       title={Prompt2Model: Generating Deployable Models from Natural Language Instructions},
       author={Vijay Viswanathan and Chenyang Zhao and Amanda Bertsch and Tongshuang Wu and Graham Neubig},
       year={2023},
-      eprint={YYMM.XXXXX},
+      eprint={2308.12261},
       archivePrefix={arXiv},
       primaryClass={cs.CL}
 }
