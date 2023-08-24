@@ -12,7 +12,7 @@ from transformers import AutoTokenizer
 from prompt2model.dataset_processor.textualize import TextualizeProcessor
 from test_helpers import are_dataset_dicts_identical, create_gpt2_model_and_tokenizer
 
-logger = logging.getLogger("DatasetProcessor")  
+logger = logging.getLogger("DatasetProcessor")
 
 DATASET_DICTS = [
     datasets.DatasetDict(

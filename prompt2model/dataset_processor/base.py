@@ -94,12 +94,12 @@ class BaseProcessor(ABC):
                     task_id=task_id,
                     has_encoder=self.has_encoder,
                     dataset_split=dataset_split,
-                    eos_token=self.eos_token
+                    eos_token=self.eos_token,
                 )
                 modified_dataset_dict[dataset_split] = (
                     dataset_dict[dataset_split]
                     .filter(filter_empty_strings)
-                    .map(mapping_function, remove_columns=['input_col', 'output_col'])
+                    .map(mapping_function, remove_columns=["input_col", "output_col"])
                 )
             modified_dataset_dict = datasets.DatasetDict(modified_dataset_dict)
             modified_dataset_dicts.append(modified_dataset_dict)
