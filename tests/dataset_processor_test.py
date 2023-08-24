@@ -12,7 +12,7 @@ from transformers import AutoTokenizer
 from prompt2model.dataset_processor.textualize import TextualizeProcessor
 from test_helpers import are_dataset_dicts_identical, create_gpt2_model_and_tokenizer
 
-logger = logging.getLogger("DatasetProcessor")
+logger = logging.getLogger("DatasetProcessor")  
 
 DATASET_DICTS = [
     datasets.DatasetDict(
@@ -138,8 +138,6 @@ def test_dataset_processor_t5_style():
                             "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
                             "<task 0>convert to text2text\nExample:\nbar\nLabel:\n",
                         ],
-                        "input_col": ["foo", "bar"],
-                        "output_col": ["baz", "qux"],
                         "model_output": ["baz", "qux"],
                     }
                 ),
@@ -149,8 +147,6 @@ def test_dataset_processor_t5_style():
                             "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
                             "<task 0>convert to text2text\nExample:\nbar\nLabel:\n",
                         ],
-                        "input_col": ["foo", "bar"],
-                        "output_col": ["baz", "qux"],
                         "model_output": ["baz", "qux"],
                     }
                 ),
@@ -164,8 +160,6 @@ def test_dataset_processor_t5_style():
                             "<task 1>convert to text2text\nExample:\nspam\nLabel:\n",
                             "<task 1>convert to text2text\nExample:\neggs\nLabel:\n",
                         ],
-                        "input_col": ["spam", "eggs"],
-                        "output_col": ["ham", "sau"],
                         "model_output": ["ham", "sau"],
                     }
                 ),
@@ -175,8 +169,6 @@ def test_dataset_processor_t5_style():
                             "<task 1>convert to text2text\nExample:\nspam\nLabel:\n",
                             "<task 1>convert to text2text\nExample:\neggs\nLabel:\n",
                         ],
-                        "input_col": ["spam", "eggs"],
-                        "output_col": ["ham", "sau"],
                         "model_output": ["ham", "sau"],
                     }
                 ),
@@ -213,8 +205,6 @@ def test_dataset_processor_decoder_only_style():
                             "<task 0>convert to text2text\nExample:\nfoo\nLabel:\nbaz<|endoftext|>",  # noqa: E501
                             "<task 0>convert to text2text\nExample:\nbar\nLabel:\nqux<|endoftext|>",  # noqa: E501
                         ],
-                        "input_col": ["foo", "bar"],
-                        "output_col": ["baz", "qux"],
                         "model_output": ["baz<|endoftext|>", "qux<|endoftext|>"],
                     }
                 ),
@@ -224,8 +214,6 @@ def test_dataset_processor_decoder_only_style():
                             "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
                             "<task 0>convert to text2text\nExample:\nbar\nLabel:\n",
                         ],
-                        "input_col": ["foo", "bar"],
-                        "output_col": ["baz", "qux"],
                         "model_output": ["baz", "qux"],
                     }
                 ),
@@ -239,8 +227,6 @@ def test_dataset_processor_decoder_only_style():
                             "<task 1>convert to text2text\nExample:\nspam\nLabel:\nham<|endoftext|>",  # noqa: E501
                             "<task 1>convert to text2text\nExample:\neggs\nLabel:\nsau<|endoftext|>",  # noqa: E501
                         ],
-                        "input_col": ["spam", "eggs"],
-                        "output_col": ["ham", "sau"],
                         "model_output": ["ham<|endoftext|>", "sau<|endoftext|>"],
                     }
                 ),
@@ -250,8 +236,6 @@ def test_dataset_processor_decoder_only_style():
                             "<task 1>convert to text2text\nExample:\nspam\nLabel:\n",
                             "<task 1>convert to text2text\nExample:\neggs\nLabel:\n",
                         ],
-                        "input_col": ["spam", "eggs"],
-                        "output_col": ["ham", "sau"],
                         "model_output": ["ham", "sau"],
                     }
                 ),
@@ -341,8 +325,6 @@ def test_empty_filter_t5_type():
                         "model_input": [
                             "<task 0>convert to text2text\nExample:\ntest\nLabel:\n",
                         ],
-                        "input_col": ["test"],
-                        "output_col": ["key"],
                         "model_output": ["key"],
                     }
                 ),
@@ -350,12 +332,6 @@ def test_empty_filter_t5_type():
                     {
                         "model_input": [
                             "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
-                        ],
-                        "input_col": [
-                            "foo",
-                        ],
-                        "output_col": [
-                            "baz",
                         ],
                         "model_output": [
                             "baz",
@@ -369,8 +345,6 @@ def test_empty_filter_t5_type():
                 "train": datasets.Dataset.from_dict(
                     {
                         "model_input": [],
-                        "input_col": [],
-                        "output_col": [],
                         "model_output": [],
                     }
                 ),
@@ -403,8 +377,6 @@ def test_empty_filter_decoder_only_style():
                         "model_input": [
                             "<task 0>convert to text2text\nExample:\ntest\nLabel:\nkey<|endoftext|>",  # noqa: E501
                         ],
-                        "input_col": ["test"],
-                        "output_col": ["key"],
                         "model_output": ["key<|endoftext|>"],
                     }
                 ),
@@ -413,8 +385,6 @@ def test_empty_filter_decoder_only_style():
                         "model_input": [
                             "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
                         ],
-                        "input_col": ["foo"],
-                        "output_col": ["baz"],
                         "model_output": ["baz"],
                     }
                 ),
@@ -425,8 +395,6 @@ def test_empty_filter_decoder_only_style():
                 "train": datasets.Dataset.from_dict(
                     {
                         "model_input": [],
-                        "input_col": [],
-                        "output_col": [],
                         "model_output": [],
                     }
                 ),
