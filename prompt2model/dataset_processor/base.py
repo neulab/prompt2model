@@ -1,5 +1,7 @@
 """A base class for dataset processor."""
 
+from __future__ import annotations  # noqa FI58
+
 from abc import ABC, abstractmethod
 from functools import partial
 
