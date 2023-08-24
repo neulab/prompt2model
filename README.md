@@ -115,8 +115,8 @@ If you use Prompt2Model in your research, please cite our paper:
 
 ```bibtex
 @misc{prompt2model,
-      title={Prompt2Model: Generating Deployable Models from Natural Language Instructions}, {{< mdl-disable "<!-- markdownlint-disable MD013 -->" >}}
-      author={Vijay Viswanathan and Chenyang Zhao and Amanda Bertsch and Tongshuang Wu and Graham Neubig}, {{< mdl-disable "<!-- markdownlint-disable MD013 -->" >}}
+      title={Prompt2Model: Generating Deployable Models from Natural Language Instructions},
+      author={Vijay Viswanathan and Chenyang Zhao and Amanda Bertsch and Tongshuang Wu and Graham Neubig},
       year={2023},
       eprint={YYMM.XXXXX},
       archivePrefix={arXiv},
