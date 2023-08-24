@@ -349,7 +349,7 @@ def test_gpt_trainer_without_validation_datasets():
                 },
                 training_datasets,
             )
-            # We set hte evaluation strategy to epoch but don't pass
+            # We set the evaluation strategy to epoch but don't pass
             # in the validation dataset. So the evaluation will be skipped.
             # Check if logger.info wasn't called.
             mock_info.assert_not_called()
