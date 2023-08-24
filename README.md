@@ -77,7 +77,7 @@ If you're interested in contributing
 to the `prompt2model` project, please
 refer to [CONTRIBUTING.md](CONTRIBUTING.md),
 or reach out to [@vijaytarian](https://twitter.com/vijaytarian)
-and [@ChenytangZhao](https://twitter.com/ChenytangZhao).
+and [@Chenan3_Zhao](https://twitter.com/Chenan3_Zhao).
 
 ## Cite
 
