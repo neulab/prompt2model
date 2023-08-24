@@ -1,15 +1,18 @@
-# prompt2model
+# prompt2model - Generate Deployable Models from Instructions
 
-## What is this?
+[![PyPI version](https://badge.fury.io/py/prompt2model.svg)](https://badge.fury.io/py/prompt2model)
+![Github Actions CI tests](https://github.com/neulab/prompt2model/actions/workflows/ci.yml/badge.svg)
+[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
 
 `Prompt2Model` is a system that takes a natural
-language task description (like the ones used for
+language task description (like the prompts used for
 LLMs such as ChatGPT) to train a small
 special-purpose model that is conducive for deployment.
 
 <img width="360" alt="prompt2model_teaser" src="https://github.com/neulab/prompt2model/assets/2577384/39ca466a-5355-4d82-8312-303e52ba2bca">
 
 ## Quick Start
+
 ```bash
 pip install .
 ```
@@ -30,11 +33,13 @@ export OPENAI_API_KEY=<your key>
 ```
 
 You can then run
-```
+
+```bash
 python cli_demo.py
 ```
-to 
-create a small model from a prompt, as shown in 
+
+to
+create a small model from a prompt, as shown in
 the demo video below. This script must be run on a
 device with an internet connection to access the OpenAI
 API. For best results, run
@@ -42,10 +47,8 @@ this script on a device with a GPU for training
 your model.
 
 ## Demo
-https://github.com/neulab/prompt2model/assets/2577384/8d73394b-3028-4a0b-bdc3-c127082868f2
 
-
-
+<https://github.com/neulab/prompt2model/assets/2577384/8d73394b-3028-4a0b-bdc3-c127082868f2>
 
 ## How to Write a Good Prompt
 
@@ -82,7 +85,6 @@ Also, we recommend providing several precise examples
 in the specified format and inquiring with ChatGPT
 about the format and scope of your examples.
 
-
 ## Components
 
 The `prompt2model` package is composed
@@ -107,18 +109,18 @@ refer to [CONTRIBUTING.md](CONTRIBUTING.md),
 or reach out to [@vijaytarian](https://twitter.com/vijaytarian)
 and [@ChenytangZhao](https://twitter.com/ChenytangZhao).
 
-
 ## Cite
 
-We have [written a paper describing Prompt2Model in detail](https://arxiv.org/abs/YYMM.XXXXX).
+We have [written a paper describing Prompt2Model in detail](https://arxiv.org/abs/2308.12261).
 
 If you use Prompt2Model in your research, please cite our paper:
-```
+
+```bibtex
 @misc{prompt2model,
-      title={Prompt2Model: Generating Deployable Models from Natural Language Instructions}, 
+      title={Prompt2Model: Generating Deployable Models from Natural Language Instructions},
       author={Vijay Viswanathan and Chenyang Zhao and Amanda Bertsch and Tongshuang Wu and Graham Neubig},
       year={2023},
-      eprint={YYMM.XXXXX},
+      eprint={2308.12261},
       archivePrefix={arXiv},
       primaryClass={cs.CL}
 }
