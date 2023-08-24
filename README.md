@@ -3,6 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/prompt2model.svg)](https://badge.fury.io/py/prompt2model)
 ![Github Actions CI tests](https://github.com/neulab/prompt2model/actions/workflows/ci.yml/badge.svg)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
+[![Discord](https://img.shields.io/discord/1144245269001678959)](https://discord.gg/UCy9csEmFc)
 
 `Prompt2Model` is a system that takes a natural
 language task description (like the prompts used for
