@@ -23,7 +23,7 @@ The few-shot examples should contain the following:
 2. Avoid unnecessary line breaks at the beginning.
 For example, `input=""` is better than breaking
 the line after `=`.
-3. Use `input` rather than `Input`, `ouput` is
+3. Use `input` rather than `Input`, `output` is
 preferable likewise.
 4. Wrap the `input` and `output` into a string with `“”`.
 
