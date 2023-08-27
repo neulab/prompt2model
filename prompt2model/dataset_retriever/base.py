@@ -3,10 +3,26 @@
 from __future__ import annotations  # noqa FI58
 
 from abc import ABC, abstractmethod
+import dataclasses
 
 import datasets
 
 from prompt2model.prompt_parser import PromptSpec
+
+
+@dataclasses.dataclass
+class DatasetInfo:
+    """Store the dataset name, description, and query-dataset score for each dataset.
+
+    Args:
+        name: The name of the dataset.
+        description: The description of the dataset.
+        score: The retrieval score of the dataset.
+    """
+
+    name: str
+    description: str
+    score: float | None = None
 
 
 # pylint: disable=too-few-public-methods
