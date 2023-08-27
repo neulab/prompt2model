@@ -245,11 +245,14 @@ class DescriptionDatasetRetriever(DatasetRetriever):
     ) -> list[DatasetInfo]:
         """Retrieve the top datasets for a prompt.
 
+        Specifically, the datasets are scored using a dual-encoder retriever model
+        and the datasets with the highest similarity scores with the query are returned.
+
         Args:
             prompt_spec: A prompt whose instruction field we use to retrieve datasets.
 
         Returns:
-            A list of the top datasets for the prompt.
+            A list of the top datasets for the prompt according to retriever score.
         """
         query_vector = encode_text(
             self.encoder_model_name,
