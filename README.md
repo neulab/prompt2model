@@ -4,7 +4,7 @@
 ![Github Actions CI tests](https://github.com/neulab/prompt2model/actions/workflows/ci.yml/badge.svg)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
 [![Discord](https://img.shields.io/discord/1144245269001678959)](https://discord.gg/UCy9csEmFc)
-[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/neulab/prompt2model/blob/add_colab_demo/demo.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/neulab/prompt2model/blob/main/colab_demo.ipynb)
 
 `Prompt2Model` is a system that takes a natural
 language task description (like the prompts used for
@@ -48,7 +48,7 @@ this script on a device with a GPU for training
 your model.
 
 Also, you could run our [`colab_demo`](./colab_demo.ipynb)
-on [colab](https://colab.research.google.com/github/neulab/prompt2model/blob/add_colab_demo/demo.ipynb)
+on [colab](https://colab.research.google.com/github/neulab/prompt2model/blob/main/colab_demo.ipynb)
  or on your own device, which is easier for you to
 configure your parameters.
 
