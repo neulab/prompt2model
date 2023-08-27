@@ -1,6 +1,6 @@
 """Import DatasetRetriever classes."""
 from prompt2model.dataset_retriever.base import DatasetRetriever
-from prompt2model.dataset_retriever.hf_dataset_retriever import (
+from prompt2model.dataset_retriever.description_dataset_retriever import (
     DatasetInfo,
     DescriptionDatasetRetriever,
 )
