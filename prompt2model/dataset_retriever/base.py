@@ -2,8 +2,8 @@
 
 from __future__ import annotations  # noqa FI58
 
-from abc import ABC, abstractmethod
 import dataclasses
+from abc import ABC, abstractmethod
 
 import datasets
 
@@ -22,7 +22,7 @@ class DatasetInfo:
 
     name: str
     description: str
-    score: float | None = None
+    score: float
 
 
 # pylint: disable=too-few-public-methods

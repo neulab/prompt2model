@@ -243,6 +243,14 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         self,
         prompt_spec: PromptSpec,
     ) -> list[DatasetInfo]:
+        """Retrieve the top datasets for a prompt.
+
+        Args:
+            prompt_spec: A prompt whose instruction field we use to retrieve datasets.
+
+        Returns:
+            A list of the top datasets for the prompt.
+        """
         query_vector = encode_text(
             self.encoder_model_name,
             text_to_encode=prompt_spec.instruction,
