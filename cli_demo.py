@@ -281,7 +281,11 @@ def main():
         instruction = status["instruction"]
         t5_processor = TextualizeProcessor(has_encoder=True)
         t5_modified_dataset_dicts = t5_processor.process_dataset_lists(
-            instruction, dataset_list, train_proportion=0.6, val_proportion=0.2, maximum_exmaple_num=3000
+            instruction,
+            dataset_list,
+            train_proportion=0.6,
+            val_proportion=0.2,
+            maximum_exmaple_num=3000,
         )
         processor_logger = get_formatted_logger("DatasetProcessor")
         processor_logger.setLevel(logging.INFO)
