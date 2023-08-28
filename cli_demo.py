@@ -269,57 +269,19 @@ def main():
         trained_tokenizer_root.mkdir(parents=True, exist_ok=True)
         RESULT_PATH.mkdir(parents=True, exist_ok=True)
         dataset = load_from_disk(dataset_root)
-        num_examples = len(dataset)
-        num_train = min(int(num_examples * 0.6), 3000)
-        num_valid = min(int(num_examples * 0.2), 3000)
-        train_dataset = datasets.Dataset.from_dict(dataset[:num_train])
-        val_dataset = datasets.Dataset.from_dict(
-            dataset[num_train : num_train + num_valid]
-        )
-        test_dataset = datasets.Dataset.from_dict(dataset[num_train + num_valid :])
-        dataset_dict = datasets.DatasetDict(
-            {"train": train_dataset, "val": val_dataset, "test": test_dataset}
-        )
         if status["retrieved_dataset_dict_root"] is not None:
             cached_retrieved_dataset_dict = datasets.load_from_disk(
                 status["retrieved_dataset_dict_root"]
             )
-            validation_key = (
-                "validation" if "validation" in cached_retrieved_dataset_dict else "val"
-            )
-            if "validation" in cached_retrieved_dataset_dict:
-                validation_key = "validation"
-            elif "val" in cached_retrieved_dataset_dict:
-                validation_key = "val"
-            else:
-                validation_key = None
-            test_key = "test" if "test" in cached_retrieved_dataset_dict else None
-            retrieved_dataset_dict = datasets.DatasetDict(
-                {
-                    "train": datasets.Dataset.from_dict(
-                        cached_retrieved_dataset_dict["train"][:3000]
-                    ),
-                    "val": datasets.Dataset.from_dict(
-                        cached_retrieved_dataset_dict[validation_key][:1000]
-                    )
-                    if validation_key is not None
-                    else datasets.Dataset.from_dict({}),
-                    "test": datasets.Dataset.from_dict(
-                        cached_retrieved_dataset_dict["test"][:1000]
-                    )
-                    if test_key is not None
-                    else datasets.Dataset.from_dict({}),
-                }
-            )
-            DATASET_DICTS = [dataset_dict, retrieved_dataset_dict]
+            dataset_list = [dataset, cached_retrieved_dataset_dict["train"]]
         else:
-            DATASET_DICTS = [dataset_dict]
+            dataset_list = [dataset]
 
         line_print("Processing datasets.")
         instruction = status["instruction"]
         t5_processor = TextualizeProcessor(has_encoder=True)
-        t5_modified_dataset_dicts = t5_processor.process_dataset_dict(
-            instruction, DATASET_DICTS
+        t5_modified_dataset_dicts = t5_processor.process_dataset_lists(
+            instruction, dataset_list, 0.6, 0.2, 3000
         )
         processor_logger = get_formatted_logger("DatasetProcessor")
         processor_logger.setLevel(logging.INFO)

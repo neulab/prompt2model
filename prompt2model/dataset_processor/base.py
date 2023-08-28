@@ -152,7 +152,7 @@ class BaseProcessor(ABC):
         )
         return dataset_dict
 
-    def process_generated_and_retrieved_datasets(
+    def process_dataset_lists(
         self,
         instruction: str,
         dataset_list: list[datasets.Dataset],

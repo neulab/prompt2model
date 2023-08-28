@@ -511,16 +511,15 @@ RETRIEVED_TRAIN_DATASET = datasets.Dataset.from_dict(
 
 DATASET_LIST = [GENERATED_DATASET, RETRIEVED_TRAIN_DATASET]
 
-def test_raise_value_error_of_process_generated_and_retrieved_datasets():
+
+def test_raise_value_error_of_process_dataset_lists():
     """Test that the ValueError is correctly raised."""
     _, gpt2_tokenizer = create_gpt2_model_and_tokenizer()
     gpt_processor = TextualizeProcessor(
         has_encoder=False, eos_token=gpt2_tokenizer.eos_token
     )
     with pytest.raises(ValueError) as exc_info:
-        gpt_processor.process_generated_and_retrieved_datasets(
-            INSTRUCTION, DATASET_LIST, 0.8, 0.2
-        )
+        gpt_processor.process_dataset_lists(INSTRUCTION, DATASET_LIST, 0.8, 0.2)
         error_info = exc_info.value.args[0]
         assert (
             error_info
@@ -529,9 +528,7 @@ def test_raise_value_error_of_process_generated_and_retrieved_datasets():
 
     t5_processor = TextualizeProcessor(has_encoder=True)
     with pytest.raises(ValueError) as exc_info:
-        t5_processor.process_generated_and_retrieved_datasets(
-            INSTRUCTION, DATASET_LIST, 0.8, 0.2
-        )
+        t5_processor.process_dataset_lists(INSTRUCTION, DATASET_LIST, 0.8, 0.2)
         error_info = exc_info.value.args[0]
         assert (
             error_info
@@ -539,10 +536,10 @@ def test_raise_value_error_of_process_generated_and_retrieved_datasets():
         )
 
 
-def test_process_generated_and_retrieved_datasets():
-    """Test the `process_generated_and_retrieved_datasets` function."""
+def test_process_dataset_lists():
+    """Test the `process_dataset_lists` function."""
     processor = TextualizeProcessor(has_encoder=True)
-    modified_dataset_dicsts = processor.process_generated_and_retrieved_datasets(
+    modified_dataset_dicsts = processor.process_dataset_lists(
         INSTRUCTION, DATASET_LIST, 0.6, 0.2
     )
     expected_modified_generated_dataset_dict = datasets.DatasetDict(
@@ -619,10 +616,10 @@ def test_process_generated_and_retrieved_datasets():
     )
 
 
-def test_process_generated_and_retrieved_datasets_with_maximum_exmaple_num():
+def test_process_dataset_lists_with_maximum_exmaple_num():
     """Test the maximum_exmaple_num parameter."""
     processor = TextualizeProcessor(has_encoder=True)
-    modified_dataset_dicsts = processor.process_generated_and_retrieved_datasets(
+    modified_dataset_dicsts = processor.process_dataset_lists(
         INSTRUCTION, DATASET_LIST, 0.6, 0.2, 3000
     )
     # Before apply the maximum_exmaple_num, train_num = 6000,
