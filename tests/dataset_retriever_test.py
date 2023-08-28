@@ -3,6 +3,7 @@
 from __future__ import annotations  # noqa FI58
 
 import os
+import pickle
 import tempfile
 from unittest.mock import patch
 
@@ -32,17 +33,18 @@ def test_initialize_dataset_retriever():
 
 def test_encode_model_retriever():
     """Test loading a small Tevatron model."""
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".pkl") as f:
+    with tempfile.TemporaryDirectory() as tempdir:
+        temporary_file = os.path.join(tempdir, "search_index.pkl")
         retriever = DescriptionDatasetRetriever(
-            search_index_path=f.name,
+            search_index_path=temporary_file,
             first_stage_search_depth=3,
             max_search_depth=3,
             encoder_model_name=TINY_DUAL_ENCODER_NAME,
             dataset_info_file="test_helpers/dataset_index_tiny.json",
         )
-        model_vectors = retriever.encode_dataset_descriptions(
-            retriever.dataset_infos, f.name
-        )
+        retriever.initialize_search_index()
+        with open(temporary_file, "rb") as f:
+            model_vectors, _ = pickle.load(f)
         assert model_vectors.shape == (3, 128)
 
 
@@ -119,17 +121,17 @@ def mock_canonicalize_dataset(self, dataset_name: str) -> DatasetDict:
 
 
 @patch(
-    "prompt2model.dataset_retriever.hf_dataset_retriever.encode_text",
+    "prompt2model.dataset_retriever.description_dataset_retriever.encode_text",
     return_value=np.array([[1, 0, 0]]),
 )
 @patch.object(
     DescriptionDatasetRetriever,
-    "choose_dataset",
+    "choose_dataset_by_cli",
     new=mock_choose_dataset,
 )
 @patch.object(
     DescriptionDatasetRetriever,
-    "canonicalize_dataset",
+    "canonicalize_dataset_by_cli",
     new=mock_canonicalize_dataset,
 )
 def test_retrieve_dataset_dict_when_search_index_exists(encode_text):
@@ -151,7 +153,7 @@ def test_retrieve_dataset_dict_when_search_index_exists(encode_text):
 
         mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
         retrieved_dataset = retriever.retrieve_dataset_dict(mock_prompt)
-        assert encode_text.call_count == 1
+        assert encode_text.call_count == 2
         for split_name in ["train", "val", "test"]:
             assert split_name in retrieved_dataset
             split = retrieved_dataset[split_name]
@@ -163,25 +165,18 @@ def test_retrieve_dataset_dict_when_search_index_exists(encode_text):
             assert split[0]["output_col"] == "mammals"
 
 
-@patch.object(
-    DescriptionDatasetRetriever,
-    "encode_dataset_descriptions",
-    new=lambda self, dataset_infos, index_file_name: create_test_search_index(
-        index_file_name
-    ),
-)
 @patch(
-    "prompt2model.dataset_retriever.hf_dataset_retriever.encode_text",
+    "prompt2model.dataset_retriever.description_dataset_retriever.encode_text",
     return_value=np.array([[1, 0, 0]]),
 )
 @patch.object(
     DescriptionDatasetRetriever,
-    "choose_dataset",
+    "choose_dataset_by_cli",
     new=mock_choose_dataset,
 )
 @patch.object(
     DescriptionDatasetRetriever,
-    "canonicalize_dataset",
+    "canonicalize_dataset_by_cli",
     new=mock_canonicalize_dataset,
 )
 def test_retrieve_dataset_dict_without_existing_search_index(encode_text):
@@ -195,6 +190,7 @@ def test_retrieve_dataset_dict_without_existing_search_index(encode_text):
             encoder_model_name=TINY_DUAL_ENCODER_NAME,
             dataset_info_file="test_helpers/dataset_index_tiny.json",
         )
+        create_test_search_index(temporary_file)
         assert [info.name for info in retriever.dataset_infos] == [
             "search_qa",
             "squad",
@@ -202,7 +198,7 @@ def test_retrieve_dataset_dict_without_existing_search_index(encode_text):
         ]
         mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
         retrieved_dataset = retriever.retrieve_dataset_dict(mock_prompt)
-        assert encode_text.call_count == 1
+        assert encode_text.call_count == 2
         for split_name in ["train", "val", "test"]:
             assert split_name in retrieved_dataset
             split = retrieved_dataset[split_name]

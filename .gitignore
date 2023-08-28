@@ -2,6 +2,7 @@ __pycache__
 build
 dist
 prompt2model.egg-info
+.env
 .vscode
 .mypy_cache
 .pytest_cache
