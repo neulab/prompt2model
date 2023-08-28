@@ -509,6 +509,7 @@ RETRIEVED_TRAIN_DATASET = datasets.Dataset.from_dict(
     }
 )
 
+DATASET_LIST = [GENERATED_DATASET, RETRIEVED_TRAIN_DATASET]
 
 def test_raise_value_error_of_process_generated_and_retrieved_datasets():
     """Test that the ValueError is correctly raised."""
@@ -518,7 +519,7 @@ def test_raise_value_error_of_process_generated_and_retrieved_datasets():
     )
     with pytest.raises(ValueError) as exc_info:
         gpt_processor.process_generated_and_retrieved_datasets(
-            INSTRUCTION, GENERATED_DATASET, RETRIEVED_TRAIN_DATASET, 0.8, 0.2
+            INSTRUCTION, DATASET_LIST, 0.8, 0.2
         )
         error_info = exc_info.value.args[0]
         assert (
@@ -529,7 +530,7 @@ def test_raise_value_error_of_process_generated_and_retrieved_datasets():
     t5_processor = TextualizeProcessor(has_encoder=True)
     with pytest.raises(ValueError) as exc_info:
         t5_processor.process_generated_and_retrieved_datasets(
-            INSTRUCTION, GENERATED_DATASET, RETRIEVED_TRAIN_DATASET, 0.8, 0.2
+            INSTRUCTION, DATASET_LIST, 0.8, 0.2
         )
         error_info = exc_info.value.args[0]
         assert (
@@ -542,7 +543,7 @@ def test_process_generated_and_retrieved_datasets():
     """Test the `process_generated_and_retrieved_datasets` function."""
     processor = TextualizeProcessor(has_encoder=True)
     modified_dataset_dicsts = processor.process_generated_and_retrieved_datasets(
-        INSTRUCTION, GENERATED_DATASET, RETRIEVED_TRAIN_DATASET, 0.6, 0.2
+        INSTRUCTION, DATASET_LIST, 0.6, 0.2
     )
     expected_modified_generated_dataset_dict = datasets.DatasetDict(
         {
@@ -622,7 +623,7 @@ def test_process_generated_and_retrieved_datasets_with_maximum_exmaple_num():
     """Test the maximum_exmaple_num parameter."""
     processor = TextualizeProcessor(has_encoder=True)
     modified_dataset_dicsts = processor.process_generated_and_retrieved_datasets(
-        INSTRUCTION, GENERATED_DATASET, RETRIEVED_TRAIN_DATASET, 0.6, 0.2, 3000
+        INSTRUCTION, DATASET_LIST, 0.6, 0.2, 3000
     )
     # Before apply the maximum_exmaple_num, train_num = 6000,
     # val_num = 2000, test_num = 2000.
