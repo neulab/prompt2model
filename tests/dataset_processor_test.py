@@ -7,10 +7,13 @@ from unittest.mock import patch
 
 import datasets
 import pytest
-from transformers import AutoTokenizer
 
 from prompt2model.dataset_processor.textualize import TextualizeProcessor
-from test_helpers import are_dataset_dicts_identical, create_gpt2_model_and_tokenizer
+from test_helpers import (
+    are_dataset_dicts_identical,
+    create_gpt2_model_and_tokenizer,
+    create_t5_model_and_tokenizer,
+)
 
 logger = logging.getLogger("DatasetProcessor")
 
@@ -91,7 +94,7 @@ UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS = [
 
 def test_the_logging_for_provide_unnecessary_eos_token_for_t5():
     """Test the logger.info for unnecessary eos token for T5 model is logged."""
-    t5_tokenizer = AutoTokenizer.from_pretrained("t5-small")
+    _, t5_tokenizer = create_t5_model_and_tokenizer()
 
     with patch.object(logger, "info") as mock_info, patch.object(
         logger, "warning"
@@ -490,3 +493,210 @@ def test_empty_filter_decoder_only_style():
         )
     )
     gc.collect()
+
+
+GENERATED_DATASET = datasets.Dataset.from_dict(
+    {
+        "input_col": list(range(10000)),
+        "output_col": list(range(10000, 20000)),
+    }
+)
+
+RETRIEVED_TRAIN_DATASET = datasets.Dataset.from_dict(
+    {
+        "input_col": list(range(20000, 30000)),
+        "output_col": list(range(30000, 40000)),
+    }
+)
+
+
+def test_raise_value_error_of_process_generated_and_retrieved_datasets():
+    """Test that the ValueError is correctly raised."""
+    _, gpt2_tokenizer = create_gpt2_model_and_tokenizer()
+    gpt_processor = TextualizeProcessor(
+        has_encoder=False, eos_token=gpt2_tokenizer.eos_token
+    )
+    with pytest.raises(ValueError) as exc_info:
+        gpt_processor.process_generated_and_retrieved_datasets(
+            INSTRUCTION, GENERATED_DATASET, RETRIEVED_TRAIN_DATASET, 0.8, 0.2
+        )
+        error_info = exc_info.value.args[0]
+        assert (
+            error_info
+            == "train_proportion 0.8 + val_proportion 0.2 must be less than 1."
+        )
+
+    t5_processor = TextualizeProcessor(has_encoder=True)
+    with pytest.raises(ValueError) as exc_info:
+        t5_processor.process_generated_and_retrieved_datasets(
+            INSTRUCTION, GENERATED_DATASET, RETRIEVED_TRAIN_DATASET, 0.8, 0.2
+        )
+        error_info = exc_info.value.args[0]
+        assert (
+            error_info
+            == "train_proportion 0.8 + val_proportion 0.2 must be less than 1."
+        )
+
+
+def test_process_generated_and_retrieved_datasets():
+    """Test the `process_generated_and_retrieved_datasets` function."""
+    processor = TextualizeProcessor(has_encoder=True)
+    modified_dataset_dicsts = processor.process_generated_and_retrieved_datasets(
+        INSTRUCTION, GENERATED_DATASET, RETRIEVED_TRAIN_DATASET, 0.6, 0.2
+    )
+    expected_modified_generated_dataset_dict = datasets.DatasetDict(
+        {
+            "train": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 0>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(6000)
+                    ],
+                    "model_output": [f"{output}" for output in range(10000, 16000)],
+                }
+            ),
+            "val": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 0>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(6000, 8000)
+                    ],
+                    "model_output": [f"{output}" for output in range(16000, 18000)],
+                }
+            ),
+            "test": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 0>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(8000, 10000)
+                    ],
+                    "model_output": [f"{output}" for output in range(18000, 20000)],
+                }
+            ),
+        }
+    )
+    expected_modified_retrieved_dataset_dict = datasets.DatasetDict(
+        {
+            "train": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 1>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(20000, 26000)
+                    ],
+                    "model_output": [f"{output}" for output in range(30000, 36000)],
+                }
+            ),
+            "val": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 1>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(26000, 28000)
+                    ],
+                    "model_output": [f"{output}" for output in range(36000, 38000)],
+                }
+            ),
+            "test": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 1>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(28000, 30000)
+                    ],
+                    "model_output": [f"{output}" for output in range(38000, 40000)],
+                }
+            ),
+        }
+    )
+    assert all(
+        are_dataset_dicts_identical(raw, origin)
+        for (raw, origin) in zip(
+            [
+                expected_modified_generated_dataset_dict,
+                expected_modified_retrieved_dataset_dict,
+            ],
+            modified_dataset_dicsts,
+        )
+    )
+
+
+def test_process_generated_and_retrieved_datasets_with_maximum_exmaple_num():
+    """Test the maximum_exmaple_num parameter."""
+    processor = TextualizeProcessor(has_encoder=True)
+    modified_dataset_dicsts = processor.process_generated_and_retrieved_datasets(
+        INSTRUCTION, GENERATED_DATASET, RETRIEVED_TRAIN_DATASET, 0.6, 0.2, 3000
+    )
+    # Before apply the maximum_exmaple_num, train_num = 6000,
+    # val_num = 2000, test_num = 2000.
+    # After apply the maximum_exmaple_num, train_num = 3000,
+    # val_num = 2000, test_num = 2000.
+    expected_modified_generated_dataset_dict = datasets.DatasetDict(
+        {
+            "train": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 0>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(3000)
+                    ],
+                    "model_output": [f"{output}" for output in range(10000, 13000)],
+                }
+            ),
+            "val": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 0>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(3000, 5000)
+                    ],
+                    "model_output": [f"{output}" for output in range(13000, 15000)],
+                }
+            ),
+            "test": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 0>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(5000, 7000)
+                    ],
+                    "model_output": [f"{output}" for output in range(15000, 17000)],
+                }
+            ),
+        }
+    )
+    expected_modified_retrieved_dataset_dict = datasets.DatasetDict(
+        {
+            "train": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 1>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(20000, 23000)
+                    ],
+                    "model_output": [f"{output}" for output in range(30000, 33000)],
+                }
+            ),
+            "val": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 1>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(23000, 25000)
+                    ],
+                    "model_output": [f"{output}" for output in range(33000, 35000)],
+                }
+            ),
+            "test": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 1>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(25000, 27000)
+                    ],
+                    "model_output": [f"{output}" for output in range(35000, 37000)],
+                }
+            ),
+        }
+    )
+    assert all(
+        are_dataset_dicts_identical(raw, origin)
+        for (raw, origin) in zip(
+            [
+                expected_modified_generated_dataset_dict,
+                expected_modified_retrieved_dataset_dict,
+            ],
+            modified_dataset_dicsts,
+        )
+    )
