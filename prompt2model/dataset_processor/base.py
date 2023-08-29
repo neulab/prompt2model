@@ -171,7 +171,7 @@ class BaseProcessor(ABC):
         dataset_list: list[datasets.Dataset],
         train_proportion: float = 0.8,
         val_proportion: float = 0.1,
-        maximum_exmaple_num: int | None = None,
+        maximum_example_num: int | None = None,
     ) -> list[datasets.DatasetDict]:
         """Post-processes both the generated and retrieved datasets.
 
@@ -186,7 +186,7 @@ class BaseProcessor(ABC):
                 the DatasetGenerator or retrieved by the DatasetRetriever.
             train_proportion: The proportion of examples used for `train`.
             val_proportion: The proportion of examples used for `val`.
-            maxium_exmaple_num: The maximum number of examples to
+            maxium_example_num: The maximum number of examples to
                 be used for `train`, `val` and `test`.
 
         Returns:
@@ -206,7 +206,7 @@ class BaseProcessor(ABC):
 
         dataset_dicts = [
             self._split_dataset_into_dataset_dict(
-                each, train_proportion, val_proportion, maximum_exmaple_num
+                each, train_proportion, val_proportion, maximum_example_num
             )
             for each in dataset_list
         ]
