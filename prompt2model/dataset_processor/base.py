@@ -152,6 +152,19 @@ class BaseProcessor(ABC):
         )
         return dataset_dict
 
+    @staticmethod
+    def wrap_single_input(instruction: str, input: str):
+        """Wrap an input string into text2text fashion to be the input of model.
+
+        Args:
+            instruction: The instruction used as a prefix to explain the task.
+            input: An input string to be wrapped.
+
+        Return:
+                A wrapped input string.
+        """
+        return f"<task 0>{instruction}\nExample:\n{input}\nLabel:\n"
+
     def process_dataset_lists(
         self,
         instruction: str,
