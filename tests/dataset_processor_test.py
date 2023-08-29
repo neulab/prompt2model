@@ -622,9 +622,9 @@ def test_process_dataset_lists_with_maximum_example_num():
     modified_dataset_dicsts = processor.process_dataset_lists(
         INSTRUCTION, DATASET_LIST, 0.6, 0.2, 3000
     )
-    # Before apply the maximum_example_num, train_num = 6000,
+    # Before applying the maximum_example_num, train_num = 6000,
     # val_num = 2000, test_num = 2000.
-    # After apply the maximum_example_num, train_num = 3000,
+    # After applying the maximum_example_num, train_num = 3000,
     # val_num = 2000, test_num = 2000.
     expected_modified_generated_dataset_dict = datasets.DatasetDict(
         {
