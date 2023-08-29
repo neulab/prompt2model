@@ -1,10 +1,10 @@
-# prompt2model - Generate Deployable Models from Instructions
+# Prompt2Model - Generate Deployable Models from Instructions
 
 [![PyPI version](https://badge.fury.io/py/prompt2model.svg)](https://badge.fury.io/py/prompt2model)
 ![Github Actions CI tests](https://github.com/neulab/prompt2model/actions/workflows/ci.yml/badge.svg)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
 [![Discord](https://img.shields.io/discord/1144245269001678959)](https://discord.gg/UCy9csEmFc)
-[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/neulab/prompt2model/blob/main/colab_demo.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/neulab/prompt2model/blob/main/prompt2model_demo.ipynb)
 
 `Prompt2Model` is a system that takes a natural
 language task description (like the prompts used for
@@ -15,11 +15,22 @@ special-purpose model that is conducive for deployment.
 
 ## Quick Start
 
+### Notebook
+
+You can run our demo of `Prompt2Model` through a notebook:
+
+- [Open Locally](./prompt2model_demo.ipynb)
+- [Open in Colab](https://colab.research.google.com/github/neulab/prompt2model/blob/main/prompt2model_demo.ipynb)
+
+### Command Line
+
+You can also run through the command line.
+
 ```bash
 pip install prompt2model
 ```
 
-Our current `prompt2model` implementation uses
+Our current `Prompt2Model` implementation uses
 the OpenAI API. Accordingly, you need to:
 
 - Sign up on the OpenAI website and obtain an
@@ -37,7 +48,7 @@ export OPENAI_API_KEY=<your key>
 You can then run
 
 ```bash
-python cli_demo.py
+python prompt2model_demo.py
 ```
 
 to create a small model from a prompt, as shown in
@@ -46,11 +57,6 @@ device with an internet connection to access the OpenAI
 API. For best results, run
 this script on a device with a GPU for training
 your model.
-
-Also, you could run our [`colab_demo`](./colab_demo.ipynb)
-on [colab](https://colab.research.google.com/github/neulab/prompt2model/blob/main/colab_demo.ipynb)
- or on your own device, which is easier for you to
-configure your parameters.
 
 ## Demo
 
