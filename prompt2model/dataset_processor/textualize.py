@@ -41,7 +41,7 @@ class TextualizeProcessor(BaseProcessor):
             )
 
     @staticmethod
-    def post_process_example(
+    def _post_process_example(
         example: dict,
         instruction: str,
         task_id: int,

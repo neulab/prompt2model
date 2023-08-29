@@ -11,6 +11,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
+import nest_asyncio
 import openai
 from datasets import Dataset
 from tqdm import tqdm
@@ -26,6 +27,7 @@ from prompt2model.utils import (
     handle_openai_error,
 )
 
+nest_asyncio.apply()
 logger = get_formatted_logger("DatasetGenerator")
 
 
