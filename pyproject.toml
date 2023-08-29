@@ -44,6 +44,7 @@ dependencies = [
     "termcolor",
     "psutil",
     "protobuf==3.20.0",
+    "nest-asyncio",
 ]
 
 dynamic = ["version"]
