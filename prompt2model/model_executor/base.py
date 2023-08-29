@@ -61,13 +61,15 @@ class ModelExecutor(ABC):
         self.tokenizer_max_length = tokenizer_max_length
         self.sequence_max_length = sequence_max_length
         if self.sequence_max_length is None:
+            max_length = self.model.config.max_length
             logger.warning(
                 (
                     "The `max_length` in `self.model.generate` will default to "
-                    f"`self.model.config.max_length` ({self.model.config.max_length})"
+                    f"`self.model.config.max_length` ({max_length})"
                     " if `sequence_max_length` is `None`."
                 )
             )
+            self.sequence_max_length = max_length
         if hasattr(self.model.config, "max_position_embeddings"):
             max_embeddings = self.model.config.max_position_embeddings
             if sequence_max_length is not None and sequence_max_length > max_embeddings:
