@@ -3,6 +3,7 @@
 import gradio as gr
 import mdtex2html
 
+from prompt2model.dataset_processor import TextualizeProcessor
 from prompt2model.model_executor import GenerationModelExecutor
 from prompt2model.prompt_parser import OpenAIInstructionParser
 
@@ -35,7 +36,12 @@ def create_gradio(
 
     gr.Chatbot.postprocess = postprocess
 
-    def response(message):
+    def response(message: str):
+        if not message.startswith("<task 0>"):
+            dataset_processor = TextualizeProcessor(has_encoder=True)
+            message = dataset_processor.wrap_single_input(
+                prompt_parser.instruction, message
+            )
         response = model_executor.make_single_prediction(message)
         prediction = response.prediction
         return prediction
