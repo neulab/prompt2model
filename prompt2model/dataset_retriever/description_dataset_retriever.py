@@ -57,7 +57,8 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         self.dataset_infos: list[DatasetInfo] = []
         if not os.path.exists(self.dataset_info_file):
             # Download the dataset search index if one is not on disk already.
-            logger.info("Downlidng the dataset search index")
+            logger.info("Downloading the dataset search index")
+            os.makedirs(os.path.dirname(self.dataset_info_file), exist_ok=True)
             urllib.request.urlretrieve(
                 "http://phontron.com/data/prompt2model/dataset_index.json",
                 self.dataset_info_file,
