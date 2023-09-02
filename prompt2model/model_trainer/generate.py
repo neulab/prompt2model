@@ -4,7 +4,7 @@ from __future__ import annotations  # noqa FI58
 
 import os
 from itertools import takewhile
-from typing import Any
+from typing import Any, Optional 
 
 import datasets
 import torch
@@ -15,7 +15,14 @@ from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 
 from prompt2model.model_trainer.base import BaseTrainer
 from prompt2model.model_trainer.callback import ValidationCallback
-from prompt2model.utils import get_formatted_logger, seed_generator
+from prompt2model.param_selector import AutomamatedParamSelector
+from prompt2model.utils.config import MAX_SUPPORTED_BATCH_SIZE, DEFAULT_HYPERPARAMETERS
+
+from prompt2model.utils import (
+    get_formatted_logger, 
+    seed_generator,
+    get_max_batch_size
+)
 
 logger = get_formatted_logger("ModelTrainer")
 
@@ -32,6 +39,7 @@ class GenerationModelTrainer(BaseTrainer):
         executor_batch_size: int = 10,
         tokenizer_max_length: int = 512,
         sequence_max_length: int = 1024,
+        device: Optional[str]=None
     ):
         """Initializes a new instance of GenerationModelTrainer.
 
@@ -49,6 +57,9 @@ class GenerationModelTrainer(BaseTrainer):
                 allowed to generate when being evaluated on validation dataset.
                 Note that sequence_max_length might be scaled in the ModelExecutor
                 if it exceeds the model's max_embedding.
+            device: The device in which the operations should happen. It is ideal to 
+                use GPU. Hence this is Optional, where if no value is given, it will
+                be assumed that GPU is being used. 
         """
         self.has_encoder = has_encoder
         self.tokenizer_max_length = tokenizer_max_length
@@ -85,6 +96,12 @@ class GenerationModelTrainer(BaseTrainer):
         # the validation dataset after each epoch.
         self.validation_callback: ValidationCallback | None = None
         self.training_seed = seed_generator.get_seed()
+        
+        if device is None:
+            self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        else:
+            self.device = device
+
 
     def get_left_padding_length(cls, input_list, padding_token_id):
         """Get the left prefix length of the input list.
@@ -238,22 +255,36 @@ class GenerationModelTrainer(BaseTrainer):
 
     def train_model(
         self,
-        hyperparameter_choices: dict[str, Any],
         training_datasets: list[datasets.Dataset],
         validation_datasets: list[datasets.Dataset] | None = None,
+        hyperparameter_choices: dict | None = None,
+        hyperparameter_search_mode: Optional[str] = None,
+
     ) -> tuple[transformers.PreTrainedModel, transformers.PreTrainedTokenizer]:
         """Train a text generation model.
 
         Args:
-            hyperparameter_choices: A dictionary of hyperparameters for training.
             training_datasets: Training datasets with `input_col` and `model_output`.
             validation_datasets: Validation datasets during training. If not provided,
                 15% of training data will be spilt from training_datasets to validate.
+            hyperparameter_choices: A dictionary of hyperparameters for training. If not 
+                provided then it will choose from the default hyperparameters
+            hyperparameter_search_mode: This is used for doing hyperparameter search. There
+                are four modes:
+                - 'no': This means that the pipeline will not go through any hyperparameter
+                optimization.
+                - 'optuna': This means that the pipeline will use optuna trials for optimal
+                hyperparameter search.
+                - 'gpt': We will pass a special prompt chaining from our input prompt such that
+                an LLM can decide what could be optimal hyperparameters for the task. As these
+                LLMs are trained on several research paper, and task specific best hyperparameter
+                information might be embedded within them.
+                - 'hybrid': This will use both the results of optuna and gpt to find the best
+                hyperparameters. 
 
         Returns:
             A trained HuggingFace model and tokenizer.
         """
-        hyperparameter_choices_keys = set(hyperparameter_choices.keys())
         supported_keys = {
             "output_dir",
             "logging_steps",
@@ -267,24 +298,48 @@ class GenerationModelTrainer(BaseTrainer):
             "learning_rate",
             "test_size",
         }
-        assert hyperparameter_choices_keys.issubset(
-            supported_keys
-        ), f"Only support {supported_keys} as training parameters."
-        training_args = Seq2SeqTrainingArguments(
-            output_dir=hyperparameter_choices.get("output_dir", "./result"),
-            logging_steps=hyperparameter_choices.get("logging_steps", 1),
-            save_strategy=hyperparameter_choices.get("save_strategy", "no"),
-            num_train_epochs=hyperparameter_choices.get("num_train_epochs", 10),
-            per_device_train_batch_size=hyperparameter_choices.get(
-                "per_device_train_batch_size", 100
-            ),
-            warmup_steps=hyperparameter_choices.get("warmup_steps", 0),
-            weight_decay=hyperparameter_choices.get("weight_decay", 0.01),
-            logging_dir=hyperparameter_choices.get("logging_dir", "./result"),
-            learning_rate=hyperparameter_choices.get("learning_rate", 1e-4),
-            predict_with_generate=True,
-        )
-        evaluation_strategy = hyperparameter_choices.get("evaluation_strategy", "epoch")
+
+        if hyperparameter_search_mode is not None:
+            assert hyperparameter_search_mode in ["no", "gpt", "optuna", "hybrid"]
+
+        if hyperparameter_choices is not None:
+            assert  set(hyperparameter_choices.keys()).issubset(
+                supported_keys
+            ), f"Only support {supported_keys} as training parameters."
+        
+        if hyperparameter_choices is None:
+            logger.info("Using Default hyperparameters")
+            hyperparameter_choices = DEFAULT_HYPERPARAMETERS
+
+        # by default we do not do any additional computation for hyperparameter search
+        # however we need to decide whether should we keep no or gpt or optuna 
+        hyperparameter_search_mode = "no" if hyperparameter_search_mode is None else hyperparameter_search_mode
+
+        # all the default choices should be derived from DEFAULT_HYPERPARAMETERS
+        # as either all the parameters can come from the DEFAULT_HYPERPARAMETERS
+        # or user will provide all the hyper parameters, or there is a thrid case 
+        # where the user will provide the some hyper parameters and the others will 
+        # be derived from DEFAULT_HYPERPARAMETERS
+        
+        if hyperparameter_search_mode in ["no", "optuna"]:
+            training_args = Seq2SeqTrainingArguments(
+                output_dir=hyperparameter_choices.get("output_dir", DEFAULT_HYPERPARAMETERS.get('output_dir')),
+                logging_steps=hyperparameter_choices.get("logging_steps", DEFAULT_HYPERPARAMETERS.get('logging_steps')),
+                save_strategy=hyperparameter_choices.get("save_strategy", DEFAULT_HYPERPARAMETERS.get('save_strategy')),
+                num_train_epochs=hyperparameter_choices.get("num_train_epochs", DEFAULT_HYPERPARAMETERS.get('num_train_epochs')),
+                per_device_train_batch_size=hyperparameter_choices.get(
+                    "per_device_train_batch_size", DEFAULT_HYPERPARAMETERS.get('per_device_train_batch_size')
+                ),
+                warmup_steps=hyperparameter_choices.get("warmup_steps", DEFAULT_HYPERPARAMETERS.get('warmup_steps')),
+                weight_decay=hyperparameter_choices.get("weight_decay", DEFAULT_HYPERPARAMETERS.get('weight_decay')),
+                logging_dir=hyperparameter_choices.get("logging_dir", DEFAULT_HYPERPARAMETERS.get('logging_dir')),
+                learning_rate=hyperparameter_choices.get("learning_rate", DEFAULT_HYPERPARAMETERS.get('learning_rate')),
+                predict_with_generate=True,
+            )
+            evaluation_strategy = hyperparameter_choices.get("evaluation_strategy", DEFAULT_HYPERPARAMETERS.get('evaluation_strategy'))
+        elif hyperparameter_search_mode in ["gpt", "hybrid"]:
+            raise NotImplementedError("Methods: gpt and hybrid are not available right now")
+        
         if evaluation_strategy == "epoch":
             evaluate_after_epoch = True
         elif evaluation_strategy == "no":
@@ -294,13 +349,12 @@ class GenerationModelTrainer(BaseTrainer):
             evaluate_after_epoch = False
         else:
             logger.warning(
-                (
-                    "Only `epoch` evaluation strategy is supported"
-                    + ", the evaluation strategy will be set to evaluate_after_epoch."
-                )
+                ("Only `epoch` evaluation strategy is supported"
+                + ", the evaluation strategy will be set to evaluate_after_epoch.")
             )
             evaluate_after_epoch = True
-
+        
+        # build the training dataset 
         concatenated_training_dataset = concatenate_datasets(training_datasets)
 
         if evaluate_after_epoch is True:
@@ -353,6 +407,14 @@ class GenerationModelTrainer(BaseTrainer):
                     "The validation dataset is provided, but the evaluation is skipped."  # noqa E501
                 )
             train_dataset = self.tokenize_dataset(concatenated_training_dataset)
+
+        def model_init():
+            self.model = self.model.to(self.device)
+            return self.model
+        
+        # Using of optimizer is skipped right now
+        # Issue: RuntimeError: Passing a `model_init` is incompatible with providing the `optimizers` argument. 
+        # You should subclass `Trainer` and override the `create_optimizer_and_scheduler` method.
         trainer = Seq2SeqTrainer(
             model=self.model,
             args=training_args,
@@ -362,27 +424,49 @@ class GenerationModelTrainer(BaseTrainer):
             else transformers.DataCollatorForLanguageModeling(
                 tokenizer=self.tokenizer, mlm=False
             ),
-            optimizers=[
-                torch.optim.AdamW(
-                    params=self.model.parameters(), lr=training_args.learning_rate
-                ),
-                None,
-            ],
+            model_init=model_init
         )
+        
+        if hyperparameter_search_mode == "optuna":
+            # skipping initiation of max batch size for now
+            # decide whether n_trials should be provided inside the hyperparameter_choices
+            logger.info("Initializing automated hyperparameter search using Optuna")
 
+            best_run = trainer.hyperparameter_search(
+                n_trials = 20,
+                direction="maximize",
+                hp_space=AutomamatedParamSelector.search_hp_space_using_optuna
+            )
+
+            # set the best hyperparameter to the trainer args
+            for k, v in best_run.hyperparameters.items():
+                setattr(training_args, k, v)
+            
+            # defined the trainer once more
+            trainer = Seq2SeqTrainer(
+                model=self.model,
+                args=training_args,
+                train_dataset=train_dataset,
+                data_collator=transformers.DataCollatorForSeq2Seq(tokenizer=self.tokenizer)
+                if self.has_encoder
+                else transformers.DataCollatorForLanguageModeling(
+                    tokenizer=self.tokenizer, mlm=False
+                ),
+                # FIXME: choosing of optimizer should also go  inside hyperparameter search
+            )
+        
         if evaluate_after_epoch:
             assert val_dataset is not None, "Validation dataset is None"
             self.validation_callback = ValidationCallback(
-                trainer,
-                self.tokenizer,
-                val_dataset,
-                executor_batch_size=self.executor_batch_size,
-                tokenizer_max_length=self.tokenizer_max_length,
-                sequence_max_length=self.sequence_max_length,
-            )
-            trainer.add_callback(self.validation_callback)
+            trainer,
+            self.tokenizer,
+            val_dataset,
+            executor_batch_size=self.executor_batch_size,
+            tokenizer_max_length=self.tokenizer_max_length,
+            sequence_max_length=self.sequence_max_length,
+        )
+        trainer.add_callback(self.validation_callback)
 
         # Train the model
         trainer.train()
-        # Return the trained model and tokenizer
         return self.model, self.tokenizer
