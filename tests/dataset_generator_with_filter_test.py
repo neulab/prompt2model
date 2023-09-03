@@ -217,7 +217,7 @@ def test_openai_key_init():
     # Test case when the API key is not provided or set in the environment variable.
     os.environ["OPENAI_API_KEY"] = ""
     with pytest.raises(
-        AssertionError
+        ValueError
     ) as exc_info, tempfile.TemporaryDirectory() as cache_dir:
         _ = OpenAIDatasetGenerator(
             filter_duplicated_examples=True, cache_root=cache_dir

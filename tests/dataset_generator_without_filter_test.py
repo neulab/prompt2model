@@ -375,7 +375,7 @@ def test_openai_key_init():
     api_key = None
     os.environ["OPENAI_API_KEY"] = ""
     with pytest.raises(
-        AssertionError
+        ValueError
     ) as exc_info, tempfile.TemporaryDirectory() as cache_dir:
         _ = OpenAIDatasetGenerator(
             filter_duplicated_examples=False, cache_root=cache_dir

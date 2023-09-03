@@ -191,18 +191,20 @@ class GenerationModelTrainer(BaseTrainer):
                     length_of_output_encoding_ids_with_padding
                     - length_of_padding_in_output_encoding_id
                 )
-                assert (
-                    length_of_output_encoding_id_without_padding != 0
-                ), "One of the model_output is empty."
+                if length_of_output_encoding_id_without_padding == 0:
+                    logger.warning("One of the model_output is empty.")
                 label = [IGNORE_INDEX] * (
                     length_of_input_encoding_ids_with_padding
                     - length_of_output_encoding_id_without_padding
                 ) + input_id[-length_of_output_encoding_id_without_padding:]
-                assert (
+                if not (
                     len(label)
                     == length_of_input_encoding_ids_with_padding
                     == len(input_id)
-                )
+                ):
+                    raise ValueError(
+                        "The label and input_id are not aligned correctly."
+                    )
                 labels.append(label)
         else:
             # For T5 model, right padding token id should ignored by the loss
@@ -226,7 +228,10 @@ class GenerationModelTrainer(BaseTrainer):
                     if length_of_right_padding_in_output_encoding_id != 0
                     else output_encoding_id
                 )
-                assert len(label) == len(output_encoding_id)
+                if len(label) != len(output_encoding_id):
+                    raise ValueError(
+                        "The label and output_encoding_id are not aligned correctly."
+                    )
                 labels.append(label)
 
         preprocessed_dict = {
@@ -267,9 +272,8 @@ class GenerationModelTrainer(BaseTrainer):
             "learning_rate",
             "test_size",
         }
-        assert hyperparameter_choices_keys.issubset(
-            supported_keys
-        ), f"Only support {supported_keys} as training parameters."
+        if not hyperparameter_choices_keys.issubset(supported_keys):
+            raise ValueError(f"Only support {supported_keys} as training parameters.")
         training_args = Seq2SeqTrainingArguments(
             output_dir=hyperparameter_choices.get("output_dir", "./result"),
             logging_steps=hyperparameter_choices.get("logging_steps", 1),
@@ -328,9 +332,10 @@ class GenerationModelTrainer(BaseTrainer):
                         )
                     )
                     test_size = hyperparameter_choices.get("test_size", 0.15)
-                    assert (
-                        len(concatenated_training_dataset) > 1
-                    ), "Dataset should be larger than 1 to make train/test split."
+                    if len(concatenated_training_dataset) <= 1:
+                        raise ValueError(
+                            "Dataset should be larger than 1 to make train/test split."
+                        )
                     splitted_dataset = concatenated_training_dataset.train_test_split(
                         test_size=test_size, seed=self.training_seed
                     )
@@ -371,7 +376,10 @@ class GenerationModelTrainer(BaseTrainer):
         )
 
         if evaluate_after_epoch:
-            assert val_dataset is not None, "Validation dataset is None"
+            if val_dataset is None:
+                raise ValueError(
+                    "Validation dataset is None when evaluate_after_epoch is True."
+                )
             self.validation_callback = ValidationCallback(
                 trainer,
                 self.tokenizer,

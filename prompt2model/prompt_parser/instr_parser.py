@@ -46,12 +46,12 @@ class OpenAIInstructionParser(PromptSpec):
         self._instruction: str | None = None
         self._examples: str | None = None
         self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
-        assert self.api_key is not None and self.api_key != "", (
-            "API key must be provided"
-            + " or set the environment variable with `export OPENAI_API_KEY=<your key>`"
-        )
-        if max_api_calls:
-            assert max_api_calls > 0, "max_api_calls must be > 0"
+        if self.api_key is None or self.api_key != "":
+            raise ValueError(
+                "API key must be provided or set the environment variable with `export OPENAI_API_KEY=<your key>`"  # noqa E501
+            )
+        if max_api_calls and max_api_calls <= 0:
+            raise ValueError("max_api_calls must be > 0.")
         self.max_api_calls = max_api_calls
         self.api_call_counter = 0
 
