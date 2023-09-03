@@ -9,7 +9,8 @@ We appreciate your support and welcome your
 Installing dependencies:
 Run the following command to install all the dependencies after you have forked the repository.
 
-```pip install .[dev]
+```bash
+pip install .[dev]
 ```
 
 If you're a developer, it's recommended to install
