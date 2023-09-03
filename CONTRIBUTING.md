@@ -6,6 +6,12 @@ We appreciate your support and welcome your
 
 ## Developer Installation
 
+Installing dependencies:
+Run the following command to install all the dependencies after you have forked the repository.
+
+```pip install .[dev]
+```
+
 If you're a developer, it's recommended to install
 pre-commit hooks before starting your development
 work. These hooks ensure code formatting, linting,
