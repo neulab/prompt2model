@@ -22,6 +22,7 @@ logger = get_formatted_logger("ModelTrainer")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
+
 class GenerationModelTrainer(BaseTrainer):
     """Trainer for T5 type (encoder-decoder) model and GPT type (deocder-only) model."""
 

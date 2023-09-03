@@ -382,7 +382,7 @@ def test_openai_key_init():
         )
         assert str(exc_info.value) == (
             "API key must be provided or set the environment variable"
-            + " with `export OPENAI_API_KEY=<your key>`"
+            + " with `export OPENAI_API_KEY=<your key>`."
         )
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     with tempfile.TemporaryDirectory() as cache_dir:

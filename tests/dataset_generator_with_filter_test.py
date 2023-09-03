@@ -224,7 +224,7 @@ def test_openai_key_init():
         )
         assert str(exc_info.value) == (
             "API key must be provided or set the environment variable"
-            + " with `export OPENAI_API_KEY=<your key>`"
+            + " with `export OPENAI_API_KEY=<your key>`."
         )
 
     # Set a fake API key in the environment variable for testing purposes.

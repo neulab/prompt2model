@@ -453,7 +453,7 @@ def test_gpt_trainer_with_unsupported_parameter():
     """Test the error handler with an unsupported hyperparameter with GPT Trainer."""
     # In this test case we provide an unsupported parameter called `batch_size` to
     # `trainer.train_model`. The supported parameter is `per_device_train_batch_size`.
-    with pytest.raises(AssertionError) as exc_info:
+    with pytest.raises(ValueError) as exc_info:
         with tempfile.TemporaryDirectory() as cache_dir:
             trainer = GenerationModelTrainer(
                 "sshleifer/tiny-gpt2",
