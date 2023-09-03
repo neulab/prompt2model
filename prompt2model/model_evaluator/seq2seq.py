@@ -45,11 +45,17 @@ class Seq2SeqEvaluator(ModelEvaluator):
         if metrics is not None:
             metric_names = [each.name for each in metrics]
             metric_names = sorted(metric_names, key=lambda name: name.lower())
-            assert set(metric_names) < {
-                "chr_f",
-                "exact_match",
-                "bert_score",
-            }, "Metrics must be within chr_f, exact_match, and bert_score."
+            if not (
+                set(metric_names)
+                < {
+                    "chr_f",
+                    "exact_match",
+                    "bert_score",
+                }
+            ):
+                raise ValueError(
+                    "Metrics must be within chr_f, exact_match, and bert_score."
+                )
             logger.info(f"Using selected metrics: {', '.join(metric_names)}.")
         else:
             logger.info("Using default metrics of chr_f, exact_match and bert_score.")
@@ -62,9 +68,10 @@ class Seq2SeqEvaluator(ModelEvaluator):
         ground_truths = dataset[gt_column]
         # Extract the predicted strings from ModelOutput
         predicted_strings = [each.prediction for each in predictions]
-        assert len(ground_truths) == len(
-            predicted_strings
-        ), "The length of input dataset and predictions are not equal."
+        if len(ground_truths) != len(predicted_strings):
+            raise ValueError(
+                "The length of input dataset and predictions are not equal."
+            )
         # Initialize the metric values dictionary
         metric_values = {}
 

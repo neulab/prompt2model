@@ -338,7 +338,7 @@ def test_dataset_processor_decoder_only_style():
 
 def test_unexpected_dataset_split():
     """Test the error handler for unexpercted dataset split."""
-    with pytest.raises(AssertionError) as exc_info:
+    with pytest.raises(ValueError) as exc_info:
         _, gpt2_tokenizer = create_gpt2_model_and_tokenizer()
         gpt_processor = TextualizeProcessor(
             has_encoder=False, eos_token=gpt2_tokenizer.eos_token
@@ -352,7 +352,7 @@ def test_unexpected_dataset_split():
 
 def test_unexpected_columns():
     """Test the error handler for unexpercted dataset columns."""
-    with pytest.raises(AssertionError) as exc_info:
+    with pytest.raises(ValueError) as exc_info:
         _, gpt2_tokenizer = create_gpt2_model_and_tokenizer()
         gpt_processor = TextualizeProcessor(
             has_encoder=False, eos_token=gpt2_tokenizer.eos_token

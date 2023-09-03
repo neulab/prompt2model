@@ -264,11 +264,12 @@ def construct_meta_prompt(
         str: A prompt template, where the `instruction` and `examples` fields
             are filled in.
     """
-    assert template_type in [
+    if template_type not in [
         "SIMPLE",
         "MIDDLE",
         "COMPLEX",
-    ], "template_type must be SIMPLE, MIDDLE, or COMPLEX"
+    ]:
+        raise ValueError("template_type must be SIMPLE, MIDDLE, or COMPLEX")
     meta_examples = random.sample(META_EXAMPLES, 4)
     example_1, example_2, example_3, example_4 = meta_examples
     if template_type == "COMPLEX":

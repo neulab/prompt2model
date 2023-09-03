@@ -168,7 +168,7 @@ def test_evaluator_with_unsupported_metrics():
         evaluate.load("accuracy"),
         evaluate.load("exact_match"),
     ]
-    with pytest.raises(AssertionError) as exc_info:
+    with pytest.raises(ValueError) as exc_info:
         _ = evaluator.evaluate_model(
             dataset=VALIDATION_DATASET,
             gt_column="model_ouput",
@@ -191,7 +191,7 @@ def test_evaluator_handle_deficient_predictions():
     deficient_predictions = [
         ModelOutput("The cat is sleeping.", auxiliary_info={}),
     ]
-    with pytest.raises(AssertionError) as exc_info:
+    with pytest.raises(ValueError) as exc_info:
         _ = evaluator.evaluate_model(
             dataset=VALIDATION_DATASET,
             gt_column="model_ouput",

@@ -81,7 +81,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             cache_root: The root directory for caching generated examples.
 
         Raises:
-            AssertionError: If an API key is not provided and set as an environment
+            ValueError: If an API key is not provided and set as an environment
             variable, or if the 'max_api_calls' value is not greater than 0.
 
         Note:
@@ -99,12 +99,12 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             high-diversity examples later on by using a higher temperature.
         """
         self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
-        assert self.api_key is not None and self.api_key != "", (
-            "API key must be provided"
-            + " or set the environment variable with `export OPENAI_API_KEY=<your key>`"
-        )
-        if max_api_calls:
-            assert max_api_calls > 0, "max_api_calls must be > 0"
+        if self.api_key is None or self.api_key == "":
+            raise ValueError(
+                "API key must be provided or set the environment variable with `export OPENAI_API_KEY=<your key>`."  # noqa E501
+            )
+        if max_api_calls and max_api_calls <= 0:
+            raise ValueError("max_api_calls must be > 0")
         self.max_api_calls = max_api_calls
         self.api_call_counter = 0
         self.initial_temperature = initial_temperature
@@ -274,8 +274,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
         # Ensure that the generated_examples list is not empty
         # and the map is constructed correctly.
-        if len(generated_examples) != 0:
-            assert input_output_map
+        if len(generated_examples) != 0 and input_output_map is None:
+            raise ValueError("input_output_map is not correctly constructed.")
 
         return input_output_map
 
@@ -321,7 +321,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             Currently generated dataset with multi-vote filtering applied.
         """
         # Ensure that multi-vote filtering is enabled.
-        assert self.filter_duplicated_examples
+        if self.filter_duplicated_examples is False:
+            raise ValueError("Multi-vote filtering is not enabled.")
 
         filtered_inputs = []
         filtered_outputs = []
@@ -396,20 +397,15 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                 input_output_map
             )
 
-            # Ensure that the input-output map and
-            # the generated dataset are not empty.
-            if len(generated_examples) != 0:
-                assert input_output_map is not None
-                assert generated_dataset is not None
+            if len(generated_examples) != 0 and input_output_map is None:
+                raise ValueError("The input-output map is not correctly constructed.")
         else:
             # When filtering duplicated examples is not enabled,
             # use all_generated_examples_dataset directly.
             generated_dataset = all_generated_examples_dataset
 
-        # If there are generated examples, the
-        # generated_dataset should not be empty.
-        if len(generated_examples) != 0:
-            assert len(generated_dataset) > 0
+        if len(generated_examples) != 0 and len(generated_dataset) == 0:
+            raise ValueError("The generated dataset is not correctly constructed.")
 
         return all_generated_examples_dataset, generated_dataset
 
@@ -449,7 +445,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             max_api_calls,
         )
         # Ensure that the batch_size is a positive value.
-        assert batch_size > 0
+        if batch_size <= 0:
+            raise ValueError("Batch size must be greater than 0.")
         return batch_size
 
     def extract_responses(

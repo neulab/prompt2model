@@ -105,16 +105,18 @@ class DescriptionModelRetriever(ModelRetriever):
         self.load_model_info()
 
         if self.use_bm25:
-            assert (
-                search_index_path is None
-            ), "BM25 expects a search index path with a particular format, so search_index_path should not be provided."  # noqa E501
+            if search_index_path is not None:
+                raise ValueError(
+                    "BM25 expects a search index path with a particular format, so search_index_path should not be provided."  # noqa E501
+                )
             self.bm25_index_name = bm25_index_name
             self._search_index_path = retriv.paths.index_path(self.bm25_index_name)
         else:
             if search_index_path is not None:
-                assert not os.path.isdir(
-                    search_index_path
-                ), f"Search index must either be a valid file or not exist yet. But {search_index_path} is provided."  # noqa E501
+                if os.path.isdir(search_index_path):
+                    raise ValueError(
+                        f"Search index must either be a valid file or not exist yet. But {search_index_path} is provided."  # noqa E501
+                    )
                 self._search_index_path = search_index_path
 
     @property
@@ -204,7 +206,8 @@ class DescriptionModelRetriever(ModelRetriever):
 
     def bm25_index_exists(self):
         """Check if a BM25 index exists."""
-        assert self.use_bm25 is True
+        if self.use_bm25 is False:
+            raise ValueError("BM25 is not enabled.")
         return (
             os.path.exists(self._search_index_path)
             and len(os.listdir(self._search_index_path)) > 0
@@ -282,5 +285,6 @@ class DescriptionModelRetriever(ModelRetriever):
         top_models_list = sorted(top_models_list, key=lambda x: x.score, reverse=True)[
             : self.search_depth
         ]
-        assert len(top_models_list) > 0, "No models retrieved from search index."
+        if len(top_models_list) == 0:
+            raise ValueError("No models retrieved from search index.")
         return [model_info.name for model_info in top_models_list]

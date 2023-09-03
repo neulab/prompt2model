@@ -77,11 +77,12 @@ class BaseProcessor(ABC):
                     False otherwise.
 
             Raises:
-                AssertionError: If no 'input_col' or 'output_col' inside the example.
+                ValueError: If no 'input_col' or 'output_col' inside the example.
             """
-            assert (
-                "input_col" in example and "output_col" in example
-            ), "Example dictionary must have 'input_col' and 'output_col' keys."
+            if not ("input_col" in example and "output_col" in example):
+                raise ValueError(
+                    "Example dictionary must have 'input_col' and 'output_col' keys."
+                )
             # Check if 'input_col' and 'output_col' are both non-empty strings
             return bool(str(example["input_col"])) and bool(str(example["output_col"]))
 
