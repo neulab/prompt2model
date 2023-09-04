@@ -25,6 +25,28 @@ class BaseTrainer(ABC):
         )
         self.wandb = None
 
+    # we can also have another method called register_trainer
+    # or something like this
+    @property
+    def trainer(self) -> transformers.Trainer:
+        """Access the hugging face trainer class.
+
+        Returns:
+            transformers.Trainer: The hugging face trainer class
+        """
+        # Let's assume we are doing Seq2Seq training here
+        # Also assuming the model has encoder now, just for the sake of not changing the
+        # constructor's defination
+
+        def model_init():
+            return self.model
+
+        return transformers.Seq2SeqTrainer(
+            model=self.model,
+            data_collator=transformers.DataCollatorForSeq2Seq(tokenizer=self.tokenizer),
+            model_init=model_init,
+        )
+
     @abstractmethod
     def train_model(
         self,
