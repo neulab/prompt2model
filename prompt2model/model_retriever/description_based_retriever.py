@@ -107,7 +107,8 @@ class DescriptionModelRetriever(ModelRetriever):
         if self.use_bm25:
             if search_index_path is not None:
                 raise ValueError(
-                    "BM25 expects a search index path with a particular format, so search_index_path should not be provided."  # noqa E501
+                    "BM25 expects a search index path with a particular format, "
+                    "so search_index_path should not be provided."
                 )
             self.bm25_index_name = bm25_index_name
             self._search_index_path = retriv.paths.index_path(self.bm25_index_name)
@@ -115,7 +116,8 @@ class DescriptionModelRetriever(ModelRetriever):
             if search_index_path is not None:
                 if os.path.isdir(search_index_path):
                     raise ValueError(
-                        f"Search index must either be a valid file or not exist yet. But {search_index_path} is provided."  # noqa E501
+                        f"Search index must either be a valid file or not exist yet. "
+                        f"But {search_index_path} is provided."
                     )
                 self._search_index_path = search_index_path
 
@@ -206,7 +208,7 @@ class DescriptionModelRetriever(ModelRetriever):
 
     def bm25_index_exists(self):
         """Check if a BM25 index exists."""
-        if self.use_bm25 is False:
+        if not self.use_bm25:
             raise ValueError("BM25 is not enabled.")
         return (
             os.path.exists(self._search_index_path)

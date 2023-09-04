@@ -49,7 +49,8 @@ class ChatGPTAgent:
         openai.api_key = api_key if api_key else os.environ["OPENAI_API_KEY"]
         if openai.api_key is None or openai.api_key == "":
             raise ValueError(
-                "API key must be provided or set the environment variable with `export OPENAI_API_KEY=<your key>`."  # noqa E501
+                "API key must be provided or set the environment variable "
+                "with `export OPENAI_API_KEY=<your key>`."
             )
         self.model_name = model_name
 
