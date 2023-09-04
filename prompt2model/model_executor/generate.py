@@ -41,7 +41,8 @@ class GenerationModelExecutor(ModelExecutor):
             # sample from the intersection of the top-k tokens and the top-p tokens.
         ]:
             raise ValueError(
-                "Only support top_k/top_p/intersect sampling and beam/greedy search for inference."  # noqa E501
+                "Only top_k/top_p/intersect sampling and beam/greedy "
+                "search are supported for inference."
             )
         if generate_strategy == "greedy":
             output = self.model.generate(
@@ -195,7 +196,8 @@ class GenerationModelExecutor(ModelExecutor):
         inference_column = "model_input"
         if len(inference_dataset) != expected_num_examples:
             raise ValueError(
-                f"Expected {expected_num_examples} examples, but got {len(inference_dataset)}."  # noqa E501
+                f"Expected {expected_num_examples} examples, "
+                f"but got {len(inference_dataset)}."
             )
         model_output = self.make_prediction(
             inference_dataset,

@@ -101,7 +101,8 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
         if self.api_key is None or self.api_key == "":
             raise ValueError(
-                "API key must be provided or set the environment variable with `export OPENAI_API_KEY=<your key>`."  # noqa E501
+                "API key must be provided or set the environment variable "
+                "with `export OPENAI_API_KEY=<your key>`."
             )
         if max_api_calls and max_api_calls <= 0:
             raise ValueError("max_api_calls must be > 0")
@@ -321,7 +322,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             Currently generated dataset with multi-vote filtering applied.
         """
         # Ensure that multi-vote filtering is enabled.
-        if self.filter_duplicated_examples is False:
+        if not self.filter_duplicated_examples:
             raise ValueError("Multi-vote filtering is not enabled.")
 
         filtered_inputs = []
