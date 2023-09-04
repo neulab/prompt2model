@@ -53,6 +53,10 @@ dynamic = ["version"]
 test = [
     "pytest>=6.0.0",
 ]
+dev = [
+    "pytest",
+    "pre-commit"
+]
 
 [tool.hatch.build]
 include = [

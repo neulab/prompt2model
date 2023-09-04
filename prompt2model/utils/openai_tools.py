@@ -47,10 +47,10 @@ class ChatGPTAgent:
             model_name: Name fo the OpenAI model to use (by default, gpt-3.5-turbo).
         """
         openai.api_key = api_key if api_key else os.environ["OPENAI_API_KEY"]
-        assert openai.api_key is not None and openai.api_key != "", (
-            "API key must be provided"
-            + " or set the environment variable with `export OPENAI_API_KEY=<your key>`"
-        )
+        if openai.api_key is None or openai.api_key == "":
+            raise ValueError(
+                "API key must be provided or set the environment variable with `export OPENAI_API_KEY=<your key>`."  # noqa E501
+            )
         self.model_name = model_name
 
     def generate_one_openai_chat_completion(

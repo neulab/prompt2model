@@ -261,7 +261,8 @@ def main():
         line_print("The model has not been trained.")
         time.sleep(2)
         dataset_root = Path("generated_dataset")
-        assert dataset_root.exists()
+        if not dataset_root.exists():
+            raise ValueError("Dataset has not been generated yet.")
         trained_model_root = Path("result/trained_model")
         trained_tokenizer_root = Path("result/trained_tokenizer")
         RESULT_PATH = Path("result/result")

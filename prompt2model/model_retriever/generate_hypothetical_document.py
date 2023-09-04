@@ -424,8 +424,8 @@ def generate_hypothetical_model_description(
     Returns:
         a hypothetical model description for the user's instruction.
     """
-    if max_api_calls:
-        assert max_api_calls > 0, "max_api_calls must be > 0"
+    if max_api_calls and max_api_calls <= 0:
+        raise ValueError("max_api_calls must be > 0.")
     api_call_counter = 0
 
     instruction = prompt.instruction

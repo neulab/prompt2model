@@ -29,7 +29,8 @@ class PromptSpec(ABC):
     @property
     def instruction(self) -> str:
         """Return the natural language instruction parsed from the prompt."""
-        assert self._instruction is not None
+        if self._instruction is None:
+            raise ValueError("Instruction hasn't been parsed from the prompt.")
         return self._instruction
 
     @property

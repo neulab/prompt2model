@@ -200,11 +200,13 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             self._print_divider()
 
         dataset = datasets.load_dataset(dataset_name, chosen_config)
-        assert "train" in dataset
+        if "train" not in dataset:
+            raise ValueError("The dataset must contain a `train` split.")
         train_columns = dataset["train"].column_names
         train_columns_formatted = ", ".join(train_columns)
 
-        assert len(dataset["train"]) > 0
+        if len(dataset["train"]) == 0:
+            raise ValueError("train split is empty.")
         example_rows = json.dumps(dataset["train"][0], indent=4)
 
         self._print_divider()

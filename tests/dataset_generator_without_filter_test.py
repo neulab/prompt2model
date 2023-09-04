@@ -375,14 +375,14 @@ def test_openai_key_init():
     api_key = None
     os.environ["OPENAI_API_KEY"] = ""
     with pytest.raises(
-        AssertionError
+        ValueError
     ) as exc_info, tempfile.TemporaryDirectory() as cache_dir:
         _ = OpenAIDatasetGenerator(
             filter_duplicated_examples=False, cache_root=cache_dir
         )
         assert str(exc_info.value) == (
             "API key must be provided or set the environment variable"
-            + " with `export OPENAI_API_KEY=<your key>`"
+            + " with `export OPENAI_API_KEY=<your key>`."
         )
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     with tempfile.TemporaryDirectory() as cache_dir:
