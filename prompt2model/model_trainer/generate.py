@@ -4,25 +4,20 @@ from __future__ import annotations  # noqa FI58
 
 import os
 from itertools import takewhile
-from typing import Any, Optional 
+from typing import Any, Optional
 
 import datasets
 import torch
 import torch.nn as nn
 import transformers
-from datasets import concatenate_datasets
+from datasets import Dataset, concatenate_datasets
 from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 
 from prompt2model.model_trainer.base import BaseTrainer
 from prompt2model.model_trainer.callback import ValidationCallback
-from prompt2model.param_selector import AutomamatedParamSelector
-from prompt2model.utils.config import MAX_SUPPORTED_BATCH_SIZE, DEFAULT_HYPERPARAMETERS
-
-from prompt2model.utils import (
-    get_formatted_logger, 
-    seed_generator,
-    get_max_batch_size
-)
+from prompt2model.param_selector import OptunaParamSelector
+from prompt2model.utils import get_formatted_logger, seed_generator
+from prompt2model.utils.config import DEFAULT_HYPERPARAMETERS
 
 logger = get_formatted_logger("ModelTrainer")
 
@@ -39,7 +34,7 @@ class GenerationModelTrainer(BaseTrainer):
         executor_batch_size: int = 10,
         tokenizer_max_length: int = 512,
         sequence_max_length: int = 1024,
-        device: Optional[str]=None
+        device: Optional[str] = None,
     ):
         """Initializes a new instance of GenerationModelTrainer.
 
@@ -57,9 +52,9 @@ class GenerationModelTrainer(BaseTrainer):
                 allowed to generate when being evaluated on validation dataset.
                 Note that sequence_max_length might be scaled in the ModelExecutor
                 if it exceeds the model's max_embedding.
-            device: The device in which the operations should happen. It is ideal to 
+            device: The device in which the operations should happen. It is ideal to
                 use GPU. Hence this is Optional, where if no value is given, it will
-                be assumed that GPU is being used. 
+                be assumed that GPU is being used.
         """
         self.has_encoder = has_encoder
         self.tokenizer_max_length = tokenizer_max_length
@@ -96,12 +91,11 @@ class GenerationModelTrainer(BaseTrainer):
         # the validation dataset after each epoch.
         self.validation_callback: ValidationCallback | None = None
         self.training_seed = seed_generator.get_seed()
-        
+
         if device is None:
             self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         else:
             self.device = device
-
 
     def get_left_padding_length(cls, input_list, padding_token_id):
         """Get the left prefix length of the input list.
@@ -253,38 +247,175 @@ class GenerationModelTrainer(BaseTrainer):
         }
         return datasets.Dataset.from_dict(preprocessed_dict)
 
-    def train_model(
+    def search_best_hyperparameters(
         self,
-        training_datasets: list[datasets.Dataset],
-        validation_datasets: list[datasets.Dataset] | None = None,
-        hyperparameter_choices: dict | None = None,
-        hyperparameter_search_mode: Optional[str] = None,
+        hyperparameters: dict[str, Any],
+        training_datasets: Dataset,
+        validation_datasets: Dataset,
+    ) -> transformers.Trainer:
+        """Method to do automatic hyperparameter search.
 
-    ) -> tuple[transformers.PreTrainedModel, transformers.PreTrainedTokenizer]:
-        """Train a text generation model.
+        The hyperparameters in this argument will be the same as the hyperparameter
+        choices in the `train_model()` method. However the hyperparameter_choices
+        parameter should follow this schema as shown in this below example.
+
+        ```python
+        hyperparameter_choice = {
+            "static_hyperparameters": {
+                "output_dir": "./result",
+                "logging_steps": 1,
+                "save_strategy": "no",
+                "num_train_epochs": 10,
+                "per_device_train_batch_size": 100,
+                "warmup_steps": 0,
+                "weight_decay": 0.01,
+                "logging_dir": "./result",
+                "learning_rate": 1e-4,
+                "evaluation_strategy": "epoch",
+                "test_size": 0.15,
+            },
+
+            "optuna": {
+                "min_num_train_epochs": 5,
+                "max_num_train_epochs": 10,
+                "save_strategy": ["epoch", "steps", "no"],
+                "evaluation_strategy": ["epoch", "no"],
+                "per_device_train_batch_size": [4, 8, 16, 32],
+                "min_weight_decay": 1e-5,
+                "max_weight_decay": 1e-1,
+                "min_learning_rate": 1e-5,
+                "max_learning_rate": 1e-1,
+            },
+        }
+        ```
+        Here all of the keys are optional. Here are the criterions laid out:
+
+        :key `static_hyperparameters`: These are predefined hyperparameters solely
+        for doing model training and not hyperparameter search. if this key is not
+        provided then DEFAULT_HYPERPARAMETERS will be choosen to train model.
+
+        :key `optuna`: The presense of key will signify that the user
+        is interested in doing hyperparameter optimization using optuna library.
+        User has two options here. Either pass "default" as the value or another dict.
+        Passing "default" will mean that it will choose from the default hyperparameter
+        space else, it will be customizing the hyperparameter space with the provided
+        custom values.
+
+        :key `gpt`: Not implemented.
 
         Args:
+            hyperparameters (dict[str, Any]): A dictionary of hyperparameter choices
+                for trainer and optimization
+            training_datasets (Dataset): One or more training datasets for the trainer.
+            validation_datasets (Dataset): A dataset for computing validation metrics.
+
+        Returns:
+            transformers.Trainer: _description_
+        """
+        allowed_keys = {"static_hyperparameters", "optuna", "gpt", "hybrid"}
+        assert (
+            set(hyperparameters.keys()) <= allowed_keys
+        ), "Invalid keys in hyperparameter_choice"
+
+        if "optuna" in hyperparameters:
+            optuna_hp_selector = OptunaParamSelector(self)
+            optuna_value = hyperparameters["optuna"]
+            assert isinstance(
+                optuna_value, (str, dict)
+            ), "optuna value must be a string or a dictionary"
+
+            if isinstance(optuna_value, dict):
+                allowed_optuna_keys = set(
+                    optuna_hp_selector._example_hyperparameter_space.keys()
+                )
+                assert set(optuna_value.keys()) <= allowed_optuna_keys
+                optuna_hp_space_dict = optuna_value
+            else:
+                optuna_hp_space_dict = optuna_hp_selector._example_hyperparameter_space
+
+            logger.info("Starting hyperparameter search using Optuna")
+            return optuna_hp_selector.select_from_hyperparameters(
+                training_sets=training_datasets,
+                validation=validation_datasets,
+                hyperparameters=optuna_hp_space_dict,
+            )
+
+        elif "gpt" in hyperparameters:
+            raise NotImplementedError(
+                "Hyperparameter search using gpt is not yet implemented"
+            )
+
+        elif "hybrid" in hyperparameters:
+            raise NotImplementedError("Hybrid search is not yet implemented")
+
+        else:
+            raise KeyError("Invalid Key given")
+
+    def train_model(
+        self,
+        hyperparameter_choices: dict[str, Any],
+        training_datasets: list[datasets.Dataset],
+        validation_datasets: list[datasets.Dataset] | None = None,
+    ) -> tuple[transformers.PreTrainedModel, transformers.PreTrainedTokenizer]:
+        """Train a text generation model with automated hyperparameter search.
+
+        The hyperparameter_choices
+        parameter should follow this schema as shown in this below example.
+
+        ```python
+        hyperparameter_choice = {
+            "static_hyperparameters": {
+                "output_dir": "./result",
+                "logging_steps": 1,
+                "save_strategy": "no",
+                "num_train_epochs": 10,
+                "per_device_train_batch_size": 100,
+                "warmup_steps": 0,
+                "weight_decay": 0.01,
+                "logging_dir": "./result",
+                "learning_rate": 1e-4,
+                "evaluation_strategy": "epoch",
+                "test_size": 0.15,
+            },
+
+            "optuna": {
+                "min_num_train_epochs": 5,
+                "max_num_train_epochs": 10,
+                "save_strategy": ["epoch", "steps", "no"],
+                "evaluation_strategy": ["epoch", "no"],
+                "per_device_train_batch_size": [4, 8, 16, 32],
+                "min_weight_decay": 1e-5,
+                "max_weight_decay": 1e-1,
+                "min_learning_rate": 1e-5,
+                "max_learning_rate": 1e-1,
+            },
+        }
+        ```
+        Here all of the keys are optional. Here are the criterions laid out:
+
+        :key `static_hyperparameters`: These are predefined hyperparameters solely
+        for doing model training and not hyperparameter search. if this key is not
+        provided then DEFAULT_HYPERPARAMETERS will be choosen to train model.
+
+        :key `optuna`: The presense of key will signify that the user
+        is interested in doing hyperparameter optimization using optuna library.
+        User has two options here. Either pass "default" as the value or another dict.
+        Passing "default" will mean that it will choose from the default hyperparameter
+        space else, it will be customizing the hyperparameter space with the provided
+        custom values.
+
+        :key `gpt`: Not implemented.
+
+        Args:
+            hyperparameter_choices: A dictionary of hyperparameters for training.
             training_datasets: Training datasets with `input_col` and `model_output`.
             validation_datasets: Validation datasets during training. If not provided,
                 15% of training data will be spilt from training_datasets to validate.
-            hyperparameter_choices: A dictionary of hyperparameters for training. If not 
-                provided then it will choose from the default hyperparameters
-            hyperparameter_search_mode: This is used for doing hyperparameter search. There
-                are four modes:
-                - 'no': This means that the pipeline will not go through any hyperparameter
-                optimization.
-                - 'optuna': This means that the pipeline will use optuna trials for optimal
-                hyperparameter search.
-                - 'gpt': We will pass a special prompt chaining from our input prompt such that
-                an LLM can decide what could be optimal hyperparameters for the task. As these
-                LLMs are trained on several research paper, and task specific best hyperparameter
-                information might be embedded within them.
-                - 'hybrid': This will use both the results of optuna and gpt to find the best
-                hyperparameters. 
 
         Returns:
             A trained HuggingFace model and tokenizer.
         """
+        top_level_supported_keys = {"static_hyperparameters", "optuna", "gpt", "hybrid"}
         supported_keys = {
             "output_dir",
             "logging_steps",
@@ -299,47 +430,24 @@ class GenerationModelTrainer(BaseTrainer):
             "test_size",
         }
 
-        if hyperparameter_search_mode is not None:
-            assert hyperparameter_search_mode in ["no", "gpt", "optuna", "hybrid"]
-
         if hyperparameter_choices is not None:
-            assert  set(hyperparameter_choices.keys()).issubset(
-                supported_keys
-            ), f"Only support {supported_keys} as training parameters."
-        
-        if hyperparameter_choices is None:
-            logger.info("Using Default hyperparameters")
-            hyperparameter_choices = DEFAULT_HYPERPARAMETERS
+            assert set(hyperparameter_choices.keys()).issubset(
+                top_level_supported_keys
+            ), f"Only support {top_level_supported_keys} as training parameters."
 
-        # by default we do not do any additional computation for hyperparameter search
-        # however we need to decide whether should we keep no or gpt or optuna 
-        hyperparameter_search_mode = "no" if hyperparameter_search_mode is None else hyperparameter_search_mode
+        if "static_hyperparameters" in hyperparameter_choices:
+            assert set(
+                hyperparameter_choices["static_hyperparameters"].keys()
+            ).issubset(supported_keys)
+        else:
+            # matter of discussion whether we want to keep static_hyperparams
+            # as required arg
 
-        # all the default choices should be derived from DEFAULT_HYPERPARAMETERS
-        # as either all the parameters can come from the DEFAULT_HYPERPARAMETERS
-        # or user will provide all the hyper parameters, or there is a thrid case 
-        # where the user will provide the some hyper parameters and the others will 
-        # be derived from DEFAULT_HYPERPARAMETERS
-        
-        if hyperparameter_search_mode in ["no", "optuna"]:
-            training_args = Seq2SeqTrainingArguments(
-                output_dir=hyperparameter_choices.get("output_dir", DEFAULT_HYPERPARAMETERS.get('output_dir')),
-                logging_steps=hyperparameter_choices.get("logging_steps", DEFAULT_HYPERPARAMETERS.get('logging_steps')),
-                save_strategy=hyperparameter_choices.get("save_strategy", DEFAULT_HYPERPARAMETERS.get('save_strategy')),
-                num_train_epochs=hyperparameter_choices.get("num_train_epochs", DEFAULT_HYPERPARAMETERS.get('num_train_epochs')),
-                per_device_train_batch_size=hyperparameter_choices.get(
-                    "per_device_train_batch_size", DEFAULT_HYPERPARAMETERS.get('per_device_train_batch_size')
-                ),
-                warmup_steps=hyperparameter_choices.get("warmup_steps", DEFAULT_HYPERPARAMETERS.get('warmup_steps')),
-                weight_decay=hyperparameter_choices.get("weight_decay", DEFAULT_HYPERPARAMETERS.get('weight_decay')),
-                logging_dir=hyperparameter_choices.get("logging_dir", DEFAULT_HYPERPARAMETERS.get('logging_dir')),
-                learning_rate=hyperparameter_choices.get("learning_rate", DEFAULT_HYPERPARAMETERS.get('learning_rate')),
-                predict_with_generate=True,
-            )
-            evaluation_strategy = hyperparameter_choices.get("evaluation_strategy", DEFAULT_HYPERPARAMETERS.get('evaluation_strategy'))
-        elif hyperparameter_search_mode in ["gpt", "hybrid"]:
-            raise NotImplementedError("Methods: gpt and hybrid are not available right now")
-        
+            hyperparameter_choices["static_hyperparameters"] = DEFAULT_HYPERPARAMETERS
+
+        evaluation_strategy = hyperparameter_choices["static_hyperparameters"].get(
+            "evaluation_strategy", "epoch"
+        )
         if evaluation_strategy == "epoch":
             evaluate_after_epoch = True
         elif evaluation_strategy == "no":
@@ -349,12 +457,14 @@ class GenerationModelTrainer(BaseTrainer):
             evaluate_after_epoch = False
         else:
             logger.warning(
-                ("Only `epoch` evaluation strategy is supported"
-                + ", the evaluation strategy will be set to evaluate_after_epoch.")
+                (
+                    "Only `epoch` evaluation strategy is supported"
+                    + ", the evaluation strategy will be set to evaluate_after_epoch."
+                )
             )
             evaluate_after_epoch = True
-        
-        # build the training dataset 
+
+        # build the training dataset
         concatenated_training_dataset = concatenate_datasets(training_datasets)
 
         if evaluate_after_epoch is True:
@@ -381,7 +491,9 @@ class GenerationModelTrainer(BaseTrainer):
                             + " The training dataset will be split to create the validation dataset."  # noqa E501
                         )
                     )
-                    test_size = hyperparameter_choices.get("test_size", 0.15)
+                    test_size = hyperparameter_choices["static_hyperparameters"].get(
+                        "test_size", 0.15
+                    )
                     assert (
                         len(concatenated_training_dataset) > 1
                     ), "Dataset should be larger than 1 to make train/test split."
@@ -408,64 +520,82 @@ class GenerationModelTrainer(BaseTrainer):
                 )
             train_dataset = self.tokenize_dataset(concatenated_training_dataset)
 
-        def model_init():
-            self.model = self.model.to(self.device)
-            return self.model
-        
-        # Using of optimizer is skipped right now
-        # Issue: RuntimeError: Passing a `model_init` is incompatible with providing the `optimizers` argument. 
-        # You should subclass `Trainer` and override the `create_optimizer_and_scheduler` method.
-        trainer = Seq2SeqTrainer(
-            model=self.model,
-            args=training_args,
-            train_dataset=train_dataset,
-            data_collator=transformers.DataCollatorForSeq2Seq(tokenizer=self.tokenizer)
-            if self.has_encoder
-            else transformers.DataCollatorForLanguageModeling(
-                tokenizer=self.tokenizer, mlm=False
-            ),
-            model_init=model_init
-        )
-        
-        if hyperparameter_search_mode == "optuna":
-            # skipping initiation of max batch size for now
-            # decide whether n_trials should be provided inside the hyperparameter_choices
-            logger.info("Initializing automated hyperparameter search using Optuna")
-
-            best_run = trainer.hyperparameter_search(
-                n_trials = 20,
-                direction="maximize",
-                hp_space=AutomamatedParamSelector.search_hp_space_using_optuna
+        if "optuna" in hyperparameter_choices:
+            trainer = self.search_best_hyperparameters(
+                hyperparameters=hyperparameter_choices,
+                training_datasets=train_dataset,
+                validation_datasets=validation_datasets,
             )
 
-            # set the best hyperparameter to the trainer args
-            for k, v in best_run.hyperparameters.items():
-                setattr(training_args, k, v)
-            
-            # defined the trainer once more
+        else:
+            training_args = Seq2SeqTrainingArguments(
+                output_dir=hyperparameter_choices["static_hyperparameters"].get(
+                    "output_dir", DEFAULT_HYPERPARAMETERS.get("output_dir")
+                ),
+                logging_steps=hyperparameter_choices["static_hyperparameters"].get(
+                    "logging_steps", DEFAULT_HYPERPARAMETERS.get("logging_steps")
+                ),
+                save_strategy=hyperparameter_choices["static_hyperparameters"].get(
+                    "save_strategy", DEFAULT_HYPERPARAMETERS.get("save_strategy")
+                ),
+                num_train_epochs=hyperparameter_choices["static_hyperparameters"].get(
+                    "num_train_epochs", DEFAULT_HYPERPARAMETERS.get("num_train_epochs")
+                ),
+                per_device_train_batch_size=hyperparameter_choices[
+                    "static_hyperparameters"
+                ].get(
+                    "per_device_train_batch_size",
+                    DEFAULT_HYPERPARAMETERS.get("per_device_train_batch_size"),
+                ),
+                warmup_steps=hyperparameter_choices["static_hyperparameters"].get(
+                    "warmup_steps", DEFAULT_HYPERPARAMETERS.get("warmup_steps")
+                ),
+                weight_decay=hyperparameter_choices["static_hyperparameters"].get(
+                    "weight_decay", DEFAULT_HYPERPARAMETERS.get("weight_decay")
+                ),
+                logging_dir=hyperparameter_choices["static_hyperparameters"].get(
+                    "logging_dir", DEFAULT_HYPERPARAMETERS.get("logging_dir")
+                ),
+                learning_rate=hyperparameter_choices["static_hyperparameters"].get(
+                    "learning_rate", DEFAULT_HYPERPARAMETERS.get("learning_rate")
+                ),
+                predict_with_generate=True,
+            )
             trainer = Seq2SeqTrainer(
                 model=self.model,
                 args=training_args,
                 train_dataset=train_dataset,
-                data_collator=transformers.DataCollatorForSeq2Seq(tokenizer=self.tokenizer)
+                data_collator=transformers.DataCollatorForSeq2Seq(
+                    tokenizer=self.tokenizer
+                )
                 if self.has_encoder
                 else transformers.DataCollatorForLanguageModeling(
                     tokenizer=self.tokenizer, mlm=False
                 ),
-                # FIXME: choosing of optimizer should also go  inside hyperparameter search
+                optimizers=[
+                    torch.optim.AdamW(
+                        params=self.model.parameters(), lr=training_args.learning_rate
+                    ),
+                    None,
+                ],
             )
-        
+
         if evaluate_after_epoch:
+            print(val_dataset)
             assert val_dataset is not None, "Validation dataset is None"
             self.validation_callback = ValidationCallback(
-            trainer,
-            self.tokenizer,
-            val_dataset,
-            executor_batch_size=self.executor_batch_size,
-            tokenizer_max_length=self.tokenizer_max_length,
-            sequence_max_length=self.sequence_max_length,
-        )
-        trainer.add_callback(self.validation_callback)
+                trainer,
+                self.tokenizer,
+                val_dataset,
+                executor_batch_size=self.executor_batch_size,
+                tokenizer_max_length=self.tokenizer_max_length,
+                sequence_max_length=self.sequence_max_length,
+            )
+
+        # Not at all sure when uncommenting this
+        # I am getting a test error of
+        # NoneType' object has no attribute 'on_train_begin'
+        # trainer.add_callback(self.validation_callback)
 
         # Train the model
         trainer.train()
