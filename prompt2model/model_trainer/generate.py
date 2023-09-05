@@ -397,7 +397,7 @@ class GenerationModelTrainer(BaseTrainer):
         for doing model training and not hyperparameter search. if this key is not
         provided then DEFAULT_HYPERPARAMETERS will be choosen to train model.
 
-        :key `optuna`: The presense of key will signify that the user
+        :key `optuna`: The presence of this key signifies that the user
         is interested in doing hyperparameter optimization using optuna library.
         User has two options here. Either pass "default" as the value or another dict.
         Passing "default" will mean that it will choose from the default hyperparameter
