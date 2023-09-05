@@ -30,7 +30,7 @@ class BaseTrainer(ABC):
         """Access the Hugging Face trainer class.
 
         Returns:
-            transformers.Trainer: The hugging face trainer class
+            transformers.Trainer: The Hugging Face trainer class
         """
         # Let's assume we are doing Seq2Seq training here
         # Also assuming the model has encoder now, just for the sake of not changing the
