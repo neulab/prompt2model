@@ -25,8 +25,6 @@ class BaseTrainer(ABC):
         )
         self.wandb = None
 
-    # we can also have another method called register_trainer
-    # or something like this
     @property
     def trainer(self) -> transformers.Trainer:
         """Access the Hugging Face trainer class.
