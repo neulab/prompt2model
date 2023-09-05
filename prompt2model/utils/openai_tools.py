@@ -9,6 +9,7 @@ import os
 import time
 
 import aiolimiter
+from litellm import completion, acompletion
 import openai
 import openai.error
 import tiktoken
@@ -78,7 +79,7 @@ class ChatGPTAgent:
         Returns:
             A response object.
         """
-        response = openai.ChatCompletion.create(
+        response = completion(
             model=self.model_name,
             messages=[
                 {"role": "user", "content": f"{prompt}"},
@@ -124,7 +125,7 @@ class ChatGPTAgent:
             async with limiter:
                 for _ in range(3):
                     try:
-                        return await openai.ChatCompletion.acreate(
+                        return await acompletion(
                             model=model,
                             messages=messages,
                             temperature=temperature,
