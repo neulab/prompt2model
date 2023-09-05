@@ -52,9 +52,9 @@ class GenerationModelTrainer(BaseTrainer):
                 allowed to generate when being evaluated on validation dataset.
                 Note that sequence_max_length might be scaled in the ModelExecutor
                 if it exceeds the model's max_embedding.
-            device: The device in which the operations should happen. It is ideal to
-                use GPU. Hence this is Optional, where if no value is given, it will
-                be assumed that GPU is being used.
+            device: The device in which the operations should happen. If not set, we
+                will infer the right device to use ("cuda:0" if cuda is available, 
+                otherwise "cpu").
         """
         self.has_encoder = has_encoder
         self.tokenizer_max_length = tokenizer_max_length
