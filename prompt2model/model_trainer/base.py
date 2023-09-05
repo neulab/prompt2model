@@ -32,9 +32,7 @@ class BaseTrainer(ABC):
         Returns:
             transformers.Trainer: The Hugging Face trainer class
         """
-        # Let's assume we are doing Seq2Seq training here
-        # Also assuming the model has encoder now, just for the sake of not changing the
-        # constructor's defination
+        # Assume we are doing Seq2Seq training here.
 
         def model_init():
             return self.model
