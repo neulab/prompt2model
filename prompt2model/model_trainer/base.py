@@ -29,7 +29,7 @@ class BaseTrainer(ABC):
     # or something like this
     @property
     def trainer(self) -> transformers.Trainer:
-        """Access the hugging face trainer class.
+        """Access the Hugging Face trainer class.
 
         Returns:
             transformers.Trainer: The hugging face trainer class
