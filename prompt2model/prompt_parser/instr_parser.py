@@ -12,12 +12,7 @@ from prompt2model.prompt_parser.base import PromptSpec, TaskType
 from prompt2model.prompt_parser.instr_parser_prompt import (  # isort: split
     construct_prompt_for_instruction_parsing,
 )
-from prompt2model.utils import (
-    OPENAI_ERRORS,
-    ChatGPTAgent,
-    get_formatted_logger,
-    handle_openai_error,
-)
+from prompt2model.utils import ChatGPTAgent, get_formatted_logger
 
 logger = get_formatted_logger("PromptParser")
 
@@ -100,29 +95,31 @@ class OpenAIInstructionParser(PromptSpec):
 
         chat_api = ChatGPTAgent(self.api_key)
         while True:
-            try:
-                self.api_call_counter += 1
-                response = chat_api.generate_one_openai_chat_completion(
-                    parsing_prompt_for_chatgpt,
-                    temperature=0,
-                    presence_penalty=0,
-                    frequency_penalty=0,
-                )
-                extraction = self.extract_response(response)
-                if extraction is not None:
-                    self._instruction, self._examples = extraction
-                    return None
-                else:
-                    if (
-                        self.max_api_calls
-                        and self.api_call_counter == self.max_api_calls
-                    ):
-                        logger.warning(
-                            "Maximum number of API calls reached for PromptParser."
-                        )
-                        return None
-            except OPENAI_ERRORS as e:
-                self.api_call_counter = handle_openai_error(e, self.api_call_counter)
+            self.api_call_counter += 1
+            response = chat_api.generate_one_openai_chat_completion(
+                parsing_prompt_for_chatgpt,
+                temperature=0,
+                presence_penalty=0,
+                frequency_penalty=0,
+            )
+
+            if isinstance(response, Exception):
+                extraction = None
+
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
                     logger.error("Maximum number of API calls reached.")
-                    raise ValueError("Maximum number of API calls reached.") from e
+                    raise ValueError(
+                        "Maximum number of API calls reached."
+                    ) from response
+            else:
+                extraction = self.extract_response(response)
+
+            if extraction is not None:
+                self._instruction, self._examples = extraction
+                return None
+            else:
+                if self.max_api_calls and self.api_call_counter == self.max_api_calls:
+                    logger.warning(
+                        "Maximum number of API calls reached for PromptParser."
+                    )
+                    return None

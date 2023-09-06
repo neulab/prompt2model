@@ -78,16 +78,21 @@ class ChatGPTAgent:
         Returns:
             A response object.
         """
-        response = openai.ChatCompletion.create(
-            model=self.model_name,
-            messages=[
-                {"role": "user", "content": f"{prompt}"},
-            ],
-            temperature=temperature,
-            presence_penalty=presence_penalty,
-            frequency_penalty=frequency_penalty,
-        )
-        return response
+        try:
+            response = openai.ChatCompletion.create(
+                model=self.model_name,
+                messages=[
+                    {"role": "user", "content": f"{prompt}"},
+                ],
+                temperature=temperature,
+                presence_penalty=presence_penalty,
+                frequency_penalty=frequency_penalty,
+            )
+            return response
+        except OPENAI_ERRORS as e:
+            err = handle_openai_error(e)
+
+        return err
 
     async def generate_batch_openai_chat_completion(
         self,
@@ -179,7 +184,7 @@ class ChatGPTAgent:
         return responses
 
 
-def handle_openai_error(e, api_call_counter):
+def handle_openai_error(e, api_call_counter=0):
     """Handle OpenAI errors or related errors that the OpenAI API may raise.
 
     Args:
@@ -200,7 +205,7 @@ def handle_openai_error(e, api_call_counter):
 
     if isinstance(e, OPENAI_ERRORS):
         # For these errors, we can increment a counter and retry the API call.
-        return api_call_counter
+        return e
     else:
         # For all other errors, immediately throw an exception.
         raise e
