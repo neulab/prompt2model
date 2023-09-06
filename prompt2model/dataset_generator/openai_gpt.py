@@ -98,11 +98,11 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             learning during generation. This allows us to achieve high-quality,
             high-diversity examples later on by using a higher temperature.
         """
-        self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
+        self.api_key: str | None = api_key if api_key else self.validate_environment()
         if self.api_key is None or self.api_key == "":
             raise ValueError(
                 "API key must be provided or set the environment variable "
-                "with `export OPENAI_API_KEY=<your key>`."
+                "e.g. `export OPENAI_API_KEY=<your key>`."
             )
         if max_api_calls and max_api_calls <= 0:
             raise ValueError("max_api_calls must be > 0")
@@ -129,6 +129,35 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.requests_per_minute = requests_per_minute
         self.filter_duplicated_examples = filter_duplicated_examples
         self.cache_root = Path(cache_root)
+
+    def validate_environment(self):
+        """Check if any of the required API keys are present in the environment.
+
+        Returns:
+            str or None: The API key value if found in the environment, else None.
+        """
+        api_key = None
+        if "OPENAI_API_KEY" in os.environ:
+            api_key = os.getenv("OPENAI_API_KEY")
+        elif "ANTHROPIC_API_KEY" in os.environ:
+            api_key = os.getenv("ANTHROPIC_API_KEY")
+        elif "REPLICATE_API_KEY" in os.environ:
+            api_key = os.getenv("REPLICATE_API_KEY")
+        elif "AZURE_API_KEY" in os.environ:
+            api_key = os.getenv("AZURE_API_KEY")
+        elif "COHERE_API_KEY" in os.getenv("COHERE_API_KEY"):
+            api_key = os.getenv("COHERE_API_KEY")
+        elif "TOGETHERAI_API_KEY" in os.environ:
+            api_key = os.getenv("TOGETHERAI_API_KEY")
+        elif "BASETEN_API_KEY" in os.environ:
+            api_key = os.getenv("BASETEN_API_KEY")
+        elif "AI21_API_KEY" in os.environ:
+            api_key = os.getenv("AI21_API_KEY")
+        elif "OPENROUTER_API_KEY" in os.environ:
+            api_key = os.getenv("OPENROUTER_API_KEY")
+        elif "ALEPHALPHA_API_KEY" in os.environ:
+            api_key = os.getenv("ALEPHALPHA_API_KEY")
+        return api_key
 
     def construct_prompt(
         self,
