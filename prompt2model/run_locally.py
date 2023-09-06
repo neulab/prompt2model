@@ -1,4 +1,5 @@
 """A script to run the prompt2model pipeline locally."""
+from __future__ import annotations
 
 import argparse
 
