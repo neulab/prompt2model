@@ -1,5 +1,6 @@
 """Tools for doing efficient similarity search via the Tevatron/faiss libraries."""
 from __future__ import annotations
+
 import pickle
 
 import numpy as np
