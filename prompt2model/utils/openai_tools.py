@@ -5,7 +5,6 @@ from __future__ import annotations  # noqa FI58
 import asyncio
 import json
 import logging
-import os
 import time
 
 import aiolimiter
@@ -13,6 +12,7 @@ import openai
 import openai.error
 import tiktoken
 from aiohttp import ClientSession
+from litellm import acompletion, completion
 from tqdm.asyncio import tqdm_asyncio
 
 OPENAI_ERRORS = (
@@ -46,8 +46,8 @@ class ChatGPTAgent:
                      the environment variable with `export OPENAI_API_KEY=<your key>`.
             model_name: Name fo the OpenAI model to use (by default, gpt-3.5-turbo).
         """
-        openai.api_key = api_key if api_key else os.environ["OPENAI_API_KEY"]
-        if openai.api_key is None or openai.api_key == "":
+        self.api_key = api_key
+        if self.api_key is None or self.api_key == "":
             raise ValueError(
                 "API key must be provided or set the environment variable "
                 "with `export OPENAI_API_KEY=<your key>`."
@@ -79,7 +79,7 @@ class ChatGPTAgent:
             A response object.
         """
         try:
-            response = openai.ChatCompletion.create(
+            response = completion(  # completion gets the key from os.getenv
                 model=self.model_name,
                 messages=[
                     {"role": "user", "content": f"{prompt}"},
@@ -129,7 +129,7 @@ class ChatGPTAgent:
             async with limiter:
                 for _ in range(3):
                     try:
-                        return await openai.ChatCompletion.acreate(
+                        return await acompletion(
                             model=model,
                             messages=messages,
                             temperature=temperature,
