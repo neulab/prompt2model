@@ -112,7 +112,7 @@ class PromptBasedInstructionParser(PromptSpec):
                         )
                         return None
             except API_ERRORS as e:
-                self.api_call_counter = handle_api_error(e, self.api_call_counter)
+                handle_api_error(e)
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
                     logger.error("Maximum number of API calls reached.")
                     raise ValueError("Maximum number of API calls reached.") from e

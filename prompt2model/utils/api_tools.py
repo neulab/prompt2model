@@ -173,31 +173,22 @@ class APIAgent:
         return responses
 
 
-def handle_api_error(e, api_call_counter):
+def handle_api_error(e) -> None:
     """Handle OpenAI errors or related errors that the API may raise.
 
     Args:
         e: The error to handle. This could be an OpenAI error or a related
            non-fatal error, such as JSONDecodeError or AssertionError.
-        api_call_counter: The number of API calls made so far.
-
-    Returns:
-        The api_call_counter (if no error was raised), else raise the error.
     """
     logging.error(e)
+    if not isinstance(e, API_ERRORS):
+        raise e
     if isinstance(
         e,
         (openai.error.APIError, openai.error.Timeout, openai.error.RateLimitError),
     ):
         # For these errors, OpenAI recommends waiting before retrying.
         time.sleep(1)
-
-    if isinstance(e, API_ERRORS):
-        # For these errors, we can increment a counter and retry the API call.
-        return api_call_counter
-    else:
-        # For all other errors, immediately throw an exception.
-        raise e
 
 
 def count_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> int:
