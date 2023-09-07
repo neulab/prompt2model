@@ -70,7 +70,8 @@ class APIAgent:
                 the model's likelihood of repeating the same line verbatim.
 
         Returns:
-            A response object.
+            An OpenAI-like response object if there were no errors in generation.
+            In case of API-specific error, Exception object is captured and returned.
         """
         response = completion(  # completion gets the key from os.getenv
             model=self.model_name,
