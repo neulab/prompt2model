@@ -95,21 +95,28 @@ class PromptBasedInstructionParser(PromptSpec):
             )
 
             if isinstance(response, Exception):
+                # Generation failed due to an API related error and requires retry.
+
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
+                    # In case we reach maximum number of API calls, we raise an error.
                     logger.error("Maximum number of API calls reached.")
                     raise ValueError(
                         "Maximum number of API calls reached."
                     ) from response
                 
-                continue
+                continue # no need to proceed with extracting response if API call failed
             
             extraction = self.extract_response(response)
 
             if extraction is not None:
+                # extraction is successful
+
                 self._instruction, self._examples = extraction
                 return None
 
             if self.max_api_calls and self.api_call_counter == self.max_api_calls:
+                # In case we reach maximum number of API calls without a successful extraction, we return None.
+                
                 logger.warning(
                     "Maximum number of API calls reached for PromptParser."
                 )
