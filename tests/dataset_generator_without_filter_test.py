@@ -1,4 +1,4 @@
-"""Testing DatasetGenerator through OpenAIDatasetGenerator."""
+"""Testing DatasetGenerator through PromptBasedDatasetGenerator."""
 
 import gc
 import logging
@@ -12,59 +12,62 @@ import pytest
 from datasets import Dataset
 
 from prompt2model.dataset_generator.base import DatasetSplit
-from prompt2model.dataset_generator.openai_gpt import Example, OpenAIDatasetGenerator
+from prompt2model.dataset_generator.prompt_based import (
+    Example,
+    PromptBasedDatasetGenerator,
+)
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from test_helpers import (
     MockCompletion,
     UnknownGpt3Exception,
     are_datasets_identical,
-    mock_batch_openai_response_identical_completions,
+    mock_batch_api_response_identical_completions,
 )
 
 logger = logging.getLogger("DatasetGenerator")
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
-    mock_batch_openai_response_identical_completions,
+    mock_batch_api_response_identical_completions,
     content='{"input": "This is a great movie!", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
-    mock_batch_openai_response_identical_completions,
+    mock_batch_api_response_identical_completions,
     content='{"input": "This is a great movie!", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
-    mock_batch_openai_response_identical_completions,
+    mock_batch_api_response_identical_completions,
     content='{"input": "This is a great movie!", "output": "1}',
 )
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
-    mock_batch_openai_response_identical_completions,
+    mock_batch_api_response_identical_completions,
     content='{"input": "This is a great movie!", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
-    mock_batch_openai_response_identical_completions,
+    mock_batch_api_response_identical_completions,
     content='{"input": "This is a great movie!", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
-    mock_batch_openai_response_identical_completions,
+    mock_batch_api_response_identical_completions,
     content='{"input": "This is a great movie!", "output": "1}',
 )
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
-    mock_batch_openai_response_identical_completions,
+    mock_batch_api_response_identical_completions,
     content='{"input": "This is a great movie!", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
-    mock_batch_openai_response_identical_completions,
+    mock_batch_api_response_identical_completions,
     content='{"input": "This is a great movie!", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
-    mock_batch_openai_response_identical_completions,
+    mock_batch_api_response_identical_completions,
     content='{"input": "This is a great movie!", "output": "1}',
 )
 
 
-def check_generate_dataset(dataset_generator: OpenAIDatasetGenerator):
-    """Test the `generate_dataset_split()` function of `OpenAIDatasetGenerator`.
+def check_generate_dataset(dataset_generator: PromptBasedDatasetGenerator):
+    """Test the `generate_dataset_split()` function of `PromptBasedDatasetGenerator`.
 
     This function generates a Dataset for a specified split of the data
     (train, validation, or test) using a simple prompt specification
@@ -94,8 +97,8 @@ def check_generate_dataset(dataset_generator: OpenAIDatasetGenerator):
     return dataset
 
 
-def check_generate_dataset_dict(dataset_generator: OpenAIDatasetGenerator):
-    """Test the `generate_dataset_dict()` function of `OpenAIDatasetGenerator`.
+def check_generate_dataset_dict(dataset_generator: PromptBasedDatasetGenerator):
+    """Test the `generate_dataset_dict()` function of `PromptBasedDatasetGenerator`.
 
         This function generates movie comments datasets by creating a specified
         number of examples for each split of the data, which includes train,
@@ -144,11 +147,11 @@ def check_generate_dataset_dict(dataset_generator: OpenAIDatasetGenerator):
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_batch_completion",
     side_effect=MOCK_CLASSIFICATION_EXAMPLE,
 )
 def test_generator_without_filter(mocked_generate_example):
-    """Test classification dataset generation using the OpenAIDatasetGenerator.
+    """Test classification dataset generation using the PromptBasedDatasetGenerator.
 
     This function first tests unlimited generation. Then, it tests generation
     when expected_num_examples >= max_api_calls. In the second test, the API agent
@@ -159,7 +162,7 @@ def test_generator_without_filter(mocked_generate_example):
     """
     with tempfile.TemporaryDirectory() as cache_dir:
         os.environ["OPENAI_API_KEY"] = "fake_api_key"
-        unlimited_dataset_generator = OpenAIDatasetGenerator(
+        unlimited_dataset_generator = PromptBasedDatasetGenerator(
             filter_duplicated_examples=False, cache_root=cache_dir
         )
         unlimited_generated_dataset = check_generate_dataset(
@@ -170,7 +173,7 @@ def test_generator_without_filter(mocked_generate_example):
         # Each API call will return 5 responses, and each response is a valid JSON.
         # So the unlimited_dataset_generator will call the API (29 // 5 + 1) times.
         assert unlimited_dataset_generator.api_call_counter == (29 // 5 + 1)
-        # The default batch_size is 5. So generate_batch_openai_chat_completion
+        # The default batch_size is 5. So generate_batch_completion
         # will be called 2 times with  first batch_size = 5 and second batch_size = 1.
         assert mocked_generate_example.call_count == 2
         # Since all the responses are valid JSON and the api_call_counter is 6,
@@ -180,7 +183,7 @@ def test_generator_without_filter(mocked_generate_example):
     # Refresh the call_count and dataset_generator.
     with tempfile.TemporaryDirectory() as cache_dir:
         mocked_generate_example.call_count = 0
-        unlimited_dataset_generator = OpenAIDatasetGenerator(
+        unlimited_dataset_generator = PromptBasedDatasetGenerator(
             filter_duplicated_examples=False, cache_root=cache_dir
         )
         unlimited_generated_dataset_dict = check_generate_dataset_dict(
@@ -192,7 +195,7 @@ def test_generator_without_filter(mocked_generate_example):
         assert unlimited_dataset_generator.api_call_counter == (
             50 // 5 + 24 // 5 + 1 + 26 // 5 + 1
         )
-        # The default batch_size is 5. So generate_batch_openai_chat_completion
+        # The default batch_size is 5. So generate_batch_completion
         # will be called 2 times for 50 examples in the train split,
         # 1 time for 24 examples in the validation split,
         # and 2 times for 26 examples in the test split.
@@ -208,7 +211,7 @@ def test_generator_without_filter(mocked_generate_example):
         # Refresh the call_count.
         mocked_generate_example.call_count = 0
 
-        limited_dataset_generator = OpenAIDatasetGenerator(
+        limited_dataset_generator = PromptBasedDatasetGenerator(
             max_api_calls=3, filter_duplicated_examples=False, cache_root=cache_dir
         )
         limited_generated_dataset = check_generate_dataset(limited_dataset_generator)
@@ -217,7 +220,7 @@ def test_generator_without_filter(mocked_generate_example):
         # limited_dataset_generator will have 3 * 5 = 15 examples.
         assert len(limited_generated_dataset) == 15
 
-        # The default batch_size is 5. So generate_batch_openai_chat_completion
+        # The default batch_size is 5. So generate_batch_completion
         # will be called only once.
         assert mocked_generate_example.call_count == 1
 
@@ -232,7 +235,7 @@ def test_generator_without_filter(mocked_generate_example):
     with tempfile.TemporaryDirectory() as cache_dir:
         # Refresh the call_count and create a new limited_dataset_generator.
         mocked_generate_example.call_count = 0
-        limited_dataset_generator = OpenAIDatasetGenerator(
+        limited_dataset_generator = PromptBasedDatasetGenerator(
             max_api_calls=13, filter_duplicated_examples=False, cache_root=cache_dir
         )
 
@@ -244,12 +247,12 @@ def test_generator_without_filter(mocked_generate_example):
         assert limited_dataset_generator.api_call_counter == 13
 
         # The train split has 50 examples, so it will call the API 10 times and call
-        # generate_batch_openai_chat_completion 2 times.
+        # generate_batch_completion 2 times.
         # The validation split has 24 examples, but there are only 3 API calls
         # left, so it will call the API 3 times and call
-        # generate_batch_openai_chat_completion 1 time.
+        # generate_batch_completion 1 time.
         # The test split has 26 examples, but there are no more API calls left,
-        # so it will not call generate_batch_openai_chat_completion.
+        # so it will not call generate_batch_completion.
         assert mocked_generate_example.call_count == 2 + 1 + 0
 
         # Each API call returns 5 responses, and each response is a valid JSON.
@@ -261,20 +264,19 @@ def test_generator_without_filter(mocked_generate_example):
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_batch_completion",
     side_effect=MOCK_WRONG_KEY_EXAMPLE,
 )
 def test_wrong_key_example(mocked_generate_example):
-    """Test OpenAIDatasetGenerator when the agent returns a dictionary with wrong keys.
+    """Test PromptBasedDatasetGenerator when the agent returns wrong keys.
 
     Args:
         mocked_generate_example: The function representing the @patch function.
     """
-    api_key = "fake_api_key"
-    # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
+    # Init the PromptBasedDatasetGenerator with `max_api_calls = 3`.
     with tempfile.TemporaryDirectory() as cache_dir:
-        dataset_generator = OpenAIDatasetGenerator(
-            api_key, 3, filter_duplicated_examples=False, cache_root=cache_dir
+        dataset_generator = PromptBasedDatasetGenerator(
+            3, filter_duplicated_examples=False, cache_root=cache_dir
         )
         prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
         expected_num_examples = 1
@@ -289,20 +291,19 @@ def test_wrong_key_example(mocked_generate_example):
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_batch_completion",
     side_effect=MOCK_INVALID_JSON,
 )
 def test_invalid_json_response(mocked_generate_example):
-    """Test OpenAIDatasetGenerator when the agent returns invalid JSON responses.
+    """Test PromptBasedDatasetGenerator when the agent returns invalid JSON responses.
 
     Args:
         mocked_generate_example: The function representing the @patch function.
     """
-    api_key = "fake_api_key"
-    # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
+    # Init the PromptBasedDatasetGenerator with `max_api_calls = 3`.
     with tempfile.TemporaryDirectory() as cache_dir:
-        dataset_generator = OpenAIDatasetGenerator(
-            api_key, 3, filter_duplicated_examples=False, cache_root=cache_dir
+        dataset_generator = PromptBasedDatasetGenerator(
+            3, filter_duplicated_examples=False, cache_root=cache_dir
         )
         prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
         expected_num_examples = 1
@@ -317,11 +318,11 @@ def test_invalid_json_response(mocked_generate_example):
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_batch_completion",
     side_effect=UnknownGpt3Exception(),
 )
 def test_unexpected_examples_of_gpt(mocked_generate_example):
-    """Test OpenAIDatasetGenerator when the agent returns unexpected examples.
+    """Test PromptBasedDatasetGenerator when the agent returns unexpected examples.
 
     This function tests the scenario when the agent raises an UnknownGpt3Exception
     during dataset generation. The test ensures that the exception is correctly raised.
@@ -330,11 +331,11 @@ def test_unexpected_examples_of_gpt(mocked_generate_example):
         mocked_generate_example: The function representing the @patch function.
     """
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    # Init the OpenAIDatasetGenerator with `max_api_calls = 3`.
+    # Init the PromptBasedDatasetGenerator with `max_api_calls = 3`.
     with pytest.raises(
         UnknownGpt3Exception
     ), tempfile.TemporaryDirectory() as cache_dir:
-        dataset_generator = OpenAIDatasetGenerator(
+        dataset_generator = PromptBasedDatasetGenerator(
             max_api_calls=3, filter_duplicated_examples=False, cache_root=cache_dir
         )
         prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
@@ -347,59 +348,6 @@ def test_unexpected_examples_of_gpt(mocked_generate_example):
     gc.collect()
 
 
-def test_openai_key_init():
-    """Test OpenAI API key initialization.
-
-    This function tests the initialization of the OpenAI API key. It verifies that
-    the API key can be provided directly or through the environment variable
-    `OPENAI_API_KEY`, and the generator successfully uses the provided API key.
-
-    It tests three cases:
-    1. When the API key is not provided and the environment variable is empty, the
-       generator should raise an AssertionError.
-    2. When the API key is provided through the environment variable, the generator
-       should use the provided API key.
-    3. When the API key is provided directly, the generator should use the provided
-       API key.
-
-    The test uses the `OpenAIDatasetGenerator` with `filter_duplicated_examples=False`
-    for each case.
-
-    Note: For security reasons, it is recommended to set the API key through the
-    environment variable rather than hardcoding it in the code.
-
-    Raises:
-        AssertionError: If the API key is not provided, either directly or through the
-                        environment variable.
-    """
-    api_key = None
-    os.environ["OPENAI_API_KEY"] = ""
-    with pytest.raises(
-        ValueError
-    ) as exc_info, tempfile.TemporaryDirectory() as cache_dir:
-        _ = OpenAIDatasetGenerator(
-            filter_duplicated_examples=False, cache_root=cache_dir
-        )
-        assert str(exc_info.value) == (
-            "API key must be provided or set the environment variable"
-            + " with `export OPENAI_API_KEY=<your key>`."
-        )
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    with tempfile.TemporaryDirectory() as cache_dir:
-        environment_key_generator = OpenAIDatasetGenerator(
-            filter_duplicated_examples=False, cache_root=cache_dir
-        )
-    assert environment_key_generator.api_key == os.environ["OPENAI_API_KEY"]
-    os.environ["OPENAI_API_KEY"] = ""
-    api_key = "qwertwetyriutytwreytuyrgtwetrueytttr"
-    with tempfile.TemporaryDirectory() as cache_dir:
-        explicit_api_key_generator = OpenAIDatasetGenerator(
-            api_key, cache_root=cache_dir
-        )
-    assert explicit_api_key_generator.api_key == api_key
-    gc.collect()
-
-
 def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs_unique_outputs():  # noqa: 501
     """Test constructing the generated dataset with duplicate inputs but unique outputs.
 
@@ -408,7 +356,8 @@ def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs
     converts the generated examples into a generated dataset while preserving the
     correct mappings between input and output.
 
-    The test uses the `OpenAIDatasetGenerator` with `filter_duplicated_examples=False`.
+    The test uses the `PromptBasedDatasetGenerator` with
+    `filter_duplicated_examples=False`.
     The `generating_split` attribute of the generator is set to `DatasetSplit.TEST`,
     and the `generated_examples` list contains examples with some duplicate inputs but
     unique outputs.
@@ -427,7 +376,7 @@ def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs
     """
     with tempfile.TemporaryDirectory() as cache_dir:
         os.environ["OPENAI_API_KEY"] = "fake_api_key"
-        data_generator = OpenAIDatasetGenerator(
+        data_generator = PromptBasedDatasetGenerator(
             filter_duplicated_examples=False, cache_root=cache_dir
         )
         generated_examples = [
@@ -462,7 +411,8 @@ def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs
     converts the generated examples into a generated dataset while preserving the
     correct mappings between input and output.
 
-    The test uses the `OpenAIDatasetGenerator` with `filter_duplicated_examples=False`.
+    The test uses the `PromptBasedDatasetGenerator` with
+    `filter_duplicated_examples=False`.
     The `generating_split` attribute of the generator is set to `DatasetSplit.TEST`,
     and the `generated_examples` list contains examples with both duplicate inputs and
     duplicate outputs. The function then calls the
@@ -480,7 +430,7 @@ def test_create_all_examples_dataset_and_generated_dataset_with_duplicate_inputs
     """
     with tempfile.TemporaryDirectory() as cache_dir:
         os.environ["OPENAI_API_KEY"] = "fake_api_key"
-        data_generator = OpenAIDatasetGenerator(
+        data_generator = PromptBasedDatasetGenerator(
             filter_duplicated_examples=False, cache_root=cache_dir
         )
         generated_examples = [
@@ -520,7 +470,8 @@ def test_create_all_examples_dataset_and_generated_dataset_with_unique_inputs_ou
     converts the generated examples into a generated dataset while preserving the
     correct mappings between input and output.
 
-    The test uses the `OpenAIDatasetGenerator` with `filter_duplicated_examples=False`.
+    The test uses the `PromptBasedDatasetGenerator` with
+    `filter_duplicated_examples=False`.
     The `generating_split` attribute of the generator is set to `DatasetSplit.TEST`,
     and the `generated_examples` list contains examples with unique inputs and
     unique outputs. The function then calls the
@@ -538,7 +489,7 @@ def test_create_all_examples_dataset_and_generated_dataset_with_unique_inputs_ou
     """
     with tempfile.TemporaryDirectory() as cache_dir:
         os.environ["OPENAI_API_KEY"] = "fake_api_key"
-        data_generator = OpenAIDatasetGenerator(
+        data_generator = PromptBasedDatasetGenerator(
             filter_duplicated_examples=False, cache_root=cache_dir
         )
         generated_examples = [
@@ -570,7 +521,8 @@ def test_create_all_examples_dataset_and_generated_dataset_with_empty_examples_l
     examples. It ensures that the generator successfully converts the empty examples
     list into an empty generated dataset.
 
-    The test uses the `OpenAIDatasetGenerator` with `filter_duplicated_examples=False`.
+    The test uses the `PromptBasedDatasetGenerator` with
+    `filter_duplicated_examples=False`.
     The `generating_split` attribute of the generator is set to `DatasetSplit.TEST`,
     and the `generated_examples` list is empty. The function then calls the
     `create_all_examples_dataset_and_generated_dataset()` method to create the generated
@@ -586,7 +538,7 @@ def test_create_all_examples_dataset_and_generated_dataset_with_empty_examples_l
     """
     with tempfile.TemporaryDirectory() as cache_dir:
         os.environ["OPENAI_API_KEY"] = "fake_api_key"
-        data_generator = OpenAIDatasetGenerator(
+        data_generator = PromptBasedDatasetGenerator(
             filter_duplicated_examples=False, cache_root=cache_dir
         )
         generated_examples = []
@@ -614,7 +566,7 @@ def test_compute_batch_size_with_limited_max_api_calls():
     max API calls. It covers scenarios where the API calls are close to reaching the
     maximum limit and when the API calls are far from the maximum limit.
 
-    The test uses the `OpenAIDatasetGenerator` with `max_api_calls=28`. The
+    The test uses the `PromptBasedDatasetGenerator` with `max_api_calls=28`. The
     `api_call_counter` attribute of the generator is set to `26`, and the
     `generated_dataset` contains 110 examples. The function then calls the
     `compute_batch_size()` method with an `expected_num_examples` of `125`.
@@ -632,7 +584,9 @@ def test_compute_batch_size_with_limited_max_api_calls():
     """
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     with tempfile.TemporaryDirectory() as cache_dir:
-        data_generator = OpenAIDatasetGenerator(max_api_calls=28, cache_root=cache_dir)
+        data_generator = PromptBasedDatasetGenerator(
+            max_api_calls=28, cache_root=cache_dir
+        )
         data_generator.api_call_counter = 26
         generated_dataset = Dataset.from_dict(
             {
@@ -682,7 +636,7 @@ def test_compute_batch_size_with_unlimited_max_api_calls():
     max API calls. It covers scenarios where the number of examples needed to reach the
     expected number of examples is greater than the default batch size.
 
-    The test uses the `OpenAIDatasetGenerator` with default `max_api_calls`. The
+    The test uses the `PromptBasedDatasetGenerator` with default `max_api_calls`. The
     `generated_dataset` contains 110 examples. The function then calls the
     `compute_batch_size()` method with an `expected_num_examples` of `125`.
 
@@ -699,7 +653,7 @@ def test_compute_batch_size_with_unlimited_max_api_calls():
     """
     with tempfile.TemporaryDirectory() as cache_dir:
         os.environ["OPENAI_API_KEY"] = "fake_api_key"
-        data_generator = OpenAIDatasetGenerator(cache_root=cache_dir)
+        data_generator = PromptBasedDatasetGenerator(cache_root=cache_dir)
         generated_dataset = Dataset.from_dict(
             {
                 "input_col": ["1"] * 110,
@@ -735,7 +689,7 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
 
     This function tests the cached dataset loading without filtering duplicated
     examples. It first saves a dataset to the cache directory and then initializes
-    the `OpenAIDatasetGenerator` with `filter_duplicated_examples=False`.
+    the `PromptBasedDatasetGenerator` with `filter_duplicated_examples=False`.
 
     The `generate_dataset_split()` method is then called with an
     `expected_num_examples` of `110`, which is equal to the size of the cached
@@ -752,7 +706,7 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
     """
     with tempfile.TemporaryDirectory() as cache_dir:
         os.environ["OPENAI_API_KEY"] = "fake_api_key"
-        data_generator = OpenAIDatasetGenerator(
+        data_generator = PromptBasedDatasetGenerator(
             cache_root=cache_dir, filter_duplicated_examples=False
         )
         examples_cache_path = Path(
@@ -791,18 +745,18 @@ def test_load_cache_dataset_without_filter_duplicated_examples():
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_batch_completion",
     side_effect=MOCK_CLASSIFICATION_EXAMPLE,
 )
 def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_generation(
     mocked_generate_example,
 ):
-    """Test OpenAIDatasetGenerator can load cache and continue generation.
+    """Test PromptBasedDatasetGenerator can load cache and continue generation.
 
-    This function tests that the `OpenAIDatasetGenerator` can load the cached
+    This function tests that the `PromptBasedDatasetGenerator` can load the cached
     dataset and continue generation if the expected number of examples is
     greater than the size of the cached dataset. The test first saves a dataset
-    to the cache directory and then initializes the `OpenAIDatasetGenerator`
+    to the cache directory and then initializes the `PromptBasedDatasetGenerator`
     with `filter_duplicated_examples=False`. The `generate_dataset_split()`
     method is then called with an `expected_num_examples` of `117`, which
     is greater than the size of the cached dataset. The function checks that
@@ -818,7 +772,7 @@ def test_load_cache_dataset_without_filter_duplicated_examples_and_continue_gene
     """
     with tempfile.TemporaryDirectory() as cache_dir:
         os.environ["OPENAI_API_KEY"] = "fake_api_key"
-        data_generator = OpenAIDatasetGenerator(
+        data_generator = PromptBasedDatasetGenerator(
             cache_root=cache_dir, filter_duplicated_examples=False
         )
         examples_cache_path = Path(
@@ -895,7 +849,7 @@ def test_extract_responses():
 
     with tempfile.TemporaryDirectory() as cache_dir:
         os.environ["OPENAI_API_KEY"] = "fake_api_key"
-        data_generator = OpenAIDatasetGenerator(
+        data_generator = PromptBasedDatasetGenerator(
             cache_root=cache_dir, filter_duplicated_examples=True
         )
         generated_examples = []
@@ -989,7 +943,7 @@ def test_extract_some_empty_responses():
 
     with tempfile.TemporaryDirectory() as cache_dir:
         os.environ["OPENAI_API_KEY"] = "fake_api_key"
-        data_generator = OpenAIDatasetGenerator(
+        data_generator = PromptBasedDatasetGenerator(
             cache_root=cache_dir, filter_duplicated_examples=True
         )
         generated_examples = []
@@ -1055,14 +1009,16 @@ def test_initialize_dataset_generator_with_dynamic_temperature():
     with tempfile.TemporaryDirectory() as cache_dir:
         os.environ["OPENAI_API_KEY"] = "fake_api_key"
         with pytest.raises(ValueError) as exc_info:
-            _ = OpenAIDatasetGenerator(cache_root=cache_dir, initial_temperature=-0.2)
+            _ = PromptBasedDatasetGenerator(
+                cache_root=cache_dir, initial_temperature=-0.2
+            )
         error_info = exc_info.value.args[0]
         assert (
             error_info
             == "initial_temperature must be >= 0, but self.initial_temperature=-0.2"
         )
         with pytest.raises(ValueError) as exc_info:
-            _ = OpenAIDatasetGenerator(cache_root=cache_dir, max_temperature=2.3)
+            _ = PromptBasedDatasetGenerator(cache_root=cache_dir, max_temperature=2.3)
             error_info = exc_info.value.args[0]
             assert (
                 error_info
@@ -1070,7 +1026,7 @@ def test_initialize_dataset_generator_with_dynamic_temperature():
             )
 
         with pytest.raises(ValueError) as exc_info:
-            _ = OpenAIDatasetGenerator(
+            _ = PromptBasedDatasetGenerator(
                 cache_root=cache_dir, max_temperature=1.2, initial_temperature=1.5
             )
             error_info = exc_info.value.args[0]

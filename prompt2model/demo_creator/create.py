@@ -5,17 +5,17 @@ import mdtex2html
 
 from prompt2model.dataset_processor import TextualizeProcessor
 from prompt2model.model_executor import GenerationModelExecutor
-from prompt2model.prompt_parser import OpenAIInstructionParser
+from prompt2model.prompt_parser import PromptBasedInstructionParser
 
 
 def create_gradio(
-    model_executor: GenerationModelExecutor, prompt_parser: OpenAIInstructionParser
+    model_executor: GenerationModelExecutor, prompt_parser: PromptBasedInstructionParser
 ) -> gr.Blocks:
     """Create a Gradio interface automatically.
 
     Args:
         model_executor: A GenerationModelExecutor to expose via a Gradio interface.
-        prompt_parser: An instance of OpenAIInstructionParser to parse the prompt.
+        prompt_parser: An instance of PromptBasedInstructionParser to parse the prompt.
 
     Returns:
         A Gradio interface for interacting with the model.

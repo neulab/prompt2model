@@ -6,7 +6,7 @@
 examples.
 - `TaskType`: Enum for classifying NLP tasks like text generation,
 classification, etc.
-- `OpenAIInstructionParser`: A `PromptSpec` subclass that uses GPT-3.5
+- `PromptBasedInstructionParser`: A `PromptSpec` subclass that uses GPT-3.5
 API for parsing.
 
 ## Getting Started
@@ -14,18 +14,10 @@ API for parsing.
 - Import Modules:
 
 ```python
-from prompt2model.prompt_parser import OpenAIInstructionParser, TaskType
+from prompt2model.prompt_parser import PromptBasedInstructionParser, TaskType
 ```
 
-- Setup OpenAI API Key and Initialize Parser:
-
-```python
-api_key = "<your-api-key>"
-task_type = TaskType.<task_type>  # Choose the type of NLP task.
-prompt_spec = OpenAIInstructionParser(task_type, api_key)
-```
-
-Or, set the API Key as an environment variable:
+- Setup API Key and Initialize Parser. For instance, if using OpenAI:
 
 ```bash
 export OPENAI_API_KEY="<your-api-key>"
@@ -35,7 +27,7 @@ And then initialize the Parser:
 
 ```python
 task_type = TaskType.<task_type>
-prompt_spec = OpenAIInstructionParser(task_type)
+prompt_spec = PromptBasedInstructionParser(task_type)
 ```
 
 ### Parse the Prompt

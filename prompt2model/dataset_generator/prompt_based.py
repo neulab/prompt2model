@@ -1,11 +1,10 @@
-"""A simple dataset generator that uses OpenAI's GPT-3.5 API."""
+"""A simple dataset generator that uses APIs."""
 
-from __future__ import annotations  # noqa FI58
+from __future__ import annotations
 
 import asyncio
 import json
 import math
-import os
 import random
 from collections import Counter, defaultdict
 from dataclasses import dataclass
@@ -17,14 +16,14 @@ from datasets import Dataset
 from tqdm import tqdm
 
 from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
-from prompt2model.dataset_generator.openai_gpt_template import construct_meta_prompt
+from prompt2model.dataset_generator.prompt_template import construct_meta_prompt
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import (
-    OPENAI_ERRORS,
-    ChatGPTAgent,
+    API_ERRORS,
+    APIAgent,
     count_tokens_from_string,
     get_formatted_logger,
-    handle_openai_error,
+    handle_api_error,
 )
 
 nest_asyncio.apply()
@@ -39,12 +38,11 @@ class Example:
     output_col: str
 
 
-class OpenAIDatasetGenerator(DatasetGenerator):
-    """A abstract class for NLP dataset generation using OpenAI's GPT-3.5 API."""
+class PromptBasedDatasetGenerator(DatasetGenerator):
+    """A abstract class for NLP dataset generation using a prompted API."""
 
     def __init__(
         self,
-        api_key: str | None = None,
         max_api_calls: int = None,
         initial_temperature: float = 0.5,
         max_temperature: float = 1.7,
@@ -56,11 +54,9 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         filter_duplicated_examples: bool = True,
         cache_root: str = "cached_generated_dataset",
     ):
-        """Initializes an instance of the OpenAI DatasetGenerator.
+        """Initializes an instance of the PromptBasedDatasetGenerator.
 
         Args:
-            api_key: A valid OpenAI API key. If not provided, the environment
-                variable OPENAI_API_KEY is used.
             max_api_calls: The maximum number of API calls allowed,
                 or None for unlimited.
             initial_temperature: The sampling temperature to use when initializing
@@ -81,29 +77,22 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             cache_root: The root directory for caching generated examples.
 
         Raises:
-            ValueError: If an API key is not provided and set as an environment
-            variable, or if the 'max_api_calls' value is not greater than 0.
+            ValueError: If the 'max_api_calls' value is not greater than 0.
 
         Note:
-            For the OpenAI GPT-3.5 API, Temperature ranges from 0 to 2. Higher
+            Temperature ranges from 0 to 2. Higher
             values yield more random/diverse outputs with lower quality, while
             lower values produce more deterministic outputs with higher quality.
             We use a strategy to dynamically adjust the temperature from
             initial_temperature to max_temperature during generation.
 
-            We incorporate random few-shot generated examples into the prompt
-            to the OpenAI GPT-3.5 API. The initial temperature is set lower to obtain
+            We incorporate random few-shot generated examples into the prompt.
+            The initial temperature is set lower to obtain
             high-quality, low-diversity examples. As the number of generated examples
             increases, we gradually have more high-quality examples for in-context
             learning during generation. This allows us to achieve high-quality,
             high-diversity examples later on by using a higher temperature.
         """
-        self.api_key: str | None = api_key if api_key else self.validate_environment()
-        if self.api_key is None or self.api_key == "":
-            raise ValueError(
-                "API key must be provided or set the environment variable "
-                "e.g. `export OPENAI_API_KEY=<your key>`."
-            )
         if max_api_calls and max_api_calls <= 0:
             raise ValueError("max_api_calls must be > 0")
         self.max_api_calls = max_api_calls
@@ -129,35 +118,6 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.requests_per_minute = requests_per_minute
         self.filter_duplicated_examples = filter_duplicated_examples
         self.cache_root = Path(cache_root)
-
-    def validate_environment(self):
-        """Check if any of the required API keys are present in the environment.
-
-        Returns:
-            str or None: The API key value if found in the environment, else None.
-        """
-        api_key = None
-        if "OPENAI_API_KEY" in os.environ:
-            api_key = os.getenv("OPENAI_API_KEY")
-        elif "ANTHROPIC_API_KEY" in os.environ:
-            api_key = os.getenv("ANTHROPIC_API_KEY")
-        elif "REPLICATE_API_KEY" in os.environ:
-            api_key = os.getenv("REPLICATE_API_KEY")
-        elif "AZURE_API_KEY" in os.environ:
-            api_key = os.getenv("AZURE_API_KEY")
-        elif "COHERE_API_KEY" in os.getenv("COHERE_API_KEY"):
-            api_key = os.getenv("COHERE_API_KEY")
-        elif "TOGETHERAI_API_KEY" in os.environ:
-            api_key = os.getenv("TOGETHERAI_API_KEY")
-        elif "BASETEN_API_KEY" in os.environ:
-            api_key = os.getenv("BASETEN_API_KEY")
-        elif "AI21_API_KEY" in os.environ:
-            api_key = os.getenv("AI21_API_KEY")
-        elif "OPENROUTER_API_KEY" in os.environ:
-            api_key = os.getenv("OPENROUTER_API_KEY")
-        elif "ALEPHALPHA_API_KEY" in os.environ:
-            api_key = os.getenv("ALEPHALPHA_API_KEY")
-        return api_key
 
     def construct_prompt(
         self,
@@ -273,7 +233,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         symbol of gold?”, the outputs might be “Au”, “Au”, and “AU”, where the
         last one is wrong due to capital letters.
 
-        To address this, OpenAIDataSetGenerator uses a two-step multi-vote
+        To address this, PromptBasedDatasetGenerator uses a two-step multi-vote
         filtering mechanism. This function represents the first step, creating a
         dictionary to map inputs to a `Counter` of their outputs.
 
@@ -442,7 +402,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
     def compute_batch_size(
         self, expected_num_examples: int, generated_dataset: Dataset
     ) -> int:
-        """Computes the batch size for OpenAI API calls in a batch.
+        """Computes the batch size for API calls in a batch.
 
         The batch size is determined based on the remaining number of examples to be
         generated and the number of responses per request. The function also respects
@@ -456,7 +416,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             generated_dataset: Currently generated dataset.
 
         Returns:
-            The batch size for the next batch of OpenAI API calls with zeno-build.
+            The batch size for the next batch of API calls with zeno-build.
         """
         # If max_api_calls is not set, make it equivalent to the batch size
         max_api_calls = (
@@ -482,10 +442,10 @@ class OpenAIDatasetGenerator(DatasetGenerator):
     def extract_responses(
         self, completions: list[openai.Completion], generated_examples: list[Example]
     ) -> list[Example]:
-        """Extracts the generated sample and annotation from an OpenAI API response.
+        """Extracts the generated sample and annotation from an API response.
 
         Args:
-            completions: A list of Completion objects returned by the OpenAI API.
+            completions: A list of Completion objects returned by the API.
             Each API call returns a number of completion objects equivalent to
             `responses_per_request`. The default `responses_per_request` = 5.
             generated_examples: Currently generated examples of DatasetGenerator.
@@ -576,7 +536,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
     async def generate_responses(
         self,
-        chat_api: ChatGPTAgent,
+        chat_api: APIAgent,
         generated_dataset: Dataset,
         expected_num_examples: int,
         prompts: list[str],
@@ -584,7 +544,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         """Asynchronously generates responses using the GPT-3.5 API.
 
         Args:
-            chat_api: ChatGPTAgent to generate responses.
+            chat_api: APIAgent to generate responses.
             generated_dataset: Currently generated dataset.
             expected_num_examples: The number of examples expected
                 to be generated.
@@ -609,7 +569,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
         # Ensure the dynamic temperature is within the range [0, 2.0]
         clipped_temperature = max(0.0, min(2.0, dynamic_temperature))
-        responses = await chat_api.generate_batch_openai_chat_completion(
+        responses = await chat_api.generate_batch_completion(
             prompts,
             temperature=clipped_temperature,
             responses_per_request=self.responses_per_request,
@@ -664,7 +624,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             generated_examples = []
 
         pbar = tqdm(total=expected_num_examples, desc="Generating examples")
-        chat_api = ChatGPTAgent(self.api_key)
+        chat_api = APIAgent()
 
         while True:
             # Each API call will return `responses_per_request` completion
@@ -724,7 +684,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
                     generated_examples = self.extract_responses(
                         responses, generated_examples
                     )
-            except OPENAI_ERRORS as e:
-                # Handle OpenAI API errors and adjust the API call counter.
-                self.api_call_counter = handle_openai_error(e, self.api_call_counter)
+            except API_ERRORS as e:
+                # Handle API errors and adjust the API call counter.
+                self.api_call_counter = handle_api_error(e, self.api_call_counter)
         return generated_dataset
