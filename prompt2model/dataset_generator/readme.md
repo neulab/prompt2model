@@ -5,7 +5,7 @@
 - `DatasetGenerator`: An abstract class to generate datasets.
 - `DatasetSplit`: An enumeration class defining dataset types (`TRAIN`,
 `VALIDATION`, `TEST`).
-- `OpenAIDatasetGenerator`: A concrete class
+- `PromptBasedDatasetGenerator`: A concrete class
 for dataset generation using GPT-3.5 API.
 
 ## Getting Started
@@ -13,11 +13,11 @@ for dataset generation using GPT-3.5 API.
 - **Import the Modules**:
 
 ```python
-from prompt2model.dataset_generator import OpenAIDatasetGenerator, DatasetSplit
-from prompt2model.prompt_parser import OpenAIInstructionParser, TaskType
+from prompt2model.dataset_generator import PromptBasedDatasetGenerator, DatasetSplit
+from prompt2model.prompt_parser import PromptBasedInstructionParser, TaskType
 ```
 
-- **Setup OpenAI API Key**:
+- **Setup API Key**:
 
 Set an API key as an environment variable:
 
@@ -28,7 +28,7 @@ export OPENAI_API_KEY="<your-api-key>"
 - **Parse the Prompt**:
 
 ```python
-prompt_spec = OpenAIInstructionParser(task_type=TaskType.<task_type>)
+prompt_spec = PromptBasedInstructionParser(task_type=TaskType.<task_type>)
 # Refer the document string of DatasetSplit for more details.
 prompt = "<your-prompt>"
 prompt_spec.parse_from_prompt(prompt)

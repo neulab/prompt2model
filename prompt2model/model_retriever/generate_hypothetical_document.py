@@ -5,7 +5,7 @@ from __future__ import annotations  # noqa FI58
 import logging
 
 from prompt2model.prompt_parser import PromptSpec
-from prompt2model.utils import OPENAI_ERRORS, APIAgent, handle_openai_error
+from prompt2model.utils import API_ERRORS, APIAgent, handle_api_error
 
 PROMPT_PREFIX = '''HuggingFace contains models, which are each given a user-generated description. The first section of the description, delimited with two "---" lines, consists of a YAML description of the model. This may contain fields like "language" (supported by model), "datasets" (used to train the model), "tags" (e.g. tasks relevant to the model), and "metrics" (used to evaluate the model). Create a hypothetical HuggingFace model description that would satisfy a given user instruction. Here are some examples:
 
@@ -427,7 +427,7 @@ def generate_hypothetical_model_description(
     api_call_counter = 0
 
     instruction = prompt.instruction
-    openai_api_agent = APIAgent("gpt-3.5-turbo-16k")
+    api_agent = APIAgent("gpt-3.5-turbo-16k")
     chatgpt_prompt = (
         PROMPT_PREFIX
         + "\n"
@@ -435,15 +435,15 @@ def generate_hypothetical_model_description(
     )
     while True:
         try:
-            chatgpt_completion = openai_api_agent.generate_one_completion(
+            chatgpt_completion = api_agent.generate_one_completion(
                 chatgpt_prompt,
                 temperature=0.0,
                 presence_penalty=0.0,
                 frequency_penalty=0.0,
             )
             return chatgpt_completion.choices[0]["message"]["content"]
-        except OPENAI_ERRORS as e:
-            api_call_counter = handle_openai_error(e, api_call_counter)
+        except API_ERRORS as e:
+            api_call_counter = handle_api_error(e, api_call_counter)
             if max_api_calls and api_call_counter >= max_api_calls:
                 logging.error("Maximum number of API calls reached.")
                 raise ValueError("Maximum number of API calls reached.") from e

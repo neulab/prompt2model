@@ -35,7 +35,7 @@ pip install prompt2model
 To use OpenAI, please follow these
 
 - Sign up on the OpenAI website and obtain an
-OpenAI API key.
+API key.
 
 - Set
 the environment variable

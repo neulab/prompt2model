@@ -13,10 +13,10 @@ from prompt2model.prompt_parser.instr_parser_prompt import (  # isort: split
     construct_prompt_for_instruction_parsing,
 )
 from prompt2model.utils import (
-    OPENAI_ERRORS,
+    API_ERRORS,
     APIAgent,
     get_formatted_logger,
-    handle_openai_error,
+    handle_api_error,
 )
 
 logger = get_formatted_logger("PromptParser")
@@ -24,7 +24,7 @@ logger = get_formatted_logger("PromptParser")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
-class OpenAIInstructionParser(PromptSpec):
+class PromptBasedInstructionParser(PromptSpec):
     """Parse the prompt to separate instructions from task demonstrations."""
 
     def __init__(self, task_type: TaskType, max_api_calls: int = None):
@@ -47,10 +47,10 @@ class OpenAIInstructionParser(PromptSpec):
         self.api_call_counter = 0
 
     def extract_response(self, response: openai.Completion) -> tuple[str, str] | None:
-        """Parse stuctured fields from the OpenAI API response.
+        """Parse stuctured fields from the API response.
 
         Args:
-            response: OpenAI API response.
+            response: API response.
 
         Returns:
             If the API response is a valid JSON object and contains the required_keys,
@@ -111,8 +111,8 @@ class OpenAIInstructionParser(PromptSpec):
                             "Maximum number of API calls reached for PromptParser."
                         )
                         return None
-            except OPENAI_ERRORS as e:
-                self.api_call_counter = handle_openai_error(e, self.api_call_counter)
+            except API_ERRORS as e:
+                self.api_call_counter = handle_api_error(e, self.api_call_counter)
                 if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
                     logger.error("Maximum number of API calls reached.")
                     raise ValueError("Maximum number of API calls reached.") from e
