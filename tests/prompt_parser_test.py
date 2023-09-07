@@ -126,7 +126,7 @@ def test_instruction_parser_with_invalid_json(mocked_parsing_method):
 
 @patch("time.sleep")
 @patch(
-    "openai.ChatCompletion.create",
+    "prompt2model.utils.APIAgent.generate_one_completion",
     side_effect=openai.error.Timeout("timeout"),
 )
 def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_method):
@@ -141,7 +141,7 @@ def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_met
                              some time after each API timeout.
     """
     prompt = """This prompt will be ignored by the parser in this test."""
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(RuntimeError) as exc_info:
         prompt_spec = PromptBasedInstructionParser(
             task_type=TaskType.TEXT_GENERATION, max_api_calls=3
         )
@@ -152,8 +152,8 @@ def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_met
     assert mocked_sleep_method.call_count == 3
     assert mocked_parsing_method.call_count == 3
 
-    # Check if the ValueError was raised
-    assert isinstance(exc_info.value, ValueError)
+    # Check if the RuntimeError was raised
+    assert isinstance(exc_info.value, RuntimeError)
     # Check if the original exception (e) is present as the cause
     original_exception = exc_info.value.__cause__
     assert isinstance(original_exception, openai.error.Timeout)
