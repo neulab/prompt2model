@@ -14,7 +14,7 @@ from prompt2model.prompt_parser.instr_parser_prompt import (  # isort: split
 )
 from prompt2model.utils import (
     OPENAI_ERRORS,
-    ChatGPTAgent,
+    APIAgent,
     get_formatted_logger,
     handle_openai_error,
 )
@@ -27,9 +27,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 class OpenAIInstructionParser(PromptSpec):
     """Parse the prompt to separate instructions from task demonstrations."""
 
-    def __init__(
-        self, task_type: TaskType, api_key: str | None = None, max_api_calls: int = None
-    ):
+    def __init__(self, task_type: TaskType, max_api_calls: int = None):
         """Initialize the prompt spec with empty parsed fields.
 
         We initialize the "instruction" and "examples" fields with None.
@@ -37,20 +35,12 @@ class OpenAIInstructionParser(PromptSpec):
 
         Args:
             task_type: Set a constant task type to use for all prompts.
-            api_key: A valid OpenAI API key. Alternatively, set as None and set
-                the environment variable with `export OPENAI_API_KEY=<your key>`.
             max_api_calls: The maximum number of API calls allowed,
                 or None for unlimited.
         """
         self.task_type = task_type
         self._instruction: str | None = None
         self._examples: str | None = None
-        self.api_key: str | None = api_key if api_key else os.environ["OPENAI_API_KEY"]
-        if self.api_key is None or self.api_key == "":
-            raise ValueError(
-                "API key must be provided or set the environment variable "
-                "with `export OPENAI_API_KEY=<your key>`."
-            )
         if max_api_calls and max_api_calls <= 0:
             raise ValueError("max_api_calls must be > 0.")
         self.max_api_calls = max_api_calls
@@ -98,11 +88,11 @@ class OpenAIInstructionParser(PromptSpec):
         """
         parsing_prompt_for_chatgpt = construct_prompt_for_instruction_parsing(prompt)
 
-        chat_api = ChatGPTAgent(self.api_key)
+        chat_api = APIAgent()
         while True:
             try:
                 self.api_call_counter += 1
-                response = chat_api.generate_one_openai_chat_completion(
+                response = chat_api.generate_one_completion(
                     parsing_prompt_for_chatgpt,
                     temperature=0,
                     presence_penalty=0,

@@ -7,7 +7,6 @@ import time
 from pathlib import Path
 
 import datasets
-import openai
 import pyfiglet
 import torch
 import transformers
@@ -26,8 +25,6 @@ from prompt2model.model_retriever import DescriptionModelRetriever
 from prompt2model.model_trainer.generate import GenerationModelTrainer
 from prompt2model.prompt_parser import MockPromptSpec, OpenAIInstructionParser, TaskType
 from prompt2model.utils.logging_utils import get_formatted_logger
-
-openai.api_key = os.environ["OPENAI_API_KEY"]
 
 
 def line_print(input_str: str) -> None:

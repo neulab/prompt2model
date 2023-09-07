@@ -50,14 +50,14 @@ MOCK_INVALID_JSON = partial(
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_batch_completion",
     side_effect=MOCK_WRONG_KEY_EXAMPLE,
 )
 def test_wrong_key_example(mocked_generate_example):
     """Test OpenAIDatasetGenerator when the agent returns a wrong key dictionary.
 
     This test case is designed to verify the behavior of OpenAIDatasetGenerator
-    when the ChatGPTAgent returns a dictionary with a wrong key, i.e., "label" instead
+    when the APIAgent returns a dictionary with a wrong key, i.e., "label" instead
     of "output".
 
     Args:
@@ -69,12 +69,10 @@ def test_wrong_key_example(mocked_generate_example):
     in the content.
 
     """
-    api_key = "fake_api_key"
-
     # Initialize the OpenAIDatasetGenerator with `max_api_calls = 3`.
     with tempfile.TemporaryDirectory() as cache_dir:
         dataset_generator = OpenAIDatasetGenerator(
-            api_key, 3, filter_duplicated_examples=True, cache_root=cache_dir
+            3, filter_duplicated_examples=True, cache_root=cache_dir
         )
 
         # Create a mock prompt specification.
@@ -100,15 +98,15 @@ def test_wrong_key_example(mocked_generate_example):
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_batch_completion",
     side_effect=MOCK_INVALID_JSON,
 )
 def test_invalid_json_response(mocked_generate_example):
     """Test OpenAIDatasetGenerator when the agent returns an invalid JSON response.
 
     This test case is designed to verify the behavior of OpenAIDatasetGenerator
-    when the ChatGPTAgent returns a response with invalid JSON content. The @patch
-    decorator replaces the 'generate_batch_openai_chat_completion' function with
+    when the APIAgent returns a response with invalid JSON content. The @patch
+    decorator replaces the 'generate_batch_completion' function with
     the 'MOCK_INVALID_JSON' side effect.
 
     Args:
@@ -119,12 +117,10 @@ def test_invalid_json_response(mocked_generate_example):
     which represents a mock example with an invalid JSON content.
 
     """
-    api_key = "fake_api_key"
-
     # Initialize the OpenAIDatasetGenerator with `max_api_calls = 3`.
     with tempfile.TemporaryDirectory() as cache_dir:
         dataset_generator = OpenAIDatasetGenerator(
-            api_key, 3, filter_duplicated_examples=True, cache_root=cache_dir
+            3, filter_duplicated_examples=True, cache_root=cache_dir
         )
 
         # Create a mock prompt specification.
@@ -150,15 +146,15 @@ def test_invalid_json_response(mocked_generate_example):
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_batch_completion",
     side_effect=UnknownGpt3Exception(),
 )
 def test_unexpected_examples_of_gpt(mocked_generate_example):
     """Test OpenAIDatasetGenerator when the agent returns an unknown GPT-3 exception.
 
     This test case is designed to verify the behavior of OpenAIDatasetGenerator
-    when the ChatGPTAgent returns an unknown GPT-3 exception. The @patch decorator
-    replaces the 'generate_batch_openai_chat_completion' function with the
+    when the APIAgent returns an unknown GPT-3 exception. The @patch decorator
+    replaces the 'generate_batch_completion' function with the
     'UnknownGpt3Exception' side effect, simulating an unexpected exception.
 
     Args:
@@ -198,63 +194,6 @@ def test_unexpected_examples_of_gpt(mocked_generate_example):
 
     # Assertions to verify the test results.
     assert mocked_generate_example.call_count == 1
-
-    # Collect garbage to release memory resources after the test.
-    gc.collect()
-
-
-def test_openai_key_init():
-    """Test OpenAIDatasetGenerator API key initialization.
-
-    This test case verifies the behavior of OpenAIDatasetGenerator when initializing
-    the API key. It checks different scenarios, including the absence of the API key,
-    setting the API key through the environment variable, and explicitly providing
-    the API key as an argument during initialization.
-
-    """
-    api_key = None
-
-    # Test case when the API key is not provided or set in the environment variable.
-    os.environ["OPENAI_API_KEY"] = ""
-    with pytest.raises(
-        ValueError
-    ) as exc_info, tempfile.TemporaryDirectory() as cache_dir:
-        _ = OpenAIDatasetGenerator(
-            filter_duplicated_examples=True, cache_root=cache_dir
-        )
-        assert str(exc_info.value) == (
-            "API key must be provided or set the environment variable"
-            + " with `export OPENAI_API_KEY=<your key>`."
-        )
-
-    # Set a fake API key in the environment variable for testing purposes.
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
-
-    # Test case when the API key is provided through the environment variable.
-    with tempfile.TemporaryDirectory() as cache_dir:
-        environment_key_generator = OpenAIDatasetGenerator(
-            filter_duplicated_examples=False, cache_root=cache_dir
-        )
-
-    # Assertions to verify that the API key is
-    # initialized from the environment variable.
-    assert environment_key_generator.api_key == os.environ["OPENAI_API_KEY"]
-
-    # Reset the API key in the environment variable.
-    os.environ["OPENAI_API_KEY"] = ""
-
-    # Set a fake API key explicitly for testing purposes.
-    api_key = "qwertwetyriutytwreytuyrgtwetrueytttr"
-
-    # Test case when the API key is provided
-    # explicitly as an argument during initialization.
-    with tempfile.TemporaryDirectory() as cache_dir:
-        explicit_api_key_generator = OpenAIDatasetGenerator(
-            api_key, cache_root=cache_dir
-        )
-
-    # Assertions to verify that the API key is initialized explicitly.
-    assert explicit_api_key_generator.api_key == api_key
 
     # Collect garbage to release memory resources after the test.
     gc.collect()
@@ -909,7 +848,7 @@ def test_load_cache_dataset_with_filter_duplicated_examples():
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_batch_completion",
     side_effect=MOCK_EXAMPLE,
 )
 def test_load_cache_dataset_with_filter_duplicated_examples_and_continue_generation(
@@ -1056,7 +995,7 @@ responses_per_request = 3
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_batch_completion",
     side_effect=MockBatchDifferentCompletions().mock_completions,
 )
 def test_generator_with_filter_first_batch(mocked_generate_example):
@@ -1079,7 +1018,6 @@ def test_generator_with_filter_first_batch(mocked_generate_example):
     with tempfile.TemporaryDirectory() as cache_dir:
         # Initialize the OpenAIDatasetGenerator with specific settings.
         dataset_generator = OpenAIDatasetGenerator(
-            api_key,
             max_api_calls=2,
             filter_duplicated_examples=filter_duplicated_examples,
             cache_root=cache_dir,
@@ -1112,7 +1050,7 @@ def test_generator_with_filter_first_batch(mocked_generate_example):
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_batch_completion",
     side_effect=MockBatchDifferentCompletions().mock_completions,
 )
 def test_generator_with_filter_second_batch(mocked_generate_example):
@@ -1136,7 +1074,6 @@ def test_generator_with_filter_second_batch(mocked_generate_example):
     with tempfile.TemporaryDirectory() as cache_dir:
         # Initialize the OpenAIDatasetGenerator with specific settings.
         dataset_generator = OpenAIDatasetGenerator(
-            api_key,
             max_api_calls=3,
             filter_duplicated_examples=filter_duplicated_examples,
             cache_root=cache_dir,
@@ -1169,7 +1106,7 @@ def test_generator_with_filter_second_batch(mocked_generate_example):
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_batch_completion",
     side_effect=MockBatchDifferentCompletions().mock_completions,
 )
 def test_generator_with_filter_third_batch(mocked_generate_example):
@@ -1196,7 +1133,6 @@ def test_generator_with_filter_third_batch(mocked_generate_example):
 
         # Initialize the OpenAIDatasetGenerator with specific settings.
         dataset_generator = OpenAIDatasetGenerator(
-            api_key,
             max_api_calls=4,
             filter_duplicated_examples=filter_duplicated_examples,
             cache_root=cache_dir,
@@ -1229,7 +1165,7 @@ def test_generator_with_filter_third_batch(mocked_generate_example):
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_batch_completion",
     side_effect=MockBatchDifferentCompletions().mock_completions,
 )
 def test_generator_with_filter_forth_batch(mocked_generate_example):
@@ -1257,7 +1193,6 @@ def test_generator_with_filter_forth_batch(mocked_generate_example):
 
         # Initialize the OpenAIDatasetGenerator with specific settings.
         dataset_generator = OpenAIDatasetGenerator(
-            api_key,
             max_api_calls=5,
             filter_duplicated_examples=filter_duplicated_examples,
             cache_root=cache_dir,
@@ -1290,7 +1225,7 @@ def test_generator_with_filter_forth_batch(mocked_generate_example):
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_batch_completion",
     side_effect=MockBatchDifferentCompletions().mock_completions,
 )
 def test_generator_with_filter_unlimited_api_calls(mocked_generate_example):
@@ -1320,7 +1255,6 @@ def test_generator_with_filter_unlimited_api_calls(mocked_generate_example):
         # Initialize the OpenAIDatasetGenerator with
         # specific settings and unlimited API calls.
         dataset_generator = OpenAIDatasetGenerator(
-            api_key,
             filter_duplicated_examples=filter_duplicated_examples,
             cache_root=cache_dir,
             max_batch_size=max_batch_size,
@@ -1352,7 +1286,7 @@ def test_generator_with_filter_unlimited_api_calls(mocked_generate_example):
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_batch_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_batch_completion",
     side_effect=MockBatchDifferentCompletions(length=5).mock_completions,
 )
 def test_generator_with_filter_to_generate_datasetdict(mocked_generate_example):
@@ -1378,7 +1312,6 @@ def test_generator_with_filter_to_generate_datasetdict(mocked_generate_example):
         # Initialize the OpenAIDatasetGenerator with
         # specific settings and limited API calls.
         dataset_generator = OpenAIDatasetGenerator(
-            api_key,
             filter_duplicated_examples=filter_duplicated_examples,
             cache_root=cache_dir,
             max_batch_size=max_batch_size,

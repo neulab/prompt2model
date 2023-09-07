@@ -45,7 +45,7 @@ class MockBatchDifferentCompletions:
         Args:
             length: Length of the batch completions.
 
-        This class is designed to simulate the response of ChatGPTAgent and test the
+        This class is designed to simulate the response of APIAgent and test the
         generation process of the OpenAIDataSetGenerator with
         `filter_duplicated_examples` set to True in
         `dataset_generator_with_filter_test`.

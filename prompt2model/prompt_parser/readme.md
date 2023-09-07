@@ -19,14 +19,6 @@ from prompt2model.prompt_parser import OpenAIInstructionParser, TaskType
 
 - Setup OpenAI API Key and Initialize Parser:
 
-```python
-api_key = "<your-api-key>"
-task_type = TaskType.<task_type>  # Choose the type of NLP task.
-prompt_spec = OpenAIInstructionParser(task_type, api_key)
-```
-
-Or, set the API Key as an environment variable:
-
 ```bash
 export OPENAI_API_KEY="<your-api-key>"
 ```

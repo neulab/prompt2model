@@ -5,7 +5,6 @@ from __future__ import annotations  # noqa FI58
 import asyncio
 import json
 import math
-import os
 import random
 from collections import Counter, defaultdict
 from dataclasses import dataclass
@@ -21,7 +20,7 @@ from prompt2model.dataset_generator.openai_gpt_template import construct_meta_pr
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import (
     OPENAI_ERRORS,
-    ChatGPTAgent,
+    APIAgent,
     count_tokens_from_string,
     get_formatted_logger,
     handle_openai_error,
@@ -44,7 +43,6 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
     def __init__(
         self,
-        api_key: str | None = None,
         max_api_calls: int = None,
         initial_temperature: float = 0.5,
         max_temperature: float = 1.7,
@@ -59,8 +57,6 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         """Initializes an instance of the OpenAI DatasetGenerator.
 
         Args:
-            api_key: A valid OpenAI API key. If not provided, the environment
-                variable OPENAI_API_KEY is used.
             max_api_calls: The maximum number of API calls allowed,
                 or None for unlimited.
             initial_temperature: The sampling temperature to use when initializing
@@ -81,29 +77,22 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             cache_root: The root directory for caching generated examples.
 
         Raises:
-            ValueError: If an API key is not provided and set as an environment
-            variable, or if the 'max_api_calls' value is not greater than 0.
+            ValueError: If the 'max_api_calls' value is not greater than 0.
 
         Note:
-            For the OpenAI GPT-3.5 API, Temperature ranges from 0 to 2. Higher
+            Temperature ranges from 0 to 2. Higher
             values yield more random/diverse outputs with lower quality, while
             lower values produce more deterministic outputs with higher quality.
             We use a strategy to dynamically adjust the temperature from
             initial_temperature to max_temperature during generation.
 
-            We incorporate random few-shot generated examples into the prompt
-            to the OpenAI GPT-3.5 API. The initial temperature is set lower to obtain
+            We incorporate random few-shot generated examples into the prompt.
+            The initial temperature is set lower to obtain
             high-quality, low-diversity examples. As the number of generated examples
             increases, we gradually have more high-quality examples for in-context
             learning during generation. This allows us to achieve high-quality,
             high-diversity examples later on by using a higher temperature.
         """
-        self.api_key: str | None = api_key if api_key else self.validate_environment()
-        if self.api_key is None or self.api_key == "":
-            raise ValueError(
-                "API key must be provided or set the environment variable "
-                "e.g. `export OPENAI_API_KEY=<your key>`."
-            )
         if max_api_calls and max_api_calls <= 0:
             raise ValueError("max_api_calls must be > 0")
         self.max_api_calls = max_api_calls
@@ -129,35 +118,6 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         self.requests_per_minute = requests_per_minute
         self.filter_duplicated_examples = filter_duplicated_examples
         self.cache_root = Path(cache_root)
-
-    def validate_environment(self):
-        """Check if any of the required API keys are present in the environment.
-
-        Returns:
-            str or None: The API key value if found in the environment, else None.
-        """
-        api_key = None
-        if "OPENAI_API_KEY" in os.environ:
-            api_key = os.getenv("OPENAI_API_KEY")
-        elif "ANTHROPIC_API_KEY" in os.environ:
-            api_key = os.getenv("ANTHROPIC_API_KEY")
-        elif "REPLICATE_API_KEY" in os.environ:
-            api_key = os.getenv("REPLICATE_API_KEY")
-        elif "AZURE_API_KEY" in os.environ:
-            api_key = os.getenv("AZURE_API_KEY")
-        elif "COHERE_API_KEY" in os.getenv("COHERE_API_KEY"):
-            api_key = os.getenv("COHERE_API_KEY")
-        elif "TOGETHERAI_API_KEY" in os.environ:
-            api_key = os.getenv("TOGETHERAI_API_KEY")
-        elif "BASETEN_API_KEY" in os.environ:
-            api_key = os.getenv("BASETEN_API_KEY")
-        elif "AI21_API_KEY" in os.environ:
-            api_key = os.getenv("AI21_API_KEY")
-        elif "OPENROUTER_API_KEY" in os.environ:
-            api_key = os.getenv("OPENROUTER_API_KEY")
-        elif "ALEPHALPHA_API_KEY" in os.environ:
-            api_key = os.getenv("ALEPHALPHA_API_KEY")
-        return api_key
 
     def construct_prompt(
         self,
@@ -576,7 +536,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
     async def generate_responses(
         self,
-        chat_api: ChatGPTAgent,
+        chat_api: APIAgent,
         generated_dataset: Dataset,
         expected_num_examples: int,
         prompts: list[str],
@@ -584,7 +544,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
         """Asynchronously generates responses using the GPT-3.5 API.
 
         Args:
-            chat_api: ChatGPTAgent to generate responses.
+            chat_api: APIAgent to generate responses.
             generated_dataset: Currently generated dataset.
             expected_num_examples: The number of examples expected
                 to be generated.
@@ -609,7 +569,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
 
         # Ensure the dynamic temperature is within the range [0, 2.0]
         clipped_temperature = max(0.0, min(2.0, dynamic_temperature))
-        responses = await chat_api.generate_batch_openai_chat_completion(
+        responses = await chat_api.generate_batch_completion(
             prompts,
             temperature=clipped_temperature,
             responses_per_request=self.responses_per_request,
@@ -664,7 +624,7 @@ class OpenAIDatasetGenerator(DatasetGenerator):
             generated_examples = []
 
         pbar = tqdm(total=expected_num_examples, desc="Generating examples")
-        chat_api = ChatGPTAgent(self.api_key)
+        chat_api = APIAgent()
 
         while True:
             # Each API call will return `responses_per_request` completion

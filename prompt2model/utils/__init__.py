@@ -1,16 +1,16 @@
 """Import utility functions."""
-from prompt2model.utils.logging_utils import get_formatted_logger
-from prompt2model.utils.openai_tools import (
+from prompt2model.utils.api_tools import (
     OPENAI_ERRORS,
-    ChatGPTAgent,
+    APIAgent,
     count_tokens_from_string,
     handle_openai_error,
 )
+from prompt2model.utils.logging_utils import get_formatted_logger
 from prompt2model.utils.rng import seed_generator
 from prompt2model.utils.tevatron_utils import encode_text, retrieve_objects
 
 __all__ = (  # noqa: F401
-    "ChatGPTAgent",
+    "APIAgent",
     "encode_text",
     "handle_openai_error",
     "OPENAI_ERRORS",

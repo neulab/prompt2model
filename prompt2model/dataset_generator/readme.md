@@ -19,12 +19,7 @@ from prompt2model.prompt_parser import OpenAIInstructionParser, TaskType
 
 - **Setup OpenAI API Key**:
 
-```python
-api_key = "<your-api-key>"
-dataset_generator = OpenAIDatasetGenerator(api_key)
-```
-
-Or, set as an environment variable:
+Set an API key as an environment variable:
 
 ```bash
 export OPENAI_API_KEY="<your-api-key>"
