@@ -17,7 +17,7 @@ API for parsing.
 from prompt2model.prompt_parser import PromptBasedInstructionParser, TaskType
 ```
 
-- Setup API Key and Initialize Parser:
+- Setup API Key and Initialize Parser. For instance, if using OpenAI:
 
 ```bash
 export OPENAI_API_KEY="<your-api-key>"

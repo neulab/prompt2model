@@ -19,7 +19,7 @@ from prompt2model.prompt_parser import PromptBasedInstructionParser, TaskType
 
 - **Setup API Key**:
 
-Set an API key as an environment variable:
+Set an API key as an environment variable. For instance, if using OpenAI:
 
 ```bash
 export OPENAI_API_KEY="<your-api-key>"
