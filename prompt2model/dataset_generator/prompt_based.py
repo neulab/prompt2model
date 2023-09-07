@@ -16,7 +16,7 @@ from datasets import Dataset
 from tqdm import tqdm
 
 from prompt2model.dataset_generator.base import DatasetGenerator, DatasetSplit
-from prompt2model.dataset_generator.prompt_based_template import construct_meta_prompt
+from prompt2model.dataset_generator.prompt_template import construct_meta_prompt
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import (
     API_ERRORS,
