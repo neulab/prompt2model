@@ -70,7 +70,7 @@ class APIAgent:
                 the model's likelihood of repeating the same line verbatim.
 
         Returns:
-            An OpenAI-like response object if there were no errors in generating completion.
+            An OpenAI-like response object if there were no errors in generation.
             In case of API-specific error, Exception object is captured and returned.
         """
         try:
@@ -188,7 +188,8 @@ def handle_api_error(e, api_call_counter=0):
         api_call_counter: The number of API calls made so far.
 
     Returns:
-        The captured exception (if error is API related and can be retried), else raise the error.
+        The captured exception (if error is API related and can be retried),
+        else raise the error.
     """
     logging.error(e)
     if isinstance(
