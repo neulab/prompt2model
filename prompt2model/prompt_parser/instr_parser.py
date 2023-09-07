@@ -87,7 +87,7 @@ class PromptBasedInstructionParser(PromptSpec):
         chat_api = APIAgent()
         while True:
             self.api_call_counter += 1
-            response = chat_api.generate_one_openai_chat_completion(
+            response = chat_api.generate_one_completion(
                 parsing_prompt_for_chatgpt,
                 temperature=0,
                 presence_penalty=0,

@@ -84,7 +84,7 @@ class APIAgent:
             )
             return response
         except API_ERRORS as e:
-            err = handle_openai_error(e)
+            err = handle_api_error(e)
 
         return err
 
@@ -178,7 +178,7 @@ class APIAgent:
         return responses
 
 
-def handle_openai_error(e, api_call_counter=0):
+def handle_api_error(e, api_call_counter=0):
     """Handle OpenAI errors or related errors that the API may raise.
 
     Args:
