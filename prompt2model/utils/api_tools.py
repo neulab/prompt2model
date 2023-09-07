@@ -15,6 +15,8 @@ from aiohttp import ClientSession
 from litellm import acompletion, completion
 from tqdm.asyncio import tqdm_asyncio
 
+# Note that litellm converts all API errors into openai errors,
+# so openai errors are valid even when using other services.
 API_ERRORS = (
     openai.error.APIError,
     openai.error.Timeout,
