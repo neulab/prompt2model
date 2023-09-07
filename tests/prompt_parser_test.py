@@ -126,7 +126,7 @@ def test_instruction_parser_with_invalid_json(mocked_parsing_method):
 
 @patch("time.sleep")
 @patch(
-    "prompt2model.utils.APIAgent.generate_one_completion",
+    "openai.ChatCompletion.create",
     side_effect=openai.error.Timeout("timeout"),
 )
 def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_method):

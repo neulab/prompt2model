@@ -70,18 +70,24 @@ class APIAgent:
                 the model's likelihood of repeating the same line verbatim.
 
         Returns:
-            A response object.
+            An OpenAI-like response object if there were no errors in generation.
+            In case of API-specific error, Exception object is captured and returned.
         """
-        response = completion(  # completion gets the key from os.getenv
-            model=self.model_name,
-            messages=[
-                {"role": "user", "content": f"{prompt}"},
-            ],
-            temperature=temperature,
-            presence_penalty=presence_penalty,
-            frequency_penalty=frequency_penalty,
-        )
-        return response
+        try:
+            response = completion(  # completion gets the key from os.getenv
+                model=self.model_name,
+                messages=[
+                    {"role": "user", "content": f"{prompt}"},
+                ],
+                temperature=temperature,
+                presence_penalty=presence_penalty,
+                frequency_penalty=frequency_penalty,
+            )
+            return response
+        except API_ERRORS as e:
+            err = handle_api_error(e)
+
+        return err
 
     async def generate_batch_completion(
         self,
@@ -173,7 +179,7 @@ class APIAgent:
         return responses
 
 
-def handle_api_error(e, api_call_counter):
+def handle_api_error(e, api_call_counter=0):
     """Handle OpenAI errors or related errors that the API may raise.
 
     Args:
@@ -182,7 +188,8 @@ def handle_api_error(e, api_call_counter):
         api_call_counter: The number of API calls made so far.
 
     Returns:
-        The api_call_counter (if no error was raised), else raise the error.
+        The captured exception (if error is API related and can be retried),
+        else raise the error.
     """
     logging.error(e)
     if isinstance(
@@ -193,8 +200,8 @@ def handle_api_error(e, api_call_counter):
         time.sleep(1)
 
     if isinstance(e, API_ERRORS):
-        # For these errors, we can increment a counter and retry the API call.
-        return api_call_counter
+        # For these errors, we can return the API related error and retry the API call.
+        return e
     else:
         # For all other errors, immediately throw an exception.
         raise e
