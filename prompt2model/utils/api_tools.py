@@ -1,4 +1,4 @@
-"""Tools for accessing OpenAI's API."""
+"""Tools for accessing API-based models."""
 
 from __future__ import annotations  # noqa FI58
 
@@ -15,7 +15,9 @@ from aiohttp import ClientSession
 from litellm import acompletion, completion
 from tqdm.asyncio import tqdm_asyncio
 
-OPENAI_ERRORS = (
+# Note that litellm converts all API errors into openai errors,
+# so openai errors are valid even when using other services.
+API_ERRORS = (
     openai.error.APIError,
     openai.error.Timeout,
     openai.error.RateLimitError,
@@ -26,42 +28,34 @@ OPENAI_ERRORS = (
 )
 
 ERROR_ERRORS_TO_MESSAGES = {
-    openai.error.InvalidRequestError: "OpenAI API Invalid Request: Prompt was filtered",  # noqa E501
-    openai.error.RateLimitError: "OpenAI API rate limit exceeded. Sleeping for 10 seconds.",  # noqa E501
-    openai.error.APIConnectionError: "OpenAI API Connection Error: Error Communicating with OpenAI",  # noqa E501
-    openai.error.Timeout: "OpenAI APITimeout Error: OpenAI Timeout",
-    openai.error.ServiceUnavailableError: "OpenAI service unavailable error: {e}",
-    openai.error.APIError: "OpenAI API error: {e}",
+    openai.error.InvalidRequestError: "API Invalid Request: Prompt was filtered",
+    openai.error.RateLimitError: "API rate limit exceeded. Sleeping for 10 seconds.",
+    openai.error.APIConnectionError: "Error Communicating with API",
+    openai.error.Timeout: "API Timeout Error: API Timeout",
+    openai.error.ServiceUnavailableError: "API service unavailable error: {e}",
+    openai.error.APIError: "API error: {e}",
 }
 
 
-class ChatGPTAgent:
-    """A class for accessing OpenAI's ChatCompletion API."""
+class APIAgent:
+    """A class for accessing API-based models."""
 
-    def __init__(self, api_key: str | None, model_name: str = "gpt-3.5-turbo"):
-        """Initialize ChatGPTAgent with an API key.
+    def __init__(self, model_name: str = "gpt-3.5-turbo"):
+        """Initialize APIAgent with an API key.
 
         Args:
-            api_key: A valid OpenAI API key. Alternatively, set as None and set
-                     the environment variable with `export OPENAI_API_KEY=<your key>`.
-            model_name: Name fo the OpenAI model to use (by default, gpt-3.5-turbo).
+            model_name: Name fo the model to use (by default, gpt-3.5-turbo).
         """
-        self.api_key = api_key
-        if self.api_key is None or self.api_key == "":
-            raise ValueError(
-                "API key must be provided or set the environment variable "
-                "with `export OPENAI_API_KEY=<your key>`."
-            )
         self.model_name = model_name
 
-    def generate_one_openai_chat_completion(
+    def generate_one_completion(
         self,
         prompt: str,
         temperature: float = 0,
         presence_penalty: float = 0,
         frequency_penalty: float = 0,
     ) -> openai.Completion:
-        """Generate a chat completion using OpenAI's gpt-3.5-turbo.
+        """Generate a chat completion using an API-based model.
 
         Args:
             prompt: A prompt asking for a response.
@@ -89,7 +83,7 @@ class ChatGPTAgent:
         )
         return response
 
-    async def generate_batch_openai_chat_completion(
+    async def generate_batch_completion(
         self,
         prompts: list[str],
         temperature: float = 1,
@@ -103,7 +97,7 @@ class ChatGPTAgent:
             model_config: Model configuration.
             temperature: Temperature to use.
             responses_per_request: Number of responses for each request.
-                i.e. the parameter n of OpenAI API call.
+                i.e. the parameter n of API call.
             requests_per_minute: Number of requests per minute to allow.
 
         Returns:
@@ -112,7 +106,7 @@ class ChatGPTAgent:
         openai.aiosession.set(ClientSession())
         limiter = aiolimiter.AsyncLimiter(requests_per_minute)
 
-        async def _throttled_openai_chat_completion_acreate(
+        async def _throttled_completion_acreate(
             model: str,
             messages: list[dict[str, str]],
             temperature: float,
@@ -160,7 +154,7 @@ class ChatGPTAgent:
                 return {"choices": [{"message": {"content": ""}}]}
 
         async_responses = [
-            _throttled_openai_chat_completion_acreate(
+            _throttled_completion_acreate(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "user", "content": f"{prompt}"},
@@ -179,8 +173,8 @@ class ChatGPTAgent:
         return responses
 
 
-def handle_openai_error(e, api_call_counter):
-    """Handle OpenAI errors or related errors that the OpenAI API may raise.
+def handle_api_error(e, api_call_counter):
+    """Handle OpenAI errors or related errors that the API may raise.
 
     Args:
         e: The error to handle. This could be an OpenAI error or a related
@@ -198,7 +192,7 @@ def handle_openai_error(e, api_call_counter):
         # For these errors, OpenAI recommends waiting before retrying.
         time.sleep(1)
 
-    if isinstance(e, OPENAI_ERRORS):
+    if isinstance(e, API_ERRORS):
         # For these errors, we can increment a counter and retry the API call.
         return api_call_counter
     else:

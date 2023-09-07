@@ -1,10 +1,10 @@
-"""Tools for mocking OpenAI API responses (for testing purposes)."""
+"""Tools for mocking API responses (for testing purposes)."""
 
 from __future__ import annotations  # noqa FI58
 
 
 class MockCompletion:
-    """Mock openai completion object."""
+    """Mock completion object."""
 
     def __init__(self, content: str | None = None, responses_per_request: int = 1):
         """Initialize a new instance of `MockCompletion` class.
@@ -18,11 +18,11 @@ class MockCompletion:
         """
         # We generate 5 identical responses for each API call by default.
         if content is not None:
-            # Mock an OpenAI ChatCompletion with identical responses.
+            # Mock a ChatCompletion with identical responses.
             self.choices = [{"message": {"content": content}}] * responses_per_request
         else:
-            # Mock an OpenAI ChatCompletion with different responses.
-            # Only used in mock_batch_openai_response_with_different_completion.
+            # Mock a ChatCompletion with different responses.
+            # Only used in mock_batch_api_response_with_different_completion.
             # The choice will be replaced later in the function.
             self.choices = []
 
@@ -37,7 +37,7 @@ class MockCompletion:
 
 
 class MockBatchDifferentCompletions:
-    """Mock batch openai completion object."""
+    """Mock batch completion object."""
 
     def __init__(self, length: int = 4) -> None:
         """Init a new instance of `MockBatchDifferentCompletions`.
@@ -45,12 +45,12 @@ class MockBatchDifferentCompletions:
         Args:
             length: Length of the batch completions.
 
-        This class is designed to simulate the response of ChatGPTAgent and test the
-        generation process of the OpenAIDataSetGenerator with
+        This class is designed to simulate the response of APIAgent and test the
+        generation process of the PromptBasedDatasetGenerator with
         `filter_duplicated_examples` set to True in
         `dataset_generator_with_filter_test`.
 
-        The class works in conjunction with OpenAIDataSetGenerator with
+        The class works in conjunction with PromptBasedDatasetGenerator with
         batch_size = 2, responses_per_request = 3, expected_num_examples
         = 5, and filter_duplicated_examples = True.
 
@@ -143,7 +143,7 @@ class MockBatchDifferentCompletions:
             )
 
 
-def mock_batch_openai_response_identical_completions(
+def mock_batch_api_response_identical_completions(
     prompts: list[str],
     content: str,
     temperature: float,
@@ -167,7 +167,7 @@ def mock_batch_openai_response_identical_completions(
         requests_per_minute: Number of requests per minute to allow.
 
     Returns:
-        A mock completion object simulating an OpenAI ChatCompletion API response.
+        A mock completion object simulating an ChatCompletion API response.
     """
     _ = prompts, temperature, presence_penalty, frequency_penalty, requests_per_minute
     mock_completions = [
