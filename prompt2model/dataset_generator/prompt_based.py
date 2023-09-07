@@ -1,6 +1,6 @@
 """A simple dataset generator that uses APIs."""
 
-from __future__ import annotations  # noqa FI58
+from __future__ import annotations
 
 import asyncio
 import json
