@@ -112,12 +112,11 @@ def test_instruction_parser_with_invalid_json(mocked_parsing_method):
     with patch.object(logger, "info") as mock_info, patch.object(
         logger, "warning"
     ) as mock_warning:
-        prompt_spec.parse_from_prompt(prompt)
+        with pytest.raises(RuntimeError):
+            prompt_spec.parse_from_prompt(prompt)
         mock_info.assert_not_called()
         warning_list = [each.args[0] for each in mock_warning.call_args_list]
-        assert warning_list == ["API response was not a valid JSON"] * 3 + [
-            "Maximum number of API calls reached for PromptParser."
-        ]
+        assert warning_list == ["API response was not a valid JSON"] * 3
     assert mocked_parsing_method.call_count == 3
     assert prompt_spec._instruction is None
     assert prompt_spec._examples is None
