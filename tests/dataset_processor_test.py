@@ -9,11 +9,7 @@ import datasets
 import pytest
 
 from prompt2model.dataset_processor.textualize import TextualizeProcessor
-from test_helpers import (
-    are_dataset_dicts_identical,
-    create_gpt2_model_and_tokenizer,
-    create_t5_model_and_tokenizer,
-)
+from test_helpers import create_gpt2_model_and_tokenizer, create_t5_model_and_tokenizer
 
 logger = logging.getLogger("DatasetProcessor")
 
@@ -128,10 +124,12 @@ def test_dataset_processor_t5_style():
         INSTRUCTION, DATASET_DICTS
     )
     # Ensure the dataset_dicts themselves are the same after processing.
-    assert all(
-        are_dataset_dicts_identical(raw, origin)
-        for (raw, origin) in zip(raw_dataset_dicts, DATASET_DICTS)
-    )
+    for raw, origin in zip(raw_dataset_dicts, DATASET_DICTS):
+        assert list(raw["train"]) == list(origin["train"])
+        if "val" in raw:
+            assert list(raw["val"]) == list(origin["val"])
+        if "test" in raw:
+            assert list(raw["test"]) == list(origin["test"])
     t5_expected_dataset_dicts = [
         datasets.DatasetDict(
             {
@@ -179,7 +177,11 @@ def test_dataset_processor_t5_style():
         ),
     ]
     for exp, act in zip(t5_expected_dataset_dicts, t5_modified_dataset_dicts):
-        assert are_dataset_dicts_identical(exp, act)
+        assert list(exp["train"]) == list(act["train"])
+        if "val" in exp:
+            assert list(exp["val"]) == list(act["val"])
+        if "test" in exp:
+            assert list(exp["test"]) == list(act["test"])
     gc.collect()
 
 
@@ -233,7 +235,7 @@ def test_dataset_processor_with_numerical_column():
                         "<task 1>convert to text2text\nExample:\nfoo\nLabel:\n",
                         "<task 1>convert to text2text\nExample:\nbar\nLabel:\n",
                     ],
-                    "model_output": ["foo", "bar", "0", "1"],
+                    "model_output": ["baz", "qux", "0", "1"],
                 }
             ),
             "test": datasets.Dataset.from_dict(
@@ -260,9 +262,8 @@ def test_dataset_processor_with_numerical_column():
     actual_dataset_dict = datasets.DatasetDict(
         {"train": concatenated_training_dataset, "test": concatenated_test_dataset}
     )
-    are_dataset_dicts_identical(expected_dataset_dict, actual_dataset_dict)
-
-    gc.collect()
+    assert list(expected_dataset_dict["train"]) == list(actual_dataset_dict["train"])
+    assert list(expected_dataset_dict["test"]) == list(actual_dataset_dict["test"])
 
 
 def test_dataset_processor_decoder_only_style():
@@ -276,10 +277,12 @@ def test_dataset_processor_decoder_only_style():
         INSTRUCTION, DATASET_DICTS
     )
     # Ensure the dataset_dicts themselves are the same after processing.
-    assert all(
-        are_dataset_dicts_identical(raw, origin)
-        for raw, origin in zip(raw_dataset_dicts, DATASET_DICTS)
-    )
+    for raw, origin in zip(raw_dataset_dicts, DATASET_DICTS):
+        assert list(raw["train"]) == list(origin["train"])
+        if "val" in raw:
+            assert list(raw["val"]) == list(origin["val"])
+        if "test" in raw:
+            assert list(raw["test"]) == list(origin["test"])
     # Check that the modified dataset dicts have the expected content
     gpt_expected_dataset_dicts = [
         datasets.DatasetDict(
@@ -327,13 +330,12 @@ def test_dataset_processor_decoder_only_style():
             }
         ),
     ]
-    assert all(
-        are_dataset_dicts_identical(exp, modified)
-        for (exp, modified) in zip(
-            gpt_expected_dataset_dicts, gpt_modified_dataset_dicts
-        )
-    )
-    gc.collect()
+    for exp, modified in zip(gpt_expected_dataset_dicts, gpt_modified_dataset_dicts):
+        assert list(exp["train"]) == list(modified["train"])
+        if "val" in exp:
+            assert list(exp["val"]) == list(modified["val"])
+        if "test" in exp:
+            assert list(exp["test"]) == list(modified["test"])
 
 
 def test_unexpected_dataset_split():
@@ -436,11 +438,12 @@ def test_empty_filter_t5_type():
             }
         ),
     ]
-    assert all(
-        are_dataset_dicts_identical(exp, act)
-        for exp, act in zip(t5_expected_dataset_dicts, t5_modified_dataset_dicts)
-    )
-    gc.collect()
+    for exp, modified in zip(t5_expected_dataset_dicts, t5_modified_dataset_dicts):
+        assert list(exp["train"]) == list(modified["train"])
+        if "val" in exp:
+            assert list(exp["val"]) == list(modified["val"])
+        if "test" in exp:
+            assert list(exp["test"]) == list(modified["test"])
 
 
 def test_empty_filter_decoder_only_style():
@@ -486,12 +489,12 @@ def test_empty_filter_decoder_only_style():
             }
         ),
     ]
-    assert all(
-        are_dataset_dicts_identical(expected, modified)
-        for expected, modified in zip(
-            gpt_expected_dataset_dicts, gpt_modified_dataset_dicts
-        )
-    )
+    for exp, modified in zip(gpt_expected_dataset_dicts, gpt_modified_dataset_dicts):
+        assert list(exp["train"]) == list(modified["train"])
+        if "val" in exp:
+            assert list(exp["val"]) == list(modified["val"])
+        if "test" in exp:
+            assert list(exp["test"]) == list(modified["test"])
     gc.collect()
 
 
@@ -539,7 +542,7 @@ def test_raise_value_error_of_process_dataset_lists():
 def test_process_dataset_lists():
     """Test the `process_dataset_lists` function."""
     processor = TextualizeProcessor(has_encoder=True)
-    modified_dataset_dicsts = processor.process_dataset_lists(
+    modified_dataset_dicts = processor.process_dataset_lists(
         INSTRUCTION, DATASET_LIST, 0.6, 0.2
     )
     expected_modified_generated_dataset_dict = datasets.DatasetDict(
@@ -604,22 +607,24 @@ def test_process_dataset_lists():
             ),
         }
     )
-    assert all(
-        are_dataset_dicts_identical(raw, origin)
-        for (raw, origin) in zip(
-            [
-                expected_modified_generated_dataset_dict,
-                expected_modified_retrieved_dataset_dict,
-            ],
-            modified_dataset_dicsts,
-        )
-    )
+    for exp, modified in zip(
+        [
+            expected_modified_generated_dataset_dict,
+            expected_modified_retrieved_dataset_dict,
+        ],
+        modified_dataset_dicts,
+    ):
+        assert list(exp["train"]) == list(modified["train"])
+        if "val" in exp:
+            assert list(exp["val"]) == list(modified["val"])
+        if "test" in exp:
+            assert list(exp["test"]) == list(modified["test"])
 
 
 def test_process_dataset_lists_with_maximum_example_num():
     """Test the maximum_example_num parameter."""
     processor = TextualizeProcessor(has_encoder=True)
-    modified_dataset_dicsts = processor.process_dataset_lists(
+    modified_dataset_dicts = processor.process_dataset_lists(
         INSTRUCTION, DATASET_LIST, 0.6, 0.2, 3000
     )
     # Before applying the maximum_example_num, train_num = 6000,
@@ -688,13 +693,15 @@ def test_process_dataset_lists_with_maximum_example_num():
             ),
         }
     )
-    assert all(
-        are_dataset_dicts_identical(raw, origin)
-        for (raw, origin) in zip(
-            [
-                expected_modified_generated_dataset_dict,
-                expected_modified_retrieved_dataset_dict,
-            ],
-            modified_dataset_dicsts,
-        )
-    )
+    for exp, modified in zip(
+        [
+            expected_modified_generated_dataset_dict,
+            expected_modified_retrieved_dataset_dict,
+        ],
+        modified_dataset_dicts,
+    ):
+        assert list(exp["train"]) == list(modified["train"])
+        if "val" in exp:
+            assert list(exp["val"]) == list(modified["val"])
+        if "test" in exp:
+            assert list(exp["test"]) == list(modified["test"])

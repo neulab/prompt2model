@@ -1,8 +1,4 @@
 """Import mock classes used in unit tests."""
-from test_helpers.dataset_tools import (
-    are_dataset_dicts_identical,
-    are_datasets_identical,
-)
 from test_helpers.mock_api import (
     MockBatchDifferentCompletions,
     MockCompletion,

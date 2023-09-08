@@ -73,21 +73,16 @@ class APIAgent:
             An OpenAI-like response object if there were no errors in generation.
             In case of API-specific error, Exception object is captured and returned.
         """
-        try:
-            response = completion(  # completion gets the key from os.getenv
-                model=self.model_name,
-                messages=[
-                    {"role": "user", "content": f"{prompt}"},
-                ],
-                temperature=temperature,
-                presence_penalty=presence_penalty,
-                frequency_penalty=frequency_penalty,
-            )
-            return response
-        except API_ERRORS as e:
-            err = handle_api_error(e)
-
-        return err
+        response = completion(  # completion gets the key from os.getenv
+            model=self.model_name,
+            messages=[
+                {"role": "user", "content": f"{prompt}"},
+            ],
+            temperature=temperature,
+            presence_penalty=presence_penalty,
+            frequency_penalty=frequency_penalty,
+        )
+        return response
 
     async def generate_batch_completion(
         self,
@@ -179,32 +174,22 @@ class APIAgent:
         return responses
 
 
-def handle_api_error(e, api_call_counter=0):
+def handle_api_error(e) -> None:
     """Handle OpenAI errors or related errors that the API may raise.
 
     Args:
         e: The error to handle. This could be an OpenAI error or a related
            non-fatal error, such as JSONDecodeError or AssertionError.
-        api_call_counter: The number of API calls made so far.
-
-    Returns:
-        The captured exception (if error is API related and can be retried),
-        else raise the error.
     """
     logging.error(e)
+    if not isinstance(e, API_ERRORS):
+        raise e
     if isinstance(
         e,
         (openai.error.APIError, openai.error.Timeout, openai.error.RateLimitError),
     ):
         # For these errors, OpenAI recommends waiting before retrying.
         time.sleep(1)
-
-    if isinstance(e, API_ERRORS):
-        # For these errors, we can return the API related error and retry the API call.
-        return e
-    else:
-        # For all other errors, immediately throw an exception.
-        raise e
 
 
 def count_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> int:
