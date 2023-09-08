@@ -8,7 +8,11 @@ import openai
 import pytest
 
 from prompt2model.prompt_parser import PromptBasedInstructionParser, TaskType
+from prompt2model.prompt_parser.mock import MockPromptSpec
+from prompt2model.utils import api_tools
 from test_helpers import MockCompletion, UnknownGpt3Exception
+from test_helpers.mock_api import MockAPIAgent
+from test_helpers.test_utils import temp_setattr
 
 logger = logging.getLogger("PromptParser")
 GPT3_RESPONSE_WITH_DEMONSTRATIONS = MockCompletion(
@@ -179,3 +183,17 @@ def test_instruction_parser_with_unexpected_error(mocked_parsing_method):
     # Check that we only tried calling the API once.
     assert mocked_parsing_method.call_count == 1
     gc.collect()
+
+
+def test_prompt_parser_agent_switch():
+    """Test if generate_hypothetical_document can switch between API agents."""
+    my_agent = MockAPIAgent(
+        default_content='{"Instruction": "test response", "Demonstrations": "test response"}'  # noqa: E501
+    )
+    with temp_setattr(api_tools, "default_api_agent", my_agent):
+        prompt_parser = PromptBasedInstructionParser(
+            TaskType.CLASSIFICATION, max_api_calls=3
+        )
+        prompt_spec = MockPromptSpec(TaskType.CLASSIFICATION)
+        prompt_parser.parse_from_prompt(prompt_spec)
+    assert my_agent.generate_one_call_counter == 1

@@ -11,8 +11,14 @@ import numpy as np
 import torch
 
 from prompt2model.model_retriever import DescriptionModelRetriever
+from prompt2model.model_retriever.generate_hypothetical_document import (
+    generate_hypothetical_model_description,
+)
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
+from prompt2model.utils import api_tools
 from test_helpers import create_test_search_index
+from test_helpers.mock_api import MockAPIAgent
+from test_helpers.test_utils import temp_setattr
 
 TINY_MODEL_NAME = "google/bert_uncased_L-2_H-128_A-2"
 
@@ -238,3 +244,12 @@ def test_retrieve_bm25_when_no_index_exists():
     assert top_model_names[0] == "t5-base"
     # Clear search index from disk.
     shutil.rmtree(retriever.search_index_path)
+
+
+def test_generate_hypothetical_document_agent_switch():
+    """Test if generate_hypothetical_document can switch between API agents."""
+    my_agent = MockAPIAgent(default_content="test response")
+    with temp_setattr(api_tools, "default_api_agent", my_agent):
+        prompt_spec = MockPromptSpec(TaskType.CLASSIFICATION)
+        generate_hypothetical_model_description(prompt_spec, max_api_calls=3)
+    assert my_agent.generate_one_call_counter == 1

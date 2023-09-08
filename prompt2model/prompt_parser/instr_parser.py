@@ -13,7 +13,7 @@ from prompt2model.prompt_parser.instr_parser_prompt import (  # isort: split
     construct_prompt_for_instruction_parsing,
 )
 
-from prompt2model.utils import APIAgent, get_formatted_logger
+from prompt2model.utils import api_tools, get_formatted_logger
 from prompt2model.utils.api_tools import API_ERRORS, handle_api_error
 
 logger = get_formatted_logger("PromptParser")
@@ -85,7 +85,7 @@ class PromptBasedInstructionParser(PromptSpec):
         """
         parsing_prompt_for_chatgpt = construct_prompt_for_instruction_parsing(prompt)
 
-        chat_api = APIAgent()
+        chat_api = api_tools.default_api_agent
         last_error = None
         while True:
             self.api_call_counter += 1

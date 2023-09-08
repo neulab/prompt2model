@@ -5,7 +5,7 @@ from __future__ import annotations  # noqa FI58
 import logging
 
 from prompt2model.prompt_parser import PromptSpec
-from prompt2model.utils import API_ERRORS, APIAgent, handle_api_error
+from prompt2model.utils import API_ERRORS, api_tools, handle_api_error
 
 PROMPT_PREFIX = '''HuggingFace contains models, which are each given a user-generated description. The first section of the description, delimited with two "---" lines, consists of a YAML description of the model. This may contain fields like "language" (supported by model), "datasets" (used to train the model), "tags" (e.g. tasks relevant to the model), and "metrics" (used to evaluate the model). Create a hypothetical HuggingFace model description that would satisfy a given user instruction. Here are some examples:
 
@@ -427,7 +427,7 @@ def generate_hypothetical_model_description(
     api_call_counter = 0
 
     instruction = prompt.instruction
-    api_agent = APIAgent("gpt-3.5-turbo-16k")
+    api_agent = api_tools.default_api_agent
     chatgpt_prompt = (
         PROMPT_PREFIX
         + "\n"
