@@ -99,7 +99,6 @@ class APIAgent:
         temperature: float = 1,
         responses_per_request: int = 5,
         requests_per_minute: int = 80,
-        max_tokens: int | None = None,
     ) -> list[openai.Completion]:
         """Generate a batch responses from OpenAI Chat Completion API.
 
