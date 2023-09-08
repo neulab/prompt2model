@@ -77,13 +77,14 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 "Search index must either be a valid file or not exist yet. "
                 "But {self.search_index_path} is provided."
             )
-        logger.info("Creating dataset descriptions")
-        encode_text(
-            self.encoder_model_name,
-            text_to_encode=[x.description for x in self.dataset_infos],
-            encoding_file=self.search_index_path,
-            device=self.device,
-        )
+        if not os.path.exists(self.search_index_path):
+            logger.info("Creating dataset descriptions")
+            encode_text(
+                self.encoder_model_name,
+                text_to_encode=[x.description for x in self.dataset_infos],
+                encoding_file=self.search_index_path,
+                device=self.device,
+            )
 
     # ---------------------------- Utility Functions ----------------------------
     @staticmethod
