@@ -61,7 +61,7 @@ class PromptBasedInstructionParser(PromptSpec):
         try:
             response_json = json.loads(response_text, strict=False)
         except json.decoder.JSONDecodeError:
-            logger.warning("API response was not a valid JSON")
+            logger.warning(f"API response was not a valid JSON: {response_text}")
             return None
 
         required_keys = ["Instruction", "Demonstrations"]
