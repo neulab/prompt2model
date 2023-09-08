@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import openai
 
-from prompt2model.utils.api_tools import APIAgent  # noqa FI58
+from prompt2model.utils.api_tools import APIAgent
 
 
 class MockCompletion:
