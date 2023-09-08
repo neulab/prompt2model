@@ -148,13 +148,13 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
                 generated examples.
             generated_examples: A list of currently generated examples.
             context_cutoff: If the total length of the prompt in tokens exceeds this
-                value, repeat prompt generation process to generate a shorter one.
+                value, repeat the prompt generation process to generate a shorter one.
 
         Returns:
             The generated prompt string.
         """
         while True:
-            # Choose a few examples to add to the prompt if examples exist
+            # Choose a few examples to add to the prompt if examples exist.
             if len(generated_examples) == 0:
                 low_quality_example_string = "N/A\n"
                 random_selected_generated_example_num = 0
