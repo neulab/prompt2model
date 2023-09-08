@@ -327,8 +327,8 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
                             f'API response must contain {", ".join(required_keys)} keys'
                         )
                         continue
-                    input = str(response_json.get("input", "")).strip()
-                    output = str(response_json.get("output", "")).strip()
+                    input = str(response_json["input"]).strip()
+                    output = str(response_json["output"]).strip()
                     if input != "" and output != "":
                         generated_examples.append(Example(input, output))
                     else:
