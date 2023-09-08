@@ -449,16 +449,18 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
                 handle_api_error(e)
 
             # Extract the responses and add new examples to the dataset.
+            prev_length = len(generated_examples)
             self.extract_and_append_responses(responses, all_generated_examples)
             generated_examples = (
                 self.apply_multi_vote_filtering(all_generated_examples)
                 if self.filter_duplicated_examples
                 else all_generated_examples
             )
-            if len(generated_examples) >= num_examples:
-                generated_examples = generated_examples[:num_examples]
 
-            pbar.update(len(generated_examples))
+            pbar.update(len(generated_examples) - prev_length)
+
+        if len(generated_examples) >= num_examples:
+            generated_examples = generated_examples[:num_examples]
 
         return Dataset.from_dict(
             {
