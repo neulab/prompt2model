@@ -598,7 +598,7 @@ def test_unexpected_examples_of_gpt(mocked_generate_example):
 def test_filter_with_duplicate_inputs_unique_outputs():
     """Test filtering with duplicate inputs, unique outputs."""
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    data_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=False)
+    data_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=True)
     generated_examples = [
         Example(input_col="apple", output_col="A"),
         Example(input_col="banana", output_col="B"),
@@ -618,7 +618,7 @@ def test_filter_with_duplicate_inputs_unique_outputs():
 def test_filter_duplicate_inputs_duplicate_outputs():
     """Test constructing a map with duplicate inputs and duplicate outputs."""
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    data_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=False)
+    data_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=True)
     generated_examples = [
         Example(input_col="apple", output_col="A"),
         Example(input_col="banana", output_col="C"),
@@ -643,7 +643,7 @@ def test_filter_duplicate_inputs_duplicate_outputs():
 def test_create_all_examples_dataset_and_generated_dataset_with_unique_inputs_outputs():
     """Test constructing a map with unique inputs and outputs."""
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    data_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=False)
+    data_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=True)
     generated_examples = [
         Example(input_col="apple", output_col="A"),
         Example(input_col="banana", output_col="B"),
@@ -656,7 +656,7 @@ def test_create_all_examples_dataset_and_generated_dataset_with_unique_inputs_ou
 def test_create_all_examples_dataset_and_generated_dataset_with_empty_examples_list():
     """Test constructing a map with empty inputs and outputs."""
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    data_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=False)
+    data_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=True)
     generated_examples = []
     filtered_examples = data_generator.apply_multi_vote_filtering(generated_examples)
     assert generated_examples == filtered_examples

@@ -147,8 +147,8 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
                 parsed from the user's prompt, which quality is higher than the
                 generated examples.
             generated_examples: A list of currently generated examples.
-            context_cutoff: If the total length of the prompt exceeds this value,
-                repeat the prompt generation process to generate a shorter one.
+            context_cutoff: If the total length of the prompt in tokens exceeds this
+                value, repeat prompt generation process to generate a shorter one.
 
         Returns:
             The generated prompt string.
@@ -224,15 +224,15 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
         Returns:
             Currently generated dataset with multi-vote filtering applied.
         """
+        # Ensure that multi-vote filtering is enabled.
+        if not self.filter_duplicated_examples:
+            raise ValueError("Multi-vote filtering is not enabled.")
         filtered_examples = []
 
         input_output_map: dict[str, Counter] = defaultdict(Counter)
 
         for ex in generated_examples:
             input_output_map[ex.input_col][ex.output_col] += 1
-
-        if len(generated_examples) != 0 and input_output_map is None:
-            raise ValueError("input_output_map is not correctly constructed.")
 
         for input_str, output_counter in input_output_map.items():
             most_common_count = output_counter.most_common(1)[0][1]

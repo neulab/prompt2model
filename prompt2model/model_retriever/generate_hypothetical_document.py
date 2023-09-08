@@ -444,6 +444,7 @@ def generate_hypothetical_model_description(
             return chatgpt_completion.choices[0]["message"]["content"]
         except API_ERRORS as e:
             handle_api_error(e)
+            api_call_counter += 1
             if max_api_calls and api_call_counter >= max_api_calls:
                 logging.error("Maximum number of API calls reached.")
                 raise ValueError("Maximum number of API calls reached.") from e
