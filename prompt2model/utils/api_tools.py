@@ -168,7 +168,7 @@ class APIAgent:
         )
         async_responses = [
             _throttled_completion_acreate(
-                model="gpt-3.5-turbo",
+                model=self.model_name,
                 messages=[
                     {"role": "user", "content": f"{prompt}"},
                 ],
