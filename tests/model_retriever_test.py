@@ -247,7 +247,7 @@ def test_retrieve_bm25_when_no_index_exists():
 
 
 def test_generate_hypothetical_document_agent_switch():
-    """Test if generate_hypothetical_document can switch between API agents."""
+    """Test if generate_hypothetical_document can use a user-set API agent."""
     my_agent = MockAPIAgent(default_content="test response")
     with temp_setattr(api_tools, "default_api_agent", my_agent):
         prompt_spec = MockPromptSpec(TaskType.CLASSIFICATION)

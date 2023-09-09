@@ -951,7 +951,7 @@ def test_dataset_generator_terminates(mocked_generate_example):
 
 
 def test_generate_dataset_agent_switch():
-    """Test if test set generation can switch between API agents."""
+    """Test if dataset generation can use a user-set API agent."""
     my_agent = MockAPIAgent(
         default_content='{"input": "This is input.", "output": "This is an output."}'
     )

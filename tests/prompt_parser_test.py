@@ -192,7 +192,7 @@ def test_instruction_parser_with_unexpected_error(mocked_parsing_method):
 
 
 def test_prompt_parser_agent_switch():
-    """Test if generate_hypothetical_document can switch between API agents."""
+    """Test if prompt parser can use a user-set API agent."""
     my_agent = MockAPIAgent(
         default_content='{"Instruction": "test response", "Demonstrations": "test response"}'  # noqa: E501
     )
