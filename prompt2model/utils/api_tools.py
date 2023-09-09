@@ -45,7 +45,7 @@ class APIAgent:
         model_name: str = "gpt-3.5-turbo",
         max_tokens: int | None = None,
     ):
-        """Initialize APIAgent with an API key.
+        """Initialize APIAgent with model_name and max_tokens.
 
         Args:
             model_name: Name fo the model to use (by default, gpt-3.5-turbo).
