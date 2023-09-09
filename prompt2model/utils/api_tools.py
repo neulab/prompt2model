@@ -8,6 +8,7 @@ import logging
 import time
 
 import aiolimiter
+import litellm.utils
 import openai
 import openai.error
 import tiktoken
@@ -49,11 +50,16 @@ class APIAgent:
 
         Args:
             model_name: Name fo the model to use (by default, gpt-3.5-turbo).
-            max_tokens: The maximum number of tokens to generate. Defaults to 4x the
-                length of the longest input in the batch.
+            max_tokens: The maximum number of tokens to generate. Defaults to the max
+                value for the model if available through litellm.
         """
         self.model_name = model_name
         self.max_tokens = max_tokens
+        if max_tokens is None:
+            try:
+                self.max_tokens = litellm.utils.get_max_tokens(model_name)
+            except Exception:
+                pass
 
     def generate_one_completion(
         self,
