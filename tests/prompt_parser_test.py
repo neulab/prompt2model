@@ -2,13 +2,12 @@
 
 import gc
 import logging
-import os
 from unittest.mock import patch
 
 import openai
 import pytest
 
-from prompt2model.prompt_parser import OpenAIInstructionParser, TaskType
+from prompt2model.prompt_parser import PromptBasedInstructionParser, TaskType
 from test_helpers import MockCompletion, UnknownGpt3Exception
 
 logger = logging.getLogger("PromptParser")
@@ -35,7 +34,7 @@ GPT3_RESPONSE_WITH_INVALID_JSON = MockCompletion(
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_one_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_one_completion",
     side_effect=[GPT3_RESPONSE_WITH_DEMONSTRATIONS],
 )
 def test_instruction_parser_with_demonstration(mocked_parsing_method):
@@ -48,8 +47,7 @@ def test_instruction_parser_with_demonstration(mocked_parsing_method):
 Fifth of November 2024 -> 11/05/2024
 Jan. 9 2023 -> 01/09/2023
 Christmas 2016 -> 12/25/2016"""
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    prompt_spec = OpenAIInstructionParser(task_type=TaskType.TEXT_GENERATION)
+    prompt_spec = PromptBasedInstructionParser(task_type=TaskType.TEXT_GENERATION)
     prompt_spec.parse_from_prompt(prompt)
 
     assert prompt_spec.task_type == TaskType.TEXT_GENERATION
@@ -74,7 +72,7 @@ Christmas 2016 -> 12/25/2016"""
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_one_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_one_completion",
     side_effect=[GPT3_RESPONSE_WITHOUT_DEMONSTRATIONS],
 )
 def test_instruction_parser_without_demonstration(mocked_parsing_method):
@@ -83,11 +81,8 @@ def test_instruction_parser_without_demonstration(mocked_parsing_method):
     Args:
         mocked_parsing_method: Mocked function for parsing a prompt using GPT.
     """
-    api_key = "fake_api_key"
     prompt = """Turn the given fact into a question by a simple rearrangement of words. This typically involves replacing some part of the given fact with a WH word. For example, replacing the subject of the provided fact with the word \"what\" can form a valid question. Don't be creative! You just need to rearrange the words to turn the fact into a question - easy! Don't just randomly remove a word from the given fact to form a question. Remember that your question must evaluate scientific understanding. Pick a word or a phrase in the given fact to be the correct answer, then make the rest of the question. You can also form a question without any WH words. For example, 'A radio converts electricity into?'"""  # noqa: E501
-    prompt_spec = OpenAIInstructionParser(
-        task_type=TaskType.TEXT_GENERATION, api_key=api_key
-    )
+    prompt_spec = PromptBasedInstructionParser(task_type=TaskType.TEXT_GENERATION)
     prompt_spec.parse_from_prompt(prompt)
 
     assert prompt_spec.task_type == TaskType.TEXT_GENERATION
@@ -101,7 +96,7 @@ def test_instruction_parser_without_demonstration(mocked_parsing_method):
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_one_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_one_completion",
     side_effect=[GPT3_RESPONSE_WITH_INVALID_JSON] * 3,
 )
 def test_instruction_parser_with_invalid_json(mocked_parsing_method):
@@ -110,20 +105,18 @@ def test_instruction_parser_with_invalid_json(mocked_parsing_method):
     Args:
         mocked_parsing_method: Mocked function for parsing a prompt using GPT.
     """
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
     prompt = """This prompt will be ignored by the parser in this test."""
-    prompt_spec = OpenAIInstructionParser(
+    prompt_spec = PromptBasedInstructionParser(
         task_type=TaskType.TEXT_GENERATION, max_api_calls=3
     )
     with patch.object(logger, "info") as mock_info, patch.object(
         logger, "warning"
     ) as mock_warning:
-        prompt_spec.parse_from_prompt(prompt)
+        with pytest.raises(RuntimeError):
+            prompt_spec.parse_from_prompt(prompt)
         mock_info.assert_not_called()
         warning_list = [each.args[0] for each in mock_warning.call_args_list]
-        assert warning_list == ["API response was not a valid JSON"] * 3 + [
-            "Maximum number of API calls reached for PromptParser."
-        ]
+        assert warning_list == ["API response was not a valid JSON"] * 3
     assert mocked_parsing_method.call_count == 3
     assert prompt_spec._instruction is None
     assert prompt_spec._examples is None
@@ -132,25 +125,24 @@ def test_instruction_parser_with_invalid_json(mocked_parsing_method):
 
 @patch("time.sleep")
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_one_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_one_completion",
     side_effect=openai.error.Timeout("timeout"),
 )
 def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_method):
     """Verify that we wait and retry (a set number of times) if the API times out.
 
     Args:
-        mocked_parsing_method: Mocked function for parsing a prompt using the OpenAI
+        mocked_parsing_method: Mocked function for parsing a prompt using the
                                API. The mocked API call raises a `openai.error.Timeout`
                                error when we request a chat completion.
         mocked_sleep_method: When `time.sleep` is called, we mock it to do nothing.
                              We simply use this mock to verify that the function waits
                              some time after each API timeout.
     """
-    api_key = "fake_api_key"
     prompt = """This prompt will be ignored by the parser in this test."""
-    with pytest.raises(ValueError) as exc_info:
-        prompt_spec = OpenAIInstructionParser(
-            task_type=TaskType.TEXT_GENERATION, api_key=api_key, max_api_calls=3
+    with pytest.raises(RuntimeError) as exc_info:
+        prompt_spec = PromptBasedInstructionParser(
+            task_type=TaskType.TEXT_GENERATION, max_api_calls=3
         )
         prompt_spec.parse_from_prompt(prompt)
 
@@ -159,8 +151,8 @@ def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_met
     assert mocked_sleep_method.call_count == 3
     assert mocked_parsing_method.call_count == 3
 
-    # Check if the ValueError was raised
-    assert isinstance(exc_info.value, ValueError)
+    # Check if the RuntimeError was raised
+    assert isinstance(exc_info.value, RuntimeError)
     # Check if the original exception (e) is present as the cause
     original_exception = exc_info.value.__cause__
     assert isinstance(original_exception, openai.error.Timeout)
@@ -168,7 +160,7 @@ def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_met
 
 
 @patch(
-    "prompt2model.utils.ChatGPTAgent.generate_one_openai_chat_completion",
+    "prompt2model.utils.APIAgent.generate_one_completion",
     side_effect=UnknownGpt3Exception(),
 )
 def test_instruction_parser_with_unexpected_error(mocked_parsing_method):
@@ -177,39 +169,13 @@ def test_instruction_parser_with_unexpected_error(mocked_parsing_method):
     Args:
         mocked_parsing_method: Mocked function for parsing a prompt using GPT.
     """
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
     prompt = """This prompt will be ignored by the parser in this test."""
     with pytest.raises(UnknownGpt3Exception):
-        prompt_spec = OpenAIInstructionParser(
+        prompt_spec = PromptBasedInstructionParser(
             task_type=TaskType.TEXT_GENERATION, max_api_calls=3
         )
         prompt_spec.parse_from_prompt(prompt)
 
     # Check that we only tried calling the API once.
     assert mocked_parsing_method.call_count == 1
-    gc.collect()
-
-
-def test_openai_key_init():
-    """Test openai key initialization."""
-    api_key = None
-    os.environ["OPENAI_API_KEY"] = ""
-    with pytest.raises(ValueError) as exc_info:
-        _ = OpenAIInstructionParser(task_type=TaskType.TEXT_GENERATION)
-        assert str(exc_info.value) == (
-            "API key must be provided or set the environment variable"
-            + " with `export OPENAI_API_KEY=<your key>`."
-        )
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    environment_key_parser = OpenAIInstructionParser(task_type=TaskType.TEXT_GENERATION)
-    assert (
-        environment_key_parser.api_key == os.environ["OPENAI_API_KEY"]
-        and os.environ["OPENAI_API_KEY"] is not None
-    )
-    os.environ["OPENAI_API_KEY"] = ""
-    api_key = "qwertwetyriutytwreytuyrgtwetrueytttr"
-    explicit_api_key_paser = OpenAIInstructionParser(
-        task_type=TaskType.TEXT_GENERATION, api_key=api_key
-    )
-    assert explicit_api_key_paser.api_key == api_key and api_key is not None
     gc.collect()

@@ -30,20 +30,18 @@ You can also run through the command line.
 pip install prompt2model
 ```
 
-Our current `Prompt2Model` implementation uses
-the OpenAI API. Accordingly, you need to:
+`Prompt2Model` supports various platforms such as OpenAI, Anthropic, Huggingface, etc. using [LiteLLM](https://github.com/BerriAI/litellm).
 
-- Sign up on the OpenAI website and obtain an
-OpenAI API key.
-
-- Set
-the environment variable
-`OPENAI_API_KEY` to your API key by running
+If you are using OpenAI models (such as the default `gpt-3.5-turbo`), please obtain an
+OpenAI API key on their [website](https://platform.openai.com/) then set
+the environment variable `OPENAI_API_KEY` to your API key by running
 the following command in your terminal:
 
 ```bash
 export OPENAI_API_KEY=<your key>
 ```
+
+[List of all supported providers](https://docs.litellm.ai/docs/providers)
 
 You can then run
 

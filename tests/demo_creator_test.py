@@ -24,7 +24,7 @@ def test_create_gradio_with_gpt2():
         batch_size=1,
     )
 
-    # Create OpenAIInstructionParser.
+    # Create PromptBasedInstructionParser.
     gpt2_prompt_parser = MockPromptSpec(TaskType.TEXT_GENERATION)
 
     # Create Gradio interface.
@@ -49,7 +49,7 @@ def test_create_gradio_with_t5():
         batch_size=1,
     )
 
-    # Create OpenAIInstructionParser.
+    # Create PromptBasedInstructionParser.
     t5_prompt_parser = MockPromptSpec(task_type="generation")
 
     # Create Gradio interface.

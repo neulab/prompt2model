@@ -114,7 +114,7 @@ Before generating a new example, ensure that you strictly adhere to the rules me
 # Prompt_template must contains `instruction` and `examples` fields.
 # The COMPLEX_PROMPT_TEMPLATE is used when random_example_num < 5.
 # The SIMPLE_PROMPT_TEMPLATE is used when random_example_num >= 5.
-# To save the price of calling OPENAI's API.
+# To save the price of making API calls.
 
 META_PROMPT = """
 As a DatasetGenerator, your task is to generate a new example (`input` and `output`) based on the [new instruction] and [few-shot examples]. Please provide a JSON dictionary response that includes the new `input` and its corresponding `output`. Use the `input` and `output` keys in the dictionary. The 'input' field should be marked as 'N/A' if the instruction doesn't require additional input.

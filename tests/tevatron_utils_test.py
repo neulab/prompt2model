@@ -1,4 +1,4 @@
-"""Testing DatasetGenerator through OpenAIDatasetGenerator."""
+"""Testing DatasetGenerator through PromptBasedDatasetGenerator."""
 
 import gc
 import json

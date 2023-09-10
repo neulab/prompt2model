@@ -7,7 +7,6 @@ import time
 from pathlib import Path
 
 import datasets
-import openai
 import pyfiglet
 import torch
 import transformers
@@ -16,7 +15,7 @@ from datasets import concatenate_datasets, load_from_disk
 from termcolor import colored
 
 from prompt2model.dataset_generator.base import DatasetSplit
-from prompt2model.dataset_generator.openai_gpt import OpenAIDatasetGenerator
+from prompt2model.dataset_generator.prompt_based import PromptBasedDatasetGenerator
 from prompt2model.dataset_processor.textualize import TextualizeProcessor
 from prompt2model.dataset_retriever import DescriptionDatasetRetriever
 from prompt2model.demo_creator import create_gradio
@@ -24,10 +23,12 @@ from prompt2model.model_evaluator import Seq2SeqEvaluator
 from prompt2model.model_executor import GenerationModelExecutor
 from prompt2model.model_retriever import DescriptionModelRetriever
 from prompt2model.model_trainer.generate import GenerationModelTrainer
-from prompt2model.prompt_parser import MockPromptSpec, OpenAIInstructionParser, TaskType
+from prompt2model.prompt_parser import (
+    MockPromptSpec,
+    PromptBasedInstructionParser,
+    TaskType,
+)
 from prompt2model.utils.logging_utils import get_formatted_logger
-
-openai.api_key = os.environ["OPENAI_API_KEY"]
 
 
 def line_print(input_str: str) -> None:
@@ -123,7 +124,7 @@ def main():
                 break
             prompt += line + "\n"
         line_print("Parsing prompt...")
-        prompt_spec = OpenAIInstructionParser(task_type=TaskType.TEXT_GENERATION)
+        prompt_spec = PromptBasedInstructionParser(task_type=TaskType.TEXT_GENERATION)
         prompt_spec.parse_from_prompt(prompt)
 
         propmt_has_been_parsed = True
@@ -235,7 +236,7 @@ def main():
                 )
         line_print("Starting to generate dataset. This may take a while...")
         time.sleep(2)
-        unlimited_dataset_generator = OpenAIDatasetGenerator(
+        unlimited_dataset_generator = PromptBasedDatasetGenerator(
             initial_temperature=initial_temperature,
             max_temperature=max_temperature,
             responses_per_request=3,
@@ -284,9 +285,9 @@ def main():
         t5_modified_dataset_dicts = t5_processor.process_dataset_lists(
             instruction,
             dataset_list,
-            train_proportion=0.6,
-            val_proportion=0.2,
-            maximum_example_num=3000,
+            train_proportion=0.7,
+            val_proportion=0.1,
+            maximum_example_num={"train": 3500, "val": 500, "test": 1000},
         )
         processor_logger = get_formatted_logger("DatasetProcessor")
         processor_logger.setLevel(logging.INFO)

@@ -153,7 +153,7 @@ def test_retrieve_dataset_dict_when_search_index_exists(encode_text):
 
         mock_prompt = MockPromptSpec(task_type=TaskType.TEXT_GENERATION)
         retrieved_dataset = retriever.retrieve_dataset_dict(mock_prompt)
-        assert encode_text.call_count == 2
+        assert encode_text.call_count == 1
         for split_name in ["train", "val", "test"]:
             assert split_name in retrieved_dataset
             split = retrieved_dataset[split_name]

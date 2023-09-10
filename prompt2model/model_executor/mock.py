@@ -1,4 +1,5 @@
 """A dummy class to generate model outputs (for testing purposes)."""
+from __future__ import annotations
 
 import datasets
 
