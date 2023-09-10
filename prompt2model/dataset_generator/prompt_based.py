@@ -20,6 +20,7 @@ from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import (
     API_ERRORS,
     APIAgent,
+    api_tools,
     count_tokens_from_string,
     get_formatted_logger,
     handle_api_error,
@@ -415,7 +416,7 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
         generated_examples: list[Example] = []
 
         pbar = tqdm(total=num_examples, desc="Generating examples")
-        chat_api = APIAgent()
+        chat_api = api_tools.default_api_agent
 
         while len(generated_examples) < num_examples:
             if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
