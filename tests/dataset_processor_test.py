@@ -625,7 +625,7 @@ def test_process_dataset_lists_with_maximum_example_num():
     """Test the maximum_example_num parameter."""
     processor = TextualizeProcessor(has_encoder=True)
     modified_dataset_dicts = processor.process_dataset_lists(
-        INSTRUCTION, DATASET_LIST, 0.6, 0.2, 3000
+        INSTRUCTION, DATASET_LIST, 0.6, 0.2, {"train": 3000, "val": 500, "test": 1000}
     )
     # Before applying the maximum_example_num, train_num = 6000,
     # val_num = 2000, test_num = 2000.
@@ -646,18 +646,18 @@ def test_process_dataset_lists_with_maximum_example_num():
                 {
                     "model_input": [
                         f"<task 0>convert to text2text\nExample:\n{input}\nLabel:\n"
-                        for input in range(3000, 5000)
+                        for input in range(3000, 3500)
                     ],
-                    "model_output": [f"{output}" for output in range(13000, 15000)],
+                    "model_output": [f"{output}" for output in range(13000, 13500)],
                 }
             ),
             "test": datasets.Dataset.from_dict(
                 {
                     "model_input": [
                         f"<task 0>convert to text2text\nExample:\n{input}\nLabel:\n"
-                        for input in range(5000, 7000)
+                        for input in range(3500, 4500)
                     ],
-                    "model_output": [f"{output}" for output in range(15000, 17000)],
+                    "model_output": [f"{output}" for output in range(13500, 14500)],
                 }
             ),
         }
@@ -677,18 +677,18 @@ def test_process_dataset_lists_with_maximum_example_num():
                 {
                     "model_input": [
                         f"<task 1>convert to text2text\nExample:\n{input}\nLabel:\n"
-                        for input in range(23000, 25000)
+                        for input in range(23000, 23500)
                     ],
-                    "model_output": [f"{output}" for output in range(33000, 35000)],
+                    "model_output": [f"{output}" for output in range(33000, 33500)],
                 }
             ),
             "test": datasets.Dataset.from_dict(
                 {
                     "model_input": [
                         f"<task 1>convert to text2text\nExample:\n{input}\nLabel:\n"
-                        for input in range(25000, 27000)
+                        for input in range(23500, 24500)
                     ],
-                    "model_output": [f"{output}" for output in range(35000, 37000)],
+                    "model_output": [f"{output}" for output in range(33500, 34500)],
                 }
             ),
         }

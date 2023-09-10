@@ -2,6 +2,7 @@
 
 from __future__ import annotations  # noqa FI58
 
+import sys
 from abc import ABC, abstractmethod
 from functools import partial
 
@@ -111,7 +112,7 @@ class BaseProcessor(ABC):
         dataset,
         train_proportion: float = 0.8,
         val_proportion: float = 0.1,
-        maximum_example_num: int | None = None,
+        maximum_example_num: dict[str, int] | None = None,
     ) -> datasets.DatasetDict:
         """Split a given dataset into `train`, `val`, and `test` splits.
 
@@ -136,9 +137,9 @@ class BaseProcessor(ABC):
         test_num = num_of_examples - train_num - val_num
 
         if maximum_example_num is not None:
-            train_num = min(train_num, maximum_example_num)
-            val_num = min(val_num, maximum_example_num)
-            test_num = min(test_num, maximum_example_num)
+            train_num = min(train_num, maximum_example_num.get("train", sys.maxsize))
+            val_num = min(val_num, maximum_example_num.get("val", sys.maxsize))
+            test_num = min(test_num, maximum_example_num.get("test", sys.maxsize))
 
         train_dataset = datasets.Dataset.from_dict(dataset[:train_num])
         val_dataset = datasets.Dataset.from_dict(
@@ -172,7 +173,7 @@ class BaseProcessor(ABC):
         dataset_list: list[datasets.Dataset],
         train_proportion: float = 0.8,
         val_proportion: float = 0.1,
-        maximum_example_num: int | None = None,
+        maximum_example_num: dict[str, int] | None = None,
     ) -> list[datasets.DatasetDict]:
         """Post-processes both the generated and retrieved datasets.
 

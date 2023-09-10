@@ -285,9 +285,9 @@ def main():
         t5_modified_dataset_dicts = t5_processor.process_dataset_lists(
             instruction,
             dataset_list,
-            train_proportion=0.6,
-            val_proportion=0.2,
-            maximum_example_num=3000,
+            train_proportion=0.7,
+            val_proportion=0.1,
+            maximum_example_num={"train": 3500, "val": 500, "test": 1000},
         )
         processor_logger = get_formatted_logger("DatasetProcessor")
         processor_logger.setLevel(logging.INFO)
