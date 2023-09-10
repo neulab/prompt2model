@@ -16,12 +16,14 @@ from prompt2model.dataset_generator.prompt_based import (
     PromptBasedDatasetGenerator,
 )
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
+from prompt2model.utils import api_tools
 from test_helpers import (
     MockCompletion,
     UnknownGpt3Exception,
     mock_batch_api_response_identical_completions,
 )
-from test_helpers.mock_api import MockBatchDifferentCompletions
+from test_helpers.mock_api import MockAPIAgent, MockBatchDifferentCompletions
+from test_helpers.test_utils import temp_setattr
 
 logger = logging.getLogger("DatasetGenerator")
 
@@ -946,3 +948,25 @@ def test_dataset_generator_terminates(mocked_generate_example):
     generated_df = generated_dataset.to_pandas()
     assert len(generated_dataset) == 100
     assert list(generated_df.columns) == ["input_col", "output_col"]
+
+
+def test_generate_dataset_agent_switch():
+    """Test if dataset generation can use a user-set API agent."""
+    my_agent = MockAPIAgent(
+        default_content='{"input": "This is input.", "output": "This is an output."}'
+    )
+    with temp_setattr(api_tools, "default_api_agent", my_agent):
+        prompt_spec = MockPromptSpec(TaskType.CLASSIFICATION)
+        dataset_generator = PromptBasedDatasetGenerator(
+            initial_temperature=0.3,
+            max_temperature=1.4,
+            responses_per_request=1,
+            max_api_calls=100,
+            requests_per_minute=80,
+            filter_duplicated_examples=False,
+        )
+        dataset_generator.generate_dataset_split(
+            prompt_spec, 100, split=DatasetSplit.TRAIN
+        )
+    # 100 outputs, and each batch has 5 outputs so 20 api calls
+    assert my_agent.generate_batch_call_counter == 20

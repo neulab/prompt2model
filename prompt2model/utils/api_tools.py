@@ -8,6 +8,7 @@ import logging
 import time
 
 import aiolimiter
+import litellm.utils
 import openai
 import openai.error
 import tiktoken
@@ -40,13 +41,25 @@ ERROR_ERRORS_TO_MESSAGES = {
 class APIAgent:
     """A class for accessing API-based models."""
 
-    def __init__(self, model_name: str = "gpt-3.5-turbo"):
-        """Initialize APIAgent with an API key.
+    def __init__(
+        self,
+        model_name: str = "gpt-3.5-turbo",
+        max_tokens: int | None = None,
+    ):
+        """Initialize APIAgent with model_name and max_tokens.
 
         Args:
             model_name: Name fo the model to use (by default, gpt-3.5-turbo).
+            max_tokens: The maximum number of tokens to generate. Defaults to the max
+                value for the model if available through litellm.
         """
         self.model_name = model_name
+        self.max_tokens = max_tokens
+        if max_tokens is None:
+            try:
+                self.max_tokens = litellm.utils.get_max_tokens(model_name)
+            except Exception:
+                pass
 
     def generate_one_completion(
         self,
@@ -73,6 +86,7 @@ class APIAgent:
             An OpenAI-like response object if there were no errors in generation.
             In case of API-specific error, Exception object is captured and returned.
         """
+        max_tokens = self.max_tokens or 4 * count_tokens_from_string(prompt)
         response = completion(  # completion gets the key from os.getenv
             model=self.model_name,
             messages=[
@@ -81,6 +95,7 @@ class APIAgent:
             temperature=temperature,
             presence_penalty=presence_penalty,
             frequency_penalty=frequency_penalty,
+            max_tokens=max_tokens,
         )
         return response
 
@@ -154,14 +169,17 @@ class APIAgent:
                         await asyncio.sleep(10)
                 return {"choices": [{"message": {"content": ""}}]}
 
+        max_tokens = self.max_tokens or 4 * max(
+            count_tokens_from_string(prompt) for prompt in prompts
+        )
         async_responses = [
             _throttled_completion_acreate(
-                model="gpt-3.5-turbo",
+                model=self.model_name,
                 messages=[
                     {"role": "user", "content": f"{prompt}"},
                 ],
                 temperature=temperature,
-                max_tokens=500,
+                max_tokens=max_tokens,
                 n=responses_per_request,
                 top_p=1,
                 limiter=limiter,
@@ -205,3 +223,8 @@ def count_tokens_from_string(string: str, encoding_name: str = "cl100k_base") ->
     encoding = tiktoken.get_encoding(encoding_name)
     num_tokens = len(encoding.encode(string))
     return num_tokens
+
+
+# This is the default API agent that is used everywhere if a different agent is not
+# specified
+default_api_agent = APIAgent()
