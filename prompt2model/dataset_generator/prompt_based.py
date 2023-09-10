@@ -389,11 +389,37 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
         )
         return responses
 
+    def create_retrieved_data_fewshot_string(
+        self, retrieved_data: Dataset, dataset_max_instances: int = 3
+    ) -> str:
+        """A method to sample instances from the dataset retrieved.
+
+        Args:
+            retrieved_data: the train set of the dataset from the dataset retriever
+            dataset_max_instances: how many instances is used as an example
+        Returns:
+            A string of pairs of examples sourced from the dataset retrieved.
+            formatted as if it was a string from the user
+        """
+        sample_dataset = retrieved_data[
+            random.sample(range(retrieved_data.num_rows), dataset_max_instances)
+        ]
+        return "\n\n".join(
+            [
+                f"""input=\"{sample_dataset['input_col'][i]}\"\n\
+                output=\"{sample_dataset['output_col'][i]}\""""
+                for i in range(dataset_max_instances)
+            ]
+        )
+
     def generate_dataset_split(
         self,
         prompt_spec: PromptSpec,
         num_examples: int,
         split: DatasetSplit = DatasetSplit.TRAIN,
+        retrieved_data: Dataset = None,
+        few_shot_method: str = "user",
+        dataset_max_instances: int = 3,
     ) -> Dataset:
         """Generates a dataset split using API-based LMs.
 
@@ -411,11 +437,28 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
         Returns:
             The generated dataset split.
         """
+        if (
+            few_shot_method in ["dataset_fixed", "dataset_swapout"]
+            and retrieved_data is None
+        ):
+            raise Exception(
+                f"original_data is None when 'sampling_method' is '{few_shot_method}'"
+            )
+
         all_generated_examples: list[Example] = []
         generated_examples: list[Example] = []
 
         pbar = tqdm(total=num_examples, desc="Generating examples")
         chat_api = APIAgent()
+
+        if few_shot_method == "user":
+            few_shot_example_string = prompt_spec.examples
+        elif few_shot_method in ["dataset_fixed", "dataset_swapout"]:
+            few_shot_example_string = self.create_retrieved_data_fewshot_string(
+                retrieved_data, dataset_max_instances
+            )
+        else:
+            raise Exception(f"'{few_shot_method}' is not a recognized few shot method")
 
         while len(generated_examples) < num_examples:
             if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
@@ -429,11 +472,17 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
             prompts = [
                 self.construct_prompt(
                     instruction=prompt_spec.instruction,
-                    few_shot_example_string=prompt_spec.examples,
+                    few_shot_example_string=few_shot_example_string,
                     generated_examples=generated_examples,
                 )
                 for _ in range(batch_size)
             ]
+
+            # regenerate few_shot_example_string if few_shot_method is dataset_swapout
+            if few_shot_method == "dataset_swapout":
+                few_shot_example_string = self.create_retrieved_data_fewshot_string(
+                    retrieved_data, dataset_max_instances
+                )
 
             try:
                 loop = asyncio.get_event_loop()
