@@ -1,4 +1,5 @@
 """Import utility functions."""
+import prompt2model.utils.api_tools as api_tools
 from prompt2model.utils.api_tools import (
     API_ERRORS,
     APIAgent,
@@ -10,6 +11,7 @@ from prompt2model.utils.rng import seed_generator
 from prompt2model.utils.tevatron_utils import encode_text, retrieve_objects
 
 __all__ = (  # noqa: F401
+    "api_tools",
     "APIAgent",
     "encode_text",
     "handle_api_error",
