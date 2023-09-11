@@ -427,7 +427,7 @@ def generate_hypothetical_model_description(
     api_call_counter = 0
 
     instruction = prompt.instruction
-    api_agent = api_tools.APIAgent(model_name = "gpt-3.5-turbo-16k")
+    api_agent = api_tools.APIAgent(model_name="gpt-3.5-turbo-16k")
     chatgpt_prompt = (
         PROMPT_PREFIX
         + "\n"

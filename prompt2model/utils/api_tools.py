@@ -92,7 +92,7 @@ class APIAgent:
         if self.max_tokens:
             max_tokens = self.max_tokens - num_prompt_tokens
         else:
-            max_tokens = 4 * count_tokens_from_string(prompt)
+            max_tokens = 4 * num_prompt_tokens
 
         response = completion(  # completion gets the key from os.getenv
             model=self.model_name,
@@ -176,9 +176,12 @@ class APIAgent:
                         await asyncio.sleep(10)
                 return {"choices": [{"message": {"content": ""}}]}
 
-        max_tokens = self.max_tokens or 4 * max(
-            count_tokens_from_string(prompt) for prompt in prompts
-        )
+        num_prompt_tokens = max(count_tokens_from_string(prompt) for prompt in prompts)
+        if self.max_tokens:
+            max_tokens = self.max_tokens - num_prompt_tokens
+        else:
+            max_tokens = 4 * num_prompt_tokens
+
         async_responses = [
             _throttled_completion_acreate(
                 model=self.model_name,
