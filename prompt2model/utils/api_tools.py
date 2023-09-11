@@ -58,6 +58,8 @@ class APIAgent:
         if max_tokens is None:
             try:
                 self.max_tokens = litellm.utils.get_max_tokens(model_name)
+                if isinstance(self.max_tokens, dict):
+                    self.max_tokens = self.max_tokens["max_tokens"]
             except Exception:
                 pass
 
@@ -86,7 +88,12 @@ class APIAgent:
             An OpenAI-like response object if there were no errors in generation.
             In case of API-specific error, Exception object is captured and returned.
         """
-        max_tokens = self.max_tokens or 4 * count_tokens_from_string(prompt)
+        num_prompt_tokens = count_tokens_from_string(prompt)
+        if self.max_tokens:
+            max_tokens = self.max_tokens - num_prompt_tokens
+        else:
+            max_tokens = 4 * num_prompt_tokens
+
         response = completion(  # completion gets the key from os.getenv
             model=self.model_name,
             messages=[
@@ -169,9 +176,12 @@ class APIAgent:
                         await asyncio.sleep(10)
                 return {"choices": [{"message": {"content": ""}}]}
 
-        max_tokens = self.max_tokens or 4 * max(
-            count_tokens_from_string(prompt) for prompt in prompts
-        )
+        num_prompt_tokens = max(count_tokens_from_string(prompt) for prompt in prompts)
+        if self.max_tokens:
+            max_tokens = self.max_tokens - num_prompt_tokens
+        else:
+            max_tokens = 4 * num_prompt_tokens
+
         async_responses = [
             _throttled_completion_acreate(
                 model=self.model_name,
