@@ -58,6 +58,8 @@ class APIAgent:
         if max_tokens is None:
             try:
                 self.max_tokens = litellm.utils.get_max_tokens(model_name)
+                if isinstance(self.max_tokens, dict):
+                    self.max_tokens = self.max_tokens["max_tokens"]
             except Exception:
                 pass
 
@@ -87,6 +89,7 @@ class APIAgent:
             In case of API-specific error, Exception object is captured and returned.
         """
         max_tokens = self.max_tokens or 4 * count_tokens_from_string(prompt)
+
         response = completion(  # completion gets the key from os.getenv
             model=self.model_name,
             messages=[
