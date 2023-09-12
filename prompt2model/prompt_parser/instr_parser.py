@@ -93,7 +93,7 @@ class PromptBasedInstructionParser(PromptSpec):
                 response: openai.ChatCompletion | Exception = (
                     chat_api.generate_one_completion(
                         parsing_prompt_for_chatgpt,
-                        temperature=0,
+                        temperature=0.01,
                         presence_penalty=0,
                         frequency_penalty=0,
                     )

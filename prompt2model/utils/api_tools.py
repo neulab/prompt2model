@@ -45,6 +45,7 @@ class APIAgent:
         self,
         model_name: str = "gpt-3.5-turbo",
         max_tokens: int | None = None,
+        api_base: str | None = None,
     ):
         """Initialize APIAgent with model_name and max_tokens.
 
@@ -52,9 +53,11 @@ class APIAgent:
             model_name: Name fo the model to use (by default, gpt-3.5-turbo).
             max_tokens: The maximum number of tokens to generate. Defaults to the max
                 value for the model if available through litellm.
+            api_base: Custom endpoint for Hugging Face's inference API.
         """
         self.model_name = model_name
         self.max_tokens = max_tokens
+        self.api_base = api_base
         if max_tokens is None:
             try:
                 self.max_tokens = litellm.utils.get_max_tokens(model_name)
@@ -99,6 +102,7 @@ class APIAgent:
             messages=[
                 {"role": "user", "content": f"{prompt}"},
             ],
+            api_base=self.api_base,
             temperature=temperature,
             presence_penalty=presence_penalty,
             frequency_penalty=frequency_penalty,
@@ -144,6 +148,7 @@ class APIAgent:
                         return await acompletion(
                             model=model,
                             messages=messages,
+                            api_base=self.api_base,
                             temperature=temperature,
                             max_tokens=max_tokens,
                             n=n,
