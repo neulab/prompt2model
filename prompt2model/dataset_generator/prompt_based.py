@@ -406,8 +406,8 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
         ]
         return "\n\n".join(
             [
-                f"""input=\"{sample_dataset['input_col'][i]}\"\n\
-                output=\"{sample_dataset['output_col'][i]}\""""
+                f"input=\"{sample_dataset['input_col'][i]}\"\n"
+                + f"output=\"{sample_dataset['output_col'][i]}\""
                 for i in range(dataset_max_instances)
             ]
         )
@@ -483,7 +483,6 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
                 few_shot_example_string = self.create_retrieved_data_fewshot_string(
                     retrieved_data, dataset_max_instances
                 )
-
             try:
                 loop = asyncio.get_event_loop()
                 responses = loop.run_until_complete(
