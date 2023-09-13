@@ -22,7 +22,7 @@ def query(API_URL):
 
 
 def get_dataset_size(dataset_name):
-    """Fetches dataset size for a dataset from huggingface API."""
+    """Fetches dataset size for a dataset in MB from hugging face API."""
     API_URL = f"https://datasets-server.huggingface.co/size?dataset={dataset_name}"
     data = query(API_URL)
     size_dict = data.get("size", {})
