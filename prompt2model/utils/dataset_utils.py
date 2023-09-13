@@ -12,7 +12,6 @@ def query(API_URL):
     try:
         response = requests.get(API_URL)
         if response.status_code == 200:
-            print(response.json())
             return response.json()
         else:
             logger.error(f"Error occurred in fetching size: {response.status_code}")
