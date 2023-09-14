@@ -13,6 +13,7 @@ import torch
 from prompt2model.dataset_retriever.base import DatasetInfo, DatasetRetriever
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import encode_text, retrieve_objects
+from prompt2model.utils.dataset_utils import get_dataset_size
 
 datasets.utils.logging.disable_progress_bar()
 logger = logging.getLogger(__name__)
@@ -115,10 +116,12 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         """
         self._print_divider()
         print("Here are the datasets I've retrieved for you:")
-        print("#\tName\tDescription")
+        print("#\tName\tSize[MB]\tDescription")
         for i, d in enumerate(top_datasets):
-            description_no_spaces = d.description.replace("\n", " ")
-            print(f"{i+1}):\t{d.name}\t{description_no_spaces}")
+            description_no_space = d.description.replace("\n", " ")
+            print(
+                f"{i+1}):\t{d.name}\t{get_dataset_size(d.name)}\t{description_no_space}"
+            )
 
         self._print_divider()
         print(
