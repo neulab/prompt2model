@@ -14,7 +14,7 @@ from test_helpers import MockCompletion, UnknownGpt3Exception
 from test_helpers.mock_api import MockAPIAgent
 from test_helpers.test_utils import temp_setattr
 
-logger = logging.getLogger("PromptParser")
+logger = logging.getLogger("ParseJsonResponses")
 GPT3_RESPONSE_WITH_DEMONSTRATIONS = MockCompletion(
     '{"Instruction": "Convert each date from an informal description into a'
     ' MM/DD/YYYY format.", "Demonstrations": "Fifth of November 2024 ->'
@@ -118,8 +118,11 @@ def test_instruction_parser_with_invalid_json(mocked_parsing_method):
     ) as mock_warning:
         with pytest.raises(RuntimeError):
             prompt_spec.parse_from_prompt(prompt)
+
         mock_info.assert_not_called()
         warning_list = [each.args[0] for each in mock_warning.call_args_list]
+        print(f"#####warn8ing_list###{warning_list}#######")
+        breakpoint
         assert (
             warning_list
             == [
