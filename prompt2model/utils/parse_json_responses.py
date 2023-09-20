@@ -37,7 +37,7 @@ def extract_response(
     missing_keys = [key for key in required_keys if key not in response_json]
     if len(missing_keys) != 0:
         logger.warning(f'API response must contain {", ".join(required_keys)} keys')
-        return {}
+        return None
 
     final_response = {key: response_json[key].strip() for key in required_keys}
     optional_response = {
