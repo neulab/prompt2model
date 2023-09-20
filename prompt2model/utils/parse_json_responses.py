@@ -48,11 +48,12 @@ class JsonParsingFromLLMResponse:
             return {}
 
         final_response = {key: response_json[key].strip() for key in required_keys}
-        final_response.update({
+        optional_response = {
             key: response_json[key].strip()
             for key in optional_keys
             if key in response_json
-        })
+        }
+        final_response.update(optional_response)
         return final_response
 
     def parse_prompt_to_fields(
