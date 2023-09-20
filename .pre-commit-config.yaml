@@ -52,8 +52,8 @@ repos:
         additional_dependencies:
           - types-requests
         files: '\.py$'
-  # - repo: https://github.com/DavidAnson/markdownlint-cli2
-  #   rev: v0.5.1
-  #   hooks:
-  #   - id: markdownlint-cli2
-  #   - id: markdownlint-cli2-fix
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.5.1
+    hooks:
+    - id: markdownlint-cli2
+    - id: markdownlint-cli2-fix
