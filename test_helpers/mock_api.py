@@ -196,6 +196,7 @@ class MockAPIAgent(APIAgent):
         temperature: float = 0,
         presence_penalty: float = 0,
         frequency_penalty: float = 0,
+        token_buffer: int = 300,
     ) -> openai.Completion:
         """Return a mocked object and increment the counter."""
         self.generate_one_call_counter += 1
@@ -207,6 +208,7 @@ class MockAPIAgent(APIAgent):
         temperature: float = 1,
         responses_per_request: int = 5,
         requests_per_minute: int = 80,
+        token_buffer: int = 300,
     ) -> list[openai.Completion]:
         """Return a mocked object and increment the counter."""
         self.generate_batch_call_counter += 1
