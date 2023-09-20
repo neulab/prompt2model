@@ -14,7 +14,7 @@ from test_helpers import MockCompletion, UnknownGpt3Exception
 from test_helpers.mock_api import MockAPIAgent
 from test_helpers.test_utils import temp_setattr
 
-logger = logging.getLogger("PromptParser")
+logger = logging.getLogger("ParseJsonResponses")
 GPT3_RESPONSE_WITH_DEMONSTRATIONS = MockCompletion(
     '{"Instruction": "Convert each date from an informal description into a'
     ' MM/DD/YYYY format.", "Demonstrations": "Fifth of November 2024 ->'
