@@ -121,8 +121,6 @@ def test_instruction_parser_with_invalid_json(mocked_parsing_method):
 
         mock_info.assert_not_called()
         warning_list = [each.args[0] for each in mock_warning.call_args_list]
-        print(f"#####warn8ing_list###{warning_list}#######")
-        breakpoint
         assert (
             warning_list
             == [

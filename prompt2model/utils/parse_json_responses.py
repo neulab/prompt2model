@@ -88,7 +88,7 @@ class JsonParsingFromLLMResponse:
                 extraction = self.extract_response(
                     response, required_keys, optional_keys
                 )
-                if extraction is not None:
+                if extraction != {}:
                     return extraction
             except API_ERRORS as e:
                 last_error = e
