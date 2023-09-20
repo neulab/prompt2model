@@ -10,7 +10,7 @@ from prompt2model.prompt_parser.instr_parser_prompt import (  # isort: split
     construct_prompt_for_instruction_parsing,
 )
 
-from prompt2model.utils import parse_json_responses
+from prompt2model.utils.parse_json_responses import parse_prompt_to_fields
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -45,12 +45,9 @@ class PromptBasedInstructionParser(PromptSpec):
                     "instruction" and "demonstrations".
         """
         parsing_prompt_for_chatgpt = construct_prompt_for_instruction_parsing(prompt)
-        json_parser = parse_json_responses.JsonParsingFromLLMResponse(
-            self.max_api_calls
-        )
         required_keys = ["Instruction", "Demonstrations"]
-        extraction = json_parser.parse_prompt_to_fields(
-            parsing_prompt_for_chatgpt, required_keys
+        extraction = parse_prompt_to_fields(
+            parsing_prompt_for_chatgpt, required_keys, max_api_calls=self.max_api_calls
         )
         self._instruction = extraction["Instruction"]
         self._examples = extraction["Demonstrations"]
