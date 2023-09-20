@@ -1,5 +1,6 @@
 """Utility file for parsing OpenAI json responses."""
 import json
+from typing import Union
 
 import openai
 
@@ -78,13 +79,13 @@ class JsonParsingFromLLMResponse:
         while True:
             self.api_call_counter += 1
             try:
-                response: openai.ChatCompletion | Exception = (
-                    chat_api.generate_one_completion(
-                        prompt,
-                        temperature=0.01,
-                        presence_penalty=0,
-                        frequency_penalty=0,
-                    )
+                response: Union[
+                    openai.ChatCompletion, Exception
+                ] = chat_api.generate_one_completion(
+                    prompt,
+                    temperature=0.01,
+                    presence_penalty=0,
+                    frequency_penalty=0,
                 )
                 extraction = self.extract_response(
                     response, required_keys, optional_keys
