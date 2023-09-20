@@ -32,7 +32,7 @@ def extract_response(
         response_json = json.loads(response_text, strict=False)
     except json.decoder.JSONDecodeError:
         logger.warning(f"API response was not a valid JSON: {response_text}")
-        return {}
+        return None
 
     missing_keys = [key for key in required_keys if key not in response_json]
     if len(missing_keys) != 0:
