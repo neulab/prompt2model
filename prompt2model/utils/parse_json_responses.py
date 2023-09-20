@@ -13,7 +13,7 @@ logger = get_formatted_logger("ParseJsonResponses")
 
 def extract_response(
     response: openai.Completion, required_keys: list, optional_keys: list
-) -> dict:
+) -> dict | None:
     """Parse stuctured fields from the API response.
 
     Args:
