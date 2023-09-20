@@ -84,7 +84,7 @@ def parse_prompt_to_fields(
                 )
             )
             extraction = extract_response(response, required_keys, optional_keys)
-            if extraction != {}:
+            if extraction is not None:
                 return extraction
         except API_ERRORS as e:
             last_error = e
