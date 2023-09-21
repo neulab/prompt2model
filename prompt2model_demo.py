@@ -203,6 +203,7 @@ def main():
         )
         max_size_line = input()
         max_size = parse_model_size_limit(max_size_line)
+        line_print(f"Maximum model size set to {max_size} bytes.")
 
         line_print("Retrieving model...")
         prompt_spec = MockPromptSpec(
