@@ -78,6 +78,44 @@ def print_logo():
     line_print(centered_ascii_art)
 
 
+def parse_model_size_limit(line: str, default_size=3e9) -> float:
+    """Parse the user input for the maximum size of the model.
+
+    Args:
+        line: The user input.
+        default_size: The default size to use if the user does not specify a size.
+    """
+    if len(line.strip()) == 0:
+        return default_size
+    model_units = {"B": 1e0, "KB": 1e3, "MB": 1e6, "GB": 1e9, "TB": 1e12, "PB": 1e15}
+    unit_disambiguations = {
+        "B": ["b", "bytes"],
+        "KB": ["Kb", "kb", "kilobytes"],
+        "MB": ["Mb", "mb", "megabytes"],
+        "GB": ["Gb", "gb", "gigabytes"],
+        "TB": ["Tb", "tb", "terabytes"],
+        "PB": ["Pb", "pb", "petabytes"],
+    }
+    unit_matched = False
+    for unit, disambiguations in unit_disambiguations.items():
+        for unit_name in [unit] + disambiguations:
+            if line.strip().endswith(unit_name):
+                unit_matched = True
+                break
+        if unit_matched:
+            break
+    if unit_matched:
+        numerical_part = line.strip()[: -len(unit_name)].strip()
+    else:
+        numerical_part = line.strip()
+    if not str.isdecimal(numerical_part):
+        raise ValueError(
+            "Invalid input. Please enter a number (integer " + "or number with units)."
+        )
+    scale_factor = model_units[unit] if unit_matched else 1
+    return int(numerical_part) * scale_factor
+
+
 def main():
     """The main function running the whole system."""
     print_logo()
@@ -157,6 +195,15 @@ def main():
         and dataset_has_been_retrieved
         and not model_has_been_retrieved
     ):
+        line_print(
+            "Enter the maximum size of the model (by default, enter nothing "
+            + "and we will use 3GB as the limit). You can specify a unit (e.g. "
+            + "3GB, 300Mb). If no unit is given, we assume the size is given in bytes."
+        )
+        max_size_line = input()
+        max_size = parse_model_size_limit(max_size_line)
+        line_print(f"Maximum model size set to {max_size} bytes.")
+
         line_print("Retrieving model...")
         prompt_spec = MockPromptSpec(
             TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
@@ -165,6 +212,7 @@ def main():
             model_descriptions_index_path="huggingface_data/huggingface_models/model_info/",  # noqa E501
             use_bm25=True,
             use_HyDE=True,
+            model_size_limit_bytes=max_size,
         )
         top_model_name = retriever.retrieve(prompt_spec)
         line_print("Here are the models we retrieved.")

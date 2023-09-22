@@ -28,6 +28,6 @@ def get_dataset_size(dataset_name):
     size_dict = data.get("size", {})
     return (
         "NA"
-        if size_dict is {}
+        if size_dict == {}
         else "{:.2f}".format(size_dict["dataset"]["num_bytes_memory"] / 1024 / 1024)
     )
