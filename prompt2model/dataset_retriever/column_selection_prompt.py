@@ -2,7 +2,7 @@
 
 from __future__ import annotations  # noqa FI58
 
-METAPROMPT_BASE = """Your objective is to carefully analyze the task, with the dataset mentioned and assign the columns into relevant input, output, ambigous and irrelevant columns for the given task. There should be atmost one output column. It is possible to have no relevant columns, in which case return the input and output column as empty lists.  Answer in a json format, with the following keys: input, output, irrelevant, ambiguous"""  # noqa: E501
+METAPROMPT_BASE = """Your objective is to carefully analyze the task, with the dataset mentioned and assign the columns into relevant input, output, ambigous and irrelevant columns for the given task. There should be at most one output column. It is possible to have no relevant columns, in which case return the input and output column as empty lists.  Answer in a json format, with the following keys: input, output, irrelevant, ambiguous"""  # noqa: E501
 METAPROMPT_EXAMPLES = [
     (
         """Your task is as follows. In this task, you will generate summaries for given texts. You will use the Scientific Papers dataset from HuggingFace. A sample data instance from this dataset is as follows.
