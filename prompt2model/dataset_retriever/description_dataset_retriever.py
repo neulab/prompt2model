@@ -11,9 +11,13 @@ import datasets
 import torch
 
 from prompt2model.dataset_retriever.base import DatasetInfo, DatasetRetriever
+from prompt2model.dataset_retriever.column_selection_prompt import (
+    construct_prompt_for_column_selection,
+)
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import encode_text, retrieve_objects
 from prompt2model.utils.dataset_utils import get_dataset_size
+from prompt2model.utils.parse_json_responses import parse_prompt_to_fields
 
 datasets.utils.logging.disable_progress_bar()
 logger = logging.getLogger(__name__)
@@ -161,6 +165,32 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             {"input_col": input_col, "output_col": output_col}
         )
 
+    @staticmethod
+    def get_input_output_columns(
+        instruction, dataset_name, dataset_columns, example_rows
+    ):
+
+        prompt = construct_prompt_for_column_selection(
+            instruction, dataset_name, dataset_columns, example_rows
+        )
+        required_keys = ["input", "output"]
+        optional_keys = ["ambiguous", "irrelevant"]
+        response = parse_prompt_to_fields(prompt, required_keys, optional_keys)
+        input_columns = response["input"]
+        output_column = response["output"]
+        incorrect_columns = [col for col in input_columns if col not in dataset_columns]
+        incorrect_columns += [
+            col for col in output_column if col not in dataset_columns
+        ]
+        if (
+            len(incorrect_columns) > 0
+            or len(input_columns) < 1
+            or len(output_column) != 1
+        ):
+            raise ValueError("incorrect number of columns")
+
+        return input_columns, output_column[0]
+
     def canonicalize_dataset_using_columns(
         self,
         dataset: datasets.DatasetDict,
@@ -175,7 +205,9 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             )
         return datasets.DatasetDict(dataset_dict)
 
-    def canonicalize_dataset_by_cli(self, dataset_name: str) -> datasets.DatasetDict:
+    def canonicalize_dataset_by_cli(
+        self, dataset_name: str, prompt_spec
+    ) -> datasets.DatasetDict:
         """Canonicalize a dataset into a suitable text-to-text format.
 
         Args:
@@ -216,28 +248,11 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         self._print_divider()
         print(f"Loaded dataset. Example row:\n{example_rows}\n")
 
-        print(
-            "Which column(s) should we use as input? Provide a comma-separated "
-            + f"list from: {train_columns_formatted}."
+        input_columns, output_column = self.get_input_output_columns(
+            prompt_spec.instruction, dataset_name, train_columns_formatted, example_rows
         )
-        user_response = self._input_string()
-        input_columns = [c.strip() for c in user_response.split(",")]
-        print(f"Will use the columns {json.dumps(input_columns)} as input.\n")
 
-        output_column = None
-        while output_column is None:
-            print(
-                "Which column(s) should we use as the target? Choose a single "
-                + f"value from: {train_columns_formatted}."
-            )
-            user_response = self._input_string()
-            if user_response in train_columns:
-                output_column = user_response
-            else:
-                print(
-                    "Invalid column provided: {user_response}. Please choose "
-                    + f"from {train_columns}\n\n"
-                )
+        print(f"Will use the columns {json.dumps(input_columns)} as input.\n")
         print(f'Will use the column "{output_column}" as our target.\n')
         self._print_divider()
 
@@ -304,4 +319,4 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         top_dataset_name = self.choose_dataset_by_cli(sorted_list)
         if top_dataset_name is None:
             return None
-        return self.canonicalize_dataset_by_cli(top_dataset_name)
+        return self.canonicalize_dataset_by_cli(top_dataset_name, prompt_spec)

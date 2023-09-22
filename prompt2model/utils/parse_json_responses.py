@@ -31,19 +31,25 @@ def extract_response(
     try:
         response_json = json.loads(response_text, strict=False)
     except json.decoder.JSONDecodeError:
+        # TODO: Should error be thrown here?
         logger.warning(f"API response was not a valid JSON: {response_text}")
         return None
 
     missing_keys = [key for key in required_keys if key not in response_json]
     if len(missing_keys) != 0:
+        # TODO: Should error be thrown here?
         logger.warning(f'API response must contain {", ".join(required_keys)} keys')
         return None
 
-    final_response = {key: response_json[key].strip() for key in required_keys}
-    optional_response = {
-        key: response_json[key].strip() for key in optional_keys if key in response_json
-    }
-    final_response.update(optional_response)
+    final_response = {}
+    for key in required_keys + optional_keys:
+        if key not in response_json:
+            continue  # optional key, we checked for required keys before
+        if type(response_json[key]) == str:
+            final_response[key] = response_json[key].strip()
+        else:
+            final_response[key] = response_json[key]
+
     return final_response
 
 
@@ -70,6 +76,10 @@ def parse_prompt_to_fields(
     chat_api = api_tools.default_api_agent
     if max_api_calls and max_api_calls <= 0:
         raise ValueError("max_api_calls must be > 0.")
+
+    if not max_api_calls:
+        max_api_calls = 5
+
     api_call_counter = 0
     last_error = None
     while True:

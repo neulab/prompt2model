@@ -95,7 +95,7 @@ def mock_choose_dataset(self, top_datasets: list[DatasetInfo]) -> str | None:
     return top_datasets[0].name
 
 
-def mock_canonicalize_dataset(self, dataset_name: str) -> DatasetDict:
+def mock_canonicalize_dataset(self, dataset_name: str, prompt_spec) -> DatasetDict:
     """Mock the canonicalize_dataset function by constructing a mock dataset."""
     # Given the dataset of
     # [ [0.9, 0, 0],
@@ -208,3 +208,35 @@ def test_retrieve_dataset_dict_without_existing_search_index(encode_text):
                 == "question: What class of animals are pandas.\ncontext: Pandas are mammals."  # noqa E501
             )
             assert split[0]["output_col"] == "mammals"
+
+
+# TODO: This is a temporary test for dev purposes, needs to be cleaned up
+def test_input_output_column():
+    import json
+
+    import datasets
+
+    dataset_name = "squad"
+
+    dataset = datasets.load_dataset(dataset_name)
+    if "train" not in dataset:
+        raise ValueError("The dataset must contain a `train` split.")
+    train_columns = dataset["train"].column_names
+    train_columns_formatted = ", ".join(train_columns)
+
+    if len(dataset["train"]) == 0:
+        raise ValueError("train split is empty.")
+    example_rows = json.dumps(dataset["train"][0], indent=4)
+
+    instruction = "Your task is to generate a relevant answer to a given question. You will be provided with context for each question" # noqa: E501
+    # Check that value error is not raised
+    input_columns, output_column = DescriptionDatasetRetriever.get_input_output_columns(
+        instruction, dataset_name, train_columns_formatted, example_rows
+    )
+    assert type(input_columns) == list
+    assert len(input_columns) > 1
+    assert "context" in input_columns
+    assert "question" in input_columns
+
+    assert type(output_column) == str
+    assert "answers" == output_column
