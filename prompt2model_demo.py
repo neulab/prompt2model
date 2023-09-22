@@ -98,8 +98,7 @@ def parse_model_size_limit(line: str, default_size=3e9) -> float:
     }
     unit_matched = False
     for unit, disambiguations in unit_disambiguations.items():
-        all_disambiguations = [unit] + disambiguations
-        for unit_name in all_disambiguations:
+        for unit_name in [unit] + disambiguations:
             if line.strip().endswith(unit_name):
                 unit_matched = True
                 break
