@@ -190,7 +190,8 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         ]
         if len(incorrect_columns) > 0:
             raise RuntimeError(
-                "Incorrect columns being parsed"
+                f"One or more columns ({incorrect_columns}) were output that were "
+                f"not in the list of columns in the dataset ({dataset_columns})."
             )  # TODO: potentially could also mean that the prompt needs to be updated
 
         return input_columns, output_column[0]
