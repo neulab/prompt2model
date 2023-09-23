@@ -168,7 +168,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
     @staticmethod
     def automatic_column_selection(
         instruction: str, dataset_name: str, dataset_columns: str, example_rows: dict
-    ):
+    ) -> tuple[list[str], str]:
         """Find appropriate input and output columns for a given dataset and tasks."""
         prompt = construct_prompt_for_column_selection(
             instruction, dataset_name, dataset_columns, example_rows
