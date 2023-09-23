@@ -31,13 +31,11 @@ def extract_response(
     try:
         response_json = json.loads(response_text, strict=False)
     except json.decoder.JSONDecodeError:
-        # TODO: Should error be thrown here?
         logger.warning(f"API response was not a valid JSON: {response_text}")
         return None
 
     missing_keys = [key for key in required_keys if key not in response_json]
     if len(missing_keys) != 0:
-        # TODO: Should error be thrown here?
         logger.warning(f'API response must contain {", ".join(required_keys)} keys')
         return None
 
@@ -49,7 +47,6 @@ def extract_response(
             final_response[key] = response_json[key].strip()
         else:
             final_response[key] = response_json[key]
-
     return final_response
 
 
@@ -57,7 +54,7 @@ def parse_prompt_to_fields(
     prompt: str,
     required_keys: list,
     optional_keys: list = [],
-    max_api_calls: int = None,
+    max_api_calls: int = 5,
 ) -> dict:
     """Parse prompt into specific fields, and return to the calling function.
 
@@ -69,16 +66,15 @@ def parse_prompt_to_fields(
         prompt: User prompt into specific fields
         required_keys: Fields that need to be present in the response
         optional_keys: Field that may/may not be present in the response
+        max_api_calls: Max number of retries, defaults to 5 to avoid
+                        being stuck in an infinite loop
 
     Returns:
         Parsed Response or throws error
     """
     chat_api = api_tools.default_api_agent
-    if max_api_calls and max_api_calls <= 0:
+    if max_api_calls <= 0:
         raise ValueError("max_api_calls must be > 0.")
-
-    if not max_api_calls:
-        max_api_calls = 5
 
     api_call_counter = 0
     last_error = None
@@ -100,7 +96,7 @@ def parse_prompt_to_fields(
             last_error = e
             handle_api_error(e)
 
-        if max_api_calls and api_call_counter >= max_api_calls:
+        if api_call_counter >= max_api_calls:
             # In case we reach maximum number of API calls, we raise an error.
             logger.error("Maximum number of API calls reached.")
             raise RuntimeError("Maximum number of API calls reached.") from last_error

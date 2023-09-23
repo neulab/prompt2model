@@ -166,28 +166,32 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         )
 
     @staticmethod
-    def get_input_output_columns(
+    def automatic_column_selection(
         instruction, dataset_name, dataset_columns, example_rows
     ):
-
+        """Find appropriate input and output columns for a given dataset and tasks."""
         prompt = construct_prompt_for_column_selection(
             instruction, dataset_name, dataset_columns, example_rows
         )
         required_keys = ["input", "output"]
         optional_keys = ["ambiguous", "irrelevant"]
+
         response = parse_prompt_to_fields(prompt, required_keys, optional_keys)
         input_columns = response["input"]
         output_column = response["output"]
-        incorrect_columns = [col for col in input_columns if col not in dataset_columns]
-        incorrect_columns += [
-            col for col in output_column if col not in dataset_columns
+
+        if len(input_columns) < 1 or len(output_column) != 1:
+            raise RuntimeError(
+                "Input columns length was less than 1 or output column length was not 1"
+            )
+
+        incorrect_columns = [
+            col for col in input_columns + output_column if col not in dataset_columns
         ]
-        if (
-            len(incorrect_columns) > 0
-            or len(input_columns) < 1
-            or len(output_column) != 1
-        ):
-            raise ValueError("incorrect number of columns")
+        if len(incorrect_columns) > 0:
+            raise RuntimeError(
+                "Incorrect columns being parsed"
+            )  # TODO: potentially could also mean that the prompt needs to be updated
 
         return input_columns, output_column[0]
 
@@ -248,9 +252,16 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         self._print_divider()
         print(f"Loaded dataset. Example row:\n{example_rows}\n")
 
-        input_columns, output_column = self.get_input_output_columns(
-            prompt_spec.instruction, dataset_name, train_columns_formatted, example_rows
-        )
+        try:
+            input_columns, output_column = self.automatic_column_selection(
+                prompt_spec.instruction,
+                dataset_name,
+                train_columns_formatted,
+                example_rows,
+            )
+        except Exception:
+            logger.error(f"{dataset_name} did not work. Try another!")
+            # TODO: add logic to choose new dataset
 
         print(f"Will use the columns {json.dumps(input_columns)} as input.\n")
         print(f'Will use the column "{output_column}" as our target.\n')
