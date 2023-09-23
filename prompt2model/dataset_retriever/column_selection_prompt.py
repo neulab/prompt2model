@@ -75,7 +75,7 @@ def construct_single_demonstration(
     Returns:
         Completed template for prompt
     """
-    return f'''Task: """\n{prompt}\n"""\n\nRequired Columns :\n{cols}'''
+    return f'Task: """\n{prompt}\n"""\n\nRequired Columns :\n{cols}'
 
 
 def construct_prompt_for_column_selection(
