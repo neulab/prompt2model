@@ -167,7 +167,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
     @staticmethod
     def automatic_column_selection(
-        instruction, dataset_name, dataset_columns, example_rows
+        instruction: str, dataset_name: str, dataset_columns: str, example_rows: dict
     ):
         """Find appropriate input and output columns for a given dataset and tasks."""
         prompt = construct_prompt_for_column_selection(
@@ -257,7 +257,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 prompt_spec.instruction,
                 dataset_name,
                 train_columns_formatted,
-                example_rows,
+                dataset["train"][0],
             )
         except Exception:
             logger.error(f"{dataset_name} did not work. Try another!")
