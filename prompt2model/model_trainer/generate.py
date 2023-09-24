@@ -32,6 +32,7 @@ class GenerationModelTrainer(BaseTrainer):
         executor_batch_size: int = 10,
         tokenizer_max_length: int = 512,
         sequence_max_length: int = 1024,
+        trust_remote_code: bool = False,
     ):
         """Initializes a new instance of GenerationModelTrainer.
 
@@ -49,6 +50,8 @@ class GenerationModelTrainer(BaseTrainer):
                 allowed to generate when being evaluated on validation dataset.
                 Note that sequence_max_length might be scaled in the ModelExecutor
                 if it exceeds the model's max_embedding.
+            trust_remote_code: This parameter controls whether the library should
+                trust remote code during model initialization or not.
         """
         self.has_encoder = has_encoder
         self.tokenizer_max_length = tokenizer_max_length
@@ -63,17 +66,19 @@ class GenerationModelTrainer(BaseTrainer):
             )
         if self.has_encoder:
             self.model = transformers.AutoModelForSeq2SeqLM.from_pretrained(
-                pretrained_model_name
+                pretrained_model_name, trust_remote_code=trust_remote_code
             )
             self.tokenizer = transformers.AutoTokenizer.from_pretrained(
-                pretrained_model_name
+                pretrained_model_name, trust_remote_code=trust_remote_code
             )
         else:
             self.model = transformers.AutoModelForCausalLM.from_pretrained(
-                pretrained_model_name
+                pretrained_model_name, trust_remote_code=trust_remote_code
             )
             self.tokenizer = transformers.AutoTokenizer.from_pretrained(
-                pretrained_model_name, padding_side="left"
+                pretrained_model_name,
+                padding_side="left",
+                trust_remote_code=trust_remote_code,
             )
 
         if self.tokenizer.pad_token is None:
