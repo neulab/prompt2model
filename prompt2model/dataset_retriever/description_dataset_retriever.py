@@ -260,9 +260,10 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 train_columns_formatted,
                 dataset["train"][0],
             )
-        except Exception:
+        except RuntimeError:
             logger.error(f"{dataset_name} did not work. Try another!")
-            # TODO: add logic to choose new dataset
+            return None  # Returning None means that the dataset chosen didn't work,
+            # and we would rather generate a dataset
 
         print(f"Will use the columns {json.dumps(input_columns)} as input.\n")
         print(f'Will use the column "{output_column}" as our target.\n')
