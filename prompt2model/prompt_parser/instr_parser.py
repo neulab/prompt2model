@@ -18,7 +18,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 class PromptBasedInstructionParser(PromptSpec):
     """Parse the prompt to separate instructions from task demonstrations."""
 
-    def __init__(self, task_type: TaskType, max_api_calls: int = None):
+    def __init__(self, task_type: TaskType, max_api_calls: int = 5):
         """Initialize the prompt spec with empty parsed fields.
 
         We initialize the "instruction" and "examples" fields with None.
