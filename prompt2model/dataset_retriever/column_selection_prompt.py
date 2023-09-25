@@ -52,7 +52,7 @@ ENDING_LINE = "After seeing these examples with the required columns, please pro
 
 
 def truncate_row(example_row: dict, max_length=50) -> str:
-    """Add truncation if the example row is too big."""
+    """Truncate the row before displaying if it is too long."""
     truncated_row = {}
     for key in example_row.keys():
         truncated_row[key] = json.dumps(example_row[key])[:max_length] + "..."
