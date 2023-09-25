@@ -42,7 +42,8 @@ def extract_response(
     final_response = {}
     for key in required_keys + optional_keys:
         if key not in response_json:
-            continue  # optional key, we checked for required keys before.
+            # This is an optional key, so exclude it from the final response.
+            continue
         if type(response_json[key]) == str:
             final_response[key] = response_json[key].strip()
         else:
