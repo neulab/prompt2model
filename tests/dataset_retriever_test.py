@@ -15,7 +15,8 @@ from prompt2model.dataset_retriever import DatasetInfo, DescriptionDatasetRetrie
 from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from test_helpers import MockCompletion, create_test_search_index
 
-# For automatic column selection tests
+# The following variables are specifically for the
+# four automatic column selection tests.
 DATASET_NAME = "squad"
 DATASET_COLUMNS = "id, title, context, question, answers"
 EXAMPLE_ROWS = {
