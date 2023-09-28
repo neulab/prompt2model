@@ -1,21 +1,24 @@
-"""Tools for accessing OpenAI's API."""
+"""Tools for accessing API-based models."""
 
 from __future__ import annotations  # noqa FI58
 
 import asyncio
 import json
 import logging
-import os
 import time
 
 import aiolimiter
+import litellm.utils
 import openai
 import openai.error
 import tiktoken
 from aiohttp import ClientSession
+from litellm import acompletion, completion
 from tqdm.asyncio import tqdm_asyncio
 
-OPENAI_ERRORS = (
+# Note that litellm converts all API errors into openai errors,
+# so openai errors are valid even when using other services.
+API_ERRORS = (
     openai.error.APIError,
     openai.error.Timeout,
     openai.error.RateLimitError,
@@ -26,41 +29,52 @@ OPENAI_ERRORS = (
 )
 
 ERROR_ERRORS_TO_MESSAGES = {
-    openai.error.InvalidRequestError: "OpenAI API Invalid Request: Prompt was filtered",  # noqa E501
-    openai.error.RateLimitError: "OpenAI API rate limit exceeded. Sleeping for 10 seconds.",  # noqa E501
-    openai.error.APIConnectionError: "OpenAI API Connection Error: Error Communicating with OpenAI",  # noqa E501
-    openai.error.Timeout: "OpenAI APITimeout Error: OpenAI Timeout",
-    openai.error.ServiceUnavailableError: "OpenAI service unavailable error: {e}",
-    openai.error.APIError: "OpenAI API error: {e}",
+    openai.error.InvalidRequestError: "API Invalid Request: Prompt was filtered",
+    openai.error.RateLimitError: "API rate limit exceeded. Sleeping for 10 seconds.",
+    openai.error.APIConnectionError: "Error Communicating with API",
+    openai.error.Timeout: "API Timeout Error: API Timeout",
+    openai.error.ServiceUnavailableError: "API service unavailable error: {e}",
+    openai.error.APIError: "API error: {e}",
 }
 
 
-class ChatGPTAgent:
-    """A class for accessing OpenAI's ChatCompletion API."""
+class APIAgent:
+    """A class for accessing API-based models."""
 
-    def __init__(self, api_key: str | None, model_name: str = "gpt-3.5-turbo"):
-        """Initialize ChatGPTAgent with an API key.
+    def __init__(
+        self,
+        model_name: str = "gpt-3.5-turbo",
+        max_tokens: int | None = None,
+        api_base: str | None = None,
+    ):
+        """Initialize APIAgent with model_name and max_tokens.
 
         Args:
-            api_key: A valid OpenAI API key. Alternatively, set as None and set
-                     the environment variable with `export OPENAI_API_KEY=<your key>`.
-            model_name: Name fo the OpenAI model to use (by default, gpt-3.5-turbo).
+            model_name: Name fo the model to use (by default, gpt-3.5-turbo).
+            max_tokens: The maximum number of tokens to generate. Defaults to the max
+                value for the model if available through litellm.
+            api_base: Custom endpoint for Hugging Face's inference API.
         """
-        openai.api_key = api_key if api_key else os.environ["OPENAI_API_KEY"]
-        assert openai.api_key is not None and openai.api_key != "", (
-            "API key must be provided"
-            + " or set the environment variable with `export OPENAI_API_KEY=<your key>`"
-        )
         self.model_name = model_name
+        self.max_tokens = max_tokens
+        self.api_base = api_base
+        if max_tokens is None:
+            try:
+                self.max_tokens = litellm.utils.get_max_tokens(model_name)
+                if isinstance(self.max_tokens, dict):
+                    self.max_tokens = self.max_tokens["max_tokens"]
+            except Exception:
+                pass
 
-    def generate_one_openai_chat_completion(
+    def generate_one_completion(
         self,
         prompt: str,
         temperature: float = 0,
         presence_penalty: float = 0,
         frequency_penalty: float = 0,
+        token_buffer: int = 300,
     ) -> openai.Completion:
-        """Generate a chat completion using OpenAI's gpt-3.5-turbo.
+        """Generate a chat completion using an API-based model.
 
         Args:
             prompt: A prompt asking for a response.
@@ -73,27 +87,42 @@ class ChatGPTAgent:
             frequency_penalty: Float between -2.0 and 2.0. Positive values penalize new
                 tokens based on their existing frequency in the text so far, decreasing
                 the model's likelihood of repeating the same line verbatim.
+            token_buffer: Number of tokens below the LLM's limit to generate. In case
+                our tokenizer does not exactly match the LLM API service's perceived
+                number of tokens, this prevents service errors. On the other hand, this
+                may lead to generating fewer tokens in the completion than is actually
+                possible.
 
         Returns:
-            A response object.
+            An OpenAI-like response object if there were no errors in generation.
+            In case of API-specific error, Exception object is captured and returned.
         """
-        response = openai.ChatCompletion.create(
+        num_prompt_tokens = count_tokens_from_string(prompt)
+        if self.max_tokens:
+            max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
+        else:
+            max_tokens = 3 * num_prompt_tokens
+
+        response = completion(  # completion gets the key from os.getenv
             model=self.model_name,
             messages=[
                 {"role": "user", "content": f"{prompt}"},
             ],
+            api_base=self.api_base,
             temperature=temperature,
             presence_penalty=presence_penalty,
             frequency_penalty=frequency_penalty,
+            max_tokens=max_tokens,
         )
         return response
 
-    async def generate_batch_openai_chat_completion(
+    async def generate_batch_completion(
         self,
         prompts: list[str],
         temperature: float = 1,
         responses_per_request: int = 5,
         requests_per_minute: int = 80,
+        token_buffer: int = 300,
     ) -> list[openai.Completion]:
         """Generate a batch responses from OpenAI Chat Completion API.
 
@@ -102,8 +131,13 @@ class ChatGPTAgent:
             model_config: Model configuration.
             temperature: Temperature to use.
             responses_per_request: Number of responses for each request.
-                i.e. the parameter n of OpenAI API call.
+                i.e. the parameter n of API call.
             requests_per_minute: Number of requests per minute to allow.
+            token_buffer: Number of tokens below the LLM's limit to generate. In case
+                our tokenizer does not exactly match the LLM API service's perceived
+                number of tokens, this prevents service errors. On the other hand, this
+                may lead to generating fewer tokens in the completion than is actually
+                possible.
 
         Returns:
             List of generated responses.
@@ -111,7 +145,7 @@ class ChatGPTAgent:
         openai.aiosession.set(ClientSession())
         limiter = aiolimiter.AsyncLimiter(requests_per_minute)
 
-        async def _throttled_openai_chat_completion_acreate(
+        async def _throttled_completion_acreate(
             model: str,
             messages: list[dict[str, str]],
             temperature: float,
@@ -123,9 +157,10 @@ class ChatGPTAgent:
             async with limiter:
                 for _ in range(3):
                     try:
-                        return await openai.ChatCompletion.acreate(
+                        return await acompletion(
                             model=model,
                             messages=messages,
+                            api_base=self.api_base,
                             temperature=temperature,
                             max_tokens=max_tokens,
                             n=n,
@@ -158,14 +193,20 @@ class ChatGPTAgent:
                         await asyncio.sleep(10)
                 return {"choices": [{"message": {"content": ""}}]}
 
+        num_prompt_tokens = max(count_tokens_from_string(prompt) for prompt in prompts)
+        if self.max_tokens:
+            max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
+        else:
+            max_tokens = 3 * num_prompt_tokens
+
         async_responses = [
-            _throttled_openai_chat_completion_acreate(
-                model="gpt-3.5-turbo",
+            _throttled_completion_acreate(
+                model=self.model_name,
                 messages=[
                     {"role": "user", "content": f"{prompt}"},
                 ],
                 temperature=temperature,
-                max_tokens=500,
+                max_tokens=max_tokens,
                 n=responses_per_request,
                 top_p=1,
                 limiter=limiter,
@@ -178,31 +219,22 @@ class ChatGPTAgent:
         return responses
 
 
-def handle_openai_error(e, api_call_counter):
-    """Handle OpenAI errors or related errors that the OpenAI API may raise.
+def handle_api_error(e) -> None:
+    """Handle OpenAI errors or related errors that the API may raise.
 
     Args:
         e: The error to handle. This could be an OpenAI error or a related
            non-fatal error, such as JSONDecodeError or AssertionError.
-        api_call_counter: The number of API calls made so far.
-
-    Returns:
-        The api_call_counter (if no error was raised), else raise the error.
     """
     logging.error(e)
+    if not isinstance(e, API_ERRORS):
+        raise e
     if isinstance(
         e,
         (openai.error.APIError, openai.error.Timeout, openai.error.RateLimitError),
     ):
         # For these errors, OpenAI recommends waiting before retrying.
         time.sleep(1)
-
-    if isinstance(e, OPENAI_ERRORS):
-        # For these errors, we can increment a counter and retry the API call.
-        return api_call_counter
-    else:
-        # For all other errors, immediately throw an exception.
-        raise e
 
 
 def count_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> int:
@@ -218,3 +250,8 @@ def count_tokens_from_string(string: str, encoding_name: str = "cl100k_base") ->
     encoding = tiktoken.get_encoding(encoding_name)
     num_tokens = len(encoding.encode(string))
     return num_tokens
+
+
+# This is the default API agent that is used everywhere if a different agent is not
+# specified
+default_api_agent = APIAgent()

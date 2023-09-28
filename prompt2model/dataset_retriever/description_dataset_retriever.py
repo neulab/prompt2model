@@ -11,8 +11,13 @@ import datasets
 import torch
 
 from prompt2model.dataset_retriever.base import DatasetInfo, DatasetRetriever
+from prompt2model.dataset_retriever.column_selection_prompt import (
+    construct_prompt_for_column_selection,
+)
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import encode_text, retrieve_objects
+from prompt2model.utils.dataset_utils import get_dataset_size
+from prompt2model.utils.parse_json_responses import parse_prompt_to_fields
 
 datasets.utils.logging.disable_progress_bar()
 logger = logging.getLogger(__name__)
@@ -77,13 +82,14 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 "Search index must either be a valid file or not exist yet. "
                 "But {self.search_index_path} is provided."
             )
-        logger.info("Creating dataset descriptions")
-        encode_text(
-            self.encoder_model_name,
-            text_to_encode=[x.description for x in self.dataset_infos],
-            encoding_file=self.search_index_path,
-            device=self.device,
-        )
+        if not os.path.exists(self.search_index_path):
+            logger.info("Creating dataset descriptions")
+            encode_text(
+                self.encoder_model_name,
+                text_to_encode=[x.description for x in self.dataset_infos],
+                encoding_file=self.search_index_path,
+                device=self.device,
+            )
 
     # ---------------------------- Utility Functions ----------------------------
     @staticmethod
@@ -114,10 +120,12 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         """
         self._print_divider()
         print("Here are the datasets I've retrieved for you:")
-        print("#\tName\tDescription")
+        print("#\tName\tSize[MB]\tDescription")
         for i, d in enumerate(top_datasets):
-            description_no_spaces = d.description.replace("\n", " ")
-            print(f"{i+1}):\t{d.name}\t{description_no_spaces}")
+            description_no_space = d.description.replace("\n", " ")
+            print(
+                f"{i+1}):\t{d.name}\t{get_dataset_size(d.name)}\t{description_no_space}"
+            )
 
         self._print_divider()
         print(
@@ -157,6 +165,37 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             {"input_col": input_col, "output_col": output_col}
         )
 
+    @staticmethod
+    def automatic_column_selection(
+        instruction: str, dataset_name: str, dataset_columns: str, example_rows: dict
+    ) -> tuple[list[str], str]:
+        """Find appropriate input and output columns for a given dataset and tasks."""
+        prompt = construct_prompt_for_column_selection(
+            instruction, dataset_name, dataset_columns, example_rows
+        )
+        required_keys = ["input", "output"]
+        optional_keys = ["ambiguous", "irrelevant"]
+
+        response = parse_prompt_to_fields(prompt, required_keys, optional_keys)
+        input_columns = response["input"]
+        output_column = response["output"]
+
+        if len(input_columns) < 1 or len(output_column) != 1:
+            raise RuntimeError(
+                "Input columns length was less than 1 or output column length was not 1"
+            )
+
+        incorrect_columns = [
+            col for col in input_columns + output_column if col not in dataset_columns
+        ]
+        if len(incorrect_columns) > 0:
+            raise RuntimeError(
+                f"One or more columns ({incorrect_columns}) were output that were "
+                f"not in the list of columns in the dataset ({dataset_columns})."
+            )
+
+        return input_columns, output_column[0]
+
     def canonicalize_dataset_using_columns(
         self,
         dataset: datasets.DatasetDict,
@@ -171,7 +210,9 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             )
         return datasets.DatasetDict(dataset_dict)
 
-    def canonicalize_dataset_by_cli(self, dataset_name: str) -> datasets.DatasetDict:
+    def canonicalize_dataset_by_cli(
+        self, dataset_name: str, prompt_spec
+    ) -> datasets.DatasetDict:
         """Canonicalize a dataset into a suitable text-to-text format.
 
         Args:
@@ -200,38 +241,31 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             self._print_divider()
 
         dataset = datasets.load_dataset(dataset_name, chosen_config)
-        assert "train" in dataset
+        if "train" not in dataset:
+            raise ValueError("The dataset must contain a `train` split.")
         train_columns = dataset["train"].column_names
         train_columns_formatted = ", ".join(train_columns)
 
-        assert len(dataset["train"]) > 0
+        if len(dataset["train"]) == 0:
+            raise ValueError("train split is empty.")
         example_rows = json.dumps(dataset["train"][0], indent=4)
 
         self._print_divider()
         print(f"Loaded dataset. Example row:\n{example_rows}\n")
 
-        print(
-            "Which column(s) should we use as input? Provide a comma-separated "
-            + f"list from: {train_columns_formatted}."
-        )
-        user_response = self._input_string()
-        input_columns = [c.strip() for c in user_response.split(",")]
-        print(f"Will use the columns {json.dumps(input_columns)} as input.\n")
-
-        output_column = None
-        while output_column is None:
-            print(
-                "Which column(s) should we use as the target? Choose a single "
-                + f"value from: {train_columns_formatted}."
+        try:
+            input_columns, output_column = self.automatic_column_selection(
+                prompt_spec.instruction,
+                dataset_name,
+                train_columns_formatted,
+                dataset["train"][0],
             )
-            user_response = self._input_string()
-            if user_response in train_columns:
-                output_column = user_response
-            else:
-                print(
-                    "Invalid column provided: {user_response}. Please choose "
-                    + f"from {train_columns}\n\n"
-                )
+        except RuntimeError:
+            logger.error(f"{dataset_name} did not work. Try another!")
+            return None  # Returning None means that the dataset chosen didn't work,
+            # and we would rather generate a dataset.
+
+        print(f"Will use the columns {json.dumps(input_columns)} as input.\n")
         print(f'Will use the column "{output_column}" as our target.\n')
         self._print_divider()
 
@@ -298,4 +332,4 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         top_dataset_name = self.choose_dataset_by_cli(sorted_list)
         if top_dataset_name is None:
             return None
-        return self.canonicalize_dataset_by_cli(top_dataset_name)
+        return self.canonicalize_dataset_by_cli(top_dataset_name, prompt_spec)

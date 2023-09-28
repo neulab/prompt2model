@@ -32,14 +32,18 @@ class GenerationModelExecutor(ModelExecutor):
             A list of model output tensors, one for each element in input_ids.
         """
         generate_strategy = hyperparameter_choices.get("generate_strategy", "greedy")
-        assert generate_strategy in [
+        if generate_strategy not in [
             "beam",  # beam search.
             "top_k",  # top_k sampling.
             "top_p",  # top_p sampling.
             "greedy",  # greedy search.
             "intersect",  # If both top_k and top_p are set, the model will
             # sample from the intersection of the top-k tokens and the top-p tokens.
-        ], "Only support top_k/top_p/intersect sampling and beam/greedy search for inference."  # noqa E501
+        ]:
+            raise ValueError(
+                "Only top_k/top_p/intersect sampling and beam/greedy "
+                "search are supported for inference."
+            )
         if generate_strategy == "greedy":
             output = self.model.generate(
                 input_ids=input_ids,
@@ -190,7 +194,11 @@ class GenerationModelExecutor(ModelExecutor):
         expected_num_examples = 1
         inference_dataset = datasets.Dataset.from_dict({"model_input": [model_input]})
         inference_column = "model_input"
-        assert len(inference_dataset) == expected_num_examples
+        if len(inference_dataset) != expected_num_examples:
+            raise ValueError(
+                f"Expected {expected_num_examples} examples, "
+                f"but got {len(inference_dataset)}."
+            )
         model_output = self.make_prediction(
             inference_dataset,
             inference_column,
