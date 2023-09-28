@@ -11,7 +11,7 @@ interface for model interactions.
 
 ```python
 from prompt2model.model_executor import GenerationModelExecutor
-from prompt2model.prompt_parser import OpenAIInstructionParser
+from prompt2model.prompt_parser import PromptBasedInstructionParser
 from prompt2model.gradio_interface import create_gradio
 ```
 
@@ -19,7 +19,7 @@ from prompt2model.gradio_interface import create_gradio
 
 ```python
 model_executor = GenerationModelExecutor(...)
-prompt_parser = OpenAIInstructionParser(...)
+prompt_parser = PromptBasedInstructionParser(...)
 # Refer to the documentation of ModelExecutor and PromptParser for details.
 ```
 

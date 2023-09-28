@@ -1,4 +1,5 @@
 """An interface for model selection."""
+from __future__ import annotations
 
 from prompt2model.model_retriever import ModelRetriever
 from prompt2model.prompt_parser import PromptSpec

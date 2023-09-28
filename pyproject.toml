@@ -45,6 +45,7 @@ dependencies = [
     "psutil",
     "protobuf==3.20.0",
     "nest-asyncio",
+    "litellm"
 ]
 
 dynamic = ["version"]
@@ -52,6 +53,10 @@ dynamic = ["version"]
 [project.optional-dependencies]
 test = [
     "pytest>=6.0.0",
+]
+dev = [
+    "pytest",
+    "pre-commit"
 ]
 
 [tool.hatch.build]

@@ -1,4 +1,5 @@
 """A mock dataset processor for testing purposes."""
+from __future__ import annotations
 
 import datasets
 

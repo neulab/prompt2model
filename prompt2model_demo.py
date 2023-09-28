@@ -7,7 +7,6 @@ import time
 from pathlib import Path
 
 import datasets
-import openai
 import pyfiglet
 import torch
 import transformers
@@ -16,7 +15,7 @@ from datasets import concatenate_datasets, load_from_disk
 from termcolor import colored
 
 from prompt2model.dataset_generator.base import DatasetSplit
-from prompt2model.dataset_generator.openai_gpt import OpenAIDatasetGenerator
+from prompt2model.dataset_generator.prompt_based import PromptBasedDatasetGenerator
 from prompt2model.dataset_processor.textualize import TextualizeProcessor
 from prompt2model.dataset_retriever import DescriptionDatasetRetriever
 from prompt2model.demo_creator import create_gradio
@@ -24,10 +23,12 @@ from prompt2model.model_evaluator import Seq2SeqEvaluator
 from prompt2model.model_executor import GenerationModelExecutor
 from prompt2model.model_retriever import DescriptionModelRetriever
 from prompt2model.model_trainer.generate import GenerationModelTrainer
-from prompt2model.prompt_parser import MockPromptSpec, OpenAIInstructionParser, TaskType
+from prompt2model.prompt_parser import (
+    MockPromptSpec,
+    PromptBasedInstructionParser,
+    TaskType,
+)
 from prompt2model.utils.logging_utils import get_formatted_logger
-
-openai.api_key = os.environ["OPENAI_API_KEY"]
 
 
 def line_print(input_str: str) -> None:
@@ -77,6 +78,44 @@ def print_logo():
     line_print(centered_ascii_art)
 
 
+def parse_model_size_limit(line: str, default_size=3e9) -> float:
+    """Parse the user input for the maximum size of the model.
+
+    Args:
+        line: The user input.
+        default_size: The default size to use if the user does not specify a size.
+    """
+    if len(line.strip()) == 0:
+        return default_size
+    model_units = {"B": 1e0, "KB": 1e3, "MB": 1e6, "GB": 1e9, "TB": 1e12, "PB": 1e15}
+    unit_disambiguations = {
+        "B": ["b", "bytes"],
+        "KB": ["Kb", "kb", "kilobytes"],
+        "MB": ["Mb", "mb", "megabytes"],
+        "GB": ["Gb", "gb", "gigabytes"],
+        "TB": ["Tb", "tb", "terabytes"],
+        "PB": ["Pb", "pb", "petabytes"],
+    }
+    unit_matched = False
+    for unit, disambiguations in unit_disambiguations.items():
+        for unit_name in [unit] + disambiguations:
+            if line.strip().endswith(unit_name):
+                unit_matched = True
+                break
+        if unit_matched:
+            break
+    if unit_matched:
+        numerical_part = line.strip()[: -len(unit_name)].strip()
+    else:
+        numerical_part = line.strip()
+    if not str.isdecimal(numerical_part):
+        raise ValueError(
+            "Invalid input. Please enter a number (integer " + "or number with units)."
+        )
+    scale_factor = model_units[unit] if unit_matched else 1
+    return int(numerical_part) * scale_factor
+
+
 def main():
     """The main function running the whole system."""
     print_logo()
@@ -123,7 +162,7 @@ def main():
                 break
             prompt += line + "\n"
         line_print("Parsing prompt...")
-        prompt_spec = OpenAIInstructionParser(task_type=TaskType.TEXT_GENERATION)
+        prompt_spec = PromptBasedInstructionParser(task_type=TaskType.TEXT_GENERATION)
         prompt_spec.parse_from_prompt(prompt)
 
         propmt_has_been_parsed = True
@@ -156,6 +195,15 @@ def main():
         and dataset_has_been_retrieved
         and not model_has_been_retrieved
     ):
+        line_print(
+            "Enter the maximum size of the model (by default, enter nothing "
+            + "and we will use 3GB as the limit). You can specify a unit (e.g. "
+            + "3GB, 300Mb). If no unit is given, we assume the size is given in bytes."
+        )
+        max_size_line = input()
+        max_size = parse_model_size_limit(max_size_line)
+        line_print(f"Maximum model size set to {max_size} bytes.")
+
         line_print("Retrieving model...")
         prompt_spec = MockPromptSpec(
             TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
@@ -164,6 +212,7 @@ def main():
             model_descriptions_index_path="huggingface_data/huggingface_models/model_info/",  # noqa E501
             use_bm25=True,
             use_HyDE=True,
+            model_size_limit_bytes=max_size,
         )
         top_model_name = retriever.retrieve(prompt_spec)
         line_print("Here are the models we retrieved.")
@@ -235,7 +284,7 @@ def main():
                 )
         line_print("Starting to generate dataset. This may take a while...")
         time.sleep(2)
-        unlimited_dataset_generator = OpenAIDatasetGenerator(
+        unlimited_dataset_generator = PromptBasedDatasetGenerator(
             initial_temperature=initial_temperature,
             max_temperature=max_temperature,
             responses_per_request=3,
@@ -261,7 +310,8 @@ def main():
         line_print("The model has not been trained.")
         time.sleep(2)
         dataset_root = Path("generated_dataset")
-        assert dataset_root.exists()
+        if not dataset_root.exists():
+            raise ValueError("Dataset has not been generated yet.")
         trained_model_root = Path("result/trained_model")
         trained_tokenizer_root = Path("result/trained_tokenizer")
         RESULT_PATH = Path("result/result")
@@ -283,9 +333,9 @@ def main():
         t5_modified_dataset_dicts = t5_processor.process_dataset_lists(
             instruction,
             dataset_list,
-            train_proportion=0.6,
-            val_proportion=0.2,
-            maximum_example_num=3000,
+            train_proportion=0.7,
+            val_proportion=0.1,
+            maximum_example_num={"train": 3500, "val": 500, "test": 1000},
         )
         processor_logger = get_formatted_logger("DatasetProcessor")
         processor_logger.setLevel(logging.INFO)

@@ -1,4 +1,5 @@
 """Tools for doing efficient similarity search via the Tevatron/faiss libraries."""
+from __future__ import annotations
 
 import pickle
 
@@ -22,8 +23,10 @@ def retrieve_objects(
     Returns:
         Ranked list of object names and their inner product similarity to the query.
     """
-    assert query_vector.shape[0] == 1, "Only a single query vector is expected."
-    assert len(query_vector.shape) == 2, "Query vector must be 1-D."
+    if query_vector.shape[0] != 1:
+        raise ValueError("Only a single query vector is expected.")
+    if len(query_vector.shape) != 2:
+        raise ValueError("Query vector must be 1-D.")
 
     with open(encoded_datasets_path, "rb") as f:
         passage_reps, passage_lookup = pickle.load(f)
@@ -31,9 +34,8 @@ def retrieve_objects(
     retriever.add(passage_reps)
 
     all_scores, all_indices = retriever.search(query_vector, depth)
-    assert (
-        len(all_scores) == len(all_indices) == 1
-    ), "Only one query's ranking should be returned."
+    if not (len(all_scores) == len(all_indices) == 1):
+        raise ValueError("Only one query's ranking should be returned.")
 
     psg_scores = all_scores[0]
     ranked_document_names = [document_names[passage_lookup[x]] for x in all_indices[0]]

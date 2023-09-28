@@ -114,7 +114,7 @@ Before generating a new example, ensure that you strictly adhere to the rules me
 # Prompt_template must contains `instruction` and `examples` fields.
 # The COMPLEX_PROMPT_TEMPLATE is used when random_example_num < 5.
 # The SIMPLE_PROMPT_TEMPLATE is used when random_example_num >= 5.
-# To save the price of calling OPENAI's API.
+# To save the price of making API calls.
 
 META_PROMPT = """
 As a DatasetGenerator, your task is to generate a new example (`input` and `output`) based on the [new instruction] and [few-shot examples]. Please provide a JSON dictionary response that includes the new `input` and its corresponding `output`. Use the `input` and `output` keys in the dictionary. The 'input' field should be marked as 'N/A' if the instruction doesn't require additional input.
@@ -264,11 +264,12 @@ def construct_meta_prompt(
         str: A prompt template, where the `instruction` and `examples` fields
             are filled in.
     """
-    assert template_type in [
+    if template_type not in [
         "SIMPLE",
         "MIDDLE",
         "COMPLEX",
-    ], "template_type must be SIMPLE, MIDDLE, or COMPLEX"
+    ]:
+        raise ValueError("template_type must be SIMPLE, MIDDLE, or COMPLEX")
     meta_examples = random.sample(META_EXAMPLES, 4)
     example_1, example_2, example_3, example_4 = meta_examples
     if template_type == "COMPLEX":
