@@ -158,16 +158,13 @@ def test_gpt_trainer_with_tokenizer_max_length():
             trainer = GenerationModelTrainer(
                 "sshleifer/tiny-gpt2", has_encoder=False, tokenizer_max_length=512
             )
-            hyperparameter_choices = {
-                "static_hyperparameters": {
+            trained_model, trained_tokenizer = trainer.train_model(
+                {
                     "output_dir": cache_dir,
                     "num_train_epochs": 2,
                     "per_device_train_batch_size": 2,
                     "evaluation_strategy": "no",
-                }
-            }
-            trained_model, trained_tokenizer = trainer.train_model(
-                hyperparameter_choices,
+                },
                 training_datasets,
             )
             # Though we did not pass in validation dataset, we set
@@ -213,20 +210,17 @@ def test_gpt_trainer_without_tokenizer_max_length():
         with patch.object(logger, "info") as mock_info, patch.object(
             logger, "warning"
         ) as mock_warning:
+            num_train_epochs = 2
             trainer = GenerationModelTrainer(
                 "sshleifer/tiny-gpt2", has_encoder=False, tokenizer_max_length=None
             )
-
-            hyperparameter_choices = {
-                "static_hyperparameters": {
+            trained_model, trained_tokenizer = trainer.train_model(
+                {
                     "output_dir": cache_dir,
-                    "num_train_epochs": 2,
+                    "num_train_epochs": num_train_epochs,
                     "per_device_train_batch_size": 2,
                     "evaluation_strategy": "no",
-                }
-            }
-            trained_model, trained_tokenizer = trainer.train_model(
-                hyperparameter_choices,
+                },
                 training_datasets,
             )
 
@@ -285,16 +279,13 @@ def test_gpt_trainer_with_epoch_evaluation():
                 has_encoder=False,
             )
             num_train_epochs = 2
-            hyperparameter_choices = {
-                "static_hyperparameters": {
+            trained_model, trained_tokenizer = trainer.train_model(
+                {
                     "output_dir": cache_dir,
                     "num_train_epochs": num_train_epochs,
                     "per_device_train_batch_size": 2,
-                    "evaluation_strategy": "no",
-                }
-            }
-            trained_model, trained_tokenizer = trainer.train_model(
-                hyperparameter_choices,
+                    "evaluation_strategy": "epoch",
+                },
                 training_datasets,
                 validation_datasets,
             )
@@ -348,16 +339,14 @@ def test_gpt_trainer_without_validation_datasets():
             logger, "warning"
         ) as mock_warning:
             trainer = GenerationModelTrainer("sshleifer/tiny-gpt2", has_encoder=False)
-            hyperparameter_choices = {
-                "static_hyperparameters": {
-                    "output_dir": cache_dir,
-                    "num_train_epochs": 2,
-                    "per_device_train_batch_size": 2,
-                    "evaluation_strategy": "no",
-                }
-            }
+            num_train_epochs = 2
             trained_model, trained_tokenizer = trainer.train_model(
-                hyperparameter_choices,
+                {
+                    "output_dir": cache_dir,
+                    "num_train_epochs": num_train_epochs,
+                    "per_device_train_batch_size": 2,
+                    "evaluation_strategy": "epoch",
+                },
                 training_datasets,
             )
             # We set the evaluation strategy to epoch but don't pass
@@ -413,16 +402,13 @@ def test_gpt_trainer_with_unsupported_evaluation_strategy():
                 has_encoder=False,
             )
             num_train_epochs = 2
-            hyperparameter_choices = {
-                "static_hyperparameters": {
+            trained_model, trained_tokenizer = trainer.train_model(
+                {
                     "output_dir": cache_dir,
                     "num_train_epochs": num_train_epochs,
                     "per_device_train_batch_size": 2,
                     "evaluation_strategy": "step",
-                }
-            }
-            trained_model, trained_tokenizer = trainer.train_model(
-                hyperparameter_choices,
+                },
                 training_datasets,
                 validation_datasets,
             )
@@ -483,19 +469,13 @@ def test_gpt_trainer_with_unsupported_parameter():
                     }
                 ),
             ]
-            hyperparameter_choices = {
-                "static_hyperparameters": {
-                    "output_dir": cache_dir,
-                    "train_epochs": 1,
-                    "batch_size": 1,
-                }
-            }
+
             trainer.train_model(
-                hyperparameter_choices,
+                {"output_dir": cache_dir, "train_epochs": 1, "batch_size": 1},
                 training_datasets,
             )
 
-        supported_keys_for_static_hyperparameters = {
+        supported_keys = {
             "output_dir",
             "logging_steps",
             "evaluation_strategy",
@@ -508,9 +488,9 @@ def test_gpt_trainer_with_unsupported_parameter():
             "learning_rate",
             "test_size",
         }
+
         assert str(exc_info.value) == (
-            f"Only support {supported_keys_for_static_hyperparameters}"
-            + "as training parameters."
+            f"Only support {supported_keys} as training parameters."
         )
     gc.collect()
 
