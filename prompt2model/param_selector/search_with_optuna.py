@@ -1,69 +1,142 @@
-"""This module provides a dummy trainer for testing purposes."""
+"""This module provides automatic hyperparameter selection using optuna."""
+
 from __future__ import annotations  # noqa FI58
 
-from typing import Any
+import os
+from typing import Any, Optional
 
+import optuna
 import transformers
+from datasets import Dataset, concatenate_datasets
 from optuna.trial import Trial
-
-from datasets import Dataset
 from transformers import PreTrainedModel  # noqa
 from transformers import PreTrainedTokenizer
-from prompt2model.prompt_parser.base import PromptSpec
 
-from prompt2model.utils.config import DEFAULT_HYPERPARAMETERS, DEFAULT_HYPERPARAMETERS_SPACE
-from prompt2model.model_trainer import BaseTrainer
+from prompt2model.model_trainer.generate import GenerationModelTrainer
 from prompt2model.param_selector.base import ParamSelector
-
-# TODO:
-# - User tweaking hyperparameter
-# - Dynamic initialization of hyperparamter range from task type and complexity
-# - Using LLM to suggest hyperparameter
+from prompt2model.prompt_parser.base import PromptSpec
+from prompt2model.utils.config import DEFAULT_HYPERPARAMETERS_SPACE
 
 
 class OptunaParamSelector(ParamSelector):
-    """Uses optuna for searching for hyperparameters"""
+    """Uses optuna for searching for hyperparameters."""
 
-    def __init__(self, trainer: BaseTrainer):
-        """Initialize with train/val datasets and a prompt specification"""
-        self.trainer = trainer
-    
-    @property
-    def _example_hyperparameters(self) -> dict[str, Any]:
-        """Example hyperparameters (for testing only)."""
-        return DEFAULT_HYPERPARAMETERS
-    
-    @property
-    def _example_hyperparameter_space(self) -> dict[str, Any]:
-        return DEFAULT_HYPERPARAMETERS_SPACE
+    def __init__(self, trainer: GenerationModelTrainer, n_trials: int):
+        """Initialize with train/val datasets and a prompt specification.
 
-    def select_from_hyperparameters(
+        Args:
+            trainer (BaseTrainer): trainer object from GenerationModelTrainer
+            n_trials (int): The number of trials for conducting hyperparameter search
+        """
+        self.generation_model_trainer = trainer
+        self.n_trials = n_trials
+
+    def optimize_hyperparameters(
         self,
-        training_sets: list[Dataset],
+        training_datasets: list[Dataset],
         validation: Dataset,
-        hyperparameters: dict[str, Any],
-    ) -> transformers.Trainer:
+        hyperparameters: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
         """Select a model among a set of hyperparameters (given or inferred).
 
         Args:
-            training_sets (list[Dataset]): One or more training datasets for the trainer.
-            validation (Dataset): A dataset for computing validation metrics.
-            hyperparameters (dict[str, list[Any]]): A dictionary of hyperparameter choices.
+            training_datasets (list[Dataset]): One or more training datasets or
+                subset of the actual dataset for running the trainer.
+            validation_sets (Dataset): A dataset for computing validation metrics.
+            hyperparameter_space (Optional[dict[str, Any]], optional): The set
+                of possible values of hyperparaneters values required for doing
+                optimal hyperparameter search. Defaults to None.
 
-        Supported keys for the hyperparameters and their specs. Left side we have the key and
-        have the expected type of the value in braces.
-            - :key min_num_train_epochs: (int)
-            - :key max_num_train_epochs: (int)
-            - :key save_strategy: List[str]
-            - :evaluation_strategy: List[str], available options: ["epoch", "no"]
-            - :per_device_train_batch_size: List[int], available options: ["epoch", "steps", "no"],
-            - :min_weight_decay: float
-            - :max_weight_decay: float
-            - :min_learning_rate: float
-            - :max_learning_rate: float
-        Here is a example of hyperparameters:
-        ```python
-        hyperparameters = {
+        Returns:
+            Returns a dict which contains the best hyperparameters
+        """
+        supported_hp_space_keys = set(DEFAULT_HYPERPARAMETERS_SPACE.keys())
+        if hyperparameters is not None:
+            assert set(hyperparameters.keys()).issubset(
+                supported_hp_space_keys
+            ), f"Only support {supported_hp_space_keys} as training parameters."
+        hyperparameter_space = self._build_hp_space(hyperparameters)
+
+        concatenated_training_dataset = concatenate_datasets(training_datasets)
+        train_dataset = self.generation_model_trainer.tokenize_dataset(
+            concatenated_training_dataset
+        )
+
+        def objective(trial: Trial):
+            model = self.generation_model_trainer.model
+            training_args = transformers.TrainingArguments(
+                output_dir="./checkpoint",
+                learning_rate=trial.suggest_loguniform(
+                    "learning_rate",
+                    low=hyperparameter_space["min_learning_rate"],
+                    high=hyperparameter_space["max_learning_rate"],
+                ),
+                weight_decay=trial.suggest_loguniform(
+                    "weight_decay",
+                    low=hyperparameter_space["min_weight_decay"],
+                    high=hyperparameter_space["max_weight_decay"],
+                ),
+                num_train_epochs=trial.suggest_int(
+                    "num_train_epochs",
+                    low=hyperparameter_space["min_num_train_epochs"],
+                    high=hyperparameter_space["max_num_train_epochs"],
+                ),
+                save_strategy=trial.suggest_categorical(
+                    "save_strategy", hyperparameter_space["save_strategy"]
+                ),
+                per_device_train_batch_size=trial.suggest_categorical(
+                    "per_device_train_batch_size",
+                    hyperparameter_space["per_device_train_batch_size"],
+                ),
+                per_device_eval_batch_size=hyperparameter_space[
+                    "per_device_train_batch_size"
+                ],
+            )
+            objective_trainer = transformers.Trainer(
+                model=model,
+                args=training_args,
+                data_collator=transformers.DataCollatorForSeq2Seq(
+                    tokenizer=self.generation_model_trainer.tokenizer
+                ),
+                train_dataset=train_dataset,
+                eval_dataset=validation,
+            )
+
+            result = objective_trainer.train()
+            return result.training_loss
+
+        study = optuna.create_study(
+            study_name="automatic_hyperparameter_search", direction="minimize"
+        )
+
+        study.optimize(func=objective, n_trials=self.n_trials, gc_after_trial=True)
+        best_hyperparameters = {
+            "learning_rate": float(study.best_params["learning_rate"]),
+            "weight_decay": float(study.best_params["weight_decay"]),
+            "num_train_epochs": int(study.best_params["num_train_epochs"]),
+            "save_strategy": study.best_params["save_strategy"],
+            "per_device_train_batch_size": study.best_params[
+                "per_device_train_batch_size"
+            ],
+        }
+        return best_hyperparameters
+
+    def select_from_hyperparameters(
+        self,
+        training_datasets: list[Dataset],
+        validation: Dataset,
+        hyperparameters: Optional[dict[str, Any]] = None,
+    ) -> tuple[PreTrainedModel, PreTrainedTokenizer]:
+        """Select a model among a set of hyperparameters (given or inferred). # noqa D410
+
+        Args:
+            training_datasets: One or more training datasets for the trainer.
+            validation: A dataset for computing validation metrics.
+            hyperparameters: A dictionary of hyperparameter choices.
+
+        If no hyperparameter_space is choosen, then the default hyperparameter_space
+        will be choosen. Here is the example of how the space looks like:
+        hyperparameter_space = {
             "min_num_train_epochs": 5,
             "max_num_train_epochs": 10,
             "save_strategy": ["epoch", "steps", "no"],
@@ -72,117 +145,95 @@ class OptunaParamSelector(ParamSelector):
             "min_weight_decay": 1e-5,
             "max_weight_decay": 1e-1,
             "min_learning_rate": 1e-5,
-            "max_learning_rate", 1e-1,
+            "max_learning_rate": 1e-1,
         }
-        ```
-        Returns:
-            Returns the transformers.Trainer class with the optimal hyperparameters
+        Return:
+            A model and tokenizer (with hyperparameters from given range).
         """
-        # TODO:
-        # - Find the industry standards for default values spec
-        # - More asserts for other keys. Example checking the min or max values
+        model = self.generation_model_trainer.model
+        tokenizer = self.generation_model_trainer.tokenizer
 
-        if "save_strategy" in hyperparameters:
-            save_strategy_is_valid = any(
-                strategy in ["epoch", "steps", "no"]
-                for strategy in hyperparameters["save_strategy"]
-            )
-            assert (
-                save_strategy_is_valid
-            ), "save strategy should have either of these values: ['epoch', 'steps', 'no']"
+        # FIXME: Needs discussion where to keep all of these paths
+        best_model_path = "./best_model"
+        if not os.path.exists(best_model_path):
+            os.makedirs(best_model_path, exist_ok=True)
 
-        if "evaluation_strategy" in hyperparameters:
-            evaluation_strategy_is_valid = any(
-                strategy in ["epoch", "no"]
-                for strategy in hyperparameters["evaluation_strategy"]
-            )
-            assert (
-                evaluation_strategy_is_valid
-            ), "Evaluation strategy should have either of these values ['epoch', 'no']"
+        best_hyperparameters = self.optimize_hyperparameters(
+            training_datasets=training_datasets,
+            validation=validation,
+            hyperparameters=hyperparameters,
+        )
+        final_hyperparameters = {
+            "output_dir": "./best_model_checkpoint",
+            **best_hyperparameters,
+        }
 
-        def hp_space(trial: Trial):
-            return {
-                "num_train_epochs": trial.suggest_int(
-                    "num_train_epochs",
-                    hyperparameters.get("min_train_epochs", 5),
-                    hyperparameters.get("max_train_epochs", 10),
+        model, tokenizer = self.generation_model_trainer.train_model(
+            hyperparameter_choices=final_hyperparameters,
+            training_datasets=training_datasets,
+        )
+
+        model.save_pretrained(best_model_path)
+        tokenizer.save_pretrained(best_model_path)
+        return model, tokenizer
+
+    def _build_hp_space(
+        self, hyperparameter_space: Optional[dict[str, Any]] = None
+    ) -> dict[str, Any]:
+        return (
+            {
+                "min_weight_decay": hyperparameter_space.get(
+                    "min_weight_decay",
+                    DEFAULT_HYPERPARAMETERS_SPACE.get("min_weight_decay"),
                 ),
-                "save_strategy": trial.suggest_categorical(
+                "max_weight_decay": hyperparameter_space.get(
+                    "max_weight_decay",
+                    DEFAULT_HYPERPARAMETERS_SPACE.get("max_weight_decay"),
+                ),
+                "min_learning_rate": hyperparameter_space.get(
+                    "min_learning_rate",
+                    DEFAULT_HYPERPARAMETERS_SPACE.get("min_learning_rate"),
+                ),
+                "max_learning_rate": hyperparameter_space.get(
+                    "max_learning_rate",
+                    DEFAULT_HYPERPARAMETERS_SPACE.get("max_learning_rate"),
+                ),
+                "min_num_train_epochs": hyperparameter_space.get(
+                    "min_num_train_epochs",
+                    DEFAULT_HYPERPARAMETERS_SPACE.get("min_num_train_epochs"),
+                ),
+                "max_num_train_epochs": hyperparameter_space.get(
+                    "max_num_train_epochs",
+                    DEFAULT_HYPERPARAMETERS_SPACE.get("max_num_train_epochs"),
+                ),
+                "save_strategy": hyperparameter_space.get(
                     "save_strategy",
-                    hyperparameters.get("save_strategy", ["epoch", "steps", "no"]),
+                    DEFAULT_HYPERPARAMETERS_SPACE.get("save_strategy"),
                 ),
-                "evaluation_strategy": trial.suggest_categorical(
+                "evaluation_strategy": hyperparameter_space.get(
                     "evaluation_strategy",
-                    hyperparameters.get("evaluation_strategy", ["epoch", "no"]),
+                    DEFAULT_HYPERPARAMETERS_SPACE.get("evaluation_strategy"),
                 ),
-                "per_device_train_batch_size": trial.suggest_categorical(
+                "per_device_train_batch_size": hyperparameter_space.get(
                     "per_device_train_batch_size",
-                    hyperparameters.get("per_device_train_batch_size", [4, 8, 16, 32]),
-                ),
-                "weight_decay": trial.suggest_loguniform(
-                    "weight_decay",
-                    hyperparameters.get("min_weight_decay", 1e-5),
-                    hyperparameters.get("max_weight_decay", 1e-1),
-                ),
-                "learning_rate": trial.suggest_loguniform(
-                    "learning_rate",
-                    hyperparameters.get("min_learning_rate", 1e-5),
-                    hyperparameters.get("max_learning_rate", 1e-2),
+                    DEFAULT_HYPERPARAMETERS_SPACE.get("per_device_train_batch_size"),
                 ),
             }
-
-        # prepare the training args
-        # we are assuming here that the user will also provide these args with the additional
-        # args for range. Or we can provide an another argument of search_args (dict) that will
-        # tell the user to provide the arguments for doing hyperparamerter search
-
-        training_args = transformers.Seq2SeqTrainingArguments(
-            output_dir=hyperparameters.get(
-                "output_dir", DEFAULT_HYPERPARAMETERS.get("output_dir")
-            ),
-            logging_steps=hyperparameters.get(
-                "logging_steps", DEFAULT_HYPERPARAMETERS.get("logging_steps")
-            ),
-            save_strategy=hyperparameters.get(
-                "save_strategy", DEFAULT_HYPERPARAMETERS.get("save_strategy")
-            ),
-            num_train_epochs=hyperparameters.get(
-                "num_train_epochs", DEFAULT_HYPERPARAMETERS.get("num_train_epochs")
-            ),
-            per_device_train_batch_size=hyperparameters.get(
-                "per_device_train_batch_size",
-                DEFAULT_HYPERPARAMETERS.get("per_device_train_batch_size"),
-            ),
-            warmup_steps=hyperparameters.get(
-                "warmup_steps", DEFAULT_HYPERPARAMETERS.get("warmup_steps")
-            ),
-            weight_decay=hyperparameters.get(
-                "weight_decay", DEFAULT_HYPERPARAMETERS.get("weight_decay")
-            ),
-            logging_dir=hyperparameters.get(
-                "logging_dir", DEFAULT_HYPERPARAMETERS.get("logging_dir")
-            ),
-            learning_rate=hyperparameters.get(
-                "learning_rate", DEFAULT_HYPERPARAMETERS.get("learning_rate")
-            ),
-            predict_with_generate=True,
-        )
-        # training args here
-        trainer = self.trainer.trainer
-        trainer.train_dataset = training_sets
-        trainer.eval_dataset = validation
-        trainer.args = training_args
-
-        best_run = trainer.hyperparameter_search(
-            n_trials=5,  # FIXME: Discussion needed, where to put this arg and visibility for the user
-            direction="maximize",
-            hp_space=hp_space,
+            if hyperparameter_space is not None
+            else DEFAULT_HYPERPARAMETERS_SPACE
         )
 
-        for k, v in best_run.hyperparameters.items():
-            setattr(training_args, k, v)
+    def select_from_spec(
+        self, training_sets: list[Dataset], validation: Dataset, prompt_spec: PromptSpec
+    ) -> tuple[PreTrainedModel, PreTrainedTokenizer]:
+        """Select a model among a set of hyperparameters (given or inferred).
 
-        return trainer
+        Args:
+            training_sets: One or more training datasets for the trainer.
+            validation: A dataset for computing validation metrics.
+            prompt_spec: A prompt to infer hyperparameters from.
 
-    def select_from_spec(self, training_sets: list[Dataset], validation: Dataset, prompt_spec: PromptSpec) -> tuple[PreTrainedModel, PreTrainedTokenizer]:
+        Return:
+            A model and tokenizer (with hyperparameters from inferred range).
+        """
         return super().select_from_spec(training_sets, validation, prompt_spec)
