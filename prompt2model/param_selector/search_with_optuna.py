@@ -62,6 +62,10 @@ class OptunaParamSelector(ParamSelector):
             concatenated_training_dataset
         )
 
+        if isinstance(validation, list):
+            validation = concatenate_datasets(validation)
+            validation = self.generation_model_trainer.tokenize_dataset(validation)
+
         def objective(trial: Trial):
             model = self.generation_model_trainer.model
             training_args = transformers.TrainingArguments(
@@ -88,9 +92,10 @@ class OptunaParamSelector(ParamSelector):
                     "per_device_train_batch_size",
                     hyperparameter_space["per_device_train_batch_size"],
                 ),
-                per_device_eval_batch_size=hyperparameter_space[
-                    "per_device_train_batch_size"
-                ],
+                per_device_eval_batch_size=trial.suggest_categorical(
+                    "per_device_eval_batch_size",
+                    hyperparameter_space["per_device_train_batch_size"],
+                ),
             )
             objective_trainer = transformers.Trainer(
                 model=model,
@@ -102,8 +107,9 @@ class OptunaParamSelector(ParamSelector):
                 eval_dataset=validation,
             )
 
-            result = objective_trainer.train()
-            return result.training_loss
+            _ = objective_trainer.train()
+            to_optimize = objective_trainer.evaluate()
+            return to_optimize["eval_loss"]
 
         study = optuna.create_study(
             study_name="automatic_hyperparameter_search", direction="minimize"
