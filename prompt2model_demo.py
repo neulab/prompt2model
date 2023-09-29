@@ -357,7 +357,7 @@ def main():
 
         while True:
             line = input(
-                "Are you interested to train the model with automatic hyperparamter search? Type 'y' for Yes and 'n' for No. "  # noqa E501
+                "Are you interested to train the model with automatic hyperparameter search? Type 'y' for Yes and 'n' for No. "  # noqa E501
             )
             try:
                 assert line in ["y", "n"]
