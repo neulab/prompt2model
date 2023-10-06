@@ -23,14 +23,20 @@ METAPROMPT_EXAMPLES = [
     ),
     (
         """
-        You are tasked with the following process. In this task, the input is a string that consists of both a question and a context passage. The context is a descriptive passage related to the question and contains the answer. And the question can range from Math, Cultural, Social, Geometry, Biology, History, Sports, Technology, Science, and so on.  For this task, you will use the Children's Book Test dataset from HuggingFace. A sample data instance from this dataset is as follows: {'answer': 'said', 'options': ['christening', 'existed', 'hear', 'knows', 'read', 'remarked', 'said', 'sitting', 'talking', 'wearing'], 'question': "`` They are very kind old ladies in their way , '' XXXXX the king ; `` and were nice to me when I was a boy . ''", 'sentences': ['This vexed the king even more than the queen , who was very clever and learned , and who had hated dolls when she was a child .', 'However , she , too in spite of all the books she read and all the pictures she painted , would have been glad enough to be the mother of a little prince .', 'The king was anxious to consult the fairies , but the queen would not hear of such a thing .', 'She did not believe in fairies : she said that they had never existed ; and that she maintained , though The History of the Royal Family was full of chapters about nothing else .', 'Well , at long and at last they had a little boy , who was generally regarded as the finest baby that had ever been seen .', 'Even her majesty herself remarked that , though she could never believe all the courtiers told her , yet he certainly was a fine child -- a very fine child .', 'Now , the time drew near for the christening party , and the king and queen were sitting at breakfast in their summer parlour talking over it .', 'It was a splendid room , hung with portraits of the royal ancestors .', 'There was Cinderella , the grandmother of the reigning monarch , with her little foot in her glass slipper thrust out before her .'"]}
-        This dataset has the following columns: [sentences, questions, answers, options]""",  # noqa: E501
+        You are tasked with the following process. In this task, you will detect whether some given text uses hateful speech or not. For this task you will use the hate_speech_offensive dataset from HuggingFace. A sample data instance from this is as follows: {
+"count": 3,
+ "hate_speech_count": 0,
+ "offensive_language_count": 0,
+ "neither_count": 3,
+ "label": 2,  # "neither"
+ "tweet": "!!! RT @mayasolovely: As a woman you shouldn't complain about cleaning up your house. &amp; as a man you should always take the trash out...")
+}. This dataset has the following columns: [count, hate_speech_count, offensive_language_count, neither_count, class, tweet]""",  # noqa: E501
         """{
-        "input": ["context", "question"],
-        "output": ["answer"],
+        "input": ["tweet"],
+        "output": ["label"],
         "irrelevant": [],
-        "ambiguous": ["options"]
-        }""",
+        "ambiguous": ["hate_speech_count", "offensive_language_count", "neither_count", "count"]
+        }""",  # noqa: E501
     ),
     (
         """You are tasked with the following process. Your job is to be able to translate between languages. For this task, you will use the Opus100 dataset from HuggingFace. A sample data instance from this is as follows:  {"translation":{ "ca": "El department de bombers té el seu propi equip d'investigació.", "en": "Well, the fire department has its own investigative unit." }}. This dataset has the following columns: [translation]. """,  # noqa: E501
