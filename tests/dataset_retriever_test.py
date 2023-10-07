@@ -19,13 +19,16 @@ from test_helpers import MockCompletion, create_test_search_index
 # four automatic column selection tests.
 DATASET_NAME = "squad"
 DATASET_COLUMNS = "id, title, context, question, answers"
+DATASET_DESCRIPTION = "Stanford Question Answering Dataset (SQuAD) is a reading comprehension dataset, consisting of questions posed by crowdworkers on a set of Wikipedia articles, where the answer to every question is a segment of text, or span, from the corresponding reading passage, or the question might be unanswerable."  # noqa: E501
 EXAMPLE_ROWS = {
     "id": "5733be284776f41900661182",
     "title": "University_of_Notre_Dame",
     "context": 'Architecturally, the school has a Catholic character. Atop the Main Building\'s gold dome is a golden statue of the Virgin Mary. Immediately in front of the Main Building and facing it, is a copper statue of Christ with arms upraised with the legend "Venite Ad Me Omnes". Next to the Main Building is the Basilica of the Sacred Heart. Immediately behind the basilica is the Grotto, a Marian place of prayer and reflection. It is a replica of the grotto at Lourdes, France where the Virgin Mary reputedly appeared to Saint Bernadette Soubirous in 1858. At the end of the main drive (and in a direct line that connects through 3 statues and the Gold Dome), is a simple, modern stone statue of Mary.',  # noqa: E501
     "question": "To whom did the Virgin Mary allegedly appear in 1858 in Lourdes France?",  # noqa: E501
-    "answers": {"text": ["Saint Bernadette Soubirous"], "answer_start": [515]},
-}  # noqa: E501
+    "answers.text": "Saint Bernadette Soubirous",
+    "answers.answer_start": 515,
+}
+
 INSTRUCTION = "Your task is to generate a relevant answer to a given question. You will be provided with context for each question"  # noqa: E501
 GPT3_RESPONSE_CORRECT = MockCompletion(
     """{\n        \"input\": [\"context\", \"question\"],\n        \"output\": [\"answers\"],\n        \"irrelevant\": [\"id\", \"title\"],\n        \"ambiguous\": []\n}"""  # noqa: E501
@@ -244,12 +247,11 @@ def test_automatic_column_selection_correct(mocked_parsing_method):
     """Check that normal automatic column selection runs fine."""
     expected_input_columns = ["context", "question"]
     expected_output_column = "answers"
-
     (
         input_columns,
         output_column,
     ) = DescriptionDatasetRetriever.automatic_column_selection(
-        INSTRUCTION, DATASET_NAME, DATASET_COLUMNS, EXAMPLE_ROWS
+        INSTRUCTION, DATASET_NAME, DATASET_DESCRIPTION, DATASET_COLUMNS, EXAMPLE_ROWS
     )
 
     assert type(input_columns) == list
@@ -267,7 +269,11 @@ def test_automatic_column_selection_unknown_cols(mocked_parsing_method):
     """Check error thrown if there are unknown cols returned in input/output."""
     with pytest.raises(RuntimeError) as exc_info:
         _ = DescriptionDatasetRetriever.automatic_column_selection(
-            INSTRUCTION, DATASET_NAME, DATASET_COLUMNS, EXAMPLE_ROWS
+            INSTRUCTION,
+            DATASET_NAME,
+            DATASET_DESCRIPTION,
+            DATASET_COLUMNS,
+            EXAMPLE_ROWS,
         )
         error_info = exc_info.value.args[0]
         assert error_info == "Incorrect columns being parsed"
@@ -281,7 +287,11 @@ def test_automatic_column_selection_without_required_cols(mocked_parsing_method)
     """Check that if input/output columns are missing, an error is thrown."""
     with pytest.raises(StopIteration) as exc_info:
         _ = DescriptionDatasetRetriever.automatic_column_selection(
-            INSTRUCTION, DATASET_NAME, DATASET_COLUMNS, EXAMPLE_ROWS
+            INSTRUCTION,
+            DATASET_NAME,
+            DATASET_DESCRIPTION,
+            DATASET_COLUMNS,
+            EXAMPLE_ROWS,
         )
         error_info = exc_info.value.args[0]
         assert error_info == "Maximum number of API calls reached."
@@ -297,7 +307,11 @@ def test_automatic_column_selection_incorrect_number_of_output_cols(
     """Check that if number of input/output columns are wrong, an error is thrown."""
     with pytest.raises(RuntimeError) as exc_info:
         _ = DescriptionDatasetRetriever.automatic_column_selection(
-            INSTRUCTION, DATASET_NAME, DATASET_COLUMNS, EXAMPLE_ROWS
+            INSTRUCTION,
+            DATASET_NAME,
+            DATASET_DESCRIPTION,
+            DATASET_COLUMNS,
+            EXAMPLE_ROWS,
         )
         error_info = exc_info.value.args[0]
         assert (
