@@ -22,7 +22,7 @@ class OptunaParamSelector(ParamSelector):
     """Uses optuna for searching for hyperparameters."""
 
     def __init__(self, trainer: GenerationModelTrainer, n_trials: int):
-        """Initialize with train/val datasets and a prompt specification.
+        """Initializes a new instance of OptunaParamSelector.
 
         Args:
             trainer (BaseTrainer): trainer object from GenerationModelTrainer
