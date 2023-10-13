@@ -167,11 +167,19 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
     @staticmethod
     def automatic_column_selection(
-        instruction: str, dataset_name: str, dataset_columns: str, example_rows: dict
+        instruction: str,
+        dataset_name: str,
+        dataset_description: str,
+        dataset_columns: str,
+        example_rows: dict,
     ) -> tuple[list[str], str]:
         """Find appropriate input and output columns for a given dataset and tasks."""
         prompt = construct_prompt_for_column_selection(
-            instruction, dataset_name, dataset_columns, example_rows
+            instruction,
+            dataset_name,
+            dataset_description,
+            dataset_columns,
+            example_rows,
         )
         required_keys = ["input", "output"]
         optional_keys = ["ambiguous", "irrelevant"]
@@ -240,11 +248,24 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                     )
             self._print_divider()
 
-        dataset = datasets.load_dataset(dataset_name, chosen_config)
+        dataset = datasets.load_dataset(dataset_name, chosen_config).flatten()
+
         if "train" not in dataset:
             raise ValueError("The dataset must contain a `train` split.")
+        columns_mapping: dict[str, str] = {}
+        counter: dict[str, int] = {}
+        # convert flattened columns like answer.text -> answer_text
+        for col in dataset["train"].column_names:
+            new_col = col.replace(".", "_")
+            if new_col in columns_mapping.values():
+                counter[new_col] = counter.get(new_col, 0) + 1
+                new_col = f"{new_col}_{counter[new_col]}"
+            columns_mapping[col] = new_col
+        dataset = dataset.rename_columns(columns_mapping)
+
         train_columns = dataset["train"].column_names
         train_columns_formatted = ", ".join(train_columns)
+        dataset_description = dataset["train"].info.description
 
         if len(dataset["train"]) == 0:
             raise ValueError("train split is empty.")
@@ -257,6 +278,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             input_columns, output_column = self.automatic_column_selection(
                 prompt_spec.instruction,
                 dataset_name,
+                dataset_description,
                 train_columns_formatted,
                 dataset["train"][0],
             )
