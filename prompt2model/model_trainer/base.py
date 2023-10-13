@@ -25,24 +25,6 @@ class BaseTrainer(ABC):
         )
         self.wandb = None
 
-    @property
-    def trainer(self) -> transformers.Trainer:
-        """Access the Hugging Face trainer class.
-
-        Returns:
-            transformers.Trainer: The Hugging Face trainer class
-        """
-        # Assume we are doing Seq2Seq training here.
-
-        def model_init():
-            return self.model
-
-        return transformers.Seq2SeqTrainer(
-            model=self.model,
-            data_collator=transformers.DataCollatorForSeq2Seq(tokenizer=self.tokenizer),
-            model_init=model_init,
-        )
-
     @abstractmethod
     def train_model(
         self,
