@@ -1,7 +1,5 @@
 """Place to store all the default configurations."""
-MAX_SUPPORTED_BATCH_SIZE = 128
-
-# All the default hyperparameters has to be set to some standardised settings
+MAX_SUPPORTED_BATCH_SIZE = 4
 
 DEFAULT_HYPERPARAMETERS_SPACE = {
     "min_num_train_epochs": 10,
