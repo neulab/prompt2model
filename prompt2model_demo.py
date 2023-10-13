@@ -412,10 +412,7 @@ def main():
                     "per_device_train_batch_size": [max_batch_size],
                 },
             )
-            # FIXME: The batch size selection needs some more smarter way to
-            # avoid cuda out of error and automatic list
-            # creation based on the max size with some intervals
-            train_batch_size = max_batch_size  # need to change this
+            train_batch_size = max_batch_size
 
         else:
             line_print("Going with normal training")
