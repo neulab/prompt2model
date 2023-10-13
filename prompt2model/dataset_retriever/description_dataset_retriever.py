@@ -252,10 +252,15 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
         if "train" not in dataset:
             raise ValueError("The dataset must contain a `train` split.")
-
-        columns_mapping = {
-            col: col.replace(".", "_") for col in dataset["train"].column_names
-        }  # convert flattened columns like answer.text -> answer_text
+        columns_mapping: dict[str, str] = {}
+        counter: dict[str, int] = {}
+        # convert flattened columns like answer.text -> answer_text
+        for col in dataset["train"].column_names:
+            new_col = col.replace(".", "_")
+            if new_col in columns_mapping.values():
+                counter[new_col] = counter.get(new_col, 0) + 1
+                new_col = f"{new_col}_{counter[new_col]}"
+            columns_mapping[col] = new_col
         dataset = dataset.rename_columns(columns_mapping)
 
         train_columns = dataset["train"].column_names

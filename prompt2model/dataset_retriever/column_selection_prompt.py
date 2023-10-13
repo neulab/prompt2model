@@ -96,7 +96,9 @@ def truncate_row(example_row: dict, max_length=50) -> str:
     for key in example_row.keys():
         curr_row = json.dumps(example_row[key])
         truncated_row[key] = (
-            curr_row if len(curr_row) <= max_length else curr_row[:max_length] + "..."
+            curr_row
+            if len(curr_row) <= max_length - 3
+            else curr_row[:max_length] + "..."
         )
     return json.dumps(truncated_row)
 
