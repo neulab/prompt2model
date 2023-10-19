@@ -67,7 +67,7 @@ class OptunaParamSelector(ParamSelector):
             validation = concatenate_datasets(validation)
             validation = self.generation_model_trainer.tokenize_dataset(validation)
 
-        def objective(trial: Trial):
+        def objective(trial: Trial) -> float:
             model = self.generation_model_trainer.model
             training_args = transformers.TrainingArguments(
                 output_dir="./checkpoint",
