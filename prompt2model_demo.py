@@ -367,7 +367,7 @@ def main():
         time.sleep(1)
 
         if line == "y":
-            line_print("Moving with training and hyperparameter selection.")
+            line_print("Starting training with hyperparameter selection.")
             max_num_epochs = input(
                 "Enter max number of epochs: Press enter to use default value: "
             )
