@@ -109,8 +109,8 @@ class OptunaParamSelector(ParamSelector):
             )
 
             _ = objective_trainer.train()
-            to_optimize = objective_trainer.evaluate()
-            return to_optimize["eval_loss"]
+            optimization_targets = objective_trainer.evaluate()
+            return optimization_targets["eval_loss"]
 
         study = optuna.create_study(
             study_name="automatic_hyperparameter_search", direction="minimize"
