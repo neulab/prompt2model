@@ -41,8 +41,8 @@ class OptunaParamSelector(ParamSelector):
         """Select a model among a set of hyperparameters (given or inferred).
 
         Args:
-            training_datasets (list[Dataset]): One or more training datasets or
-                subset of the actual dataset for running the trainer.
+            training_datasets (list[Dataset]): One or more training datasets
+                to use for training models.
             validation_sets (Dataset): A dataset for computing validation metrics.
             hyperparameter_space (Optional[dict[str, Any]], optional): The set
                 of possible values of hyperparaneters values required for doing
