@@ -140,7 +140,7 @@ class OptunaParamSelector(ParamSelector):
             validation: A dataset for computing validation metrics.
             hyperparameters: A dictionary of hyperparameter choices.
 
-        If no hyperparameter_space is choosen, then the default hyperparameter_space
+        If no hyperparameter_space is specified, then the default hyperparameter_space
         will be choosen. Here is the example of how the space looks like:
         hyperparameter_space = {
             "min_num_train_epochs": 5,
