@@ -26,7 +26,8 @@ class OptunaParamSelector(ParamSelector):
 
         Args:
             trainer (BaseTrainer): trainer object from GenerationModelTrainer
-            n_trials (int): The number of trials for conducting hyperparameter search
+            n_trials (int): The maximum number of parameter configurations to evaluate
+                during conducting hyperparameter search.
         """
         self.generation_model_trainer = trainer
         self.n_trials = n_trials
