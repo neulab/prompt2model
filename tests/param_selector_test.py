@@ -16,7 +16,7 @@ logger = logging.getLogger("AutoHyperparamOptimization")
 
 def test_optimize_hyperparameters():
     """Tests whether the hyperparameter optimization is working correctly or not."""
-    # create a simple training dataset
+    # Create a simple training dataset.
     with tempfile.TemporaryDirectory() as _:
         training_datasets = [
             datasets.Dataset.from_dict(
