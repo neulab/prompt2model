@@ -417,7 +417,7 @@ def main():
             train_batch_size = max_batch_size
 
         else:
-            line_print("Going with normal training")
+            line_print("Starting training without hyperparameter selection.")
             while True:
                 line = input("Enter the training batch size:")
                 try:
