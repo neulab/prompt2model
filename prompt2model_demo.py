@@ -374,8 +374,10 @@ def main():
             num_trials = input(
                 "Enter the number of trials to conduct hypeparamter search. Press enter to use default value: "  # noqa E501
             )
+            default_batch_size = DEFAULT_HYPERPARAMETERS_SPACE["per_device_train_batch_size"][0]  # noqa E501
             max_batch_size = input(
-                "Enter the max batch size Press enter to use default: "
+                "Enter the max batch size. " + \
+                f"Press enter to use default: {default_batch_size}"
             )
 
             max_num_epochs = (
