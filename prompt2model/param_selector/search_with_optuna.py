@@ -3,6 +3,7 @@
 from __future__ import annotations  # noqa FI58
 
 import os
+from pathlib import Path
 from typing import Any, Optional
 
 import optuna
@@ -89,14 +90,6 @@ class OptunaParamSelector(ParamSelector):
                 save_strategy=trial.suggest_categorical(
                     "save_strategy", hyperparameter_space["save_strategy"]
                 ),
-                per_device_train_batch_size=trial.suggest_categorical(
-                    "per_device_train_batch_size",
-                    hyperparameter_space["per_device_train_batch_size"],
-                ),
-                per_device_eval_batch_size=trial.suggest_categorical(
-                    "per_device_eval_batch_size",
-                    hyperparameter_space["per_device_train_batch_size"],
-                ),
             )
             objective_trainer = transformers.Trainer(
                 model=model,
@@ -161,7 +154,7 @@ class OptunaParamSelector(ParamSelector):
         tokenizer = self.generation_model_trainer.tokenizer
 
         # FIXME: Needs discussion where to keep all of these paths
-        best_model_path = "./best_model"
+        best_model_path = Path("result/trained_model")
         if not os.path.exists(best_model_path):
             os.makedirs(best_model_path, exist_ok=True)
 
