@@ -187,48 +187,13 @@ class OptunaParamSelector(ParamSelector):
     def _build_hp_space(
         self, hyperparameter_space: Optional[dict[str, Any]] = None
     ) -> dict[str, Any]:
-        return (
-            {
-                "min_weight_decay": hyperparameter_space.get(
-                    "min_weight_decay",
-                    DEFAULT_HYPERPARAMETERS_SPACE.get("min_weight_decay"),
-                ),
-                "max_weight_decay": hyperparameter_space.get(
-                    "max_weight_decay",
-                    DEFAULT_HYPERPARAMETERS_SPACE.get("max_weight_decay"),
-                ),
-                "min_learning_rate": hyperparameter_space.get(
-                    "min_learning_rate",
-                    DEFAULT_HYPERPARAMETERS_SPACE.get("min_learning_rate"),
-                ),
-                "max_learning_rate": hyperparameter_space.get(
-                    "max_learning_rate",
-                    DEFAULT_HYPERPARAMETERS_SPACE.get("max_learning_rate"),
-                ),
-                "min_num_train_epochs": hyperparameter_space.get(
-                    "min_num_train_epochs",
-                    DEFAULT_HYPERPARAMETERS_SPACE.get("min_num_train_epochs"),
-                ),
-                "max_num_train_epochs": hyperparameter_space.get(
-                    "max_num_train_epochs",
-                    DEFAULT_HYPERPARAMETERS_SPACE.get("max_num_train_epochs"),
-                ),
-                "save_strategy": hyperparameter_space.get(
-                    "save_strategy",
-                    DEFAULT_HYPERPARAMETERS_SPACE.get("save_strategy"),
-                ),
-                "evaluation_strategy": hyperparameter_space.get(
-                    "evaluation_strategy",
-                    DEFAULT_HYPERPARAMETERS_SPACE.get("evaluation_strategy"),
-                ),
-                "per_device_train_batch_size": hyperparameter_space.get(
-                    "per_device_train_batch_size",
-                    DEFAULT_HYPERPARAMETERS_SPACE.get("per_device_train_batch_size"),
-                ),
-            }
-            if hyperparameter_space is not None
-            else DEFAULT_HYPERPARAMETERS_SPACE
-        )
+        if hyperparameter_space is None:
+            return DEFAULT_HYPERPARAMETERS_SPACE
+
+        hp_space = {}
+        for key, default_value in DEFAULT_HYPERPARAMETERS_SPACE.items():
+            hp_space[key] = hyperparameter_space.get(key, default_value)
+        return hp_space
 
     def select_from_spec(
         self, training_sets: list[Dataset], validation: Dataset, prompt_spec: PromptSpec
