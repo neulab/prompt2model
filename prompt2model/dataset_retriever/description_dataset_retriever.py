@@ -230,28 +230,32 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             A canonicalized dataset.
         """
         configs = datasets.get_dataset_config_names(dataset_name)
-        chosen_config = None
-        if len(configs) == 1:
-            chosen_config = configs[0]
-        else:
-            self._print_divider()
-            print(f"Multiple dataset configs available: {configs}")
-            while chosen_config is None:
-                print("Which dataset config would you like to use for this?")
-                user_response = self._input_string()
-                if user_response in configs:
-                    chosen_config = user_response
-                else:
-                    print(
-                        f"Invalid config provided: {user_response}. Please choose "
-                        + "from {configs}\n\n"
-                    )
-            self._print_divider()
+        chosen_config = configs[0]
+        # chosen_config = None
+        # if len(configs) == 1:
+        #     chosen_config = configs[0]
+        # else:
+        #     self._print_divider()
+        #     print(f"Multiple dataset configs available: {configs}")
+        #     while chosen_config is None:
+        #         print("Which dataset config would you like to use for this?")
+        #         user_response = self._input_string()
+        #         if user_response in configs:
+        #             chosen_config = user_response
+        #         else:
+        #             print(
+        #                 f"Invalid config provided: {user_response}. Please choose "
+        #                 + "from {configs}\n\n"
+        #             )
+        #     self._print_divider()
 
         dataset = datasets.load_dataset(dataset_name, chosen_config).flatten()
 
         if "train" not in dataset:
-            raise ValueError("The dataset must contain a `train` split.")
+            # raise ValueError("The dataset must contain a `train` split.")
+            logger.error(f"{dataset_name} must contain a `train` split.")
+            return None
+
         columns_mapping: dict[str, str] = {}
         counter: dict[str, int] = {}
         # convert flattened columns like answer.text -> answer_text
@@ -268,7 +272,10 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         dataset_description = dataset["train"].info.description
 
         if len(dataset["train"]) == 0:
-            raise ValueError("train split is empty.")
+            # raise ValueError("train split is empty.")
+            logger.error("train split is empty.")
+            return None
+
         example_rows = json.dumps(dataset["train"][0], indent=4)
 
         self._print_divider()
