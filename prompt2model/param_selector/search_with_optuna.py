@@ -19,7 +19,7 @@ from prompt2model.utils.config import DEFAULT_HYPERPARAMETERS_SPACE
 
 
 class OptunaParamSelector(ParamSelector):
-    """Uses optuna for searching for hyperparameters."""
+    """Uses Optuna for searching for hyperparameters."""
 
     def __init__(self, trainer: GenerationModelTrainer, n_trials: int):
         """Initializes a new instance of OptunaParamSelector.
