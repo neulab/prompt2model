@@ -152,8 +152,6 @@ class OptunaParamSelector(ParamSelector):
         """
         model = self.generation_model_trainer.model
         tokenizer = self.generation_model_trainer.tokenizer
-
-        # FIXME: Needs discussion where to keep all of these paths
         best_model_path = Path("result/trained_model")
         if not os.path.exists(best_model_path):
             os.makedirs(best_model_path, exist_ok=True)
