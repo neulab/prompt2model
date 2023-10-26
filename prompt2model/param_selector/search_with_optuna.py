@@ -15,7 +15,6 @@ from transformers import PreTrainedTokenizer
 
 from prompt2model.model_trainer.generate import GenerationModelTrainer
 from prompt2model.param_selector.base import ParamSelector
-from prompt2model.prompt_parser.base import PromptSpec
 from prompt2model.utils.config import DEFAULT_HYPERPARAMETERS_SPACE
 
 
@@ -182,18 +181,3 @@ class OptunaParamSelector(ParamSelector):
         for key, default_value in DEFAULT_HYPERPARAMETERS_SPACE.items():
             hp_space[key] = hyperparameter_space.get(key, default_value)
         return hp_space
-
-    def select_from_spec(
-        self, training_sets: list[Dataset], validation: Dataset, prompt_spec: PromptSpec
-    ) -> tuple[PreTrainedModel, PreTrainedTokenizer]:
-        """Select a model among a set of hyperparameters (given or inferred).
-
-        Args:
-            training_sets: One or more training datasets for the trainer.
-            validation: A dataset for computing validation metrics.
-            prompt_spec: A prompt to infer hyperparameters from.
-
-        Return:
-            A model and tokenizer (with hyperparameters from inferred range).
-        """
-        return super().select_from_spec(training_sets, validation, prompt_spec)
