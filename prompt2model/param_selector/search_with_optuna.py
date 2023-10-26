@@ -49,7 +49,7 @@ class OptunaParamSelector(ParamSelector):
                 optimal hyperparameter search. Defaults to None.
 
         Returns:
-            Returns a dict which contains the best hyperparameters
+            Returns a dict which contains the best hyperparameters.
         """
         supported_hp_space_keys = set(DEFAULT_HYPERPARAMETERS_SPACE.keys())
         if hyperparameters is not None:
