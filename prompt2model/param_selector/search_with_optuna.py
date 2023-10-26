@@ -1,4 +1,4 @@
-"""This module provides automatic hyperparameter selection using optuna."""
+"""This module provides automatic hyperparameter selection using Optuna."""
 
 from __future__ import annotations  # noqa FI58
 
