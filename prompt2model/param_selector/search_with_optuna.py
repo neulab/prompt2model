@@ -87,9 +87,6 @@ class OptunaParamSelector(ParamSelector):
                     low=hyperparameter_space["min_num_train_epochs"],
                     high=hyperparameter_space["max_num_train_epochs"],
                 ),
-                save_strategy=trial.suggest_categorical(
-                    "save_strategy", hyperparameter_space["save_strategy"]
-                ),
             )
             objective_trainer = transformers.Trainer(
                 model=model,
