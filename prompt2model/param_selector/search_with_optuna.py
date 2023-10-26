@@ -110,10 +110,6 @@ class OptunaParamSelector(ParamSelector):
             "learning_rate": float(study.best_params["learning_rate"]),
             "weight_decay": float(study.best_params["weight_decay"]),
             "num_train_epochs": int(study.best_params["num_train_epochs"]),
-            "save_strategy": study.best_params["save_strategy"],
-            "per_device_train_batch_size": study.best_params[
-                "per_device_train_batch_size"
-            ],
         }
         return best_hyperparameters
 
@@ -176,7 +172,6 @@ class OptunaParamSelector(ParamSelector):
     ) -> dict[str, Any]:
         if hyperparameter_space is None:
             return DEFAULT_HYPERPARAMETERS_SPACE
-
         hp_space = {}
         for key, default_value in DEFAULT_HYPERPARAMETERS_SPACE.items():
             hp_space[key] = hyperparameter_space.get(key, default_value)
