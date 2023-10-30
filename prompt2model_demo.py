@@ -96,7 +96,7 @@ def parse_model_size_limit(line: str, default_size=3e9) -> float:
         "GB": ["Gb", "gb", "gigabytes"],
         "TB": ["Tb", "tb", "terabytes"],
         "PB": ["Pb", "pb", "petabytes"],
-        "B": ["b", "bytes"]
+        "B": ["b", "bytes"],
     }
     unit_matched = False
     for unit, disambiguations in unit_disambiguations.items():
@@ -369,13 +369,17 @@ def main():
 
         if line == "y":
             line_print("Starting training with hyperparameter selection.")
-            default_min_num_epochs = DEFAULT_HYPERPARAMETERS_SPACE["min_num_train_epochs"]
+            default_min_num_epochs = DEFAULT_HYPERPARAMETERS_SPACE[
+                "min_num_train_epochs"
+            ]
             min_num_epochs = input(
-                    f"Enter min number of epochs. Press enter to use default value ({default_min_num_epochs}): "  # noqa E501
+                f"Enter min number of epochs. Press enter to use default value ({default_min_num_epochs}): "  # noqa E501
             )
-            default_max_num_epochs = DEFAULT_HYPERPARAMETERS_SPACE["max_num_train_epochs"]
+            default_max_num_epochs = DEFAULT_HYPERPARAMETERS_SPACE[
+                "max_num_train_epochs"
+            ]
             max_num_epochs = input(
-                    f"Enter max number of epochs. Press enter to use default value ({default_max_num_epochs}): "  # noqa E501
+                f"Enter max number of epochs. Press enter to use default value ({default_max_num_epochs}): "  # noqa E501
             )
             default_num_trials = 10
             num_trials = input(
