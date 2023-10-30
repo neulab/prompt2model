@@ -173,6 +173,15 @@ class OptunaParamSelector(ParamSelector):
         if hyperparameter_space is None:
             return DEFAULT_HYPERPARAMETERS_SPACE
         hp_space = {}
+
+        default_keys = list(DEFAULT_HYPERPARAMETERS_SPACE.keys())
+        for key in list(hyperparameter_space.keys()):
+            if key not in default_keys:
+                print(
+                    f"Key {key} is not present in DEFAULT_HYPERPARAMETERS_SPACE. Hence will be ignored",  # noqa
+                    "However, you can expose the key to the Trainer by adding it to DEFAULT_HYPERPARAMETERS_SPACE.",  # noqa
+                )
+
         for key, default_value in DEFAULT_HYPERPARAMETERS_SPACE.items():
             hp_space[key] = hyperparameter_space.get(key, default_value)
         return hp_space
