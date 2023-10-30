@@ -2,8 +2,8 @@
 MAX_SUPPORTED_BATCH_SIZE = 4
 
 DEFAULT_HYPERPARAMETERS_SPACE = {
-    "min_num_train_epochs": 10,
-    "max_num_train_epochs": 20,
+    "min_num_train_epochs": 5,
+    "max_num_train_epochs": 15,
     "save_strategy": ["no"],
     "evaluation_strategy": ["no"],
     "per_device_train_batch_size": MAX_SUPPORTED_BATCH_SIZE,
