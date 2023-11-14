@@ -14,10 +14,17 @@ from prompt2model.dataset_retriever.base import DatasetInfo, DatasetRetriever
 from prompt2model.dataset_retriever.column_selection_prompt import (
     construct_prompt_for_column_selection,
 )
+from prompt2model.dataset_retriever.data_transform_prompt import (
+    construct_prompt_for_plan,
+    construct_prompt_for_transform_data,
+)
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import encode_text, retrieve_objects
 from prompt2model.utils.dataset_utils import get_dataset_size
-from prompt2model.utils.parse_json_responses import parse_prompt_to_fields
+from prompt2model.utils.parse_json_responses import (
+    make_request_from_prompt,
+    parse_prompt_to_fields,
+)
 
 datasets.utils.logging.disable_progress_bar()
 logger = logging.getLogger(__name__)
@@ -204,6 +211,18 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
         return input_columns, output_column[0]
 
+    def canonicalize_dataset_using_samples(
+        self,
+        inputs: list[str],
+        outputs: list[str],
+    ) -> datasets.DatasetDict:
+        """Canonicalize a dataset into a suitable text-to-text format."""
+        dataset_dict = {}
+        dataset_dict["train"] = datasets.Dataset.from_dict(
+            {"input_col": inputs, "output_col": outputs}
+        )
+        return datasets.DatasetDict(dataset_dict)
+
     def canonicalize_dataset_using_columns(
         self,
         dataset: datasets.DatasetDict,
@@ -217,6 +236,130 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 dataset[split], input_columns, output_columns
             )
         return datasets.DatasetDict(dataset_dict)
+
+    def data_transform(
+        self, prompt_spec: PromptSpec, dataset: datasets.Dataset, num_transform: int
+    ) -> tuple[list[str], list[str]]:
+        """Transform the dataset into the required format according to the prompt_spec.
+        1. Use the prompt_spec and an example row from the dataset to create a "plan" for the data transformation.
+        2. Use the prompt_spec and the plan to transform each row of the dataset into the required format.
+        3. Return the transformed inputs and outputs.
+        """
+        # 1. Use the prompt_spec and an example row from the dataset to create a "plan" for the data transformation.
+        plan_prompt = construct_prompt_for_plan(
+            task_description=prompt_spec.instruction,
+            dataset_row=dataset[0],
+            example=prompt_spec.examples,
+        )
+        plan = make_request_from_prompt(plan_prompt)
+
+        print(f"plan_prompt: {plan_prompt}")
+
+        print(f"plan: {plan}")
+
+        # 2. Use the prompt_spec and the plan to transform each row of the dataset into the required format.
+        inputs = []
+        outputs = []
+
+        required_keys = ["input", "output"]
+
+        max_len = min(num_transform, len(dataset))
+        for row in dataset[:max_len]:
+            print(f"row: {row}")
+            transform_prompt = construct_prompt_for_transform_data(
+                task_description=prompt_spec.instruction,
+                dataset_row=row,
+                example=prompt_spec.examples,
+                plan=plan,
+            )
+            response = parse_prompt_to_fields(transform_prompt, required_keys, [])
+            inputs.append(response["input"])
+            outputs.append(response["output"])
+            print(f"transformed_input: {response['input']}")
+            print(f"transformed_output: {response['output']}")
+
+        # 3. Return the transformed inputs and outputs.
+        return inputs, outputs
+
+    def canonicalize_dataset_by_cli_data_transform(
+        self, dataset_name: str, prompt_spec, num_transform: int = 10
+    ) -> datasets.DatasetDict:
+        """Canonicalize a dataset into a suitable text-to-text format.
+
+        Args:
+            dataset_name: The name of the dataset to canonicalize.
+
+        Returns:
+            A canonicalized dataset.
+        """
+        configs = datasets.get_dataset_config_names(dataset_name)
+        chosen_config = configs[0]
+        # chosen_config = None
+        # if len(configs) == 1:
+        #     chosen_config = configs[0]
+        # else:
+        #     self._print_divider()
+        #     print(f"Multiple dataset configs available: {configs}")
+        #     while chosen_config is None:
+        #         print("Which dataset config would you like to use for this?")
+        #         user_response = self._input_string()
+        #         if user_response in configs:
+        #             chosen_config = user_response
+        #         else:
+        #             print(
+        #                 f"Invalid config provided: {user_response}. Please choose "
+        #                 + "from {configs}\n\n"
+        #             )
+        #     self._print_divider()
+
+        dataset = datasets.load_dataset(dataset_name, chosen_config).flatten()
+
+        if "train" not in dataset:
+            # raise ValueError("The dataset must contain a `train` split.")
+            logger.error(f"{dataset_name} must contain a `train` split.")
+            return None
+
+        columns_mapping: dict[str, str] = {}
+        counter: dict[str, int] = {}
+        # convert flattened columns like answer.text -> answer_text
+        for col in dataset["train"].column_names:
+            new_col = col.replace(".", "_")
+            if new_col in columns_mapping.values():
+                counter[new_col] = counter.get(new_col, 0) + 1
+                new_col = f"{new_col}_{counter[new_col]}"
+            columns_mapping[col] = new_col
+        dataset = dataset.rename_columns(columns_mapping)
+
+        train_columns = dataset["train"].column_names
+        train_columns_formatted = ", ".join(train_columns)
+        dataset_description = dataset["train"].info.description
+
+        if len(dataset["train"]) == 0:
+            # raise ValueError("train split is empty.")
+            logger.error("train split is empty.")
+            return None
+
+        example_rows = json.dumps(dataset["train"][0], indent=4)
+
+        self._print_divider()
+        print(f"Loaded dataset. Example row:\n{example_rows}\n")
+
+        try:
+            inputs, outputs = self.data_transform(
+                prompt_spec=prompt_spec,
+                dataset=dataset["train"],
+                num_transform=num_transform,
+            )
+        except RuntimeError:
+            logger.error(f"{dataset_name} did not work. Try another!")
+            return None  # Returning None means that the dataset chosen didn't work,
+            # and we would rather generate a dataset.
+
+        print(f"Data transformation completed\n")
+        self._print_divider()
+
+        canonicalized_dataset = self.canonicalize_dataset_using_samples(inputs, outputs)
+        return canonicalized_dataset
 
     def canonicalize_dataset_by_cli(
         self, dataset_name: str, prompt_spec
