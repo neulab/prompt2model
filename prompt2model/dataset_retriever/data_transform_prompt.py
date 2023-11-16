@@ -92,7 +92,10 @@ Data Sample:
 
 {plan}
 
-Your response MUST be a JSON with exactly 2 fields: "input" and "output"."""
+Your response MUST be a JSON with exactly 2 fields: "input" and "output".
+
+Response:
+"""
 
 
 def truncate_row(example_row: dict, max_length=200) -> str:
