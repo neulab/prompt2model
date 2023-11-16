@@ -296,12 +296,16 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             handle_api_error(e)
         
         for response in responses:
-            extraction = extract_response(response, required_keys, [])
-            if extraction is not None:
-                inputs.append(extraction["input"])
-                outputs.append(extraction["output"])
-                print(f"transformed_input: {extraction['input']}")
-                print(f"transformed_output: {extraction['output']}")
+            try:
+                extraction = extract_response(response, required_keys, [])
+                if extraction is not None:
+                    inputs.append(extraction["input"])
+                    outputs.append(extraction["output"])
+                    print(f"transformed_input: {extraction['input']}")
+                    print(f"transformed_output: {extraction['output']}")
+            except Exception as e:
+                print(f"Error: {e}")
+                continue
         
         print(f"Requested length: {max_len}\nActual length: {len(inputs)}\n")
         # 3. Return the transformed inputs and outputs.
