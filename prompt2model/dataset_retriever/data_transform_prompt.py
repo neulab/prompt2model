@@ -63,12 +63,12 @@ input=Westlife: According to the British Phonographic Industry ( BPI ) , Westlif
 output=Neither
 
 Data Sample:
-{
+{{
     \"abstract\": \"[\"Alterations of the architecture of cerebral white matter in the developing human brain can affect cortical development and result in functional disabilities. A line scan diffusion-weighted magnetic resonance imaging (MRI) sequence with diffusion tensor analysis was applied to measure the apparent diffusion coefficient, to calculate relative anisotropy, and to delineate three-dimensional fiber architecture in cerebral white matter in preterm (n = 17) and full-term infants (n = 7). To assess effects of prematurity on cerebral white matter development, early gestation preterm infants (n = 10) were studied a second time at term. In the central white matter the mean apparent diffusion coefficient at 28 wk was high, 1.8 microm2/ms, and decreased toward term to 1.2 microm2/ms.\",
     \"doc_id\": 4983,
     \"structured\": false,
     \"title\": \"Microstructural development of human newborn cerebral white matter assessed in vivo by diffusion tensor magnetic resonance imaging.\"
-}
+}}
 
 Plan:
 1. Combine "abstract" and "title" to create "context".
@@ -77,10 +77,10 @@ Plan:
 4. Combine "context" and "claim" to create "input"
 
 Response:
-{
+{{
 \"input\" : \"Microstructural development of human newborn cerebral white matter assessed in vivo by diffusion tensor magnetic resonance imaging. Alterations of the architecture of cerebral white matter in the developing human brain can affect cortical development and result in functional disabilities. A line scan diffusion-weighted magnetic resonance imaging (MRI) sequence with diffusion tensor analysis was applied to measure the apparent diffusion coefficient, to calculate relative anisotropy, and to delineate three-dimensional fiber architecture in cerebral white matter in preterm (n = 17) and full-term infants (n = 7). To assess effects of prematurity on cerebral white matter development, early gestation preterm infants (n = 10) were studied a second time at term. In the central white matter the mean apparent diffusion coefficient at 28 wk was high, 1.8 microm2/ms, and decreased toward term to 1.2 microm2/ms. Claim: The study found that preterm infants at term showed lower mean diffusion coefficients in the central white matter compared to full-term infants.\",
 \"output\" : \"False\"
-}
+}}
 
 Task Description: {task_description}
 
