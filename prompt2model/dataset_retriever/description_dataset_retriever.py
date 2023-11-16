@@ -18,7 +18,7 @@ from prompt2model.dataset_retriever.data_transform_prompt import (
     construct_prompt_for_plan,
     construct_prompt_for_transform_data,
 )
-from prompt2model.prompt_parser import PromptSpec
+from prompt2model.prompt_parser import MockPromptSpec, PromptSpec
 from prompt2model.utils import encode_text, retrieve_objects
 from prompt2model.utils.dataset_utils import get_dataset_size
 from prompt2model.utils.parse_json_responses import (
@@ -264,7 +264,8 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         required_keys = ["input", "output"]
 
         max_len = min(num_transform, len(dataset))
-        for row in dataset[:max_len]:
+        len_count = 0
+        for row in dataset:
             print(f"row: {row}")
             transform_prompt = construct_prompt_for_transform_data(
                 task_description=prompt_spec.instruction,
@@ -277,6 +278,9 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             outputs.append(response["output"])
             print(f"transformed_input: {response['input']}")
             print(f"transformed_output: {response['output']}")
+            len_count += 1
+            if len_count >= max_len:
+                break
 
         # 3. Return the transformed inputs and outputs.
         return inputs, outputs
@@ -505,3 +509,47 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         if top_dataset_name is None:
             return None
         return self.canonicalize_dataset_by_cli(top_dataset_name, prompt_spec)
+
+
+if __name__ == "__main__":
+    retriever = DescriptionDatasetRetriever()
+    retrieved_dataset_name = "Fraser/python-state-changes"
+    prompt_spec = MockPromptSpec(
+        1,
+        instruction="Answer questions about a Python 3.7 program's intermediate state",
+        examples="""input=
+```
+while True
+	print('hello world')
+```
+What type of exception does this program produce?
+
+output=SyntaxError: invalid syntax
+
+input=
+```
+def test(x):
+	for i in range(2, x**(0.5)):
+		if x % int(i) == 0:
+			return False
+	return True
+```
+What is test(101)?
+
+output=True
+
+input=
+```
+x = [i for i in range(10)]
+for i, x_elem in enumerate(x):
+	x_elem *= 5
+	x[i] *= 3
+```
+What is x at the end of this program?
+
+output=[0, 3, 6, 9, 12, 15, 18, 21, 24, 27]""",
+    )
+    num_transform = 10
+    retrieved_dataset_dict = retriever.canonicalize_dataset_by_cli_data_transform(
+        retrieved_dataset_name, prompt_spec, num_transform=num_transform
+    )
