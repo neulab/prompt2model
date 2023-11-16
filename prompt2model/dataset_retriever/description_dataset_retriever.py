@@ -19,12 +19,15 @@ from prompt2model.dataset_retriever.data_transform_prompt import (
     construct_prompt_for_transform_data,
 )
 from prompt2model.prompt_parser import PromptSpec
-from prompt2model.utils import encode_text, retrieve_objects
+from prompt2model.utils import encode_text, retrieve_objects, API_ERRORS, handle_api_error
 from prompt2model.utils.dataset_utils import get_dataset_size
 from prompt2model.utils.parse_json_responses import (
     make_request_from_prompt,
     parse_prompt_to_fields,
+    extract_response
 )
+import asyncio
+from prompt2model.utils import api_tools
 
 
 datasets.utils.logging.disable_progress_bar()
@@ -266,6 +269,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
         max_len = min(num_transform, len(dataset))
         len_count = 0
+        transform_prompts = []
         for row in dataset:
             print(f"row: {row}")
             transform_prompt = construct_prompt_for_transform_data(
@@ -274,15 +278,31 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 example=prompt_spec.examples,
                 plan=plan,
             )
-            response = parse_prompt_to_fields(transform_prompt, required_keys, [])
-            inputs.append(str(response["input"]))
-            outputs.append(str(response["output"]))
-            print(f"transformed_input: {response['input']}")
-            print(f"transformed_output: {response['output']}")
-            len_count += 1
-            if len_count >= max_len:
-                break
+            transform_prompts.append(transform_prompt)
+        
+        transform_prompts = transform_prompts[:max_len]
 
+        async def generate_responses(transform_prompts):
+            responses = await api_tools.default_api_agent.generate_batch_completion(transform_prompts, 0)
+            return responses
+        
+        try:
+            loop = asyncio.get_event_loop()
+            responses = loop.run_until_complete(
+                generate_responses(transform_prompts)
+            )
+        except API_ERRORS as e:
+            handle_api_error(e)
+        
+        for response in responses:
+            extraction = extract_response(response, required_keys, [])
+            if extraction is not None:
+                inputs.append(extraction["input"])
+                outputs.append(extraction["output"])
+                print(f"transformed_input: {extraction['input']}")
+                print(f"transformed_output: {extraction['output']}")
+        
+        print(f"Requested length: {max_len}\nActual length: {len(inputs)}\n")
         # 3. Return the transformed inputs and outputs.
         return inputs, outputs
 
