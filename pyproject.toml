@@ -25,7 +25,7 @@ dependencies = [
     "datasets",
     "pandas",
     "fastapi",
-    "gradio",
+    "gradio==3.38.0",
     "torch",
     "pytest",
     "openai==0.27.10",
