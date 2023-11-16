@@ -18,13 +18,14 @@ from prompt2model.dataset_retriever.data_transform_prompt import (
     construct_prompt_for_plan,
     construct_prompt_for_transform_data,
 )
-from prompt2model.prompt_parser import MockPromptSpec, PromptSpec
+from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import encode_text, retrieve_objects
 from prompt2model.utils.dataset_utils import get_dataset_size
 from prompt2model.utils.parse_json_responses import (
     make_request_from_prompt,
     parse_prompt_to_fields,
 )
+
 
 datasets.utils.logging.disable_progress_bar()
 logger = logging.getLogger(__name__)
@@ -512,6 +513,9 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
 
 if __name__ == "__main__":
+    from prompt2model.utils import api_tools
+    from prompt2model.prompt_parser import MockPromptSpec
+    api_tools.default_api_agent = api_tools.APIAgent(model_name="azure/vijay-gpt-4", max_tokens=8000)
     retriever = DescriptionDatasetRetriever()
     retrieved_dataset_name = "Fraser/python-state-changes"
     prompt_spec = MockPromptSpec(
