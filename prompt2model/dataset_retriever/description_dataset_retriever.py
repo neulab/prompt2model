@@ -297,6 +297,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         
         for response in responses:
             try:
+                print(response)
                 extraction = extract_response(response, required_keys, [])
                 if extraction is not None:
                     inputs.append(extraction["input"])
