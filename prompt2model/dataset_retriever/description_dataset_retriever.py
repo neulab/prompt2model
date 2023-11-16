@@ -515,7 +515,8 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 if __name__ == "__main__":
     from prompt2model.utils import api_tools
     from prompt2model.prompt_parser import MockPromptSpec
-    api_tools.default_api_agent = api_tools.APIAgent(model_name="azure/vijay-gpt-4", max_tokens=8000)
+    # api_tools.default_api_agent = api_tools.APIAgent(model_name="azure/vijay-gpt-4", max_tokens=8000)
+    api_tools.default_api_agent = api_tools.APIAgent(model_name="azure/GPT-3-5-turbo-chat", max_tokens=8000)
     retriever = DescriptionDatasetRetriever()
     retrieved_dataset_name = "Fraser/python-state-changes"
     prompt_spec = MockPromptSpec(
