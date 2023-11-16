@@ -1,8 +1,0 @@
-name: Nightly CI
-on:
-  schedule:
-    - cron: "0 0 * * *"
-
-jobs:
-  call-ci:
-    uses: neulab/prompt2model/.github/workflows/ci.yml@main
