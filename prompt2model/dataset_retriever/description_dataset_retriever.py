@@ -2,6 +2,7 @@
 
 from __future__ import annotations  # noqa FI58
 
+import asyncio
 import json
 import logging
 import os
@@ -19,16 +20,19 @@ from prompt2model.dataset_retriever.data_transform_prompt import (
     construct_prompt_for_transform_data,
 )
 from prompt2model.prompt_parser import PromptSpec
-from prompt2model.utils import encode_text, retrieve_objects, API_ERRORS, handle_api_error
+from prompt2model.utils import (
+    API_ERRORS,
+    api_tools,
+    encode_text,
+    handle_api_error,
+    retrieve_objects,
+)
 from prompt2model.utils.dataset_utils import get_dataset_size
 from prompt2model.utils.parse_json_responses import (
+    extract_response,
     make_request_from_prompt,
     parse_prompt_to_fields,
-    extract_response
 )
-import asyncio
-from prompt2model.utils import api_tools
-
 
 datasets.utils.logging.disable_progress_bar()
 logger = logging.getLogger(__name__)
@@ -284,30 +288,30 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 break
 
         async def generate_responses(transform_prompts):
-            responses = await api_tools.default_api_agent.generate_batch_completion(transform_prompts, 0)
+            responses = await api_tools.default_api_agent.generate_batch_completion(
+                transform_prompts, temperature=0, responses_per_request=1
+            )
             return responses
-        
+
         try:
             loop = asyncio.get_event_loop()
-            responses = loop.run_until_complete(
-                generate_responses(transform_prompts)
-            )
+            responses = loop.run_until_complete(generate_responses(transform_prompts))
         except API_ERRORS as e:
             handle_api_error(e)
-        
+
         for response in responses:
             try:
                 print(response)
                 extraction = extract_response(response, required_keys, [])
                 if extraction is not None:
-                    inputs.append(extraction["input"])
-                    outputs.append(extraction["output"])
+                    inputs.append(str(extraction["input"]))
+                    outputs.append(str(extraction["output"]))
                     print(f"transformed_input: {extraction['input']}")
                     print(f"transformed_output: {extraction['output']}")
             except Exception as e:
                 print(f"Error: {e}")
                 continue
-        
+
         print(f"Requested length: {max_len}\nActual length: {len(inputs)}\n")
         # 3. Return the transformed inputs and outputs.
         return inputs, outputs
@@ -539,10 +543,13 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
 
 if __name__ == "__main__":
-    from prompt2model.utils import api_tools
     from prompt2model.prompt_parser import MockPromptSpec
+    from prompt2model.utils import api_tools
+
     # api_tools.default_api_agent = api_tools.APIAgent(model_name="azure/vijay-gpt-4", max_tokens=8000)
-    api_tools.default_api_agent = api_tools.APIAgent(model_name="azure/GPT-3-5-turbo-chat", max_tokens=8000)
+    api_tools.default_api_agent = api_tools.APIAgent(
+        model_name="azure/GPT-3-5-turbo-chat", max_tokens=8000
+    )
     retriever = DescriptionDatasetRetriever()
     retrieved_dataset_name = "Fraser/python-state-changes"
     prompt_spec = MockPromptSpec(
@@ -580,7 +587,7 @@ What is x at the end of this program?
 
 output=[0, 3, 6, 9, 12, 15, 18, 21, 24, 27]""",
     )
-    num_transform = 10
+    num_transform = 100
     retrieved_dataset_dict = retriever.canonicalize_dataset_by_cli_data_transform(
         retrieved_dataset_name, prompt_spec, num_transform=num_transform
     )
