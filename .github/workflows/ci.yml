@@ -1,6 +1,10 @@
-name: Reusable Continuous Integration Workflow
-on:   
-  workflow_call:
+name: Continuous Integration
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches: ["**"]
 
 jobs:
   unit-tests:
