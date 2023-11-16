@@ -289,7 +289,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
         async def generate_responses(transform_prompts):
             responses = await api_tools.default_api_agent.generate_batch_completion(
-                transform_prompts, temperature=0, responses_per_request=1
+                transform_prompts, temperature=0, responses_per_request=1, requests_per_minute=20
             )
             return responses
 
