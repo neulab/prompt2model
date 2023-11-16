@@ -275,8 +275,8 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 plan=plan,
             )
             response = parse_prompt_to_fields(transform_prompt, required_keys, [])
-            inputs.append(response["input"])
-            outputs.append(response["output"])
+            inputs.append(str(response["input"]))
+            outputs.append(str(response["output"]))
             print(f"transformed_input: {response['input']}")
             print(f"transformed_output: {response['output']}")
             len_count += 1
