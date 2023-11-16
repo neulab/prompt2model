@@ -279,8 +279,9 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 plan=plan,
             )
             transform_prompts.append(transform_prompt)
-        
-        transform_prompts = transform_prompts[:max_len]
+            len_count += 1
+            if len_count >= max_len:
+                break
 
         async def generate_responses(transform_prompts):
             responses = await api_tools.default_api_agent.generate_batch_completion(transform_prompts, 0)
