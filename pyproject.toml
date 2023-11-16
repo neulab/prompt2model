@@ -25,10 +25,10 @@ dependencies = [
     "datasets",
     "pandas",
     "fastapi",
-    "gradio",
+    "gradio==3.38.0",
     "torch",
     "pytest",
-    "openai",
+    "openai==0.27.10",
     "sentencepiece",
     "bert_score",
     "sacrebleu",
@@ -45,7 +45,7 @@ dependencies = [
     "psutil",
     "protobuf",
     "nest-asyncio",
-    "litellm"
+    "litellm==0.1.583"
 ]
 
 dynamic = ["version"]
