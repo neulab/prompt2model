@@ -5,7 +5,9 @@ from __future__ import annotations  # noqa FI58
 import json
 import logging
 import os
+import random
 import urllib.request
+from collections.abc import MutableMapping
 
 import datasets
 import torch
@@ -14,10 +16,20 @@ from prompt2model.dataset_retriever.base import DatasetInfo, DatasetRetriever
 from prompt2model.dataset_retriever.column_selection_prompt import (
     construct_prompt_for_column_selection,
 )
+from prompt2model.dataset_retriever.reranking_prompt import (
+    build_input,
+    construct_prompt_for_dataset_reranking,
+)
+
+# FIXME
+from prompt2model.dataset_retriever.retrieve_dataset_mp import (
+    fetch_first_row_with_timeout,
+    get_dataset_validity,
+)
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import encode_text, retrieve_objects
 from prompt2model.utils.dataset_utils import get_dataset_size
-from prompt2model.utils.parse_json_responses import parse_prompt_to_fields
+from prompt2model.utils.parse_responses import parse_prompt_to_fields
 
 datasets.utils.logging.disable_progress_bar()
 logger = logging.getLogger(__name__)
@@ -109,6 +121,32 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         """Utility function to assist with the retriever's command line interface."""
         print("\n-------------------------------------------------\n")
 
+    def flatten_dict(
+        self, d: MutableMapping, parent_key: str = "", sep: str = "."
+    ) -> MutableMapping:
+        items = []
+        for k, v in d.items():
+            new_key = parent_key + sep + k if parent_key else k
+            if isinstance(v, MutableMapping):
+                items.extend(self.flatten_dict(v, new_key, sep=sep).items())
+            else:
+                items.append((new_key, v))
+        return dict(items)
+
+    def replace_duplicate_columns(self, original_dataset_columns):
+        columns_mapping: dict[str, str] = {}
+        new_columns = []
+        counter: dict[str, int] = {}
+        # convert flattened columns like answer.text -> answer_text
+        for col in original_dataset_columns:
+            new_col = col.replace(".", "_")
+            if new_col in columns_mapping.values():
+                counter[new_col] = counter.get(new_col, 0) + 1
+                new_col = f"{new_col}_{counter[new_col]}"
+            columns_mapping[col] = new_col
+            new_columns.append(new_col)
+        return new_columns, columns_mapping
+
     def choose_dataset_by_cli(self, top_datasets: list[DatasetInfo]) -> str | None:
         """Have the user choose an appropriate dataset from a list of top datasets.
 
@@ -165,21 +203,85 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             {"input_col": input_col, "output_col": output_col}
         )
 
-    @staticmethod
+    def get_configs_info(self, dataset_name):
+        config_names = datasets.get_dataset_config_names(dataset_name)
+        if len(config_names) > 5:
+            config_names = random.sample(
+                config_names, 5
+            )  # Loading more configs would take really long
+
+        all_config_infos = []
+        for config_name in config_names:
+
+            if "train" not in datasets.get_dataset_split_names(
+                dataset_name, config_name
+            ):
+                continue
+            dataset = datasets.load_dataset(
+                dataset_name, config_name, split="train", streaming=True
+            )
+            sample_rows = fetch_first_row_with_timeout(dataset)
+            if sample_rows is None:
+                continue
+            sample_rows = self.flatten_dict(sample_rows)
+            if any(
+                sample_rows[key].__class__.__name__ == "PngImageFile"
+                for key in sample_rows
+            ):
+                continue  # We dont want to handle image datasets.
+            # FUTURE TODO: This can be put into flatten_dict if required
+            columns, columns_mapping = self.replace_duplicate_columns(
+                sample_rows.keys()
+            )
+
+            columns = ", ".join(columns)
+            all_config_infos.append(
+                {
+                    "config_name": config_name,
+                    "sample_row": sample_rows,
+                    "columns": columns,
+                    "columns_mapping": columns_mapping,
+                    "dataset_description": dataset.info.description,
+                    "dataset_name": dataset_name,
+                }
+            )
+            print("compelted config: ", config_name)
+            del dataset
+
+        return all_config_infos
+
+    def get_dataset_info(self, dataset_name):
+        print("Now doing..", dataset_name)
+        try:
+            if not get_dataset_validity(dataset_name):
+                return None
+            configs = self.get_configs_info(dataset_name)
+            if len(configs) == 0:
+                return None
+            dataset_information = {
+                "dataset_name": dataset_name,
+                "configs": configs,
+                "dataset_description": configs[0][
+                    "dataset_description"
+                ],  # Configs dont have different descriptions from the original dataset, even for datasets like glue
+            }
+        except Exception as e:
+            print(f"Error processing {dataset_name}: {e}")
+            return None
+        return dataset_information
+
     def automatic_column_selection(
+        self,
         instruction: str,
-        dataset_name: str,
-        dataset_description: str,
-        dataset_columns: str,
-        example_rows: dict,
+        dataset_info: str,
     ) -> tuple[list[str], str]:
         """Find appropriate input and output columns for a given dataset and tasks."""
         prompt = construct_prompt_for_column_selection(
             instruction,
-            dataset_name,
-            dataset_description,
-            dataset_columns,
-            example_rows,
+            dataset_info["dataset_name"],
+            dataset_info["dataset_description"],
+            dataset_info["columns"],
+            dataset_info["sample_row"],
         )
         required_keys = ["input", "output"]
         optional_keys = ["ambiguous", "irrelevant"]
@@ -187,12 +289,12 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         response = parse_prompt_to_fields(prompt, required_keys, optional_keys)
         input_columns = response["input"]
         output_column = response["output"]
-
         if len(input_columns) < 1 or len(output_column) != 1:
             raise RuntimeError(
                 "Input columns length was less than 1 or output column length was not 1"
             )
 
+        dataset_columns = dataset_info["columns"]
         incorrect_columns = [
             col for col in input_columns + output_column if col not in dataset_columns
         ]
@@ -338,6 +440,87 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             raise ValueError("No datasets retrieved from search index.")
         return sorted_list
 
+    def dataset_reranking(self, dataset_list, prompt_spec):
+        dataset_info_list = []
+        import time
+
+        start_time = time.time()
+        for dataset_name in dataset_list:
+            info = self.get_dataset_info(dataset_name.name)
+            if info is None:
+                continue
+            dataset_info_list.append(info)
+        end_time = time.time()
+        total_time = end_time - start_time
+        print("Time taken to retrieve datastet retriever is:", total_time, "seconds")
+        if len(dataset_info_list) == 0:
+            return None  # All datasets private/took too long to be retrieved
+
+        prompt = construct_prompt_for_dataset_reranking(
+            prompt_spec.instruction, prompt_spec.examples, dataset_info_list
+        )
+        print(prompt)
+        # TODO: Is this an overkill?
+        try:
+            (
+                dataset_index,
+                dataset_name,
+                config_index,
+                config_name,
+                confidence_level,
+            ) = parse_prompt_to_fields(prompt=prompt, response_type="rerank")
+
+            print()
+            print(
+                "Rernaking results: ",
+                dataset_index,
+                dataset_name,
+                config_index,
+                config_name,
+                confidence_level,
+            )
+            if (
+                dataset_index == -1
+                or dataset_info_list[dataset_index - 1]["dataset_name"] != dataset_name
+                or dataset_info_list[dataset_index - 1]["configs"][config_index - 1][
+                    "config_name"
+                ]
+                != config_name
+                or confidence_level == "low"
+            ):
+                return None  # None of the datasets are relevant or there is hallucination or reranker is not confident
+
+            return (
+                dataset_info_list[dataset_index - 1]["configs"][config_index - 1],
+                prompt,
+            )
+        except Exception as e:
+            print(
+                "dataset reranker failed probably because of output being in incorrect format."
+            )
+            return None, prompt
+
+    def canocalize_dataset_automatically(self, top_dataset_info, task_instruction):
+        if top_dataset_info is None:
+            return None
+        try:
+            input_columns, output_column = self.automatic_column_selection(
+                task_instruction, top_dataset_info
+            )
+        except Exception as e:
+            print("Column selection failed: ", e)
+            return None
+        full_dataset = datasets.load_dataset(
+            top_dataset_info["dataset_name"], top_dataset_info["config_name"]
+        ).flatten()
+        full_dataset = full_dataset.rename_columns(top_dataset_info["columns_mapping"])
+
+        canonicalized_dataset = self.canonicalize_dataset_using_columns(
+            full_dataset, input_columns, output_column
+        )
+
+        return canonicalized_dataset
+
     def retrieve_dataset_dict(
         self,
         prompt_spec: PromptSpec,
@@ -351,7 +534,23 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             A list of relevant datasets dictionaries.
         """
         sorted_list = self.retrieve_top_datasets(prompt_spec)
-        top_dataset_name = self.choose_dataset_by_cli(sorted_list)
-        if top_dataset_name is None:
-            return None
-        return self.canonicalize_dataset_by_cli(top_dataset_name, prompt_spec)
+
+        top_dataset_info, reranking_prompt = self.dataset_reranking(
+            sorted_list, prompt_spec
+        )
+
+        dataset_name, config_name = None, None
+        if top_dataset_info:
+            dataset_name, config_name = (
+                top_dataset_info["dataset_name"],
+                top_dataset_info["config_name"],
+            )
+
+        return (
+            self.canocalize_dataset_automatically(
+                top_dataset_info, prompt_spec.instruction
+            ),
+            reranking_prompt,
+            dataset_name,
+            config_name,
+        )

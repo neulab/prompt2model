@@ -119,79 +119,172 @@ def parse_model_size_limit(line: str, default_size=3e9) -> float:
     return int(numerical_part) * scale_factor
 
 
+# tasks = [
+# """
+# In this task, you're given passages that contain mentions of names of people, places, or things. Some of these mentions refer to the same person, place, or thing. Your job is to write questions that evaluate one's understanding of such references. Good questions are expected to link pronouns (she, her, him, his, their, etc.) or other mentions to people, places, or things to which they may refer. Do not ask questions that can be answered correctly without understanding the paragraph or having multiple answers. Avoid questions that do not link phrases referring to the same entity. For each of your questions, the answer should be one or more phrases in the paragraph, and it should be unambiguous.
+
+# "input": "Passage: Nearing London, Oliver encounters Jack Dawkins, a pickpocket more commonly known by the nickname the \"Artful Dodger\", and his sidekick, a boy of a humorous nature named Charley Bates, but Oliver's innocent and trusting nature fails to see any dishonesty in their actions. The Dodger provides Oliver with a free meal and tells him of a gentleman in London who will \"give him lodgings for nothing, and never ask for change\". Grateful for the unexpected assistance, Oliver follows the Dodger to the \"old gentleman's\" residence. In this way Oliver unwittingly falls in with an infamous Jewish criminal known as Fagin, the gentleman of whom the Artful Dodger spoke. Ensnared, Oliver lives with Fagin and his gang of juvenile pickpockets in their lair at Saffron Hill for some time, unaware of their criminal occupations. He believes they make wallets and handkerchiefs.",
+# "output": "Who believes Fagin's gang make wallets and handkerchiefs?.",
+# "explanation": "This question is based on the following sentence in the passage \"He believes they make wallets and handkerchiefs\". It evaluates the understanding that the pronoun \"he\" refers to name \"Oliver\". You can ask questions like this one about most pronouns in a paragraph."
+
+# "input": "Passage: Nearing London, Oliver encounters Jack Dawkins, a pickpocket more commonly known by the nickname the \"Artful Dodger\", and his sidekick, a boy of a humorous nature named Charley Bates, but Oliver's innocent and trusting nature fails to see any dishonesty in their actions. The Dodger provides Oliver with a free meal and tells him of a gentleman in London who will \"give him lodgings for nothing, and never ask for change\". Grateful for the unexpected assistance, Oliver follows the Dodger to the \"old gentleman's\" residence. In this way Oliver unwittingly falls in with an infamous Jewish criminal known as Fagin, the gentleman of whom the Artful Dodger spoke. Ensnared, Oliver lives with Fagin and his gang of juvenile pickpockets in their lair at Saffron Hill for some time, unaware of their criminal occupations. He believes they make wallets and handkerchiefs.",
+# "output": "What is the alias of the person whose sidekick had a humorous nature?.",
+# "explanation": "This question is based on the following sentence in the passage \"Nearing London, Oliver encounters Jack Dawkins, a pickpocket more commonly known by the nickname the \"Artful Dodger\", and his sidekick, a boy of a humorous nature named Charley Bates\". The pronoun \"his\" refers to a person with multiple names. But since the question explicitly asks for the alias, the answer is unambiguous."
+# """,
+# """
+# "In this task, you are given a date in \"mm/dd/yyyy\" format. You need to check if the date is valid or not. Return 1 if it is valid, else return 0. A date is valid is the components month(\"mm\"), day(\"dd\") and year(\"yyyy\") are all valid individually. A day(dd) is valid if it is greater than or equal to 1 and less than 30 or 31 depending upon the month(mm). Months which have 31 days are January, March, May, July, August, October, December. Rest of the months have 30 days except February which has 28 days if it is not a leap year and 29 days if it is a leap year. A month(mm) is valid if it lies in the range from 1 to 12 as there are 12 months in a year. A year is always valid if it is expressed in the form of \"yyyy\"."
+
+# "input": "14/25/1405",
+# "output": "0",
+# "explanation": "It is an invalid date as the month(mm) is 14 which does not lie in the range 1 to 12."
+
+# "input": "07/29/1617",
+# "output": "1",
+# "explanation": "It is a valid date as month(mm), day(dd) and year(yyyy) are all valid."
+
+# """,
+# """
+# Given an Amazon review, indicate whether it is a 'Positive Review' or 'Negative Review'.
+#  "input": "Bought cables in 3ft, 6ft and 9ft.  NONE of them worked.  NO FUNCTIONALITY WHATSOEVER.  Tested many times, its as if the copper wires are just not connected to the terminations.  Do these even go through Quality Control before they leave the factory?  Waste of money and time.",
+#  "output": "Negative Review",
+#  "explanation": "User did not like cables at all and found all of them useless so it is a negative review."
+# """
+# ]
+
+
+# tasks =[
+# """
+#  "You are given a sentence in English. Your job is to translate the English sentence into Italian."
+#  {
+#             "input": "Why? Because that profit allows whatever solution we've created to be infinitely scalable.",
+#             "output": "Perché? Perché quel profitto fa sì che qualunque soluzione da noi creata sia infinitamente riproducibile su scala.",
+#             "explanation": "The English sentence is correctly translated into Italian, because the meaning is preserved."
+#         },
+#         {
+#             "input": "I chose to build there a blessed life.",
+#             "output": "Ho scelto di costruirmi una vita fortunata.",
+#             "explanation": "The English sentence is correctly translated into Italian, because the meaning is preserved."
+#         },
+#         {
+#             "input": "These are really hybrids, not pure animals.",
+#             "output": "Questi sono ibridi veri, non animali puri.",
+#             "explanation": "The English sentence is correctly translated into Italian, because the meaning is preserved."
+#         }
+# """,
+# """
+# "You need to answer a given question containing a blank (_). Your answer must be one of the two objects mentioned in the question, for example \"trophy\" and \"suitcase\". Your answer must not contain a word that is not present in the question. Please don't use articles (e.g., the, a) before the answer."
+# {
+#             "input": "The trophy doesn't fit into the brown suitcase because _ is too large.",
+#             "output": "trophy",
+#             "explanation": "Answer is one of the objects (\"trophy\" and \"suitcase\") in the question. Since the blank is a \"large\" object that didn't fit the \"suitcase\", the answer must be \"trophy\"."
+#         },
+#         {
+#             "input": "Grace was happy to trade me her sweater for my jacket. She thinks _ looks dowdy on her.",
+#             "output": "sweater",
+#             "explanation": "The word \"dowdy\" decides the answer among the objects (\"sweater\" and \"jacket\") present in the question."
+#         },
+#         {
+#             "input": "While redecorating her home, Sam took out the carpet and replaced it with wood floors. The _ was old.",
+#             "output": "carpet",
+#             "explanation": "The blank is \"old\", it must be what gets \"replaced\", which has to be \"carpet\"."
+#         },
+# """,
+# """
+#  "You are given a question and some answer options (associated with \"A\", \"B\", \"C\", \"D\"). You should choose the correct answer based on commonsense knowledge. Avoid answering questions based on associations, the set of answers are chosen deliberately to capture common sense beyond associations. Do not generate anything else apart from one of the following characters: 'A', 'B, 'C', 'D', 'E' and only give one answer for each question."
+#   {
+#             "input": "Where would you find magazines along side many other printed works?\n(A)doctor (B)bookstore (C)market (D)train station (E)mortuary",
+#             "output": "B",
+#             "explanation": "libraries contains magazines and many other printed works."
+#         },
+#         {
+#             "input": "What island country is ferret popular?\n(A)own home (B)north carolina (C)great britain (D)hutch (E)outdoors",
+#             "output": "C",
+#             "explanation": "great britain is the only island country in the choices."
+#         }
+# """
+
+# ]
+
+
 def main():
     """The main function running the whole system."""
-    print_logo()
+    # print_logo()
     # Save the status of Prompt2Model for this session,
     # in case the user wishes to stop and continue later.
-    if os.path.isfile("status.yaml"):
-        with open("status.yaml", "r") as f:
-            status = yaml.safe_load(f)
-    else:
-        status = {}
+    # if os.path.isfile("status.yaml"):
+    #     with open("status.yaml", "r") as f:
+    #         status = yaml.safe_load(f)
+    # else:
+    status = {}
+    import pandas as pd
 
-    while True:
-        line_print("Do you want to start from scratch? (y/n)")
-        answer = input()
-        if answer.lower() == "n":
-            if os.path.isfile("status.yaml"):
-                with open("status.yaml", "r") as f:
-                    status = yaml.safe_load(f)
-                    print(f"Current status:\n{json.dumps(status, indent=4)}")
-                    break
+    df = pd.read_csv("prompt2model/dataset_retriever/reranking.csv")
+    for idx, row in df.iterrows():
+        task = row["Task"]
+
+        propmt_has_been_parsed = status.get("prompt_has_been_parsed", False)
+        dataset_has_been_retrieved = status.get("dataset_has_been_retrieved", False)
+        model_has_been_retrieved = status.get("model_has_been_retrieved", False)
+        dataset_has_been_generated = status.get("dataset_has_been_generated", False)
+        model_has_been_trained = status.get("model_has_been_trained", False)
+        # if not propmt_has_been_parsed:
+        if True:
+            prompt = ""
+            line_print(
+                "Enter your task description and few-shot examples (or 'done' to finish):"
+            )
+            time.sleep(2)
+            # while True:
+            #     line = input()
+            #     if line == "done":
+            #         break
+            #     prompt += line + "\n"
+            # line_print("Parsing prompt...")
+            prompt_spec = PromptBasedInstructionParser(
+                task_type=TaskType.TEXT_GENERATION
+            )
+            print(task)
+            prompt_spec.parse_from_prompt(task)
+
+            propmt_has_been_parsed = True
+            status["instruction"] = prompt_spec.instruction
+            status["examples"] = prompt_spec.examples
+            status["prompt_has_been_parsed"] = False
+            with open("status.yaml", "w") as f:
+                yaml.safe_dump(status, f)
+            line_print("Prompt parsed.")
+
+        # if propmt_has_been_parsed and not dataset_has_been_retrieved:
+        if True:
+            prompt_spec = MockPromptSpec(
+                TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
+            )
+            line_print("Retrieving dataset...")
+            retriever = DescriptionDatasetRetriever()
+            # TODO: Change me back
+            (
+                retrieved_dataset_dict,
+                reranking_prompt,
+                dataset_name,
+                config_name,
+            ) = retriever.retrieve_dataset_dict(prompt_spec)
+            df["Prompt"] = reranking_prompt
+            df["Reranker_Dataset"] = dataset_name
+            df["Reranker_Config"] = config_name
+
+            dataset_has_been_retrieved = True
+            if retrieved_dataset_dict is not None:
+                print("After everything: Dataset retrieved successfully!!")
+                retrieved_dataset_dict.save_to_disk("retrieved_dataset_dict")
+                status["retrieved_dataset_dict_root"] = "retrieved_dataset_dict"
             else:
-                status = {}
-                break
-        elif answer.lower() == "y":
-            status = {}
-            break
-        else:
-            continue
-
-    propmt_has_been_parsed = status.get("prompt_has_been_parsed", False)
-    dataset_has_been_retrieved = status.get("dataset_has_been_retrieved", False)
-    model_has_been_retrieved = status.get("model_has_been_retrieved", False)
-    dataset_has_been_generated = status.get("dataset_has_been_generated", False)
-    model_has_been_trained = status.get("model_has_been_trained", False)
-    if not propmt_has_been_parsed:
-        prompt = ""
-        line_print(
-            "Enter your task description and few-shot examples (or 'done' to finish):"
-        )
-        time.sleep(2)
-        while True:
-            line = input()
-            if line == "done":
-                break
-            prompt += line + "\n"
-        line_print("Parsing prompt...")
-        prompt_spec = PromptBasedInstructionParser(task_type=TaskType.TEXT_GENERATION)
-        prompt_spec.parse_from_prompt(prompt)
-
-        propmt_has_been_parsed = True
-        status["instruction"] = prompt_spec.instruction
-        status["examples"] = prompt_spec.examples
-        status["prompt_has_been_parsed"] = True
-        with open("status.yaml", "w") as f:
-            yaml.safe_dump(status, f)
-        line_print("Prompt parsed.")
-
-    if propmt_has_been_parsed and not dataset_has_been_retrieved:
-        prompt_spec = MockPromptSpec(
-            TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
-        )
-        line_print("Retrieving dataset...")
-        retriever = DescriptionDatasetRetriever()
-        retrieved_dataset_dict = retriever.retrieve_dataset_dict(prompt_spec)
-        dataset_has_been_retrieved = True
-        if retrieved_dataset_dict is not None:
-            retrieved_dataset_dict.save_to_disk("retrieved_dataset_dict")
-            status["retrieved_dataset_dict_root"] = "retrieved_dataset_dict"
-        else:
-            status["retrieved_dataset_dict_root"] = None
-        status["dataset_has_been_retrieved"] = True
-        with open("status.yaml", "w") as f:
-            yaml.safe_dump(status, f)
+                print("After everything: Dataset not retrieved successfully.")
+                status["retrieved_dataset_dict_root"] = None
+            status["dataset_has_been_retrieved"] = False
+            with open("status.yaml", "w") as f:
+                yaml.safe_dump(status, f)
+    df.to_csv("prompt2model/dataset_retriever/reranking2.csv", index=False)
+    return
 
     if (
         propmt_has_been_parsed

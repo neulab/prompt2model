@@ -1,0 +1,128 @@
+Task_Index,Task,Datasets_Retrieved,Prompt,Manually_Chosen_Dataset,Manually_Chosen_Config,Reranker_Dataset,Reranker_Config
+task001: question generation from entity tracking,"In this task, you're given passages that contain mentions of names of people, places, or things. Some of these mentions refer to the same person, place, or thing. Your job is to write questions that evaluate one's understanding of such references. Good questions are expected to link pronouns (she, her, him, his, their, etc.) or other mentions to people, places, or things to which they may refer. Do not ask questions that can be answered correctly without understanding the paragraph or having multiple answers. Avoid questions that do not link phrases referring to the same entity. For each of your questions, the answer should be one or more phrases in the paragraph, and it should be unambiguous.{
+            ""input"": ""Passage: Nearing London, Oliver encounters Jack Dawkins, a pickpocket more commonly known by the nickname the \""Artful Dodger\"", and his sidekick, a boy of a humorous nature named Charley Bates, but Oliver's innocent and trusting nature fails to see any dishonesty in their actions. The Dodger provides Oliver with a free meal and tells him of a gentleman in London who will \""give him lodgings for nothing, and never ask for change\"". Grateful for the unexpected assistance, Oliver follows the Dodger to the \""old gentleman's\"" residence. In this way Oliver unwittingly falls in with an infamous Jewish criminal known as Fagin, the gentleman of whom the Artful Dodger spoke. Ensnared, Oliver lives with Fagin and his gang of juvenile pickpockets in their lair at Saffron Hill for some time, unaware of their criminal occupations. He believes they make wallets and handkerchiefs."",
+            ""output"": ""Who believes Fagin's gang make wallets and handkerchiefs?."",
+            ""explanation"": ""This question is based on the following sentence in the passage \""He believes they make wallets and handkerchiefs\"". It evaluates the understanding that the pronoun \""he\"" refers to name \""Oliver\"". You can ask questions like this one about most pronouns in a paragraph.""
+        },
+        {
+            ""input"": ""Passage: Nearing London, Oliver encounters Jack Dawkins, a pickpocket more commonly known by the nickname the \""Artful Dodger\"", and his sidekick, a boy of a humorous nature named Charley Bates, but Oliver's innocent and trusting nature fails to see any dishonesty in their actions. The Dodger provides Oliver with a free meal and tells him of a gentleman in London who will \""give him lodgings for nothing, and never ask for change\"". Grateful for the unexpected assistance, Oliver follows the Dodger to the \""old gentleman's\"" residence. In this way Oliver unwittingly falls in with an infamous Jewish criminal known as Fagin, the gentleman of whom the Artful Dodger spoke. Ensnared, Oliver lives with Fagin and his gang of juvenile pickpockets in their lair at Saffron Hill for some time, unaware of their criminal occupations. He believes they make wallets and handkerchiefs."",
+            ""output"": ""What is the alias of the person whose sidekick had a humorous nature?."",
+            ""explanation"": ""This question is based on the following sentence in the passage \""Nearing London, Oliver encounters Jack Dawkins, a pickpocket more commonly known by the nickname the \""Artful Dodger\"", and his sidekick, a boy of a humorous nature named Charley Bates\"". The pronoun \""his\"" refers to a person with multiple names. But since the question explicitly asks for the alias, the answer is unambiguous.""
+        },",,,,,,
+task033:winogrande answer generation,"You need to answer a given question containing a blank (_). Your answer must be one of the two objects mentioned in the question, for example \""trophy\"" and \""suitcase\"". Your answer must not contain a word that is not present in the question. Please don't use articles (e.g., the, a) before the answer.""
+{
+            ""input"": ""The trophy doesn't fit into the brown suitcase because _ is too large."",
+            ""output"": ""trophy"",
+            ""explanation"": ""Answer is one of the objects (\""trophy\"" and \""suitcase\"") in the question. Since the blank is a \""large\"" object that didn't fit the \""suitcase\"", the answer must be \""trophy\"".""
+        },
+        {
+            ""input"": ""Grace was happy to trade me her sweater for my jacket. She thinks _ looks dowdy on her."",
+            ""output"": ""sweater"",
+            ""explanation"": ""The word \""dowdy\"" decides the answer among the objects (\""sweater\"" and \""jacket\"") present in the question.""
+        },
+        {
+            ""input"": ""While redecorating her home, Sam took out the carpet and replaced it with wood floors. The _ was old."",
+            ""output"": ""carpet"",
+            ""explanation"": ""The blank is \""old\"", it must be what gets \""replaced\"", which has to be \""carpet\"".""
+        },",,,,,,
+task073_commonsenseqa_answer_generation," ""You are given a question and some answer options (associated with \""A\"", \""B\"", \""C\"", \""D\""). You should choose the correct answer based on commonsense knowledge. Avoid answering questions based on associations, the set of answers are chosen deliberately to capture common sense beyond associations. Do not generate anything else apart from one of the following characters: 'A', 'B, 'C', 'D', 'E' and only give one answer for each question.""
+  {
+            ""input"": ""Where would you find magazines along side many other printed works?\n(A)doctor (B)bookstore (C)market (D)train station (E)mortuary"",
+            ""output"": ""B"",
+            ""explanation"": ""libraries contains magazines and many other printed works.""
+        },
+        {
+            ""input"": ""What island country is ferret popular?\n(A)own home (B)north carolina (C)great britain (D)hutch (E)outdoors"",
+            ""output"": ""C"",
+            ""explanation"": ""great britain is the only island country in the choices.""
+        }",,,,,,
+task288_gigaword_summarization,"""In this task, you are given a text of the article. Your task is to generate a headline (title) for this article."",
+        
+       {
+            ""input"": ""australia 's current account deficit shrunk by a record #.## billion dollars -lrb- #.## billion us -rrb- in the june quarter due to soaring commodity prices , figures released monday showed ."",
+            ""output"": ""australian current account deficit narrows sharply"",
+            ""explanation"": ""This headline is appropriate for the given article text because the focus of this article is Australian current accounts.""
+        },
+        {
+            ""input"": ""at least two people were killed in a suspected bomb attack on a passenger bus in the strife-torn southern philippines on monday , the military said ."",
+            ""output"": ""at least two dead in southern philippines blast"",
+            ""explanation"": ""This article focuses on the southern Philippines blast; hence the generated title is correct.""
+        },
+        {
+            ""input"": ""four east timorese youths who scaled the french embassy 's fence here thursday , left the embassy on their way to portugal friday ."",
+            ""output"": ""UNK latest east timorese asylum seekers leave for portugal"",
+            ""explanation"": ""The example is correct, as it correctly summarizes the passage""
+        },",,,,,,
+task211_logic2text_classification,"In this task, you are given commands (in terms of logical operations) and natural interpretation of the given command to select relevant rows from the given table. Your job is to generate a label \""yes\"" if the interpretation is appropriate for the command, otherwise generate label \""no\"". \n Here are the definitions of logical operators: \n 1. count: returns the number of rows in the view. \n 2. only: returns whether there is exactly one row in the view. \n 3. hop: returns the value under the header column of the row. \n 4. and: returns the boolean operation result of two arguments. \n 5. max/min/avg/sum: returns the max/min/average/sum of the values under the header column. \n 6. nth_max/nth_min: returns the n-th max/n-th min of the values under the header column. \n 7. argmax/argmin: returns the row with the max/min value in header column. \n 8. nth_argmax/nth_argmin: returns the row with the n-th max/min value in header column. \n 9. eq/not_eq: returns if the two arguments are equal. \n 10. round_eq: returns if the two arguments are roughly equal under certain tolerance. \n 11. greater/less: returns if the first argument is greater/less than the second argument. \n 12. diff: returns the difference between two arguments. \n 13. filter_eq/ filter_not_eq: returns the subview whose values under the header column is equal/not equal to the third argument. \n 14. filter_greater/filter_less: returns the subview whose values under the header column is greater/less than the third argument. \n 15. filter_greater_eq /filter_less_eq: returns the subview whose values under the header column is greater/less or equal than the third argument. \n 16. filter_all: returns the view itself for the case of describing the whole table \n 17. all_eq/not_eq: returns whether all the values under the header column are equal/not equal to the third argument. \n 18. all_greater/less: returns whether all the values under the header column are greater/less than the third argument. \n 19. all_greater_eq/less_eq: returns whether all the values under the header column are greater/less or equal to the third argument. \n 20. most_eq/not_eq: returns whether most of the values under the header column are equal/not equal to the third argument. \n 21. most_greater/less: returns whether most of the values under the header column are greater/less than the third argument. \n 22. most_greater_eq/less_eq: returns whether most of the values under the header column are greater/less or equal to the third argument.
+       {
+            ""input"": ""Command: eq { hop { nth_argmax { all_rows ; attendance ; 3 } ; competition } ; danish superliga 2005 - 06 }, interpretation: select the row whose attendance record of all rows is 3rd maximum. the competition record of this row is danish superliga 2005-06."",
+            ""output"": ""yes"",
+            ""explanation"": ""Here, the command and interpretion given for the command is correct that 3rd maximum should be selected from given table rows. Hence, the label is 'yes'.""
+        },
+        {
+            ""input"": ""Command: eq { hop { argmax { all_rows ; duration } ; actor } ; lesley saweard }, interpretation: select the row whose duration record of all rows is maximum. the actor record of this row is lesley saweard."",
+            ""output"": ""yes"",
+            ""explanation"": ""Here, the command and interpretion given for the command is correct that the maximum duration should be selected from the given table rows. Hence, the label is 'yes'.""
+        },
+        {
+            ""input"": ""Command: most_eq { all_rows ; points ; 0 }, interpretation: select the row whose duration record of all rows is maximum. the actor record of this row is lesley saweard."",
+            ""output"": ""no"",
+            ""explanation"": ""Here, the command and interpretion given for the command is not correct because command indicates that the most of the point records are zero, however, interetation indicates that the maximum duration should be selected from the given table rows. Hence, the label is 'no'.""
+        },",,,,,,
+task369_synthetic_remove_odds.json,"In this task, you will be given a list of integers. You should remove all of the odd integers from the list(consider 0 an even number). If every integer in the input list is odd then an empty list (\""[]\"") should be returned. Otherwise, answer with the list of even numbers separated by comma inside brackets.
+        {
+            ""input"": ""[1, 8, 0, 2, 9]"",
+            ""output"": ""[8, 0, 2]"",
+            ""explanation"": ""1 and 9 are removed from the list because they are odd numbers.""
+        },
+        {
+            ""input"": ""[1, 3, 7, 1]"",
+            ""output"": ""[]"",
+            ""explanation"": ""Every value in the input list is odd so an empty list is returned.""
+        },
+        {
+            ""input"": ""[-3, -10, -31, -2]"",
+            ""output"": ""[-10, -2]"",
+            ""explanation"": ""-3 and -31 are removed from the list, because they are odd numbers.""
+        }",,,,,,
+task326_jigsaw_classification_obscene,"""In this task, you are given a public comment from online platforms. You are expected to classify the comment into two classes: obscene and non-obscene. A comment is obscene if it is considered offensive to the public sense of decency, for example because it too obviously relates to sex or contains language regarded as taboo in polite usage.
+     {
+            ""input"": ""Comment: Damn!  Another cloudy day, and it's all Obama's doing!"",
+            ""output"": ""Obscene"",
+            ""explanation"": ""This is obscenity because it hints on sexual content that is offensive to the public sense of decency.""
+        },
+        {
+            ""input"": ""Comment: Be a victim or shoot back."",
+            ""output"": ""Non-obscene"",
+            ""explanation"": ""This is unrelated to pornography or obscenity.""
+        }",,,,,,
+task1091_ted_translation_en_it," ""You are given a sentence in English. Your job is to translate the English sentence into Italian.""
+ {
+            ""input"": ""Why? Because that profit allows whatever solution we've created to be infinitely scalable."",
+            ""output"": ""Perché? Perché quel profitto fa sì che qualunque soluzione da noi creata sia infinitamente riproducibile su scala."",
+            ""explanation"": ""The English sentence is correctly translated into Italian, because the meaning is preserved.""
+        },
+        {
+            ""input"": ""I chose to build there a blessed life."",
+            ""output"": ""Ho scelto di costruirmi una vita fortunata."",
+            ""explanation"": ""The English sentence is correctly translated into Italian, because the meaning is preserved.""
+        },
+        {
+            ""input"": ""These are really hybrids, not pure animals."",
+            ""output"": ""Questi sono ibridi veri, non animali puri."",
+            ""explanation"": ""The English sentence is correctly translated into Italian, because the meaning is preserved.""
+        }",,,,,,
+task1403_check_validity_date_mmddyyyy,"""In this task, you are given a date in \""mm/dd/yyyy\"" format. You need to check if the date is valid or not. Return 1 if it is valid, else return 0. A date is valid is the components month(\""mm\""), day(\""dd\"") and year(\""yyyy\"") are all valid individually. A day(dd) is valid if it is greater than or equal to 1 and less than 30 or 31 depending upon the month(mm). Months which have 31 days are January, March, May, July, August, October, December. Rest of the months have 30 days except February which has 28 days if it is not a leap year and 29 days if it is a leap year. A month(mm) is valid if it lies in the range from 1 to 12 as there are 12 months in a year. A year is always valid if it is expressed in the form of \""yyyy\"".""
+        
+""input"": ""14/25/1405"",
+""output"": ""0"",
+""explanation"": ""It is an invalid date as the month(mm) is 14 which does not lie in the range 1 to 12.""
+
+""input"": ""07/29/1617"",
+""output"": ""1"",
+""explanation"": ""It is a valid date as month(mm), day(dd) and year(yyyy) are all valid.""",,,,,,
+task1343_amazon_us_reviews_rating,"Given an Amazon review, indicate whether it is a 'Positive Review' or 'Negative Review'.
+{""input"": ""Bought cables in 3ft, 6ft and 9ft.  NONE of them worked.  NO FUNCTIONALITY WHATSOEVER.  Tested many times, its as if the copper wires are just not connected to the terminations.  Do these even go through Quality Control before they leave the factory?  Waste of money and time."",
+""output"": ""Negative Review"",
+ ""explanation"": ""User did not like cables at all and found all of them useless so it is a negative review.""
+}",,,,,,
