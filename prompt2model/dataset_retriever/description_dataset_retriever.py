@@ -442,25 +442,20 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
     def dataset_reranking(self, dataset_list, prompt_spec):
         dataset_info_list = []
-        import time
 
-        start_time = time.time()
-        for dataset_name in dataset_list:
+        for dataset_name in dataset_list[:1]:
             info = self.get_dataset_info(dataset_name.name)
             if info is None:
                 continue
             dataset_info_list.append(info)
-        end_time = time.time()
-        total_time = end_time - start_time
-        print("Time taken to retrieve datastet retriever is:", total_time, "seconds")
+        return dataset_info_list[0]["configs"][0]
+
         if len(dataset_info_list) == 0:
             return None  # All datasets private/took too long to be retrieved
 
         prompt = construct_prompt_for_dataset_reranking(
             prompt_spec.instruction, prompt_spec.examples, dataset_info_list
         )
-        print(prompt)
-        # TODO: Is this an overkill?
         try:
             (
                 dataset_index,
@@ -470,15 +465,6 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 confidence_level,
             ) = parse_prompt_to_fields(prompt=prompt, response_type="rerank")
 
-            print()
-            print(
-                "Rernaking results: ",
-                dataset_index,
-                dataset_name,
-                config_index,
-                config_name,
-                confidence_level,
-            )
             if (
                 dataset_index == -1
                 or dataset_info_list[dataset_index - 1]["dataset_name"] != dataset_name
@@ -489,16 +475,13 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 or confidence_level == "low"
             ):
                 return None  # None of the datasets are relevant or there is hallucination or reranker is not confident
+            return (dataset_info_list[dataset_index - 1]["configs"][config_index - 1],)
 
-            return (
-                dataset_info_list[dataset_index - 1]["configs"][config_index - 1],
-                prompt,
-            )
         except Exception as e:
             print(
                 "dataset reranker failed probably because of output being in incorrect format."
             )
-            return None, prompt
+            return None
 
     def canocalize_dataset_automatically(self, top_dataset_info, task_instruction):
         if top_dataset_info is None:
@@ -535,22 +518,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         """
         sorted_list = self.retrieve_top_datasets(prompt_spec)
 
-        top_dataset_info, reranking_prompt = self.dataset_reranking(
-            sorted_list, prompt_spec
-        )
-
-        dataset_name, config_name = None, None
-        if top_dataset_info:
-            dataset_name, config_name = (
-                top_dataset_info["dataset_name"],
-                top_dataset_info["config_name"],
-            )
-
-        return (
-            self.canocalize_dataset_automatically(
-                top_dataset_info, prompt_spec.instruction
-            ),
-            reranking_prompt,
-            dataset_name,
-            config_name,
+        top_dataset_info = self.dataset_reranking(sorted_list, prompt_spec)
+        return self.canocalize_dataset_automatically(
+            top_dataset_info, prompt_spec.instruction
         )
