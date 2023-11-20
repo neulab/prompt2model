@@ -33,6 +33,7 @@ class GenerationModelTrainer(BaseTrainer):
         tokenizer_max_length: int = 512,
         sequence_max_length: int = 1024,
         trust_remote_code: bool = False,
+        tokenizer_path: str | None = None,
     ):
         """Initializes a new instance of GenerationModelTrainer.
 
@@ -57,6 +58,9 @@ class GenerationModelTrainer(BaseTrainer):
         self.tokenizer_max_length = tokenizer_max_length
         self.sequence_max_length = sequence_max_length
         self.executor_batch_size = executor_batch_size
+        if tokenizer_path is None:
+            tokenizer_path = pretrained_model_name
+
         if self.tokenizer_max_length is None:
             logger.warning(
                 (
@@ -69,14 +73,14 @@ class GenerationModelTrainer(BaseTrainer):
                 pretrained_model_name, trust_remote_code=trust_remote_code
             )
             self.tokenizer = transformers.AutoTokenizer.from_pretrained(
-                pretrained_model_name, trust_remote_code=trust_remote_code
+                tokenizer_path, trust_remote_code=trust_remote_code
             )
         else:
             self.model = transformers.AutoModelForCausalLM.from_pretrained(
                 pretrained_model_name, trust_remote_code=trust_remote_code
             )
             self.tokenizer = transformers.AutoTokenizer.from_pretrained(
-                pretrained_model_name,
+                tokenizer_path,
                 padding_side="left",
                 trust_remote_code=trust_remote_code,
             )
