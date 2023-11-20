@@ -314,7 +314,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
         print(f"Requested length: {max_len}\nActual length: {len(inputs)}\n")
         # 3. Return the transformed inputs and outputs.
-        return inputs, outputs
+        return inputs, outputs, plan
 
     def canonicalize_dataset_by_cli_data_transform(
         self, dataset_name: str, prompt_spec, num_transform: int = 10
@@ -352,7 +352,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         if "train" not in dataset:
             # raise ValueError("The dataset must contain a `train` split.")
             logger.error(f"{dataset_name} must contain a `train` split.")
-            return None
+            return None, None
 
         columns_mapping: dict[str, str] = {}
         counter: dict[str, int] = {}
@@ -372,7 +372,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         if len(dataset["train"]) == 0:
             # raise ValueError("train split is empty.")
             logger.error("train split is empty.")
-            return None
+            return None, None
 
         example_rows = json.dumps(dataset["train"][0], indent=4)
 
@@ -380,21 +380,21 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         print(f"Loaded dataset. Example row:\n{example_rows}\n")
 
         try:
-            inputs, outputs = self.data_transform(
+            inputs, outputs, plan = self.data_transform(
                 prompt_spec=prompt_spec,
                 dataset=dataset["train"],
                 num_transform=num_transform,
             )
         except RuntimeError:
             logger.error(f"{dataset_name} did not work. Try another!")
-            return None  # Returning None means that the dataset chosen didn't work,
+            return None, None  # Returning None means that the dataset chosen didn't work,
             # and we would rather generate a dataset.
 
         print(f"Data transformation completed\n")
         self._print_divider()
 
         canonicalized_dataset = self.canonicalize_dataset_using_samples(inputs, outputs)
-        return canonicalized_dataset
+        return canonicalized_dataset, plan
 
     def canonicalize_dataset_by_cli(
         self, dataset_name: str, prompt_spec
