@@ -17,16 +17,22 @@ from test_helpers import MockCompletion, create_test_search_index
 
 # The following variables are specifically for the
 # four automatic column selection tests.
-DATASET_NAME = "squad"
-DATASET_COLUMNS = "id, title, context, question, answers"
-DATASET_DESCRIPTION = "Stanford Question Answering Dataset (SQuAD) is a reading comprehension dataset, consisting of questions posed by crowdworkers on a set of Wikipedia articles, where the answer to every question is a segment of text, or span, from the corresponding reading passage, or the question might be unanswerable."  # noqa: E501
-EXAMPLE_ROWS = {
-    "id": "5733be284776f41900661182",
-    "title": "University_of_Notre_Dame",
-    "context": 'Architecturally, the school has a Catholic character. Atop the Main Building\'s gold dome is a golden statue of the Virgin Mary. Immediately in front of the Main Building and facing it, is a copper statue of Christ with arms upraised with the legend "Venite Ad Me Omnes". Next to the Main Building is the Basilica of the Sacred Heart. Immediately behind the basilica is the Grotto, a Marian place of prayer and reflection. It is a replica of the grotto at Lourdes, France where the Virgin Mary reputedly appeared to Saint Bernadette Soubirous in 1858. At the end of the main drive (and in a direct line that connects through 3 statues and the Gold Dome), is a simple, modern stone statue of Mary.',  # noqa: E501
-    "question": "To whom did the Virgin Mary allegedly appear in 1858 in Lourdes France?",  # noqa: E501
-    "answers.text": "Saint Bernadette Soubirous",
-    "answers.answer_start": 515,
+SQUAD_DATASET_INFO = {
+    "dataset_name": "squad",
+    "columns": "id, title, context, question, answers",
+    "dataset_description": "Stanford Question Answering Dataset (SQuAD) is a reading comprehension dataset, consisting of questions posed by crowdworkers on a set of Wikipedia articles, where the answer to every question is a segment of text, or span, from the corresponding reading passage, or the question might be unanswerable.",  # noqa: E501
+    "sample_rows": {
+        "id": "5733be284776f41900661182",
+        "title": "University_of_Notre_Dame",
+        "context": 'Architecturally, the school has a Catholic character. Atop the Main Building\'s gold dome is a golden statue of the Virgin Mary. Immediately in front of the Main Building and facing it, is a copper statue of Christ with arms upraised with the legend "Venite Ad Me Omnes". Next to the Main Building is the Basilica of the Sacred Heart. Immediately behind the basilica is the Grotto, a Marian place of prayer and reflection. It is a replica of the grotto at Lourdes, France where the Virgin Mary reputedly appeared to Saint Bernadette Soubirous in 1858. At the end of the main drive (and in a direct line that connects through 3 statues and the Gold Dome), is a simple, modern stone statue of Mary.',  # noqa: E501
+        "question": "To whom did the Virgin Mary allegedly appear in 1858 in Lourdes France?",  # noqa: E501
+        "answers.text": "Saint Bernadette Soubirous",
+        "answers.answer_start": 515,
+    },
+}
+
+SEARCH_QA_DATASET_INFO = {
+
 }
 
 INSTRUCTION = "Your task is to generate a relevant answer to a given question. You will be provided with context for each question"  # noqa: E501
@@ -123,8 +129,11 @@ def mock_choose_dataset(self, top_datasets: list[DatasetInfo]) -> str | None:
     assert len(top_datasets) == 3
     return top_datasets[0].name
 
+def mock_dataset_reranking(self, dataset_name):
+    return SEARCH_QA_DATASET_INFO
 
-def mock_canonicalize_dataset(self, dataset_name: str, prompt_spec) -> DatasetDict:
+
+def mock_canonicalize_dataset(self, top_dataset_info, task_instruction) -> DatasetDict:
     """Mock the canonicalize_dataset function by constructing a mock dataset."""
     # Given the dataset of
     # [ [0.9, 0, 0],
@@ -133,7 +142,7 @@ def mock_canonicalize_dataset(self, dataset_name: str, prompt_spec) -> DatasetDi
     # and the query
     # [1, 0, 0]
     # we should return the first dataset, which in our test index is search_qa.
-    assert dataset_name == "search_qa"
+    assert top_dataset_info["dataset_name"] == "search_qa"
     mock_dataset = Dataset.from_dict(
         {
             "input_col": [
@@ -155,12 +164,12 @@ def mock_canonicalize_dataset(self, dataset_name: str, prompt_spec) -> DatasetDi
 )
 @patch.object(
     DescriptionDatasetRetriever,
-    "choose_dataset_by_cli",
-    new=mock_choose_dataset,
+    "dataset_reranking",
+    new=mock_dataset_reranking,
 )
 @patch.object(
     DescriptionDatasetRetriever,
-    "canonicalize_dataset_by_cli",
+    "canonicalize_dataset_automatically",
     new=mock_canonicalize_dataset,
 )
 def test_retrieve_dataset_dict_when_search_index_exists(encode_text):
@@ -200,12 +209,12 @@ def test_retrieve_dataset_dict_when_search_index_exists(encode_text):
 )
 @patch.object(
     DescriptionDatasetRetriever,
-    "choose_dataset_by_cli",
-    new=mock_choose_dataset,
+    "dataset_reranking",
+    new=mock_dataset_reranking,
 )
 @patch.object(
     DescriptionDatasetRetriever,
-    "canonicalize_dataset_by_cli",
+    "canonicalize_dataset_automatically",
     new=mock_canonicalize_dataset,
 )
 def test_retrieve_dataset_dict_without_existing_search_index(encode_text):
@@ -251,7 +260,7 @@ def test_automatic_column_selection_correct(mocked_parsing_method):
         input_columns,
         output_column,
     ) = DescriptionDatasetRetriever.automatic_column_selection(
-        INSTRUCTION, DATASET_NAME, DATASET_DESCRIPTION, DATASET_COLUMNS, EXAMPLE_ROWS
+        INSTRUCTION, SQUAD_DATASET_INFO
     )
 
     assert type(input_columns) == list
@@ -269,11 +278,7 @@ def test_automatic_column_selection_unknown_cols(mocked_parsing_method):
     """Check error thrown if there are unknown cols returned in input/output."""
     with pytest.raises(RuntimeError) as exc_info:
         _ = DescriptionDatasetRetriever.automatic_column_selection(
-            INSTRUCTION,
-            DATASET_NAME,
-            DATASET_DESCRIPTION,
-            DATASET_COLUMNS,
-            EXAMPLE_ROWS,
+            INSTRUCTION, SQUAD_DATASET_INFO
         )
         error_info = exc_info.value.args[0]
         assert error_info == "Incorrect columns being parsed"
@@ -287,11 +292,7 @@ def test_automatic_column_selection_without_required_cols(mocked_parsing_method)
     """Check that if input/output columns are missing, an error is thrown."""
     with pytest.raises(StopIteration) as exc_info:
         _ = DescriptionDatasetRetriever.automatic_column_selection(
-            INSTRUCTION,
-            DATASET_NAME,
-            DATASET_DESCRIPTION,
-            DATASET_COLUMNS,
-            EXAMPLE_ROWS,
+            INSTRUCTION, SQUAD_DATASET_INFO
         )
         error_info = exc_info.value.args[0]
         assert error_info == "Maximum number of API calls reached."
@@ -307,11 +308,7 @@ def test_automatic_column_selection_incorrect_number_of_output_cols(
     """Check that if number of input/output columns are wrong, an error is thrown."""
     with pytest.raises(RuntimeError) as exc_info:
         _ = DescriptionDatasetRetriever.automatic_column_selection(
-            INSTRUCTION,
-            DATASET_NAME,
-            DATASET_DESCRIPTION,
-            DATASET_COLUMNS,
-            EXAMPLE_ROWS,
+            INSTRUCTION, SQUAD_DATASET_INFO
         )
         error_info = exc_info.value.args[0]
         assert (

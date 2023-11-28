@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 
-import datasets
 import openai
 
 from prompt2model.utils import api_tools, get_formatted_logger
@@ -54,45 +53,39 @@ def parse_json(
 
 def parse_reranking_results(
     response: openai.Completion,
-) -> tuple:
+) -> dict | None:
     """Parse a formatted string and extract numbers for reranking results.
 
     Args:
-        response_string: A string in the format '[1] > [2] > [3]'.
+        response_string: A string containing three comma separated fields'.
 
     Returns:
-        A list of integers extracted from the string.
+        (dataset_name, config_name, confidence_level) or None
 
-    Raises:
-        ValueError: If the string is not in the expected format.
     """
     response_text = response.choices[0]["message"]["content"]
     print("This is response text: ", response_text)
     fields = [x.strip() for x in response_text[1:-1].split(",")]
-    if len(fields) != 5:
+    if len(fields) != 3:
         logger.warning(
             "Reranking results are not in the right format: number of fields"
         )
         return None
-    dataset_index, dataset_name, config_index, config_name, confidence_level = fields
+    dataset_name, config_name, confidence_level = fields
     CONFIDENCE_LEVELS_ALLOWED = ("low", "medium", "high")
 
     # Check if the entire string matches the expected pattern
-    if (
-        not dataset_index.isdigit()
-        or len(config_index) > 1
-        or not config_index.islower()
-        or ord(config_index) - ord("a") > 5
-        or confidence_level not in CONFIDENCE_LEVELS_ALLOWED
-    ):
+    if confidence_level not in CONFIDENCE_LEVELS_ALLOWED:
         logger.warning(
             "Reranking results are not in the right format: fields are not appropriate"
         )
         return None
 
-    dataset_index = int(dataset_index)
-    config_index = ord(config_index) - ord("a")
-    return (dataset_index, dataset_name, config_index, config_name, confidence_level)
+    return {
+        "dataset_name": dataset_name,
+        "config_name": config_name,
+        "confidence_level": confidence_level,
+    }
 
 
 def parse_prompt_to_fields(
@@ -101,7 +94,7 @@ def parse_prompt_to_fields(
     optional_keys: list = [],
     max_api_calls: int = 5,
     response_type: str = "json",
-) -> dict:
+) -> dict | None:
     """Parse prompt into specific fields, and return to the calling function.
 
     This function calls the required api, has the logic for the retrying,
@@ -117,6 +110,8 @@ def parse_prompt_to_fields(
 
     Returns:
         Parsed Response or throws error
+    Raises:
+        Value Error
     """
     chat_api = api_tools.default_api_agent
     if max_api_calls <= 0:

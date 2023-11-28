@@ -254,13 +254,13 @@ def count_tokens_from_string(string: str, encoding_name: str = "cl100k_base") ->
 
 # This is the default API agent that is used everywhere if a different agent is not
 # specified
-# default_api_agent = APIAgent()
-import os
+default_api_agent = APIAgent()
+# import os
 
-os.environ["AZURE_API_KEY"] = "8060e86df2424c598acaacd0949a5f74"
-os.environ["AZURE_API_BASE"] = "https://vijay-openai.openai.azure.com/"
-os.environ["AZURE_API_VERSION"] = "2023-05-15"
-os.environ["AZURE_API_TYPE"] = "azure"
-model_name = "azure/GPT-3-5-turbo-chat"
+# os.environ["AZURE_API_KEY"] = "8060e86df2424c598acaacd0949a5f74"
+# os.environ["AZURE_API_BASE"] = "https://vijay-openai.openai.azure.com/"
+# os.environ["AZURE_API_VERSION"] = "2023-05-15"
+# os.environ["AZURE_API_TYPE"] = "azure"
+# model_name = "azure/GPT-3-5-turbo-chat"
 
-default_api_agent = APIAgent(model_name=model_name, max_tokens=8000)
+# default_api_agent = APIAgent(model_name=model_name, max_tokens=8000)
