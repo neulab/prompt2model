@@ -4,17 +4,15 @@ from __future__ import annotations  # noqa FI58
 
 import json
 
-METAPROMPT_BASE = """Your objective is to rerank datasets given a task (and few examples of the task) based on relevancy. Relevant factors involve how suited the dataset is for the task, whether the input/output formats of the task and the dataset match. For each dataset, you will be provided with the dataset description, and the configurations available for each dataset. Each configuration will be represented with the config_name, the columns in the dataset, and an example row. Please return a SINGLE tuple with the combination of the most relevant dataset, with the best suited config using their name, along with a confidence level ranging from [low, medium, high] representing how relevant the dataset is to the task. The output format should be a tuple of form (dataset_name,config_name,confidence_level). e.g., (squad,plain_text,low). """  # noqa: E501
+METAPROMPT_BASE = """Your objective is to rerank datasets given a task (and few examples of the task) based on relevancy. Relevant factors involve how suited the dataset is for the task and whether the input/output formats of the task and the dataset data matches. For each dataset, you will be provided with the dataset description, and the configurations available. Each configuration of the dataset will be represented with the config_name, the columns in that configuration, and an example row. Please return a SINGLE tuple of the combination of the most relevant dataset, with the best suited config using their name, along with a confidence level ranging from [low, medium, high] representing how relevant the dataset is to the task. The output format should be a tuple of form (dataset_name,config_name,confidence_level). e.g., (squad,plain_text,low). """  # noqa: E501
 
 INPUT_PROMPT_TEMPLATE = """The following is the task \n {instruction} and these are some examples of the same: {examples} \n
-There are {num} datasets available for this task, each indicated by number identifier []. \n
+There are {num} datasets available for this task. \n
 {datasets}.
 The reranking results of the {num} datasets in (dataset_name,config_name,confidence_level) format is: \n{reranking}"""  # noqa: E501
 
-# ENDING_LINE = "After seeing these examples with the required columns, please provide the relevant columns for this context:"  # noqa: E501
-ENDING_LINE = ""
 DATASET_TEMPLATE = """[{counter}] **{dataset_name}**\n: Description-{dataset_description}.\n. This dataset has the following configs:\n  """  # noqa: E501
-CONFIG_TEMPLATE = """\t[{counter}] **{config_name}**\n: The columns in this config are {dataset_columns}.\n An example row from this config is {sample_row}.\n\n """  # noqa: E501
+CONFIG_TEMPLATE = """\t[{counter}] **{config_name}**\n: The columns in this config are {dataset_columns}.\n An example row from this config is {sample_row}.\n """  # noqa: E501
 
 INCONTEXT_EXAMPLE = """
 An example of this as follows:
@@ -29,7 +27,7 @@ Explanation: This question is based on the following sentence in the passage "He
 Output: What is the alias of the person whose sidekick had a humorous nature?.
 Explanation: This question is based on the following sentence in the passage "Nearing London, Oliver encounters Jack Dawkins, a pickpocket more commonly known by the nickname the "Artful Dodger", and his sidekick, a boy of a humorous nature named Charley Bates". The pronoun "his" refers to a person with multiple names. But since the question explicitly asks for the alias, the answer is unambiguous.
 
-There are 3 datasets available for this task, each indicated by number identifier [].
+There are 3 datasets available for this task.
 
 [1] **facebook/babi_qa**
 : Description-The (20) QA bAbI tasks are a set of proxy tasks that evaluate reading
@@ -42,11 +40,9 @@ can identify (and then rectify)the failings of their systems.
 .
 . This dataset has the following configs:
 
-
         [a] **shuffled-10k-qa1**
 : The columns in this config are story_id, story_type, story_text, story_supporting_ids, story_answer.
  An example row from this config is {"story.id": "[\"1\", \"2\", \"3\", \"4\", \"5\", \"6\", \"7\", \"8\", \"9\", \"10\"...", "story.type": "[0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]", "story.text": "[\"Utxi ybnha qb qzh ptqzxbby.\", \"Hbzm jhmq qb qzh ...", "story.supporting_ids": "[[], [], [\"1\"], [], [], [\"4\"], [], [], [\"4\"], [], ...", "story.answer": "[\"\", \"\", \"ptqzxbby\", \"\", \"\", \"ztuujti\", \"\", \"\", \"z..."}.
-
 
 
         [b] **en-valid-10k-qa1**
@@ -54,17 +50,14 @@ can identify (and then rectify)the failings of their systems.
  An example row from this config is {"story.id": "[\"1\", \"2\", \"3\", \"4\", \"5\", \"6\", \"7\", \"8\", \"9\", \"10\"...", "story.type": "[0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]", "story.text": "[\"Mary moved to the bathroom.\", \"John went to the ...", "story.supporting_ids": "[[], [], [\"1\"], [], [], [\"4\"], [], [], [\"4\"], [], ...", "story.answer": "[\"\", \"\", \"bathroom\", \"\", \"\", \"hallway\", \"\", \"\", \"h..."}.
 
 
-
         [c] **hn-10k-qa1**
 : The columns in this config are story_id, story_type, story_text, story_supporting_ids, story_answer.
  An example row from this config is {"story.id": "[\"1\", \"2\", \"3\", \"4\", \"5\", \"6\", \"7\", \"8\", \"9\", \"10\"...", "story.type": "[0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]", "story.text": "[\"Sita gusalkhaney mein gayi.\", \"Priya sayanakaksh...", "story.supporting_ids": "[[], [], [\"2\"], [], [], [\"5\"], [], [], [\"7\"], [], ...", "story.answer": "[\"\", \"\", \"sayanakaksh\", \"\", \"\", \"rasoi ghar\", \"\", ..."}.
 
 
-
         [d] **en-valid-qa1**
 : The columns in this config are story_id, story_type, story_text, story_supporting_ids, story_answer.
  An example row from this config is {"story.id": "[\"1\", \"2\", \"3\", \"4\", \"5\", \"6\", \"7\", \"8\", \"9\", \"10\"...", "story.type": "[0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]", "story.text": "[\"Mary moved to the bathroom.\", \"John went to the ...", "story.supporting_ids": "[[], [], [\"1\"], [], [], [\"4\"], [], [], [\"4\"], [], ...", "story.answer": "[\"\", \"\", \"bathroom\", \"\", \"\", \"hallway\", \"\", \"\", \"h..."}.
-
 
 
 
@@ -78,13 +71,9 @@ question, perhaps to multiple input positions, and perform discrete operations o
 .
 . This dataset has the following configs:
 
-
         [a] **default**
 : The columns in this config are section_id, query_id, passage, question, answers_spans_spans, answers_spans_types.
  An example row from this config is {"section_id": "\"nfl_2201\"", "query_id": "\"f16c0ee7-f131-4a8b-a6ac-4d275ea68066\"", "passage": "\"To start the season, the Lions traveled south to ...", "question": "\"How many points did the buccaneers need to tie in...", "answers_spans.spans": "[\"3\"]", "answers_spans.types": "[\"number\"]"}.
-
-
-
 
 
 
@@ -94,7 +83,6 @@ Persian Question Answering (PersianQA) Dataset is a reading comprehension datase
 The crowd-sourced dataset consists of more than 9,000 entries. Each entry can be either an impossible to answer or a question with one or more answers spanning in the passage (the context) from which the questioner proposed the question. Much like the SQuAD2.0 dataset, the impossible or unanswerable questions can be utilized to create a system which "knows that it doesn't know the answer".
 .
 . This dataset has the following configs:
-
 
         [a] **persian_qa**
 : The columns in this config are id, title, context, question, answers_text, answers_answer_start.
@@ -106,8 +94,8 @@ The reranking results of the 3 datasets in (dataset_name,config_name,confidence_
 
 (drop,default,medium)
 
-
 """  # noqa: E501
+ENDING_LINE = "After seeing this examples, please provide the reranking of the datasets for this context:"  # noqa: E501
 
 
 def truncate_row(example_row: dict, max_length=50) -> str:
@@ -140,7 +128,7 @@ def build_input(instruction: str, examples: str, datasets_infos) -> str:
                                                     config_name = config["config_name"],
                                                     dataset_columns = config["columns"],
                                                     sample_row = truncate_row(config["sample_row"])
-                                                    )}\n\n"""  # noqa: E501
+                                                    )}\n"""  # noqa: E501
             j += 1
 
         dataset_string += curr_dataset + "\n\n\n"
