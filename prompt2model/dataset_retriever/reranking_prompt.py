@@ -135,7 +135,6 @@ def build_input(instruction: str, examples: str, datasets_infos) -> str:
                                                   )}\n\n"""
         j = 0
         for _, config in dataset_info["configs"].items():
-
             curr_dataset += f"""{CONFIG_TEMPLATE.format(
                                                     counter = chr(ord('a')+j),
                                                     config_name = config["config_name"],

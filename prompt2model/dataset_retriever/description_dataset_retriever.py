@@ -18,14 +18,14 @@ from prompt2model.dataset_retriever.column_selection_prompt import (
 from prompt2model.dataset_retriever.reranking_prompt import (
     construct_prompt_for_dataset_reranking,
 )
-from prompt2model.dataset_retriever.retrieve_dataset_info_w_configs import (
+from prompt2model.prompt_parser import PromptSpec
+from prompt2model.utils import encode_text, retrieve_objects
+from prompt2model.utils.dataset_retriever_utils import (
     fetch_first_row_with_timeout,
     flatten_dict,
     get_dataset_validity,
     replace_duplicate_columns,
 )
-from prompt2model.prompt_parser import PromptSpec
-from prompt2model.utils import encode_text, retrieve_objects
 from prompt2model.utils.dataset_utils import get_dataset_size
 from prompt2model.utils.parse_responses import parse_prompt_to_fields
 
@@ -175,7 +175,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             {"input_col": input_col, "output_col": output_col}
         )
 
-    def get_configs_info(self, dataset_name):
+    def get_configs_info(self, dataset_name: str) -> dict:
         """Get atmost 5 configs (and their information) for a given dataset."""
         config_names = datasets.get_dataset_config_names(dataset_name)
         if len(config_names) > 5:
@@ -185,7 +185,6 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
         all_config_infos = {}
         for config_name in config_names:
-
             if "train" not in datasets.get_dataset_split_names(
                 dataset_name, config_name
             ):
@@ -218,7 +217,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
         return all_config_infos
 
-    def get_dataset_info(self, dataset_name):
+    def get_dataset_info(self, dataset_name: str) -> dict | None:
         """Get information for a given dataset."""
         try:
             if not get_dataset_validity(dataset_name):
@@ -240,6 +239,20 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             print(f"Error processing {dataset_name}: {e}")
             return None
         return dataset_information
+
+    def get_all_dataset_infos(self, dataset_list: list[DatasetInfo]) -> dict:
+        """Iterate and get info about all datasets retrived."""
+        dataset_info_dict = {}
+        unique_descriptions = set()
+
+        for dataset in dataset_list:
+            dataset_name = dataset.name
+            info = self.get_dataset_info(dataset_name)
+            if info is None or info["dataset_description"] in unique_descriptions:
+                continue
+            dataset_info_dict[dataset_name] = info
+            unique_descriptions.add(info["dataset_description"])
+        return dataset_info_dict
 
     @staticmethod
     def automatic_column_selection(
@@ -321,7 +334,11 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                     )
             self._print_divider()
 
-        dataset_info = self.get_dataset_info(dataset_name)["configs"][chosen_config]
+        dataset_info = self.get_dataset_info(dataset_name)
+        if dataset_info is None:
+            return None
+        dataset_info = dataset_info["configs"][chosen_config]
+        assert dataset_info is not None
         try:
             input_columns, output_column = self.automatic_column_selection(
                 prompt_spec.instruction, dataset_info
@@ -387,34 +404,29 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             raise ValueError("No datasets retrieved from search index.")
         return sorted_list
 
-    def dataset_reranking(self, dataset_list, prompt_spec):
+    def dataset_reranking(
+        self, dataset_list: list[DatasetInfo], prompt_spec: PromptSpec
+    ):
         """Rerank the datasets returned by the dataset_retriever.
 
         Args:
             dataset_list: List of DatasetInfos, as returned by the retriever
             prompt_spec: prompt whose instruction field we use to retrieve datasets.
+
         Returns:
             The most relevant dataset (with the most relevant configuration)
             from the list of available datasets.
         """
         print("Starting dataset reranking...")
-        dataset_info_dict = {}
-        unique_descriptions = set()
+        dataset_info_dict = self.get_all_dataset_infos(dataset_list)
 
-        for dataset in dataset_list:
-            dataset_name = dataset.name
-            info = self.get_dataset_info(dataset_name)
-            if info is None or info["dataset_description"] in unique_descriptions:
-                continue
-            dataset_info_dict[dataset_name] = info
-            unique_descriptions.add(info["dataset_description"])
         if len(dataset_info_dict.keys()) == 0:
             return None  # All datasets private/took too long to be retrieved
         prompt = construct_prompt_for_dataset_reranking(
             prompt_spec.instruction, prompt_spec.examples, dataset_info_dict
         )
-        print(prompt)
         response = parse_prompt_to_fields(prompt=prompt, response_type="rerank")
+
         dataset_name, config_name, confidence_level = (
             response["dataset_name"],
             response["config_name"],
@@ -431,7 +443,9 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
         return dataset_info_dict[dataset_name]["configs"][config_name]
 
-    def canonicalize_dataset_automatically(self, top_dataset_info, task_instruction):
+    def canonicalize_dataset_automatically(
+        self, top_dataset_info: dict, task_instruction: str
+    ):
         """Use existing functions to canonicalize dataset (instead of using cli).
 
         Args:

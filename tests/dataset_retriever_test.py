@@ -2,6 +2,7 @@
 
 from __future__ import annotations  # noqa FI58
 
+import json
 import os
 import pickle
 import tempfile
@@ -17,36 +18,23 @@ from test_helpers import MockCompletion, create_test_search_index
 
 # The following variables are specifically for the
 # four automatic column selection tests.
-SQUAD_DATASET_INFO = {
-    "dataset_name": "squad",
-    "columns": "id, title, context, question, answers",
-    "dataset_description": "Stanford Question Answering Dataset (SQuAD) is a reading comprehension dataset, consisting of questions posed by crowdworkers on a set of Wikipedia articles, where the answer to every question is a segment of text, or span, from the corresponding reading passage, or the question might be unanswerable.",  # noqa: E501
-    "sample_rows": {
-        "id": "5733be284776f41900661182",
-        "title": "University_of_Notre_Dame",
-        "context": 'Architecturally, the school has a Catholic character. Atop the Main Building\'s gold dome is a golden statue of the Virgin Mary. Immediately in front of the Main Building and facing it, is a copper statue of Christ with arms upraised with the legend "Venite Ad Me Omnes". Next to the Main Building is the Basilica of the Sacred Heart. Immediately behind the basilica is the Grotto, a Marian place of prayer and reflection. It is a replica of the grotto at Lourdes, France where the Virgin Mary reputedly appeared to Saint Bernadette Soubirous in 1858. At the end of the main drive (and in a direct line that connects through 3 statues and the Gold Dome), is a simple, modern stone statue of Mary.',  # noqa: E501
-        "question": "To whom did the Virgin Mary allegedly appear in 1858 in Lourdes France?",  # noqa: E501
-        "answers.text": "Saint Bernadette Soubirous",
-        "answers.answer_start": 515,
-    },
-}
-
-SEARCH_QA_DATASET_INFO = {
-
-}
-
 INSTRUCTION = "Your task is to generate a relevant answer to a given question. You will be provided with context for each question"  # noqa: E501
-GPT3_RESPONSE_CORRECT = MockCompletion(
+GPT3_RESPONSE_COL_SELECTION_CORRECT = MockCompletion(
     """{\n        \"input\": [\"context\", \"question\"],\n        \"output\": [\"answers\"],\n        \"irrelevant\": [\"id\", \"title\"],\n        \"ambiguous\": []\n}"""  # noqa: E501
 )
-GPT3_RESPONSE_WITHOUT_REQUIRED_COLS = MockCompletion(
+GPT3_RESPONSE_COL_SELECTION_WITHOUT_REQUIRED_COLS = MockCompletion(
     """{\n       \"output\": [\"answers\"],\n        \"irrelevant\": [\"id\", \"title\"],\n        \"ambiguous\": []\n}"""  # noqa: E501
 )
-GPT3_RESPONSE_WITH_UNKNOWN_COLS = MockCompletion(
+GPT3_RESPONSE_COL_SELECTION_WITH_UNKNOWN_COLS = MockCompletion(
     """{\n   \"input\": [\"comprehension\", \"question\"],\n     \"output\": [\"answers\"],\n        \"irrelevant\": [\"id\", \"title\"],\n        \"ambiguous\": []\n}"""  # noqa: E501
 )
-GPT3_RESPONSE_WITH_MORE_THAN_ONE_OUTPUT = MockCompletion(
+GPT3_RESPONSE_COL_SELECTION_WITH_MORE_THAN_ONE_OUTPUT = MockCompletion(
     """{\n   \"input\": [\"context\", \"question\"],\n     \"output\": [\"answers\", \"title\"],\n        \"irrelevant\": [\"id\", \"title\"],\n        \"ambiguous\": []\n}"""  # noqa: E501
+)
+
+GPT3_RESPONSE_DATASET_RERANKING_CORRECT = MockCompletion("""[squad,plain_text,high]""")
+GPT3_RESPONSE_DATASET_RERANKING_HALLUCINATES_CONFIG = MockCompletion(
+    """[squad,not_a_config,high]"""
 )
 
 TINY_DUAL_ENCODER_NAME = "google/bert_uncased_L-2_H-128_A-2"
@@ -81,6 +69,85 @@ def test_encode_model_retriever():
         with open(temporary_file, "rb") as f:
             model_vectors, _ = pickle.load(f)
         assert model_vectors.shape == (3, 128)
+
+
+def util_get_squad_dataset_info():
+    """Utilitiy function for returning sqauad dataset object."""
+    with open("test_helpers/dataset_index_w_configs_tiny.json", "r") as f:
+        dataset_info_dict = json.load(f)
+    return dataset_info_dict["squad"]["configs"]["plain_text"]
+
+
+SQUAD_DATASET_INFO = util_get_squad_dataset_info()
+
+
+@patch(
+    "prompt2model.utils.APIAgent.generate_one_completion",
+    side_effect=[GPT3_RESPONSE_COL_SELECTION_CORRECT],
+)
+def test_automatic_column_selection_correct(mocked_parsing_method):
+    """Check that normal automatic column selection runs fine."""
+    expected_input_columns = ["context", "question"]
+    expected_output_column = "answers"
+    (
+        input_columns,
+        output_column,
+    ) = DescriptionDatasetRetriever.automatic_column_selection(
+        INSTRUCTION, SQUAD_DATASET_INFO
+    )
+
+    assert type(input_columns) == list
+    assert input_columns == expected_input_columns
+
+    assert type(output_column) == str
+    assert output_column == expected_output_column
+
+
+@patch(
+    "prompt2model.utils.APIAgent.generate_one_completion",
+    side_effect=[GPT3_RESPONSE_COL_SELECTION_WITH_UNKNOWN_COLS],
+)
+def test_automatic_column_selection_unknown_cols(mocked_parsing_method):
+    """Check error thrown if there are unknown cols returned in input/output."""
+    with pytest.raises(RuntimeError) as exc_info:
+        _ = DescriptionDatasetRetriever.automatic_column_selection(
+            INSTRUCTION, SQUAD_DATASET_INFO
+        )
+        error_info = exc_info.value.args[0]
+        assert error_info == "Incorrect columns being parsed"
+
+
+@patch(
+    "prompt2model.utils.APIAgent.generate_one_completion",
+    side_effect=[GPT3_RESPONSE_COL_SELECTION_WITHOUT_REQUIRED_COLS],
+)
+def test_automatic_column_selection_without_required_cols(mocked_parsing_method):
+    """Check that if input/output columns are missing, an error is thrown."""
+    with pytest.raises(StopIteration) as exc_info:
+        _ = DescriptionDatasetRetriever.automatic_column_selection(
+            INSTRUCTION, SQUAD_DATASET_INFO
+        )
+        error_info = exc_info.value.args[0]
+        assert error_info == "Maximum number of API calls reached."
+
+
+@patch(
+    "prompt2model.utils.APIAgent.generate_one_completion",
+    side_effect=[GPT3_RESPONSE_COL_SELECTION_WITH_MORE_THAN_ONE_OUTPUT],
+)
+def test_automatic_column_selection_incorrect_number_of_output_cols(
+    mocked_parsing_method,
+):
+    """Check that if number of input/output columns are wrong, an error is thrown."""
+    with pytest.raises(RuntimeError) as exc_info:
+        _ = DescriptionDatasetRetriever.automatic_column_selection(
+            INSTRUCTION, SQUAD_DATASET_INFO
+        )
+        error_info = exc_info.value.args[0]
+        assert (
+            error_info
+            == "Input columns length was less than 1 or output column length was not 1"
+        )
 
 
 def test_canonicalize_dataset_using_columns():
@@ -129,8 +196,55 @@ def mock_choose_dataset(self, top_datasets: list[DatasetInfo]) -> str | None:
     assert len(top_datasets) == 3
     return top_datasets[0].name
 
-def mock_dataset_reranking(self, dataset_name):
-    return SEARCH_QA_DATASET_INFO
+
+def mock_get_all_dataset_infos(self, dataset_list):
+    """Mock getting dataset info by reading from a tiny file instead."""
+    with open("test_helpers/dataset_index_w_configs_tiny.json", "r") as f:
+        dataset_info_dict = json.load(f)
+    return dataset_info_dict
+
+
+@patch.object(
+    DescriptionDatasetRetriever,
+    "get_all_dataset_infos",
+    new=mock_get_all_dataset_infos,
+)
+@patch(
+    "prompt2model.utils.APIAgent.generate_one_completion",
+    side_effect=[GPT3_RESPONSE_DATASET_RERANKING_CORRECT],
+)
+def test_dataset_reranking_correct(mocked_parsing_method):
+    """Test correct working of dataset reranking."""
+    prompt_spec = MockPromptSpec(
+        task_type=TaskType.TEXT_GENERATION, instruction=INSTRUCTION
+    )
+    dataset_info = DescriptionDatasetRetriever().dataset_reranking([], prompt_spec)
+    assert dataset_info is not None
+    assert dataset_info["dataset_name"] == "squad"
+    assert dataset_info["config_name"] == "plain_text"
+    other_required_keys = ["dataset_description", "columns", "sample_row"]
+
+    assert all(
+        [key in dataset_info for key in other_required_keys]
+    ), "Not all required keys are present in the dictionary"
+
+
+@patch(
+    "prompt2model.utils.APIAgent.generate_one_completion",
+    side_effect=[GPT3_RESPONSE_DATASET_RERANKING_HALLUCINATES_CONFIG],
+)
+def test_dataset_reranking_hallucinate_config(mocked_parsing_method):
+    """Check if dataset reranking returns None if LLM hallucinates config name."""
+    prompt_spec = MockPromptSpec(
+        task_type=TaskType.TEXT_GENERATION, instruction=INSTRUCTION
+    )
+    dataset_info = DescriptionDatasetRetriever().dataset_reranking([], prompt_spec)
+    assert dataset_info is None
+
+
+def mock_dataset_reranking(self, dataset_list, prompt_spec):
+    """Mock dataset reranking by just returning squad dataset."""
+    return SQUAD_DATASET_INFO
 
 
 def mock_canonicalize_dataset(self, top_dataset_info, task_instruction) -> DatasetDict:
@@ -142,7 +256,7 @@ def mock_canonicalize_dataset(self, top_dataset_info, task_instruction) -> Datas
     # and the query
     # [1, 0, 0]
     # we should return the first dataset, which in our test index is search_qa.
-    assert top_dataset_info["dataset_name"] == "search_qa"
+    assert top_dataset_info["dataset_name"] == "squad"
     mock_dataset = Dataset.from_dict(
         {
             "input_col": [
@@ -246,72 +360,3 @@ def test_retrieve_dataset_dict_without_existing_search_index(encode_text):
                 == "question: What class of animals are pandas.\ncontext: Pandas are mammals."  # noqa E501
             )
             assert split[0]["output_col"] == "mammals"
-
-
-@patch(
-    "prompt2model.utils.APIAgent.generate_one_completion",
-    side_effect=[GPT3_RESPONSE_CORRECT],
-)
-def test_automatic_column_selection_correct(mocked_parsing_method):
-    """Check that normal automatic column selection runs fine."""
-    expected_input_columns = ["context", "question"]
-    expected_output_column = "answers"
-    (
-        input_columns,
-        output_column,
-    ) = DescriptionDatasetRetriever.automatic_column_selection(
-        INSTRUCTION, SQUAD_DATASET_INFO
-    )
-
-    assert type(input_columns) == list
-    assert input_columns == expected_input_columns
-
-    assert type(output_column) == str
-    assert output_column == expected_output_column
-
-
-@patch(
-    "prompt2model.utils.APIAgent.generate_one_completion",
-    side_effect=[GPT3_RESPONSE_WITH_UNKNOWN_COLS],
-)
-def test_automatic_column_selection_unknown_cols(mocked_parsing_method):
-    """Check error thrown if there are unknown cols returned in input/output."""
-    with pytest.raises(RuntimeError) as exc_info:
-        _ = DescriptionDatasetRetriever.automatic_column_selection(
-            INSTRUCTION, SQUAD_DATASET_INFO
-        )
-        error_info = exc_info.value.args[0]
-        assert error_info == "Incorrect columns being parsed"
-
-
-@patch(
-    "prompt2model.utils.APIAgent.generate_one_completion",
-    side_effect=[GPT3_RESPONSE_WITHOUT_REQUIRED_COLS],
-)
-def test_automatic_column_selection_without_required_cols(mocked_parsing_method):
-    """Check that if input/output columns are missing, an error is thrown."""
-    with pytest.raises(StopIteration) as exc_info:
-        _ = DescriptionDatasetRetriever.automatic_column_selection(
-            INSTRUCTION, SQUAD_DATASET_INFO
-        )
-        error_info = exc_info.value.args[0]
-        assert error_info == "Maximum number of API calls reached."
-
-
-@patch(
-    "prompt2model.utils.APIAgent.generate_one_completion",
-    side_effect=[GPT3_RESPONSE_WITH_MORE_THAN_ONE_OUTPUT],
-)
-def test_automatic_column_selection_incorrect_number_of_output_cols(
-    mocked_parsing_method,
-):
-    """Check that if number of input/output columns are wrong, an error is thrown."""
-    with pytest.raises(RuntimeError) as exc_info:
-        _ = DescriptionDatasetRetriever.automatic_column_selection(
-            INSTRUCTION, SQUAD_DATASET_INFO
-        )
-        error_info = exc_info.value.args[0]
-        assert (
-            error_info
-            == "Input columns length was less than 1 or output column length was not 1"
-        )

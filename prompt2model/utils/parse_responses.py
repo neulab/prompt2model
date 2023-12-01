@@ -94,7 +94,7 @@ def parse_prompt_to_fields(
     optional_keys: list = [],
     max_api_calls: int = 5,
     response_type: str = "json",
-) -> dict | None:
+) -> dict:
     """Parse prompt into specific fields, and return to the calling function.
 
     This function calls the required api, has the logic for the retrying,
