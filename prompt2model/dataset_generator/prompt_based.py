@@ -32,18 +32,19 @@ logger = get_formatted_logger("DatasetGenerator")
 
 @dataclass(frozen=True)
 class Example:
-    """An example from a dataset, containing input and output columns."""
+    """An example from a dataset, containing input, explanation and output columns."""
 
     input_col: str
+    explain_col: str
     output_col: str
 
     def __eq__(self, other) -> bool:
         """Example equality."""
-        return self.input_col == other.input_col and self.output_col == other.output_col
+        return self.input_col == other.input_col and self.output_col == other.output_col and self.explain_col == other.explain_col
 
     def __lt__(self, other) -> bool:
         """Example less than."""
-        return self.input_col < other.input_col or self.output_col < other.output_col
+        return self.input_col < other.input_col or self.output_col < other.output_col or self.explain_col < other.explain_col
 
 
 class PromptBasedDatasetGenerator(DatasetGenerator):
@@ -169,7 +170,7 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
                 )
                 for example in random_examples:
                     low_quality_example_string += (
-                        f'input="{example.input_col}"\noutput="{example.output_col}"\n'
+                        f'input="{example.input_col}"\nexplanation="{example.explain_col}"\noutput="{example.output_col}"\n'
                     )
             # To increase the diversity of the prompt to DatasetGenerator, create three
             # prompt templates, COMPLEX, MIDDLE, and SIMPLE. The COMPLEX template
@@ -231,9 +232,11 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
         filtered_examples = []
 
         input_output_map: dict[str, Counter] = defaultdict(Counter)
+        output_explain_map = defaultdict(list)
 
         for ex in generated_examples:
             input_output_map[ex.input_col][ex.output_col] += 1
+            output_explain_map[ex.output_col].append(ex.explain_col)
 
         for input_str, output_counter in input_output_map.items():
             most_common_count = output_counter.most_common(1)[0][1]
@@ -252,7 +255,7 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
             most_frequent_outputs.sort(key=len)
             final_output = most_frequent_outputs[0]
 
-            filtered_examples.append(Example(input_str, final_output))
+            filtered_examples.append(Example(input_str, random.choice(output_explain_map[final_output]),final_output))
         return filtered_examples
 
     def compute_batch_size(self, num_examples: int, generated_dataset_size: int) -> int:
@@ -318,7 +321,7 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
                         logger.warning(f"Error happened parsing API choice: {choice}")
                         continue
                         # If the response is not a valid JSON object, discard it.
-                    required_keys = ["input", "output"]
+                    required_keys = ["input", "explanation", "output"]
                     missing_keys = [
                         key for key in required_keys if key not in response_json
                     ]
@@ -328,15 +331,17 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
                         )
                         continue
                     input = str(response_json["input"]).strip()
+                    explanation = str(response_json["explanation"]).strip()
                     output = str(response_json["output"]).strip()
-                    if input != "" and output != "":
-                        generated_examples.append(Example(input, output))
+                    if input != "" and explanation != "" and output != "":
+                        generated_examples.append(Example(input, explanation, output))
                     else:
                         logger.info(
                             "Empty input or output ditected. Discard this example."
                         )
                         continue
                     logger.info(f"input: \n\n{input}\n\n")
+                    logger.info(f"explanation: \n\n{explanation}\n\n")
                     logger.info(f"output: \n\n{output}\n\n")
             except Exception:
                 logger.warning(
@@ -466,6 +471,7 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
         return Dataset.from_dict(
             {
                 "input_col": [ex.input_col for ex in generated_examples],
+                "explain_col": [ex.explain_col for ex in generated_examples],
                 "output_col": [ex.output_col for ex in generated_examples],
             }
         )
