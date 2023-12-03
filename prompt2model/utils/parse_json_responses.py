@@ -106,6 +106,7 @@ def parse_prompt_to_fields(
 def make_request_from_prompt(
     prompt: str,
     max_api_calls: int = 5,
+    role: str = "user",
 ) -> str:
     """Make request from prompt, and return the generated response.
 
@@ -135,6 +136,7 @@ def make_request_from_prompt(
                     temperature=0.01,
                     presence_penalty=0,
                     frequency_penalty=0,
+                    role=role,
                 )
             )
             if response is not None:

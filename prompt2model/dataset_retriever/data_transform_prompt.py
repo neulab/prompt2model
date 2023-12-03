@@ -112,12 +112,12 @@ def truncate_row(example_row: dict, max_length=200) -> str:
 
 
 def construct_prompt_for_plan(
-    task_description: str, dataset_row: dict, example: str
+    task_description: str, dataset: dict, example: str
 ) -> str:
     """Construct prompt for plan."""
     return CREATE_PLAN_PROMPT.format(
         task_description=task_description,
-        dataset_row=truncate_row(dataset_row),
+        dataset_row=truncate_row(dataset[0]),
         example=example,
     )
 
