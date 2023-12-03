@@ -131,6 +131,8 @@ class BaseProcessor(ABC):
             datasets.DatasetDict: A dictionary containing the `train`,
                 `val`, and `test` datasets.
         """
+        if "train" in dataset:
+            dataset = dataset["train"]
         num_of_examples = len(dataset)
         train_num = int(train_proportion * num_of_examples)
         val_num = int(val_proportion * num_of_examples)
