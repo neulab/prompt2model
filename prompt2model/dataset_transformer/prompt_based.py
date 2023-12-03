@@ -45,6 +45,9 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         outputs: list[str],
     ) -> datasets.DatasetDict:
         """Canonicalize a dataset into a suitable text-to-text format."""
+        assert len(inputs) > 0
+        assert len(inputs) == len(outputs)
+
         dataset_dict = {}
         dataset_dict["train"] = datasets.Dataset.from_dict(
             {"input_col": inputs, "output_col": outputs}
