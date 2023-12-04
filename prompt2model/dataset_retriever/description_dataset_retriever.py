@@ -34,7 +34,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         self,
         search_index_path: str = "huggingface_data/huggingface_datasets/"
         + "huggingface_datasets_datafinder_index",
-        first_stage_search_depth: int = 800,
+        first_stage_search_depth: int = 1000,
         max_search_depth: int = 25,
         encoder_model_name: str = "viswavi/datafinder-huggingface-prompt-queries",
         dataset_info_file: str = "huggingface_data/huggingface_datasets/"
