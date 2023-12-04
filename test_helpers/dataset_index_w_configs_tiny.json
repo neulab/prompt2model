@@ -29,7 +29,7 @@
                 "dataset_name": "squad"
             }
         },
-        "dataset_description": "Stanford Question Answering Dataset (SQuAD) is a reading comprehension dataset, consisting of questions posed by crowdworkers on a set of Wikipedia articles, where the answer to every question is a segment of text, or span, from the corresponding reading passage, or the question might be unanswerable.\n"
+        "description": "Stanford Question Answering Dataset (SQuAD) is a reading comprehension dataset, consisting of questions posed by crowdworkers on a set of Wikipedia articles, where the answer to every question is a segment of text, or span, from the corresponding reading passage, or the question might be unanswerable.\n"
     },
     "wiki_qa": {
         "dataset_name": "wiki_qa",
@@ -55,7 +55,7 @@
                 "dataset_name": "wiki_qa"
             }
         },
-        "dataset_description": "Wiki Question Answering corpus from Microsoft\n"
+        "description": "Wiki Question Answering corpus from Microsoft\n"
     },
     "trivia_qa": {
         "dataset_name": "trivia_qa",
@@ -219,7 +219,7 @@
                 "dataset_name": "trivia_qa"
             }
         },
-        "dataset_description": "TriviaqQA is a reading comprehension dataset containing over 650K\nquestion-answer-evidence triples. TriviaqQA includes 95K question-answer\npairs authored by trivia enthusiasts and independently gathered evidence\ndocuments, six per question on average, that provide high quality distant\nsupervision for answering the questions.\n"
+        "description": "TriviaqQA is a reading comprehension dataset containing over 650K\nquestion-answer-evidence triples. TriviaqQA includes 95K question-answer\npairs authored by trivia enthusiasts and independently gathered evidence\ndocuments, six per question on average, that provide high quality distant\nsupervision for answering the questions.\n"
     },
     "daily_dialog": {
         "dataset_name": "daily_dialog",
@@ -274,7 +274,7 @@
                 "dataset_name": "daily_dialog"
             }
         },
-        "dataset_description": "We develop a high-quality multi-turn dialog dataset, DailyDialog, which is intriguing in several aspects.\nThe language is human-written and less noisy. The dialogues in the dataset reflect our daily communication way\nand cover various topics about our daily life. We also manually label the developed dataset with communication\nintention and emotion information. Then, we evaluate existing approaches on DailyDialog dataset and hope it\nbenefit the research field of dialog systems.\n"
+        "description": "We develop a high-quality multi-turn dialog dataset, DailyDialog, which is intriguing in several aspects.\nThe language is human-written and less noisy. The dialogues in the dataset reflect our daily communication way\nand cover various topics about our daily life. We also manually label the developed dataset with communication\nintention and emotion information. Then, we evaluate existing approaches on DailyDialog dataset and hope it\nbenefit the research field of dialog systems.\n"
     },
     "lmqg/qag_squad": {
         "dataset_name": "lmqg/qag_squad",
@@ -310,6 +310,6 @@
                 "dataset_name": "lmqg/qag_squad"
             }
         },
-        "dataset_description": "Question & answer generation dataset based on SQuAD."
+        "description": "Question & answer generation dataset based on SQuAD."
     }
 }

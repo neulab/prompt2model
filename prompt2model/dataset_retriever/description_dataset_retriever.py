@@ -20,12 +20,6 @@ from prompt2model.dataset_retriever.reranking_prompt import (
 )
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import encode_text, retrieve_objects
-from prompt2model.utils.dataset_retriever_utils import (
-    fetch_first_row_with_timeout,
-    flatten_dict,
-    get_dataset_validity,
-    replace_duplicate_columns,
-)
 from prompt2model.utils.dataset_utils import get_dataset_size
 from prompt2model.utils.parse_responses import parse_prompt_to_fields
 
@@ -40,7 +34,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         self,
         search_index_path: str = "huggingface_data/huggingface_datasets/"
         + "huggingface_datasets_datafinder_index",
-        first_stage_search_depth: int = 1000,
+        first_stage_search_depth: int = 800,
         max_search_depth: int = 25,
         encoder_model_name: str = "viswavi/datafinder-huggingface-prompt-queries",
         dataset_info_file: str = "huggingface_data/huggingface_datasets/"
@@ -48,6 +42,8 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         device: torch.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         ),
+        max_number_of_dataset_rows=3000,
+        allow_gated_datasets=False,
     ):
         """Initialize a dual-encoder retriever against a search index.
 
@@ -58,6 +54,8 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             encoder_model_name: The name of the model to use for the dual-encoder.
             dataset_info_file: The file containing dataset names and descriptions.
             device: The device to use for encoding text for our dual-encoder model.
+            max_number_of_dataset_rows: Limit the number of rows for large datasets.
+            allow_gated_datasets: Use only if the user explicitly wants gated datasets
         """
         self.search_index_path = search_index_path
         self.first_stage_search_depth = first_stage_search_depth
@@ -65,6 +63,8 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         self.encoder_model_name = encoder_model_name
         self.device = device
         self.dataset_info_file = dataset_info_file
+        self.max_number_of_dataset_rows = max_number_of_dataset_rows
+        self.allow_gated_datasets = allow_gated_datasets
         self.initialize_search_index()
 
     def initialize_search_index(self) -> None:
@@ -160,11 +160,12 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         dataset_split: datasets.Dataset,
         input_columns: list[str],
         output_column: str,
+        max_number_of_rows: int,
     ) -> datasets.DatasetDict:
         """Canonicalize a single dataset split into a suitable text-to-text format."""
         input_col = []
         output_col = []
-        for i in range(len(dataset_split)):
+        for i in range(min(len(dataset_split), max_number_of_rows)):
             curr_string = ""
             for col in input_columns:
                 curr_string += f"{col}: {dataset_split[i][col]}\n"
@@ -175,83 +176,31 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             {"input_col": input_col, "output_col": output_col}
         )
 
-    def get_configs_info(self, dataset_name: str) -> dict:
-        """Get atmost 5 configs (and their information) for a given dataset."""
-        config_names = datasets.get_dataset_config_names(dataset_name)
-        if len(config_names) > 5:
-            config_names = random.sample(
-                config_names, 5
-            )  # Loading more configs would take really long
-
-        all_config_infos = {}
-        for config_name in config_names:
-            if "train" not in datasets.get_dataset_split_names(
-                dataset_name, config_name
-            ):
-                continue
-            dataset = datasets.load_dataset(
-                dataset_name, config_name, split="train", streaming=True
-            )
-            sample_rows = fetch_first_row_with_timeout(dataset)
-            if sample_rows is None:
-                continue
-            sample_rows = flatten_dict(sample_rows)
-            if any(
-                "ImageFile" in sample_rows[key].__class__.__name__
-                or "DateTime" in sample_rows[key].__class__.__name__
-                for key in sample_rows
-            ):
-                continue  # We dont want to handle image or DT datasets.
-            columns, columns_mapping = replace_duplicate_columns(sample_rows.keys())
-
-            columns = ", ".join(columns)
-            all_config_infos[config_name] = {
-                "config_name": config_name,
-                "sample_row": sample_rows,
-                "columns": columns,
-                "columns_mapping": columns_mapping,
-                "dataset_description": dataset.info.description,
-                "dataset_name": dataset_name,
-            }
-            del dataset
-
-        return all_config_infos
-
-    def get_dataset_info(self, dataset_name: str) -> dict | None:
-        """Get information for a given dataset."""
-        try:
-            if not get_dataset_validity(dataset_name):
-                return None
-            configs = self.get_configs_info(dataset_name)
-            if len(configs) == 0:
-                return None
-            # Configs dont have different descriptions from the original dataset,even
-            # for datasets like glue, so we just use description
-            # of from the first config
-            dataset_information = {
-                "dataset_name": dataset_name,
-                "configs": configs,
-                "dataset_description": configs[next(iter(configs))][
-                    "dataset_description"
-                ],
-            }
-        except Exception as e:
-            print(f"Error processing {dataset_name}: {e}")
-            return None
-        return dataset_information
-
-    def get_all_dataset_infos(self, dataset_list: list[DatasetInfo]) -> dict:
+    def get_all_dataset_infos(self, dataset_list: list[str]) -> dict:
         """Iterate and get info about all datasets retrived."""
-        dataset_info_dict = {}
-        unique_descriptions = set()
+        with open(
+            "huggingface_data/huggingface_datasets/updated_dataset_index_file.json", "r"
+        ) as f:
+            available_datasets = json.load(f)
 
-        for dataset in dataset_list:
-            dataset_name = dataset.name
-            info = self.get_dataset_info(dataset_name)
-            if info is None or info["dataset_description"] in unique_descriptions:
+        for dataset_name in dataset_list:
+            if dataset_name not in available_datasets:
                 continue
-            dataset_info_dict[dataset_name] = info
-            unique_descriptions.add(info["dataset_description"])
+            if (
+                available_datasets[dataset_name]["is_gated"]
+                != self.allow_gated_datasets
+            ):
+                continue
+            curr_dataset = available_datasets[dataset_name]
+            if len(curr_dataset["configs"]) > 5:
+                curr_dataset["configs"] = dict(
+                    random.sample(list(curr_dataset["configs"].items()), 5)
+                )
+        dataset_info_dict = {
+            dataset_name: available_datasets[dataset_name]
+            for dataset_name in dataset_list
+            if dataset_name in available_datasets
+        }
         return dataset_info_dict
 
     @staticmethod
@@ -300,7 +249,10 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         dataset_dict = {}
         for split in dataset:
             dataset_dict[split] = self.canonicalize_dataset_using_columns_for_split(
-                dataset[split], input_columns, output_columns
+                dataset[split],
+                input_columns,
+                output_columns,
+                self.max_number_of_dataset_rows,
             )
         return datasets.DatasetDict(dataset_dict)
 
@@ -334,7 +286,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                     )
             self._print_divider()
 
-        dataset_info = self.get_dataset_info(dataset_name)
+        dataset_info = self.get_all_dataset_infos([dataset_name])[dataset_name]
         if dataset_info is None:
             return None
         dataset_info = dataset_info["configs"][chosen_config]
@@ -365,7 +317,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
     def retrieve_top_datasets(
         self,
         prompt_spec: PromptSpec,
-    ) -> list[DatasetInfo]:
+    ) -> list[str]:
         """Retrieve the top datasets for a prompt.
 
         Specifically, the datasets are scored using a dual-encoder retriever model
@@ -382,6 +334,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             text_to_encode=prompt_spec.instruction,
             device=self.device,
         )
+
         ranked_list = retrieve_objects(
             query_vector,
             self.search_index_path,
@@ -402,11 +355,10 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         ]
         if len(sorted_list) == 0:
             raise ValueError("No datasets retrieved from search index.")
-        return sorted_list
+        dataset_names = [x.name for x in sorted_list]
+        return dataset_names
 
-    def dataset_reranking(
-        self, dataset_list: list[DatasetInfo], prompt_spec: PromptSpec
-    ):
+    def dataset_reranking(self, dataset_list: list[str], prompt_spec: PromptSpec):
         """Rerank the datasets returned by the dataset_retriever.
 
         Args:
@@ -417,7 +369,6 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             The most relevant dataset (with the most relevant configuration)
             from the list of available datasets.
         """
-        print("Starting dataset reranking...")
         dataset_info_dict = self.get_all_dataset_infos(dataset_list)
 
         if len(dataset_info_dict.keys()) == 0:
@@ -432,13 +383,16 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             response["config_name"],
             response["confidence_level"],
         )
-
         if (
             dataset_name not in dataset_info_dict
             or config_name not in dataset_info_dict[dataset_name]["configs"]
-            or confidence_level == "low"
         ):
+            logger.warning("LLM hallucinated dataset/config name")
             return None  # None of the datasets are relevant
+        if confidence_level == "low":
+            logger.warning("Confidence in retrieved dataset is low..")
+            return None
+
         # or there is hallucination or reranker is not confident
 
         return dataset_info_dict[dataset_name]["configs"][config_name]
@@ -455,24 +409,23 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             The most relevant dataset from the list of available datasets.
         """
         if top_dataset_info is None:
-            print("None of the retrieved datasets were relevant.")
+            logger.warning("None of the retrieved datasets were relevant.")
             return None
         try:
             input_columns, output_column = self.automatic_column_selection(
                 task_instruction, top_dataset_info
             )
         except Exception as e:
-            print("Column selection failed: ", e)
+            logger.warning("Column selection failed: ", e)
             return None
         full_dataset = datasets.load_dataset(
             top_dataset_info["dataset_name"], top_dataset_info["config_name"]
         ).flatten()
         full_dataset = full_dataset.rename_columns(top_dataset_info["columns_mapping"])
-
         canonicalized_dataset = self.canonicalize_dataset_using_columns(
             full_dataset, input_columns, output_column
         )
-        print(f"Using dataset {top_dataset_info['dataset_name']}")
+        logger.info(f"Using dataset {top_dataset_info['dataset_name']}")
 
         return canonicalized_dataset
 

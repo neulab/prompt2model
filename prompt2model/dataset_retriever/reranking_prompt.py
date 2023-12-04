@@ -119,7 +119,7 @@ def build_input(instruction: str, examples: str, datasets_infos) -> str:
         curr_dataset = f"""{DATASET_TEMPLATE.format(
                                                     counter = i+1,
                                                     dataset_name=dataset_info["dataset_name"],
-                                                    dataset_description=dataset_info["dataset_description"]
+                                                    dataset_description=dataset_info["description"]
                                                   )}\n\n"""
         j = 0
         for _, config in dataset_info["configs"].items():
@@ -127,7 +127,7 @@ def build_input(instruction: str, examples: str, datasets_infos) -> str:
                                                     counter = chr(ord('a')+j),
                                                     config_name = config["config_name"],
                                                     dataset_columns = config["columns"],
-                                                    sample_row = truncate_row(config["sample_row"])
+                                                    sample_row = config["sample_row"]
                                                     )}\n"""  # noqa: E501
             j += 1
 
