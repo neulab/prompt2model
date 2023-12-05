@@ -40,11 +40,15 @@ class Example:
 
     def __eq__(self, other) -> bool:
         """Example equality."""
-        return self.input_col == other.input_col and self.output_col == other.output_col and self.explain_col == other.explain_col
+        return (self.input_col == other.input_col and 
+                self.output_col == other.output_col and 
+                self.explain_col == other.explain_col)
 
     def __lt__(self, other) -> bool:
         """Example less than."""
-        return self.input_col < other.input_col or self.output_col < other.output_col or self.explain_col < other.explain_col
+        return (self.input_col < other.input_col 
+                or self.output_col < other.output_col 
+                or self.explain_col < other.explain_col)
 
 
 class PromptBasedDatasetGenerator(DatasetGenerator):
@@ -170,7 +174,9 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
                 )
                 for example in random_examples:
                     low_quality_example_string += (
-                        f'input="{example.input_col}"\nexplanation="{example.explain_col}"\noutput="{example.output_col}"\n'
+                        f'input="{example.input_col}"\n'
+                        f'explanation="{example.explain_col}"\n'
+                        f'output="{example.output_col}"\n'
                     )
             # To increase the diversity of the prompt to DatasetGenerator, create three
             # prompt templates, COMPLEX, MIDDLE, and SIMPLE. The COMPLEX template
@@ -255,7 +261,13 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
             most_frequent_outputs.sort(key=len)
             final_output = most_frequent_outputs[0]
 
-            filtered_examples.append(Example(input_str, random.choice(output_explain_map[final_output]),final_output))
+            filtered_examples.append(
+                Example(
+                    input_str, 
+                    random.choice(output_explain_map[final_output]), 
+                    final_output
+                )
+            )
         return filtered_examples
 
     def compute_batch_size(self, num_examples: int, generated_dataset_size: int) -> int:
