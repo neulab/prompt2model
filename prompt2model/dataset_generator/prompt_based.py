@@ -41,16 +41,16 @@ class Example:
     def __eq__(self, other) -> bool:
         """Example equality."""
         return (
-            self.input_col == other.input_col 
-            and self.output_col == other.output_col 
+            self.input_col == other.input_col
+            and self.output_col == other.output_col
             and self.explain_col == other.explain_col
         ) # noqa E501
 
     def __lt__(self, other) -> bool:
         """Example less than."""
         return (
-            self.input_col < other.input_col 
-            or self.output_col < other.output_col 
+            self.input_col < other.input_col
+            or self.output_col < other.output_col
             or self.explain_col < other.explain_col
         ) # noqa E501
 
