@@ -44,11 +44,11 @@ Alternate Entity Names: ["Catholic Church", "Roman Catholic", "Catholic"]""",  #
 Example conversation:
 
 User: Hey can you help me with something
-explanation="The agent has to reply what the user needs help with since the user requested for help"
+explanation="The agent has to reply what the user needs help with since the user requested for help" # noqa E501
 Agent: Sure! What do you need help with?
 
 User: I want to bake a cake but don't know what temperature to set the oven to.
-explanation="The user asks what temperature should the oven be set to since he wants to bake a cake. So the agent must reply the temperature the over should be preheated to, i.e 350°F (177°C)"
+explanation="The user asks what temperature should the oven be set to since he wants to bake a cake. So the agent must reply the temperature the over should be preheated to, i.e 350°F (177°C)" # noqa E501
 Agent: For most cakes, the oven should be preheated to 350°F (177°C).
 
 Current conversation:
@@ -62,11 +62,11 @@ Agent:""",
                 + "questions. Reply as agent."
             ),
             "Demonstrations": """User: Hey can you help me with something
-explanation="The agent has to reply what the user needs help with since the user requested for help"
+explanation="The agent has to reply what the user needs help with since the user requested for help" # noqa E501
 Agent: Sure! What do you need help with?
 
 User: I want to bake a cake but don't know what temperature to set the oven to.
-explanation="The user asks what temperature should the oven be set to since he wants to bake a cake. So the agent must reply the temperature the over should be preheated to, i.e 350°F (177°C)"
+explanation="The user asks what temperature should the oven be set to since he wants to bake a cake. So the agent must reply the temperature the over should be preheated to, i.e 350°F (177°C)" # noqa E501
 Agent: For most cakes, the oven should be preheated to 350°F (177°C).""",
         },
     ),
@@ -81,7 +81,7 @@ Agent: For most cakes, the oven should be preheated to 350°F (177°C).""",
         "I am learning Japanese. Please translate some Japanese sentences to English. For example, Japanese: その日、人類は思い出した。ヤツらに支配されていた恐怖を鳥籠の中に囚われていた屈辱を English: On that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage.The explanation for the example is that the input is a Japanese sentence which is conveying that on that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage.",  # noqa: E501
         {
             "Instruction": "I am learning Japanese. Please translate some Japanese sentences to English.",  # noqa: E501
-            "Demonstrations": "Japanese: その日、人類は思い出した。ヤツらに支配されていた恐怖を鳥籠の中に囚われていた屈辱を English: On that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage. The explanation for the example is that the input is a Japanese sentence which is conveying that on that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage.",  # noqa: E501", 
+            "Demonstrations": "Japanese: その日、人類は思い出した。ヤツらに支配されていた恐怖を鳥籠の中に囚われていた屈辱を English: On that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage. The explanation for the example is that the input is a Japanese sentence which is conveying that on that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage.",  # noqa: E501",
         },
     ),
     (
