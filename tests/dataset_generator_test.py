@@ -1,972 +1,720 @@
-"""Testing DatasetGenerator through PromptBasedDatasetGenerator."""
+"""Testing TextualizeProcessor."""
 
+import gc
 import logging
-import os
-import tempfile
-from functools import partial
+from copy import deepcopy
 from unittest.mock import patch
 
 import datasets
 import pytest
-from datasets import Dataset
 
-from prompt2model.dataset_generator.base import DatasetSplit
-from prompt2model.dataset_generator.prompt_based import (
-    Example,
-    PromptBasedDatasetGenerator,
-)
-from prompt2model.prompt_parser import MockPromptSpec, TaskType
-from prompt2model.utils import api_tools
-from test_helpers import (
-    MockCompletion,
-    UnknownGpt3Exception,
-    mock_batch_api_response_identical_completions,
-)
-from test_helpers.mock_api import MockAPIAgent, MockBatchDifferentCompletions
-from test_helpers.test_utils import temp_setattr
+from prompt2model.dataset_processor.textualize import TextualizeProcessor
+from test_helpers import create_gpt2_model_and_tokenizer, create_t5_model_and_tokenizer
 
-logger = logging.getLogger("DatasetGenerator")
+logger = logging.getLogger("DatasetProcessor")
 
-MOCK_CLASSIFICATION_EXAMPLE = partial(
-    mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1"}',
-)
-MOCK_WRONG_KEY_EXAMPLE = partial(
-    mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "label": "1"}',
-)
-MOCK_INVALID_JSON = partial(
-    mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1}',
-)
-
-MOCK_CLASSIFICATION_EXAMPLE = partial(
-    mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1"}',
-)
-MOCK_WRONG_KEY_EXAMPLE = partial(
-    mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "label": "1"}',
-)
-MOCK_INVALID_JSON = partial(
-    mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1}',
-)
-
-MOCK_CLASSIFICATION_EXAMPLE = partial(
-    mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1"}',
-)
-MOCK_WRONG_KEY_EXAMPLE = partial(
-    mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "label": "1"}',
-)
-MOCK_INVALID_JSON = partial(
-    mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1}',
-)
-
-
-@patch(
-    "prompt2model.utils.APIAgent.generate_batch_completion",
-    side_effect=MOCK_CLASSIFICATION_EXAMPLE,
-)
-def test_generate_dataset(mocked_generate_example):
-    """Test the `generate_dataset_split()` function of `PromptBasedDatasetGenerator`."""
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    dataset_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=False)
-    prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
-    split = DatasetSplit.TRAIN
-    num_examples = 29
-    # If num_examples >= max_api_calls, the returned dataset's
-    # length will be less than or equal to max_api_calls.
-    dataset = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
-    # Since each API call would return one completion object with 5 responses
-    # and some of the responses are invalid JSON objects, the upper bound of
-    # the length of the dataset is num_examples + 5, where 5 is the
-    # default number of responses per API call.
-    assert len(dataset) < num_examples + 5
-    expected_columns = {"input_col", "output_col"}
-    assert set(dataset.column_names) == expected_columns
-    return dataset
-
-
-@patch(
-    "prompt2model.utils.APIAgent.generate_batch_completion",
-    side_effect=MOCK_CLASSIFICATION_EXAMPLE,
-)
-def test_generate_dataset_dict(mocked_generate_example):
-    """Test the `generate_dataset_dict()` function of `PromptBasedDatasetGenerator`."""
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    dataset_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=False)
-    prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
-    num_examples = {
-        DatasetSplit.TRAIN: 50,
-        DatasetSplit.VAL: 24,
-        DatasetSplit.TEST: 26,
-    }
-    dataset_dict = dataset_generator.generate_dataset_dict(
-        prompt_spec=prompt_spec,
-        num_examples=num_examples,
-    )
-
-    assert set(dataset_dict.keys()) == {"train", "val", "test"}
-    for split, num in num_examples.items():
-        # As explained previously, the upper bound of the length of
-        # generated dataset is num_examples + 5, where
-        # 5 is the default number of responses per API call.
-        assert len(dataset_dict[split.value]) < num + 5
-    expected_columns = {"input_col", "output_col"}
-    for dataset in dataset_dict.values():
-        assert set(dataset.column_names) == expected_columns
-
-
-@patch(
-    "prompt2model.utils.APIAgent.generate_batch_completion",
-    side_effect=MOCK_CLASSIFICATION_EXAMPLE,
-)
-def test_generator_without_filter(mocked_generate_example):
-    """Unlimited dataset generation using the PromptBasedDatasetGenerator."""
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    dataset_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=False)
-    dataset = dataset_generator.generate_dataset_split(
-        MockPromptSpec(TaskType.TEXT_GENERATION), 29, DatasetSplit.TRAIN
-    )
-    assert len(dataset) == 29
-    # The default responses_per_request is 5. So each API call will return
-    # 5 responses, i.e. 5 choices in openai.Completion.choices.
-    # Each API call will return 5 responses, and each response is a valid JSON.
-    # So the unlimited_dataset_generator will call the API 6 times.
-    assert dataset_generator.api_call_counter == 6
-    # The default batch_size is 5. So generate_batch_completion
-    # will be called 2 times with  first batch_size = 5 and second batch_size = 1.
-    assert mocked_generate_example.call_count == 2
-
-
-@patch(
-    "prompt2model.utils.APIAgent.generate_batch_completion",
-    side_effect=MOCK_CLASSIFICATION_EXAMPLE,
-)
-def test_generator_without_filter_dict(mocked_generate_example):
-    """Test generation of a dataset dict."""
-    dataset_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=False)
-
-    prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
-    num_examples = {
-        DatasetSplit.TRAIN: 50,
-        DatasetSplit.VAL: 24,
-        DatasetSplit.TEST: 26,
-    }
-
-    dataset_dict = dataset_generator.generate_dataset_dict(
-        prompt_spec=prompt_spec,
-        num_examples=num_examples,
-    )
-
-    assert set(dataset_dict.keys()) == {"train", "val", "test"}
-    for split, num in num_examples.items():
-        # As explained previously, the upper bound of the length of
-        # generated dataset is num_examples + 5, where
-        # 5 is the default number of responses per API call.
-        assert len(dataset_dict[split.value]) < num + 5
-    expected_columns = {"input_col", "output_col"}
-    for dataset in dataset_dict.values():
-        assert set(dataset.column_names) == expected_columns
-
-    # Each API call returns five responses. So the dataset_generator will
-    # call the API (50 // 5 + 24 // 5 + 1 + 26 // 5 + 1) = 21 times.
-    assert dataset_generator.api_call_counter == (50 // 5 + 24 // 5 + 1 + 26 // 5 + 1)
-    # The default batch_size is 5. So generate_batch_completion
-    # will be called 2 times for 50 examples in the train split,
-    # 1 time for 24 examples in the validation split,
-    # and 2 times for 26 examples in the test split.
-    assert mocked_generate_example.call_count == 2 + 1 + 2
-
-    # Each API call returns 5 responses, and each response is a valid JSON.
-    # So the dataset_dict will contain (50, 25, 30) examples.
-    assert len(dataset_dict["train"]) == 50
-    assert len(dataset_dict["val"]) == 24
-    assert len(dataset_dict["test"]) == 26
-
-
-@patch(
-    "prompt2model.utils.APIAgent.generate_batch_completion",
-    side_effect=MOCK_CLASSIFICATION_EXAMPLE,
-)
-def test_generator_max_api_calls(mocked_generate_example):
-    """Test generation when num_examples >= max_api_calls."""
-    dataset_generator = PromptBasedDatasetGenerator(
-        max_api_calls=3, filter_duplicated_examples=False
-    )
-    dataset = dataset_generator.generate_dataset_split(
-        MockPromptSpec(TaskType.TEXT_GENERATION), 29, DatasetSplit.TRAIN
-    )
-    # The max_api_calls is 3. So the limited_dataset_generator calls the
-    # API 3 times. Each API call returns 5 responses. So the
-    # limited_dataset_generator will have 3 * 5 = 15 examples.
-    assert len(dataset) == 15
-
-    # The default batch_size is 5. So generate_batch_completion
-    # will be called only once.
-    assert mocked_generate_example.call_count == 1
-
-    # Each API call returns 5 responses, so the limited_dataset_generator
-    # will use up all the available API calls.
-    assert dataset_generator.api_call_counter == 3
-
-    # Each API call returns 5 responses, and each response is a valid JSON.
-    # So the dataset will contain 15 examples.
-    assert len(dataset) == 15
-
-
-@patch(
-    "prompt2model.utils.APIAgent.generate_batch_completion",
-    side_effect=MockBatchDifferentCompletions().mock_completions,
-)
-def test_generator_with_filter_first_batch(mocked_generate_example):
-    """Test PromptBasedDatasetGenerator with filter methods in the first batch."""
-    dataset_generator = PromptBasedDatasetGenerator(
-        max_api_calls=2,
-        filter_duplicated_examples=True,
-        max_batch_size=2,
-        responses_per_request=3,
-    )
-
-    # Generate the dataset split using the initialized generator.
-    generated_dataset = dataset_generator.generate_dataset_split(
-        prompt_spec=MockPromptSpec(TaskType.TEXT_GENERATION),
-        num_examples=5,
-        split=DatasetSplit.TRAIN,
-    )
-
-    # Assertions for API call count and dataset matching the expected result.
-    assert mocked_generate_example.call_count == 1
-    assert dataset_generator.api_call_counter == 2
-
-    # Define the expected dataset based on the given mock responses.
-    expected_dataset = Dataset.from_dict(
+DATASET_DICTS = [
+    datasets.DatasetDict(
         {
-            "input_col": ["1", "2"],
-            "output_col": ["a", "a"],
+            "train": datasets.Dataset.from_dict(
+                {
+                    "input_col": ["foo", "bar"],
+                    "explain_col": ["abc","xyz"],
+                    "output_col": ["baz", "qux"],
+                }
+            ),
+            "test": datasets.Dataset.from_dict(
+                {
+                    "input_col": ["foo", "bar"],
+                    "explain_col": ["abc","xyz"],
+                    "output_col": ["baz", "qux"],
+                }
+            ),
         }
-    )
-
-    # Verify the generated dataset matches the expected dataset.
-    assert list(generated_dataset) == list(expected_dataset)
-
-
-@patch(
-    "prompt2model.utils.APIAgent.generate_batch_completion",
-    side_effect=MockBatchDifferentCompletions().mock_completions,
-)
-def test_generator_with_filter_second_batch(mocked_generate_example):
-    """Test PromptBasedDatasetGenerator with filter methods in the second batch.
-
-    This test verifies the behavior of the PromptBasedDatasetGenerator with filter
-    methods in the second batch of API calls. It initializes an
-    PromptBasedDatasetGenerator with specific settings, limiting the number of
-    API calls to 3. After running the generation process, the test checks
-    whether the generated dataset matches the expected result after the
-    second API call. The test also ensures that the number of calls to the
-    API mock matches the expected number.
-
-    Note: The first API call's max_batch_size is 2, generating 6 responses.
-    The second API call's max_batch_size is 1, generating 3 responses.
-
-    Args:
-        mocked_generate_example (MagicMock): The patched function representing the
-            @patch decorator for generating example responses.
-    """
-    # Initialize the PromptBasedDatasetGenerator with specific settings.
-    dataset_generator = PromptBasedDatasetGenerator(
-        max_api_calls=3,
-        filter_duplicated_examples=True,
-        max_batch_size=2,
-        responses_per_request=3,
-    )
-
-    # Generate the dataset split using the initialized generator.
-    generated_dataset = dataset_generator.generate_dataset_split(
-        prompt_spec=MockPromptSpec(TaskType.TEXT_GENERATION),
-        num_examples=5,
-        split=DatasetSplit.TRAIN,
-    )
-
-    # Assertions for API call count and dataset matching the expected result.
-    assert mocked_generate_example.call_count == 2
-    assert dataset_generator.api_call_counter == 3
-
-    # Define the expected dataset based on the given mock responses.
-    expected_dataset = Dataset.from_dict(
+    ),
+    datasets.DatasetDict(
         {
-            "input_col": ["1", "2", "3"],
-            "output_col": ["a", "a", "a"],
+            "train": datasets.Dataset.from_dict(
+                {
+                    "input_col": ["spam", "eggs"],
+                    "explain_col": ["lmn","opq"],
+                    "output_col": ["ham", "sau"],
+                }
+            ),
+            "val": datasets.Dataset.from_dict(
+                {
+                    "input_col": ["spam", "eggs"],
+                    "explain_col": ["lmn","opq"],
+                    "output_col": ["ham", "sau"],
+                }
+            ),
         }
-    )
-
-    # Verify the generated dataset matches the expected dataset.
-    assert list(generated_dataset) == list(expected_dataset)
+    ),
+]
 
 
-@patch(
-    "prompt2model.utils.APIAgent.generate_batch_completion",
-    side_effect=MockBatchDifferentCompletions().mock_completions,
-)
-def test_generator_with_filter_third_batch(mocked_generate_example):
-    """Test PromptBasedDatasetGenerator with filter methods in the third batch.
+INSTRUCTION = "convert to text2text"
 
-    This test verifies the behavior of the PromptBasedDatasetGenerator with
-    filter methods in the third batch of API calls. It initializes an
-    PromptBasedDatasetGenerator with specific settings, limiting the number
-    of API calls to 4. After running the generation process, the test
-    checks whether the generated dataset matches the expected
-    result after the third API call. The test also ensures that the
-    number of calls to the API mock matches the expected number.
-
-    Note: The first API call's max_batch_size is 2, generating 6 responses.
-    The second API call's max_batch_size is 1, generating 3 responses.
-    The third API call's max_batch_size is 1, generating 3 responses.
-
-    Args:
-        mocked_generate_example (MagicMock): The patched function representing the
-            @patch decorator for generating example responses.
-    """
-    # Initialize the PromptBasedDatasetGenerator with specific settings.
-    dataset_generator = PromptBasedDatasetGenerator(
-        max_api_calls=4,
-        filter_duplicated_examples=True,
-        max_batch_size=2,
-        responses_per_request=3,
-    )
-
-    # Generate the dataset split using the initialized generator.
-    generated_dataset = dataset_generator.generate_dataset_split(
-        prompt_spec=MockPromptSpec(TaskType.TEXT_GENERATION),
-        num_examples=5,
-        split=DatasetSplit.TRAIN,
-    )
-
-    # Assertions for API call count and dataset matching the expected result.
-    assert mocked_generate_example.call_count == 3
-    assert dataset_generator.api_call_counter == 4
-
-    # Define the expected dataset based on the given mock responses.
-    expected_dataset = Dataset.from_dict(
+# Our support spilts are `train, val, test`.
+UNEXPECTED_DATASET_DICTS_WITH_WRONG_SPLIT = [
+    datasets.DatasetDict(
         {
-            "input_col": ["1", "2", "3"],
-            "output_col": ["b", "a", "a"],
+            "full": datasets.Dataset.from_dict(
+                {"input_col": ["foo", "bar"], "explain_col": ["abc","xyz"], "output_col": ["baz", "qux"]}
+            )
         }
-    )
-
-    # Verify the generated dataset matches the expected dataset.
-    assert list(generated_dataset) == list(expected_dataset)
-
-
-@patch(
-    "prompt2model.utils.APIAgent.generate_batch_completion",
-    side_effect=MockBatchDifferentCompletions().mock_completions,
-)
-def test_generator_with_filter_forth_batch(mocked_generate_example):
-    """Test PromptBasedDatasetGenerator with filter methods in the forth batch."""
-    # Initialize the PromptBasedDatasetGenerator with specific settings.
-    dataset_generator = PromptBasedDatasetGenerator(
-        max_api_calls=5,
-        filter_duplicated_examples=True,
-        max_batch_size=2,
-        responses_per_request=3,
-    )
-
-    # Generate the dataset split using the initialized generator.
-    generated_dataset = dataset_generator.generate_dataset_split(
-        prompt_spec=MockPromptSpec(TaskType.TEXT_GENERATION),
-        num_examples=5,
-        split=DatasetSplit.TRAIN,
-    )
-
-    # Assertions for API call count and dataset matching the expected result.
-    assert mocked_generate_example.call_count == 4
-    assert dataset_generator.api_call_counter == 5
-
-    # Define the expected dataset based on the given mock responses.
-    expected_dataset = Dataset.from_dict(
+    ),
+    datasets.DatasetDict(
         {
-            "input_col": ["1", "2", "3", "4", "5"],
-            "output_col": ["b", "a", "a", "c", "a"],
+            "train": datasets.Dataset.from_dict(
+                {"input_col": ["spam", "eggs"], "explain_col": ["lmn","opq"], "output_col": ["ham", "sau"]}
+            )
         }
-    )
+    ),
+]
 
-    # Verify the generated dataset matches the expected dataset.
-    assert list(generated_dataset) == list(expected_dataset)
-
-
-@patch(
-    "prompt2model.utils.APIAgent.generate_batch_completion",
-    side_effect=MockBatchDifferentCompletions().mock_completions,
-)
-def test_generator_with_filter_unlimited_api_calls(mocked_generate_example):
-    """Test PromptBasedDatasetGenerator with filter methods and unlimited API calls."""
-    # Initialize the PromptBasedDatasetGenerator with
-    # specific settings and unlimited API calls.
-    dataset_generator = PromptBasedDatasetGenerator(
-        filter_duplicated_examples=True,
-        max_batch_size=2,
-        responses_per_request=3,
-    )
-
-    # Generate the dataset split using the initialized generator.
-    generated_dataset = dataset_generator.generate_dataset_split(
-        prompt_spec=MockPromptSpec(TaskType.TEXT_GENERATION),
-        num_examples=5,
-        split=DatasetSplit.TRAIN,
-    )
-
-    # Assertions for API call count and dataset matching the expected result.
-    assert mocked_generate_example.call_count == 4
-    assert dataset_generator.api_call_counter == 5
-
-    # Define the expected dataset based on the given mock responses.
-    expected_dataset = Dataset.from_dict(
+# Our support columns are `input_col, output_col`.
+UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS = [
+    datasets.DatasetDict(
         {
-            "input_col": ["1", "2", "3", "4", "5"],
-            "output_col": ["b", "a", "a", "c", "a"],
+            "train": datasets.Dataset.from_dict(
+                {"input_col": ["foo", "bar"], "explain_col": ["abc","xyz"], "output_col": ["baz", "qux"]}
+            )
         }
+    ),
+    datasets.DatasetDict(
+        {
+            "train": datasets.Dataset.from_dict(
+                {"input_col": ["spam", "eggs"], "explain_col": ["lmn","opq"], "output": ["ham", "sau"]}
+            )
+        }
+    ),
+]
+
+
+def test_the_logging_for_provide_unnecessary_eos_token_for_t5():
+    """Test the logger.info for unnecessary eos token for T5 model is logged."""
+    _, t5_tokenizer = create_t5_model_and_tokenizer()
+
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
+        _ = TextualizeProcessor(has_encoder=True, eos_token=t5_tokenizer.eos_token)
+        mock_info.assert_called_once_with(
+            "The T5 tokenizer automatically adds eos token in the end of sequence when tokenizing. So the eos_token of encoder-decoder model tokenizer is unnecessary."  # noqa E501
+        )
+        mock_warning.assert_not_called()
+    gc.collect()
+
+
+def test_the_logging_for_eos_token_required_for_gpt():
+    """Test the logger.warning for requiring eos token for GPT model is logged."""
+    with patch.object(logger, "info") as mock_info, patch.object(
+        logger, "warning"
+    ) as mock_warning:
+        _ = TextualizeProcessor(has_encoder=False)
+        mock_info.assert_not_called()
+        mock_warning.assert_called_once_with(
+            "The autoregressive model tokenizer does not automatically add eos token in the end of the sequence. So the `eos_token` of the autoregressive model is required."  # noqa E501
+        )
+    gc.collect()
+
+
+def test_dataset_processor_t5_style():
+    """Test the `process_dataset_dict` function of T5-type `TextualizeProcessor`."""
+    t5_processor = TextualizeProcessor(has_encoder=True)
+    raw_dataset_dicts = deepcopy(DATASET_DICTS)
+    t5_modified_dataset_dicts = t5_processor.process_dataset_dict(
+        INSTRUCTION, DATASET_DICTS
     )
+    # Ensure the dataset_dicts themselves are the same after processing.
+    for raw, origin in zip(raw_dataset_dicts, DATASET_DICTS):
+        assert list(raw["train"]) == list(origin["train"])
+        if "val" in raw:
+            assert list(raw["val"]) == list(origin["val"])
+        if "test" in raw:
+            assert list(raw["test"]) == list(origin["test"])
+    t5_expected_dataset_dicts = [
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
+                            "<task 0>convert to text2text\nExample:\nbar\nLabel:\n",
+                        ],
+                        "model_output": ["baz", "qux"],
+                    }
+                ),
+                "test": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
+                            "<task 0>convert to text2text\nExample:\nbar\nLabel:\n",
+                        ],
+                        "model_output": ["baz", "qux"],
+                    }
+                ),
+            }
+        ),
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 1>convert to text2text\nExample:\nspam\nLabel:\n",
+                            "<task 1>convert to text2text\nExample:\neggs\nLabel:\n",
+                        ],
+                        "model_output": ["ham", "sau"],
+                    }
+                ),
+                "val": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 1>convert to text2text\nExample:\nspam\nLabel:\n",
+                            "<task 1>convert to text2text\nExample:\neggs\nLabel:\n",
+                        ],
+                        "model_output": ["ham", "sau"],
+                    }
+                ),
+            }
+        ),
+    ]
+    for exp, act in zip(t5_expected_dataset_dicts, t5_modified_dataset_dicts):
+        assert list(exp["train"]) == list(act["train"])
+        if "val" in exp:
+            assert list(exp["val"]) == list(act["val"])
+        if "test" in exp:
+            assert list(exp["test"]) == list(act["test"])
+    gc.collect()
 
-    # Verify the generated dataset matches the expected dataset.
-    assert list(generated_dataset) == list(expected_dataset)
 
-
-@patch(
-    "prompt2model.utils.APIAgent.generate_batch_completion",
-    side_effect=MockBatchDifferentCompletions(length=5).mock_completions,
-)
-def test_generator_with_filter_to_generate_datasetdict(mocked_generate_example):
-    """Test with filter methods to generate a DatasetDict."""
-    # Initialize the PromptBasedDatasetGenerator with
-    # specific settings and limited API calls.
-    dataset_generator = PromptBasedDatasetGenerator(
-        filter_duplicated_examples=True,
-        max_batch_size=2,
-        responses_per_request=3,
-        max_api_calls=7,
+def test_dataset_processor_with_numerical_column():
+    """Test process_dataset_dict with numerical column values."""
+    t5_processor = TextualizeProcessor(has_encoder=True)
+    raw_dataset_dicts = [
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "input_col": ["foo", "bar"],
+                        "explain_col": ["abc","xyz"],
+                        "output_col": ["baz", "qux"],
+                    }
+                ),
+                "test": datasets.Dataset.from_dict(
+                    {
+                        "input_col": ["spam", "eggs"],
+                        "explain_col": ["lmn","opq"],
+                        "output_col": ["ham", "sau"],
+                    }
+                ),
+            }
+        ),
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "input_col": ["foo", "bar"],
+                        "explain_col": ["abc","xyz"],
+                        "output_col": [0, 1],
+                    }
+                ),
+                "test": datasets.Dataset.from_dict(
+                    {
+                        "input_col": ["spam", "eggs"],
+                        "explain_col": ["lmn","opq"],
+                        "output_col": [1, 2],
+                    }
+                ),
+            }
+        ),
+    ]
+    t5_modified_dataset_dicts = t5_processor.process_dataset_dict(
+        INSTRUCTION, raw_dataset_dicts
     )
-
-    # Generate the DatasetDict using the initialized generator.
-    generated_dataset_dict = dataset_generator.generate_dataset_dict(
-        prompt_spec=MockPromptSpec(TaskType.TEXT_GENERATION),
-        num_examples={
-            DatasetSplit.TRAIN: 4,
-            DatasetSplit.VAL: 4,
-            DatasetSplit.TEST: 2,
-        },
-    )
-
-    # Assertions for API call count and dataset
-    # dictionaries matching the expected results.
-    assert mocked_generate_example.call_count == 5
-    assert dataset_generator.api_call_counter == 7
-
-    # Define the expected dataset dictionaries
-    # based on the given mock responses.
     expected_dataset_dict = datasets.DatasetDict(
         {
-            "train": Dataset.from_dict(
+            "train": datasets.Dataset.from_dict(
                 {
-                    "input_col": ["1", "2", "3", "4"],
-                    "output_col": ["b", "a", "a", "c"],
+                    "model_input": [
+                        "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
+                        "<task 0>convert to text2text\nExample:\nbar\nLabel:\n",
+                        "<task 1>convert to text2text\nExample:\nfoo\nLabel:\n",
+                        "<task 1>convert to text2text\nExample:\nbar\nLabel:\n",
+                    ],
+                    "model_output": ["baz", "qux", "0", "1"],
                 }
             ),
-            "val": Dataset.from_dict(
+            "test": datasets.Dataset.from_dict(
                 {
-                    "input_col": ["1", "2"],
-                    "output_col": ["a", "a"],
-                }
-            ),
-            "test": Dataset.from_dict(
-                {
-                    "input_col": [],
-                    "output_col": [],
+                    "model_input": [
+                        "<task 0>convert to text2text\nExample:\nspam\nLabel:\n",
+                        "<task 0>convert to text2text\nExample:\neggs\nLabel:\n",
+                        "<task 1>convert to text2text\nExample:\nspam\nLabel:\n",
+                        "<task 1>convert to text2text\nExample:\neggs\nLabel:\n",
+                    ],
+                    "model_output": ["ham", "sau", "1", "2"],
                 }
             ),
         }
     )
+    training_datasets = []
+    test_datasets = []
+    for modified_dataset_dict in t5_modified_dataset_dicts:
+        training_datasets.append(modified_dataset_dict["train"])
+        test_datasets.append(modified_dataset_dict["test"])
 
-    # Verify the generated DatasetDict matches the expected DatasetDict.
-    assert list(generated_dataset_dict["train"]) == list(expected_dataset_dict["train"])
-    assert list(generated_dataset_dict["val"]) == list(expected_dataset_dict["val"])
-    assert list(generated_dataset_dict["test"]) == list(expected_dataset_dict["test"])
+    concatenated_training_dataset = datasets.concatenate_datasets(training_datasets)
+    concatenated_test_dataset = datasets.concatenate_datasets(test_datasets)
+    actual_dataset_dict = datasets.DatasetDict(
+        {"train": concatenated_training_dataset, "test": concatenated_test_dataset}
+    )
+    assert list(expected_dataset_dict["train"]) == list(actual_dataset_dict["train"])
+    assert list(expected_dataset_dict["test"]) == list(actual_dataset_dict["test"])
 
 
-@patch(
-    "prompt2model.utils.APIAgent.generate_batch_completion",
-    side_effect=MOCK_CLASSIFICATION_EXAMPLE,
-)
-def test_generator_max_api_calls_dict(mocked_generate_example):
-    """Test generation of a dataset dict where we hit max api calls."""
-    # Refresh the call_count and create a new limited_dataset_generator.
-    dataset_generator = PromptBasedDatasetGenerator(
-        filter_duplicated_examples=False,
-        max_api_calls=13,
+def test_dataset_processor_decoder_only_style():
+    """Test the `process_dataset_dict` function of a GPT-type `TextualizeProcessor`."""
+    _, gpt2_tokenizer = create_gpt2_model_and_tokenizer()
+    gpt_processor = TextualizeProcessor(
+        has_encoder=False, eos_token=gpt2_tokenizer.eos_token
+    )
+    raw_dataset_dicts = deepcopy(DATASET_DICTS)
+    gpt_modified_dataset_dicts = gpt_processor.process_dataset_dict(
+        INSTRUCTION, DATASET_DICTS
+    )
+    # Ensure the dataset_dicts themselves are the same after processing.
+    for raw, origin in zip(raw_dataset_dicts, DATASET_DICTS):
+        assert list(raw["train"]) == list(origin["train"])
+        if "val" in raw:
+            assert list(raw["val"]) == list(origin["val"])
+        if "test" in raw:
+            assert list(raw["test"]) == list(origin["test"])
+    # Check that the modified dataset dicts have the expected content
+    gpt_expected_dataset_dicts = [
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 0>convert to text2text\nExample:\nfoo\nLabel:\nbaz<|endoftext|>",  # noqa: E501
+                            "<task 0>convert to text2text\nExample:\nbar\nLabel:\nqux<|endoftext|>",  # noqa: E501
+                        ],
+                        "model_output": ["baz<|endoftext|>", "qux<|endoftext|>"],
+                    }
+                ),
+                "test": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
+                            "<task 0>convert to text2text\nExample:\nbar\nLabel:\n",
+                        ],
+                        "model_output": ["baz", "qux"],
+                    }
+                ),
+            }
+        ),
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 1>convert to text2text\nExample:\nspam\nLabel:\nham<|endoftext|>",  # noqa: E501
+                            "<task 1>convert to text2text\nExample:\neggs\nLabel:\nsau<|endoftext|>",  # noqa: E501
+                        ],
+                        "model_output": ["ham<|endoftext|>", "sau<|endoftext|>"],
+                    }
+                ),
+                "val": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 1>convert to text2text\nExample:\nspam\nLabel:\n",
+                            "<task 1>convert to text2text\nExample:\neggs\nLabel:\n",
+                        ],
+                        "model_output": ["ham", "sau"],
+                    }
+                ),
+            }
+        ),
+    ]
+    for exp, modified in zip(gpt_expected_dataset_dicts, gpt_modified_dataset_dicts):
+        assert list(exp["train"]) == list(modified["train"])
+        if "val" in exp:
+            assert list(exp["val"]) == list(modified["val"])
+        if "test" in exp:
+            assert list(exp["test"]) == list(modified["test"])
+
+
+def test_unexpected_dataset_split():
+    """Test the error handler for unexpercted dataset split."""
+    with pytest.raises(ValueError) as exc_info:
+        _, gpt2_tokenizer = create_gpt2_model_and_tokenizer()
+        gpt_processor = TextualizeProcessor(
+            has_encoder=False, eos_token=gpt2_tokenizer.eos_token
+        )
+        _ = gpt_processor.process_dataset_dict(
+            INSTRUCTION, UNEXPECTED_DATASET_DICTS_WITH_WRONG_SPLIT
+        )
+        assert str(exc_info.value) == ("Datset split must be in train/val/test.")
+    gc.collect()
+
+
+def test_unexpected_columns():
+    """Test the error handler for unexpercted dataset columns."""
+    with pytest.raises(ValueError) as exc_info:
+        _, gpt2_tokenizer = create_gpt2_model_and_tokenizer()
+        gpt_processor = TextualizeProcessor(
+            has_encoder=False, eos_token=gpt2_tokenizer.eos_token
+        )
+        _ = gpt_processor.process_dataset_dict(
+            INSTRUCTION, UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS
+        )
+        assert str(exc_info.value) == (
+            "Example dictionary must have 'input_col', 'explain_col' and 'output_col' keys."
+        )
+    gc.collect()
+
+
+DATASET_DICTS_WITH_EMPTY_COLUMNS = [
+    datasets.DatasetDict(
+        {
+            "train": datasets.Dataset.from_dict(
+                {
+                    "input_col": ["foo", "", "test"],
+                    "explain_col": ["abc","","xyz"],
+                    "output_col": ["", "qux", "key"],
+                }
+            ),
+            "test": datasets.Dataset.from_dict(
+                {
+                    "input_col": ["foo", ""],
+                    "explain_col": ["abc",""],
+                    "output_col": ["baz", "qux"],
+                }
+            ),
+        }
+    ),
+    datasets.DatasetDict(
+        {
+            "train": datasets.Dataset.from_dict(
+                {
+                    "input_col": ["", ""],
+                    "explain_col": ["abc","xyz"],
+                    "output_col": ["ham", "sau"],
+                }
+            ),
+        }
+    ),
+]
+
+
+def test_empty_filter_t5_type():
+    """Test that examples with empty input_col or output_col are discarded."""
+    t5_processor = TextualizeProcessor(has_encoder=True)
+    t5_modified_dataset_dicts = t5_processor.process_dataset_dict(
+        INSTRUCTION, DATASET_DICTS_WITH_EMPTY_COLUMNS
+    )
+    t5_expected_dataset_dicts = [
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 0>convert to text2text\nExample:\ntest\nLabel:\n",
+                        ],
+                        "model_output": ["key"],
+                    }
+                ),
+                "test": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
+                        ],
+                        "model_output": [
+                            "baz",
+                        ],
+                    }
+                ),
+            }
+        ),
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [],
+                        "model_output": [],
+                    }
+                ),
+            }
+        ),
+    ]
+    for exp, modified in zip(t5_expected_dataset_dicts, t5_modified_dataset_dicts):
+        assert list(exp["train"]) == list(modified["train"])
+        if "val" in exp:
+            assert list(exp["val"]) == list(modified["val"])
+        if "test" in exp:
+            assert list(exp["test"]) == list(modified["test"])
+
+
+def test_empty_filter_decoder_only_style():
+    """Test the `process_dataset_dict` function of a GPT-type `TextualizeProcessor`."""
+    _, gpt2_tokenizer = create_gpt2_model_and_tokenizer()
+    gpt_processor = TextualizeProcessor(
+        has_encoder=False, eos_token=gpt2_tokenizer.eos_token
+    )
+    gpt_modified_dataset_dicts = gpt_processor.process_dataset_dict(
+        INSTRUCTION, DATASET_DICTS_WITH_EMPTY_COLUMNS
     )
 
-    prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
-    num_examples = {
-        DatasetSplit.TRAIN: 50,
-        DatasetSplit.VAL: 24,
-        DatasetSplit.TEST: 26,
+    # Check that the modified dataset dicts have the expected content
+    gpt_expected_dataset_dicts = [
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 0>convert to text2text\nExample:\ntest\nLabel:\nkey<|endoftext|>",  # noqa: E501
+                        ],
+                        "model_output": ["key<|endoftext|>"],
+                    }
+                ),
+                "test": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [
+                            "<task 0>convert to text2text\nExample:\nfoo\nLabel:\n",
+                        ],
+                        "model_output": ["baz"],
+                    }
+                ),
+            }
+        ),
+        datasets.DatasetDict(
+            {
+                "train": datasets.Dataset.from_dict(
+                    {
+                        "model_input": [],
+                        "model_output": [],
+                    }
+                ),
+            }
+        ),
+    ]
+    for exp, modified in zip(gpt_expected_dataset_dicts, gpt_modified_dataset_dicts):
+        assert list(exp["train"]) == list(modified["train"])
+        if "val" in exp:
+            assert list(exp["val"]) == list(modified["val"])
+        if "test" in exp:
+            assert list(exp["test"]) == list(modified["test"])
+    gc.collect()
+
+
+GENERATED_DATASET = datasets.Dataset.from_dict(
+    {
+        "input_col": list(range(10000)),
+        "explain_col": ['a'] * 10000,
+        "output_col": list(range(10000, 20000)),
     }
-
-    dataset_dict = dataset_generator.generate_dataset_dict(
-        prompt_spec=prompt_spec,
-        num_examples=num_examples,
-    )
-
-    # Since the max_api_calls is 13, the limited_dataset_generator cannot
-    # generate the whole dataset_dict and will call the API 13 times.
-    assert dataset_generator.api_call_counter == 13
-
-    # The train split has 50 examples, so it will call the API 10 times and call
-    # generate_batch_completion 2 times.
-    # The validation split has 24 examples, but there are only 3 API calls
-    # left, so it will call the API 3 times and call
-    # generate_batch_completion 1 time.
-    # The test split has 26 examples, but there are no more API calls left,
-    # so it will not call generate_batch_completion.
-    assert mocked_generate_example.call_count == 2 + 1 + 0
-
-    # Each API call returns 5 responses, and each response is a valid JSON.
-    # So the generated_dataset_dict will contain (50, 15, 0) examples.
-    assert len(dataset_dict["train"]) == 50
-    assert len(dataset_dict["val"]) == 15
-    assert len(dataset_dict["test"]) == 0
-
-
-@patch(
-    "prompt2model.utils.APIAgent.generate_batch_completion",
-    side_effect=MOCK_WRONG_KEY_EXAMPLE,
 )
-def test_wrong_key_example(mocked_generate_example):
-    """Test PromptBasedDatasetGenerator when the agent returns wrong keys."""
-    dataset_generator = PromptBasedDatasetGenerator(
-        max_api_calls=3, filter_duplicated_examples=False
-    )
-    prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
-    num_examples = 1
-    split = DatasetSplit.TRAIN
-    generated_dataset = dataset_generator.generate_dataset_split(
-        prompt_spec, num_examples, split
-    )
-    assert mocked_generate_example.call_count == 3
-    expected_dataset = Dataset.from_dict({"input_col": [], "output_col": []})
-    assert list(expected_dataset) == list(generated_dataset)
 
-
-@patch(
-    "prompt2model.utils.APIAgent.generate_batch_completion",
-    side_effect=MOCK_INVALID_JSON,
+RETRIEVED_TRAIN_DATASET = datasets.Dataset.from_dict(
+    {
+        "input_col": list(range(20000, 30000)),
+        "explain_col": ['a'] * 10000,
+        "output_col": list(range(30000, 40000)),
+    }
 )
-def test_invalid_json_response(mocked_generate_example):
-    """Test when the agent returns invalid JSON responses."""
-    # Init the PromptBasedDatasetGenerator with `max_api_calls = 3`.
-    dataset_generator = PromptBasedDatasetGenerator(3, filter_duplicated_examples=False)
-    prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
-    num_examples = 1
-    split = DatasetSplit.VAL
-    dataset = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
-    assert mocked_generate_example.call_count == 3
-    expected_dataset = Dataset.from_dict({"input_col": [], "output_col": []})
-    assert list(dataset) == list(expected_dataset)
+
+DATASET_LIST = [GENERATED_DATASET, RETRIEVED_TRAIN_DATASET]
 
 
-@patch(
-    "prompt2model.utils.APIAgent.generate_batch_completion",
-    side_effect=UnknownGpt3Exception(),
-)
-def test_unexpected_examples_of_gpt(mocked_generate_example):
-    """Test PromptBasedDatasetGenerator when the agent returns unexpected examples."""
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    # Init the PromptBasedDatasetGenerator with `max_api_calls = 3`.
-    with pytest.raises(UnknownGpt3Exception):
-        dataset_generator = PromptBasedDatasetGenerator(
-            max_api_calls=3, filter_duplicated_examples=False
-        )
-        prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
-        num_examples = 1
-        split = DatasetSplit.TEST
-        _ = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
-    assert mocked_generate_example.call_count == 1
-
-
-def test_filter_with_duplicate_inputs_unique_outputs():
-    """Test filtering with duplicate inputs, unique outputs."""
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    data_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=True)
-    generated_examples = [
-        Example(input_col="apple", output_col="A"),
-        Example(input_col="banana", output_col="B"),
-        Example(input_col="apple", output_col="E"),
-        Example(input_col="orange", output_col="O"),
-        Example(input_col="apple", output_col="D"),
-    ]
-    filtered_examples = data_generator.apply_multi_vote_filtering(generated_examples)
-    expected_examples = [
-        Example(input_col="apple", output_col="A"),
-        Example(input_col="banana", output_col="B"),
-        Example(input_col="orange", output_col="O"),
-    ]
-    assert sorted(expected_examples) == sorted(filtered_examples)
-
-
-def test_filter_duplicate_inputs_duplicate_outputs():
-    """Test constructing a map with duplicate inputs and duplicate outputs."""
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    data_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=True)
-    generated_examples = [
-        Example(input_col="apple", output_col="A"),
-        Example(input_col="banana", output_col="C"),
-        Example(input_col="apple", output_col="A"),
-        Example(input_col="banana", output_col="B"),
-        Example(input_col="apple", output_col="G"),
-        Example(input_col="apple", output_col="A"),
-        Example(input_col="orange", output_col="O"),
-        Example(input_col="apple", output_col="D"),
-        Example(input_col="banana", output_col="B"),
-        Example(input_col="orange", output_col="F"),
-    ]
-    filtered_examples = data_generator.apply_multi_vote_filtering(generated_examples)
-    expected_examples = [
-        Example(input_col="apple", output_col="A"),
-        Example(input_col="banana", output_col="B"),
-        Example(input_col="orange", output_col="O"),
-    ]
-    assert expected_examples == filtered_examples
-
-
-def test_create_all_examples_dataset_and_generated_dataset_with_unique_inputs_outputs():
-    """Test constructing a map with unique inputs and outputs."""
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    data_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=True)
-    generated_examples = [
-        Example(input_col="apple", output_col="A"),
-        Example(input_col="banana", output_col="B"),
-        Example(input_col="orange", output_col="O"),
-    ]
-    filtered_examples = data_generator.apply_multi_vote_filtering(generated_examples)
-    assert generated_examples == filtered_examples
-
-
-def test_create_all_examples_dataset_and_generated_dataset_with_empty_examples_list():
-    """Test constructing a map with empty inputs and outputs."""
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    data_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=True)
-    generated_examples = []
-    filtered_examples = data_generator.apply_multi_vote_filtering(generated_examples)
-    assert generated_examples == filtered_examples
-
-
-def test_compute_batch_size_with_limited_max_api_calls():
-    """Test the batch size computation with limited max API calls."""
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    data_generator = PromptBasedDatasetGenerator(max_api_calls=28)
-    data_generator.api_call_counter = 26
-    # Default batch size and responses_per_request are both 5.
-    # So each batch should contain 25 examples.
-
-    # At least (125 - 110) / 5 = 3 API calls needed to get
-    # more than 125 examples.
-
-    batch_size = data_generator.compute_batch_size(
-        num_examples=125, generated_dataset_size=110
+def test_raise_value_error_of_process_dataset_lists():
+    """Test that the ValueError is correctly raised."""
+    _, gpt2_tokenizer = create_gpt2_model_and_tokenizer()
+    gpt_processor = TextualizeProcessor(
+        has_encoder=False, eos_token=gpt2_tokenizer.eos_token
     )
-    assert (
-        batch_size
-        == data_generator.max_api_calls - data_generator.api_call_counter
-        == 28 - 26
-    )
-
-    data_generator.api_call_counter = 20
-    batch_size = data_generator.compute_batch_size(125, generated_dataset_size=110)
-    assert (
-        batch_size
-        == (125 - 110) / data_generator.responses_per_request
-        == (125 - 110) / 5
-    )
-
-    data_generator.api_call_counter = 0
-    batch_size = data_generator.compute_batch_size(125, generated_dataset_size=50)
-    assert batch_size == data_generator.max_batch_size
-
-
-def test_compute_batch_size_with_unlimited_max_api_calls():
-    """Test the batch size computation with unlimited max API calls."""
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    data_generator = PromptBasedDatasetGenerator()
-    # Default batch size and responses_per_request are both 5.
-    # So each batch should contain 25 examples.
-
-    # At least (125 - 110) / 5 = 3 API calls needed to get
-    # more than 125 examples.
-
-    batch_size = data_generator.compute_batch_size(125, generated_dataset_size=110)
-    assert (
-        batch_size
-        == (125 - 110) / data_generator.responses_per_request
-        == (125 - 110) / 5
-    )
-
-    batch_size = data_generator.compute_batch_size(125, generated_dataset_size=50)
-    assert batch_size == data_generator.max_batch_size == 5
-
-
-def test_extract_responses():
-    """Test the extract_responses function of DatasetGenerator."""
-    mock_completion_1 = MockCompletion()
-    mock_completion_1.choices = [
-        {"message": {"content": '{"input": "1", "output": "a"}'}},
-        {"message": {"content": '{"input": "1", "output": "b"}'}},
-        {"message": {"content": '{"input": "1", "output": "a"}'}},
-    ]
-    mock_completion_2 = MockCompletion()
-    mock_completion_2.choices = [
-        {"message": {"content": '{"input": "3", "output": "a"}'}},
-        # Note that the following choice miss the right quote of JSON.
-        # So it should be discarded. And will log a warning.
-        {"message": {"content": '{"input": "3", "output": "a}'}},
-        {"message": {"content": '{"input": "3", "output": "b"}'}},
-    ]
-    mock_completion_3 = MockCompletion()
-    mock_completion_3.choices = [
-        {"message": {"content": '{"input": "4", "output": "c"}'}},
-        {"message": {"content": '{"input": "4", "output": "c"}'}},
-        {"message": {"content": '{"input": "5", "output": "a"}'}},
-    ]
-    # choices should be list of dicts. So mock_completion_4
-    # is invalid. Which will be discarded and log a warning.
-    mock_completion_4 = MockCompletion()
-    mock_completion_4.choices = None
-
-    os.environ["OPENAI_API_KEY"] = "fake_api_key"
-    data_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=True)
-    generated_examples = []
-    with patch.object(logger, "info") as mock_info, patch.object(
-        logger, "warning"
-    ) as mock_warning:
-        data_generator.extract_and_append_responses(
-            [mock_completion_1, mock_completion_2], generated_examples
-        )
-        mock_warning.assert_called_once_with(
-            'Error happened parsing API choice: {\'message\': {\'content\': \'{"input": "3", "output": "a}\'}}'  # noqa E501
-        )
-        # There are 5 valid examples. Each input
-        # and output will be logged once as info.
-        assert mock_info.call_count == 5 * 2
-
-    # The second choice in mock_completion_2
-    # is invalid. So it should be discarded.
-    assert generated_examples == [
-        Example(input_col="1", output_col="a"),
-        Example(input_col="1", output_col="b"),
-        Example(input_col="1", output_col="a"),
-        Example(input_col="3", output_col="a"),
-        Example(input_col="3", output_col="b"),
-    ]
-    data_generator.extract_and_append_responses([mock_completion_3], generated_examples)
-    assert generated_examples == [
-        Example(input_col="1", output_col="a"),
-        Example(input_col="1", output_col="b"),
-        Example(input_col="1", output_col="a"),
-        Example(input_col="3", output_col="a"),
-        Example(input_col="3", output_col="b"),
-        Example(input_col="4", output_col="c"),
-        Example(input_col="4", output_col="c"),
-        Example(input_col="5", output_col="a"),
-    ]
-    with patch.object(logger, "info") as mock_info, patch.object(
-        logger, "warning"
-    ) as mock_warning:
-        data_generator.extract_and_append_responses(
-            [mock_completion_4], generated_examples
-        )
-        mock_warning.assert_called_once_with(
-            "Error happened when parsing API completion: <MockObject choices=None>"
-        )
-        mock_info.assert_not_called()
-        # The generated_examples should be the same.
-        assert generated_examples == [
-            Example(input_col="1", output_col="a"),
-            Example(input_col="1", output_col="b"),
-            Example(input_col="1", output_col="a"),
-            Example(input_col="3", output_col="a"),
-            Example(input_col="3", output_col="b"),
-            Example(input_col="4", output_col="c"),
-            Example(input_col="4", output_col="c"),
-            Example(input_col="5", output_col="a"),
-        ]
-
-
-def test_extract_some_empty_responses():
-    """Test the extract_responses function correctly handle empty responses."""
-    mock_completion_1 = MockCompletion()
-    mock_completion_1.choices = [
-        # Note that this choice's input is empty. So it should be discarded.
-        {"message": {"content": '{"input": "", "output": "a"}'}},
-        {"message": {"content": '{"input": "5", "output": "b"}'}},
-        # Note that this choice's output is empty. So it should be discarded.
-        {"message": {"content": '{"input": "1", "output": ""}'}},
-    ]
-    mock_completion_2 = MockCompletion()
-    mock_completion_2.choices = [
-        {"message": {"content": '{"input": "3", "output": "a"}'}},
-        # Note that the following choice misses the right quote of JSON.
-        # So it should be discarded. And will log a warning.
-        {"message": {"content": '{"input": "3", "output": "a}'}},
-        {"message": {"content": '{"input": "3", "output": "b"}'}},
-    ]
-    mock_completion_3 = MockCompletion()
-    mock_completion_3.choices = [
-        {"message": {"content": '{"input": "4", "output": "c"}'}},
-        {"message": {"content": '{"input": "4", "output": "c"}'}},
-        {"message": {"content": '{"input": "5", "output": "a"}'}},
-    ]
-    # choices should be list of dicts. So mock_completion_4
-    # is invalid. Which will be discarded and log a warning.
-    mock_completion_4 = MockCompletion()
-    mock_completion_4.choices = None
-
-    with tempfile.TemporaryDirectory() as cache_dir:
-        os.environ["OPENAI_API_KEY"] = "fake_api_key"
-        data_generator = PromptBasedDatasetGenerator(
-            cache_root=cache_dir, filter_duplicated_examples=True
-        )
-        generated_examples = []
-        with patch.object(logger, "info") as mock_info, patch.object(
-            logger, "warning"
-        ) as mock_warning:
-            data_generator.extract_and_append_responses(
-                [mock_completion_1, mock_completion_2], generated_examples
-            )
-            mock_warning.assert_called_once_with(
-                'Error happened parsing API choice: {\'message\': {\'content\': \'{"input": "3", "output": "a}\'}}'  # noqa E501
-            )
-            # There are 3 valid examples in [mock_completion_1,
-            # mock_completion_2] Each input
-            # and output will be logged once as info.
-            # And there are 2 examples with empty
-            # input or output, which should be discarded
-            # and be logged as info.
-            assert mock_info.call_count == 3 * 2 + 2
-
-        # The second choice in mock_completion_2
-        # is invalid. So it should be discarded.
-        assert generated_examples == [
-            Example(input_col="5", output_col="b"),
-            Example(input_col="3", output_col="a"),
-            Example(input_col="3", output_col="b"),
-        ]
-        data_generator.extract_and_append_responses(
-            [mock_completion_3], generated_examples
-        )
-        assert generated_examples == [
-            Example(input_col="5", output_col="b"),
-            Example(input_col="3", output_col="a"),
-            Example(input_col="3", output_col="b"),
-            Example(input_col="4", output_col="c"),
-            Example(input_col="4", output_col="c"),
-            Example(input_col="5", output_col="a"),
-        ]
-        with patch.object(logger, "info") as mock_info, patch.object(
-            logger, "warning"
-        ) as mock_warning:
-            data_generator.extract_and_append_responses(
-                [mock_completion_4], generated_examples
-            )
-            mock_warning.assert_called_once_with(
-                "Error happened when parsing API completion: <MockObject choices=None>"
-            )
-            mock_info.assert_not_called()
-            # The generated_examples should be the same.
-            assert generated_examples == [
-                Example(input_col="5", output_col="b"),
-                Example(input_col="3", output_col="a"),
-                Example(input_col="3", output_col="b"),
-                Example(input_col="4", output_col="c"),
-                Example(input_col="4", output_col="c"),
-                Example(input_col="5", output_col="a"),
-            ]
-
-
-def test_initialize_dataset_generator_with_dynamic_temperature():
-    """Test the correct initialization of the dynamic temperature strategy."""
-    with tempfile.TemporaryDirectory() as cache_dir:
-        os.environ["OPENAI_API_KEY"] = "fake_api_key"
-        with pytest.raises(ValueError) as exc_info:
-            _ = PromptBasedDatasetGenerator(
-                cache_root=cache_dir, initial_temperature=-0.2
-            )
+    with pytest.raises(ValueError) as exc_info:
+        gpt_processor.process_dataset_lists(INSTRUCTION, DATASET_LIST, 0.8, 0.2)
         error_info = exc_info.value.args[0]
         assert (
             error_info
-            == "initial_temperature must be >= 0, but self.initial_temperature=-0.2"
+            == "train_proportion 0.8 + val_proportion 0.2 must be less than 1."
         )
-        with pytest.raises(ValueError) as exc_info:
-            _ = PromptBasedDatasetGenerator(cache_root=cache_dir, max_temperature=2.3)
-            error_info = exc_info.value.args[0]
-            assert (
-                error_info
-                == "max_temperature must be <= 2,0, but self.max_temperature=2.3"
-            )
 
-        with pytest.raises(ValueError) as exc_info:
-            _ = PromptBasedDatasetGenerator(
-                cache_root=cache_dir, max_temperature=1.2, initial_temperature=1.5
-            )
-            error_info = exc_info.value.args[0]
-            assert (
-                error_info
-                == "self.initial_temperature=1.5 must be <= self.max_temperature=1.2"
-            )
-
-
-@patch(
-    "prompt2model.utils.APIAgent.generate_batch_completion",
-    side_effect=MOCK_CLASSIFICATION_EXAMPLE,
-)
-def test_dataset_generator_terminates(mocked_generate_example):
-    """Check to make sure that the dataset generator terminates."""
-    prompt_spec = MockPromptSpec(TaskType.TEXT_GENERATION)
-    dataset_generator = PromptBasedDatasetGenerator(
-        initial_temperature=0.3,
-        max_temperature=1.4,
-        responses_per_request=3,
-        max_api_calls=10000,
-        requests_per_minute=80,
-        filter_duplicated_examples=False,
-    )
-    generated_dataset = dataset_generator.generate_dataset_split(
-        prompt_spec, 100, split=DatasetSplit.TRAIN
-    )
-    generated_df = generated_dataset.to_pandas()
-    assert len(generated_dataset) == 100
-    assert list(generated_df.columns) == ["input_col", "output_col"]
-
-
-def test_generate_dataset_agent_switch():
-    """Test if dataset generation can use a user-set API agent."""
-    my_agent = MockAPIAgent(
-        default_content='{"input": "This is input.", "output": "This is an output."}'
-    )
-    with temp_setattr(api_tools, "default_api_agent", my_agent):
-        prompt_spec = MockPromptSpec(TaskType.CLASSIFICATION)
-        dataset_generator = PromptBasedDatasetGenerator(
-            initial_temperature=0.3,
-            max_temperature=1.4,
-            responses_per_request=1,
-            max_api_calls=100,
-            requests_per_minute=80,
-            filter_duplicated_examples=False,
+    t5_processor = TextualizeProcessor(has_encoder=True)
+    with pytest.raises(ValueError) as exc_info:
+        t5_processor.process_dataset_lists(INSTRUCTION, DATASET_LIST, 0.8, 0.2)
+        error_info = exc_info.value.args[0]
+        assert (
+            error_info
+            == "train_proportion 0.8 + val_proportion 0.2 must be less than 1."
         )
-        dataset_generator.generate_dataset_split(
-            prompt_spec, 100, split=DatasetSplit.TRAIN
-        )
-    # 100 outputs, and each batch has 5 outputs so 20 api calls
-    assert my_agent.generate_batch_call_counter == 20
+
+
+def test_process_dataset_lists():
+    """Test the `process_dataset_lists` function."""
+    processor = TextualizeProcessor(has_encoder=True)
+    modified_dataset_dicts = processor.process_dataset_lists(
+        INSTRUCTION, DATASET_LIST, 0.6, 0.2
+    )
+    expected_modified_generated_dataset_dict = datasets.DatasetDict(
+        {
+            "train": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 0>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(6000)
+                    ],
+                    "model_output": [f"{output}" for output in range(10000, 16000)],
+                }
+            ),
+            "val": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 0>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(6000, 8000)
+                    ],
+                    "model_output": [f"{output}" for output in range(16000, 18000)],
+                }
+            ),
+            "test": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 0>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(8000, 10000)
+                    ],
+                    "model_output": [f"{output}" for output in range(18000, 20000)],
+                }
+            ),
+        }
+    )
+    expected_modified_retrieved_dataset_dict = datasets.DatasetDict(
+        {
+            "train": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 1>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(20000, 26000)
+                    ],
+                    "model_output": [f"{output}" for output in range(30000, 36000)],
+                }
+            ),
+            "val": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 1>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(26000, 28000)
+                    ],
+                    "model_output": [f"{output}" for output in range(36000, 38000)],
+                }
+            ),
+            "test": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 1>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(28000, 30000)
+                    ],
+                    "model_output": [f"{output}" for output in range(38000, 40000)],
+                }
+            ),
+        }
+    )
+    for exp, modified in zip(
+        [
+            expected_modified_generated_dataset_dict,
+            expected_modified_retrieved_dataset_dict,
+        ],
+        modified_dataset_dicts,
+    ):
+        assert list(exp["train"]) == list(modified["train"])
+        if "val" in exp:
+            assert list(exp["val"]) == list(modified["val"])
+        if "test" in exp:
+            assert list(exp["test"]) == list(modified["test"])
+
+
+def test_process_dataset_lists_with_maximum_example_num():
+    """Test the maximum_example_num parameter."""
+    processor = TextualizeProcessor(has_encoder=True)
+    modified_dataset_dicts = processor.process_dataset_lists(
+        INSTRUCTION, DATASET_LIST, 0.6, 0.2, {"train": 3000, "val": 500, "test": 1000}
+    )
+    # Before applying the maximum_example_num, train_num = 6000,
+    # val_num = 2000, test_num = 2000.
+    # After applying the maximum_example_num, train_num = 3000,
+    # val_num = 2000, test_num = 2000.
+    expected_modified_generated_dataset_dict = datasets.DatasetDict(
+        {
+            "train": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 0>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(3000)
+                    ],
+                    "model_output": [f"{output}" for output in range(10000, 13000)],
+                }
+            ),
+            "val": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 0>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(3000, 3500)
+                    ],
+                    "model_output": [f"{output}" for output in range(13000, 13500)],
+                }
+            ),
+            "test": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 0>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(3500, 4500)
+                    ],
+                    "model_output": [f"{output}" for output in range(13500, 14500)],
+                }
+            ),
+        }
+    )
+    expected_modified_retrieved_dataset_dict = datasets.DatasetDict(
+        {
+            "train": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 1>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(20000, 23000)
+                    ],
+                    "model_output": [f"{output}" for output in range(30000, 33000)],
+                }
+            ),
+            "val": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 1>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(23000, 23500)
+                    ],
+                    "model_output": [f"{output}" for output in range(33000, 33500)],
+                }
+            ),
+            "test": datasets.Dataset.from_dict(
+                {
+                    "model_input": [
+                        f"<task 1>convert to text2text\nExample:\n{input}\nLabel:\n"
+                        for input in range(23500, 24500)
+                    ],
+                    "model_output": [f"{output}" for output in range(33500, 34500)],
+                }
+            ),
+        }
+    )
+    for exp, modified in zip(
+        [
+            expected_modified_generated_dataset_dict,
+            expected_modified_retrieved_dataset_dict,
+        ],
+        modified_dataset_dicts,
+    ):
+        assert list(exp["train"]) == list(modified["train"])
+        if "val" in exp:
+            assert list(exp["val"]) == list(modified["val"])
+        if "test" in exp:
+            assert list(exp["test"]) == list(modified["test"])
