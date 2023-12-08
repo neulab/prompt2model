@@ -63,8 +63,8 @@ UNEXPECTED_DATASET_DICTS_WITH_WRONG_SPLIT = [
                 {
                     "input_col": ["foo", "bar"],
                     "explain_col": ["abc", "xyz"],
-                    "output_col": ["baz", "qux"]
-                } 
+                    "output_col": ["baz", "qux"],
+                }
             )
         }
     ),
@@ -74,7 +74,7 @@ UNEXPECTED_DATASET_DICTS_WITH_WRONG_SPLIT = [
                 {
                     "input_col": ["spam", "eggs"],
                     "explain_col": ["lmn", "opq"],
-                    "output_col": ["ham", "sau"]
+                    "output_col": ["ham", "sau"],
                 }
             )
         }
@@ -89,7 +89,7 @@ UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS = [
                 {
                     "input_col": ["foo", "bar"],
                     "explain_col": ["abc", "xyz"],
-                    "output_col": ["baz", "qux"]
+                    "output_col": ["baz", "qux"],
                 }
             )
         }
@@ -100,7 +100,7 @@ UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS = [
                 {
                     "input_col": ["spam", "eggs"],
                     "explain_col": ["lmn", "opq"],
-                    "output": ["ham", "sau"]
+                    "output": ["ham", "sau"],
                 }
             )
         }
