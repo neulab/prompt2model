@@ -19,14 +19,14 @@ DATASET_DICTS = [
             "train": datasets.Dataset.from_dict(
                 {
                     "input_col": ["foo", "bar"],
-                    "explain_col": ["abc","xyz"],
+                    "explain_col": ["abc", "xyz"],
                     "output_col": ["baz", "qux"],
                 }
             ),
             "test": datasets.Dataset.from_dict(
                 {
                     "input_col": ["foo", "bar"],
-                    "explain_col": ["abc","xyz"],
+                    "explain_col": ["abc", "xyz"],
                     "output_col": ["baz", "qux"],
                 }
             ),
@@ -37,14 +37,14 @@ DATASET_DICTS = [
             "train": datasets.Dataset.from_dict(
                 {
                     "input_col": ["spam", "eggs"],
-                    "explain_col": ["lmn","opq"],
+                    "explain_col": ["lmn", "opq"],
                     "output_col": ["ham", "sau"],
                 }
             ),
             "val": datasets.Dataset.from_dict(
                 {
                     "input_col": ["spam", "eggs"],
-                    "explain_col": ["lmn","opq"],
+                    "explain_col": ["lmn", "opq"],
                     "output_col": ["ham", "sau"],
                 }
             ),
@@ -60,14 +60,14 @@ UNEXPECTED_DATASET_DICTS_WITH_WRONG_SPLIT = [
     datasets.DatasetDict(
         {
             "full": datasets.Dataset.from_dict(
-                {"input_col": ["foo", "bar"], "explain_col": ["abc","xyz"], "output_col": ["baz", "qux"]}
+                {"input_col": ["foo", "bar"], "explain_col": ["abc", "xyz"], "output_col": ["baz", "qux"]} # noqa E501
             )
         }
     ),
     datasets.DatasetDict(
         {
             "train": datasets.Dataset.from_dict(
-                {"input_col": ["spam", "eggs"], "explain_col": ["lmn","opq"], "output_col": ["ham", "sau"]}
+                {"input_col": ["spam", "eggs"], "explain_col": ["lmn", "opq"], "output_col": ["ham", "sau"]} # noqa E501
             )
         }
     ),
@@ -78,14 +78,14 @@ UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS = [
     datasets.DatasetDict(
         {
             "train": datasets.Dataset.from_dict(
-                {"input_col": ["foo", "bar"], "explain_col": ["abc","xyz"], "output_col": ["baz", "qux"]}
+                {"input_col": ["foo", "bar"], "explain_col": ["abc", "xyz"], "output_col": ["baz", "qux"]} # noqa E501
             )
         }
     ),
     datasets.DatasetDict(
         {
             "train": datasets.Dataset.from_dict(
-                {"input_col": ["spam", "eggs"], "explain_col": ["lmn","opq"], "output": ["ham", "sau"]}
+                {"input_col": ["spam", "eggs"], "explain_col": ["lmn", "opq"], "output": ["ham", "sau"]} # noqa E501
             )
         }
     ),
@@ -198,14 +198,14 @@ def test_dataset_processor_with_numerical_column():
                 "train": datasets.Dataset.from_dict(
                     {
                         "input_col": ["foo", "bar"],
-                        "explain_col": ["abc","xyz"],
+                        "explain_col": ["abc", "xyz"],
                         "output_col": ["baz", "qux"],
                     }
                 ),
                 "test": datasets.Dataset.from_dict(
                     {
                         "input_col": ["spam", "eggs"],
-                        "explain_col": ["lmn","opq"],
+                        "explain_col": ["lmn", "opq"],
                         "output_col": ["ham", "sau"],
                     }
                 ),
@@ -216,14 +216,14 @@ def test_dataset_processor_with_numerical_column():
                 "train": datasets.Dataset.from_dict(
                     {
                         "input_col": ["foo", "bar"],
-                        "explain_col": ["abc","xyz"],
+                        "explain_col": ["abc", "xyz"],
                         "output_col": [0, 1],
                     }
                 ),
                 "test": datasets.Dataset.from_dict(
                     {
                         "input_col": ["spam", "eggs"],
-                        "explain_col": ["lmn","opq"],
+                        "explain_col": ["lmn", "opq"],
                         "output_col": [1, 2],
                     }
                 ),
@@ -371,7 +371,7 @@ def test_unexpected_columns():
             INSTRUCTION, UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS
         )
         assert str(exc_info.value) == (
-            "Example dictionary must have 'input_col', 'explain_col' and 'output_col' keys."
+            "Example dictionary must have 'input_col', 'explain_col' and 'output_col' keys." # noqa E501
         )
     gc.collect()
 
@@ -382,14 +382,14 @@ DATASET_DICTS_WITH_EMPTY_COLUMNS = [
             "train": datasets.Dataset.from_dict(
                 {
                     "input_col": ["foo", "", "test"],
-                    "explain_col": ["abc","","xyz"],
+                    "explain_col": ["abc", "", "xyz"],
                     "output_col": ["", "qux", "key"],
                 }
             ),
             "test": datasets.Dataset.from_dict(
                 {
                     "input_col": ["foo", ""],
-                    "explain_col": ["abc",""],
+                    "explain_col": ["abc", ""],
                     "output_col": ["baz", "qux"],
                 }
             ),
@@ -400,7 +400,7 @@ DATASET_DICTS_WITH_EMPTY_COLUMNS = [
             "train": datasets.Dataset.from_dict(
                 {
                     "input_col": ["", ""],
-                    "explain_col": ["abc","xyz"],
+                    "explain_col": ["abc", "xyz"],
                     "output_col": ["ham", "sau"],
                 }
             ),
