@@ -100,15 +100,15 @@ class MockBatchDifferentCompletions:
         self.current_index = 0
         mock_completion_1 = MockCompletion()
         mock_completion_1.choices = [
-            {"message": {"content": '{"input": "1", "output": "a"}'}},
-            {"message": {"content": '{"input": "1", "output": "b"}'}},
-            {"message": {"content": '{"input": "1", "output": "a"}'}},
+            {"message": {"content": '{"input": "1", "explanation": "x", "output": "a"}'}},
+            {"message": {"content": '{"input": "1", "explanation": "x", "output": "b"}'}},
+            {"message": {"content": '{"input": "1", "explanation": "x", "output": "a"}'}},
         ]
         mock_completion_2 = MockCompletion()
         mock_completion_2.choices = [
-            {"message": {"content": '{"input": "1", "output": "c"}'}},
-            {"message": {"content": '{"input": "2", "output": "a"}'}},
-            {"message": {"content": '{"input": "2", "output": "b"}'}},
+            {"message": {"content": '{"input": "1", "explanation": "x", "output": "c"}'}},
+            {"message": {"content": '{"input": "2", "explanation": "x", "output": "a"}'}},
+            {"message": {"content": '{"input": "2", "explanation": "x", "output": "b"}'}},
         ]
         self.mock_completions.append(
             [
@@ -118,24 +118,24 @@ class MockBatchDifferentCompletions:
         )
         mock_completion_3 = MockCompletion()
         mock_completion_3.choices = [
-            {"message": {"content": '{"input": "3", "output": "a"}'}},
-            {"message": {"content": '{"input": "3", "output": "a"}'}},
-            {"message": {"content": '{"input": "3", "output": "b"}'}},
+            {"message": {"content": '{"input": "3", "explanation": "x", "output": "a"}'}},
+            {"message": {"content": '{"input": "3", "explanation": "x", "output": "a"}'}},
+            {"message": {"content": '{"input": "3", "explanation": "x", "output": "b"}'}},
         ]
         self.mock_completions.append([mock_completion_3])
 
         mock_completion_4 = MockCompletion()
         mock_completion_4.choices = [
-            {"message": {"content": '{"input": "1", "output": "b"}'}},
-            {"message": {"content": '{"input": "1", "output": "b"}'}},
-            {"message": {"content": '{"input": "1", "output": "b"}'}},
+            {"message": {"content": '{"input": "1", "explanation": "x", "output": "b"}'}},
+            {"message": {"content": '{"input": "1", "explanation": "x", "output": "b"}'}},
+            {"message": {"content": '{"input": "1", "explanation": "x", "output": "b"}'}},
         ]
         self.mock_completions.append([mock_completion_4])
         mock_completion_5 = MockCompletion()
         mock_completion_5.choices = [
-            {"message": {"content": '{"input": "4", "output": "c"}'}},
-            {"message": {"content": '{"input": "4", "output": "c"}'}},
-            {"message": {"content": '{"input": "5", "output": "a"}'}},
+            {"message": {"content": '{"input": "4", "explanation": "x", "output": "c"}'}},
+            {"message": {"content": '{"input": "4", "explanation": "x", "output": "c"}'}},
+            {"message": {"content": '{"input": "5", "explanation": "x", "output": "a"}'}},
         ]
         self.mock_completions.append([mock_completion_5])
         if length == 5:
