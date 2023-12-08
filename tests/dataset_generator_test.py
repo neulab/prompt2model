@@ -29,41 +29,41 @@ logger = logging.getLogger("DatasetGenerator")
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "explain":"x", "output": "1"}',
+    content='{"input": "This is a great movie!", "explanation":"x", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "explain":"x", "label": "1"}',
+    content='{"input": "This is a great movie!", "explanation":"x", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "explain":"x", "output": "1}',
+    content='{"input": "This is a great movie!", "explanation":"x", "output": "1}',
 )
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "explain":"x", "output": "1"}',
+    content='{"input": "This is a great movie!", "explanation":"x", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "explain":"x", "label": "1"}',
+    content='{"input": "This is a great movie!", "explanation":"x", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "explain":"x", "output": "1}',
+    content='{"input": "This is a great movie!", "explanation":"x", "output": "1}',
 )
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "explain":"x", "output": "1"}',
+    content='{"input": "This is a great movie!", "explanation":"x", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "explain":"x", "label": "1"}',
+    content='{"input": "This is a great movie!", "explanation":"x", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "explain":"x", "output": "1}',
+    content='{"input": "This is a great movie!", "explanation":"x", "output": "1}',
 )
 
 
@@ -734,23 +734,23 @@ def test_extract_responses():
     """Test the extract_responses function of DatasetGenerator."""
     mock_completion_1 = MockCompletion()
     mock_completion_1.choices = [
-        {"message": {"content": '{"input": "1", "explain": "x", "output": "a"}'}},
-        {"message": {"content": '{"input": "1", "explain": "x", "output": "b"}'}},
-        {"message": {"content": '{"input": "1", "explain": "x", "output": "a"}'}},
+        {"message": {"content": '{"input": "1", "explanation": "x", "output": "a"}'}},
+        {"message": {"content": '{"input": "1", "explanation": "x", "output": "b"}'}},
+        {"message": {"content": '{"input": "1", "explanation": "x", "output": "a"}'}},
     ]
     mock_completion_2 = MockCompletion()
     mock_completion_2.choices = [
-        {"message": {"content": '{"input": "3", "explain": "x", "output": "a"}'}},
+        {"message": {"content": '{"input": "3", "explanation": "x", "output": "a"}'}},
         # Note that the following choice miss the right quote of JSON.
         # So it should be discarded. And will log a warning.
-        {"message": {"content": '{"input": "3", "explain": "x", "output": "a}'}},
-        {"message": {"content": '{"input": "3", "explain": "x", "output": "b"}'}},
+        {"message": {"content": '{"input": "3", "explanation": "x", "output": "a}'}},
+        {"message": {"content": '{"input": "3", "explanation": "x", "output": "b"}'}},
     ]
     mock_completion_3 = MockCompletion()
     mock_completion_3.choices = [
-        {"message": {"content": '{"input": "4", "explain": "x", "output": "c"}'}},
-        {"message": {"content": '{"input": "4", "explain": "x", "output": "c"}'}},
-        {"message": {"content": '{"input": "5", "explain": "x", "output": "a"}'}},
+        {"message": {"content": '{"input": "4", "explanation": "x", "output": "c"}'}},
+        {"message": {"content": '{"input": "4", "explanation": "x", "output": "c"}'}},
+        {"message": {"content": '{"input": "5", "explanation": "x", "output": "a"}'}},
     ]
     # choices should be list of dicts. So mock_completion_4
     # is invalid. Which will be discarded and log a warning.
@@ -767,11 +767,11 @@ def test_extract_responses():
             [mock_completion_1, mock_completion_2], generated_examples
         )
         mock_warning.assert_called_once_with(
-            'Error happened parsing API choice: {\'message\': {\'content\': \'{"input": "3", "output": "a}\'}}'  # noqa E501
+            'Error happened parsing API choice: {\'message\': {\'content\': \'{"input": "3", "explanation": "x", "output": "a}\'}}'  # noqa E501
         )
         # There are 5 valid examples. Each input
         # and output will be logged once as info.
-        assert mock_info.call_count == 5 * 2
+        assert mock_info.call_count == 5 * 3
 
     # The second choice in mock_completion_2
     # is invalid. So it should be discarded.
@@ -821,24 +821,24 @@ def test_extract_some_empty_responses():
     mock_completion_1 = MockCompletion()
     mock_completion_1.choices = [
         # Note that this choice's input is empty. So it should be discarded.
-        {"message": {"content": '{"input": "", "explain": "x", "output": "a"}'}},
-        {"message": {"content": '{"input": "5", "explain": "x", "output": "b"}'}},
+        {"message": {"content": '{"input": "", "explanation": "x", "output": "a"}'}},
+        {"message": {"content": '{"input": "5", "explanation": "x", "output": "b"}'}},
         # Note that this choice's output is empty. So it should be discarded.
-        {"message": {"content": '{"input": "1", "explain": "x", "output": ""}'}},
+        {"message": {"content": '{"input": "1", "explanation": "x", "output": ""}'}},
     ]
     mock_completion_2 = MockCompletion()
     mock_completion_2.choices = [
-        {"message": {"content": '{"input": "3", "explain": "x", "output": "a"}'}},
+        {"message": {"content": '{"input": "3", "explanation": "x", "output": "a"}'}},
         # Note that the following choice misses the right quote of JSON.
         # So it should be discarded. And will log a warning.
-        {"message": {"content": '{"input": "3", "explain": "x", "output": "a}'}},
-        {"message": {"content": '{"input": "3","explain": "x",  "output": "b"}'}},
+        {"message": {"content": '{"input": "3", "explanation": "x", "output": "a}'}},
+        {"message": {"content": '{"input": "3", "explanation": "x", "output": "b"}'}},
     ]
     mock_completion_3 = MockCompletion()
     mock_completion_3.choices = [
-        {"message": {"content": '{"input": "4", "explain": "x", "output": "c"}'}},
-        {"message": {"content": '{"input": "4", "explain": "x", "output": "c"}'}},
-        {"message": {"content": '{"input": "5","explain": "x",  "output": "a"}'}},
+        {"message": {"content": '{"input": "4", "explanation": "x", "output": "c"}'}},
+        {"message": {"content": '{"input": "4", "explanation": "x", "output": "c"}'}},
+        {"message": {"content": '{"input": "5", "explanation": "x",  "output": "a"}'}},
     ]
     # choices should be list of dicts. So mock_completion_4
     # is invalid. Which will be discarded and log a warning.
@@ -858,7 +858,7 @@ def test_extract_some_empty_responses():
                 [mock_completion_1, mock_completion_2], generated_examples
             )
             mock_warning.assert_called_once_with(
-                'Error happened parsing API choice: {\'message\': {\'content\': \'{"input": "3", "explain": "x", "output": "a}\'}}'  # noqa E501
+                'Error happened parsing API choice: {\'message\': {\'content\': \'{"input": "3", "explanation": "x", "output": "a}\'}}'  # noqa E501
             )
             # There are 3 valid examples in [mock_completion_1,
             # mock_completion_2] Each input
@@ -866,7 +866,7 @@ def test_extract_some_empty_responses():
             # And there are 2 examples with empty
             # input or output, which should be discarded
             # and be logged as info.
-            assert mock_info.call_count == 3 * 2 + 2
+            assert mock_info.call_count == 3 * 3 + 2
 
         # The second choice in mock_completion_2
         # is invalid. So it should be discarded.
@@ -959,13 +959,13 @@ def test_dataset_generator_terminates(mocked_generate_example):
     )
     generated_df = generated_dataset.to_pandas()
     assert len(generated_dataset) == 100
-    assert list(generated_df.columns) == ["input_col", "output_col"]
+    assert list(generated_df.columns) == ["input_col", "explain_col", "output_col"]
 
 
 def test_generate_dataset_agent_switch():
     """Test if dataset generation can use a user-set API agent."""
     my_agent = MockAPIAgent(
-        default_content='{"input": "This is input.", "output": "This is an output."}'
+        default_content='{"input": "This is input.", "explanation": "This is an explanation", "output": "This is an output."}'  # noqa E501
     )
     with temp_setattr(api_tools, "default_api_agent", my_agent):
         prompt_spec = MockPromptSpec(TaskType.CLASSIFICATION)
