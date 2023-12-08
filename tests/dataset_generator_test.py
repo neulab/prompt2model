@@ -29,41 +29,41 @@ logger = logging.getLogger("DatasetGenerator")
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1"}',
+    content='{"input": "This is a great movie!", "explain":"x", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "label": "1"}',
+    content='{"input": "This is a great movie!", "explain":"x", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1}',
+    content='{"input": "This is a great movie!", "explain":"x", "output": "1}',
 )
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1"}',
+    content='{"input": "This is a great movie!", "explain":"x", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "label": "1"}',
+    content='{"input": "This is a great movie!", "explain":"x", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1}',
+    content='{"input": "This is a great movie!", "explain":"x", "output": "1}',
 )
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1"}',
+    content='{"input": "This is a great movie!", "explain":"x", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "label": "1"}',
+    content='{"input": "This is a great movie!", "explain":"x", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1}',
+    content='{"input": "This is a great movie!", "explain":"x", "output": "1}',
 )
 
 
@@ -86,7 +86,7 @@ def test_generate_dataset(mocked_generate_example):
     # the length of the dataset is num_examples + 5, where 5 is the
     # default number of responses per API call.
     assert len(dataset) < num_examples + 5
-    expected_columns = {"input_col", "output_col"}
+    expected_columns = {"input_col", "explain_col", "output_col"}
     assert set(dataset.column_names) == expected_columns
     return dataset
 
@@ -116,7 +116,7 @@ def test_generate_dataset_dict(mocked_generate_example):
         # generated dataset is num_examples + 5, where
         # 5 is the default number of responses per API call.
         assert len(dataset_dict[split.value]) < num + 5
-    expected_columns = {"input_col", "output_col"}
+    expected_columns = {"input_col", "explain_col", "output_col"}
     for dataset in dataset_dict.values():
         assert set(dataset.column_names) == expected_columns
 
