@@ -387,7 +387,7 @@ def test_unexpected_columns():
             INSTRUCTION, UNEXPECTED_DATASET_DICTS_WITH_WRONG_COLUMNS
         )
         assert str(exc_info.value) == (
-            "Example dictionary must have 'input_col', 'explain_col' and 'output_col' keys." # noqa E501
+            "Example dictionary must have 'input_col', 'explain_col' and 'output_col' keys."  # noqa E501
         )
     gc.collect()
 
@@ -528,7 +528,7 @@ def test_empty_filter_decoder_only_style():
 GENERATED_DATASET = datasets.Dataset.from_dict(
     {
         "input_col": list(range(10000)),
-        "explain_col": ['a'] * 10000,
+        "explain_col": ["a"] * 10000,
         "output_col": list(range(10000, 20000)),
     }
 )
@@ -536,7 +536,7 @@ GENERATED_DATASET = datasets.Dataset.from_dict(
 RETRIEVED_TRAIN_DATASET = datasets.Dataset.from_dict(
     {
         "input_col": list(range(20000, 30000)),
-        "explain_col": ['a'] * 10000,
+        "explain_col": ["a"] * 10000,
         "output_col": list(range(30000, 40000)),
     }
 )
