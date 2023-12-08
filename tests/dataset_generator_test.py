@@ -565,7 +565,9 @@ def test_wrong_key_example(mocked_generate_example):
         prompt_spec, num_examples, split
     )
     assert mocked_generate_example.call_count == 3
-    expected_dataset = Dataset.from_dict({"input_col": [], "explain_col": [], "output_col": []})  # noqa E501
+    expected_dataset = Dataset.from_dict(
+        {"input_col": [], "explain_col": [], "output_col": []}
+    )  # noqa E501
     assert list(expected_dataset) == list(generated_dataset)
 
 
@@ -582,7 +584,9 @@ def test_invalid_json_response(mocked_generate_example):
     split = DatasetSplit.VAL
     dataset = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
     assert mocked_generate_example.call_count == 3
-    expected_dataset = Dataset.from_dict({"input_col": [], "explain_col": [], "output_col": []})  # noqa E501
+    expected_dataset = Dataset.from_dict(
+        {"input_col": [], "explain_col": [], "output_col": []}
+    )  # noqa E501
     assert list(dataset) == list(expected_dataset)
 
 
@@ -618,9 +622,9 @@ def test_filter_with_duplicate_inputs_unique_outputs():
     ]
     filtered_examples = data_generator.apply_multi_vote_filtering(generated_examples)
     expected_examples = [
-        Example(input_col="apple", explain_col="a", output_col="A"),  #noqa E501
-        Example(input_col="banana", explain_col="b", output_col="B"),  #noqa E501
-        Example(input_col="orange", explain_col="d", output_col="O"),  #noqa E501
+        Example(input_col="apple", explain_col="a", output_col="A"),  # noqa E501
+        Example(input_col="banana", explain_col="b", output_col="B"),  # noqa E501
+        Example(input_col="orange", explain_col="d", output_col="O"),  # noqa E501
     ]
     assert sorted(expected_examples) == sorted(filtered_examples)
 
