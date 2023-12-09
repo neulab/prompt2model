@@ -39,6 +39,8 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         encoder_model_name: str = "viswavi/datafinder-huggingface-prompt-queries",
         dataset_info_file: str = "huggingface_data/huggingface_datasets/"
         + "dataset_index.json",
+        reranking_dataset_info_file="huggingface_data/huggingface_datasets/"
+        + "reranking_dataset_index.json",
         device: torch.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         ),
@@ -53,6 +55,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             max_search_depth: The number of most-relevant datasets to retrieve.
             encoder_model_name: The name of the model to use for the dual-encoder.
             dataset_info_file: The file containing dataset names and descriptions.
+            reranking_dataset_info_file: File containing dataset info used for reranking
             device: The device to use for encoding text for our dual-encoder model.
             max_number_of_dataset_rows: Limit the number of rows for large datasets.
             allow_gated_datasets: Use only if the user explicitly wants gated datasets
@@ -63,6 +66,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         self.encoder_model_name = encoder_model_name
         self.device = device
         self.dataset_info_file = dataset_info_file
+        self.reranking_dataset_info_file = reranking_dataset_info_file
         self.max_number_of_dataset_rows = max_number_of_dataset_rows
         self.allow_gated_datasets = allow_gated_datasets
         self.initialize_search_index()
@@ -87,6 +91,16 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                     score=0.0,
                 )
             )
+        if not os.path.exists(self.reranking_dataset_info_file):
+            # Download the reranking index if one is not on disk already.
+            logger.info("Downloading the Reranking Dataset Index File")
+            urllib.request.urlretrieve(
+                "http://phontron.com/data/prompt2model/dataset_reranking_index.json",
+                self.reranking_dataset_info_file,
+            )
+        with open(self.reranking_dataset_info_file, "r") as f:
+            self.reranking_datasets_infos = json.load(f)
+
         if os.path.isdir(self.search_index_path):
             raise ValueError(
                 "Search index must either be a valid file or not exist yet. "
@@ -177,29 +191,38 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         )
 
     def get_all_dataset_infos(self, dataset_list: list[str]) -> dict:
-        """Iterate and get info about all datasets retrived."""
-        with open(
-            "huggingface_data/huggingface_datasets/updated_dataset_index_file.json", "r"
-        ) as f:
-            available_datasets = json.load(f)
+        """Gather all information about a list of datasets.
 
+        This function iterates over a list of dataset names and retrieves
+        their information from a stored dataset information dictionary. It
+        filters out datasets based on whether users allows for gated_datasets and
+        limits the number of configurations to a maximum of 5 for each dataset.
+
+        Args:
+            dataset_list: A list of dataset names to retrieve information for.
+
+        Returns:
+            dict: A dictionary containing information about the requested datasets.
+                The keys are dataset names and the values are dictionaries
+                with dataset information.
+        """
         for dataset_name in dataset_list:
-            if dataset_name not in available_datasets:
+            if dataset_name not in self.reranking_datasets_infos:
                 continue
             if (
-                available_datasets[dataset_name]["is_gated"]
+                self.reranking_datasets_infos[dataset_name]["is_gated"]
                 != self.allow_gated_datasets
             ):
                 continue
-            curr_dataset = available_datasets[dataset_name]
+            curr_dataset = self.reranking_datasets_infos[dataset_name]
             if len(curr_dataset["configs"]) > 5:
                 curr_dataset["configs"] = dict(
                     random.sample(list(curr_dataset["configs"].items()), 5)
                 )
         dataset_info_dict = {
-            dataset_name: available_datasets[dataset_name]
+            dataset_name: self.reranking_datasets_infos[dataset_name]
             for dataset_name in dataset_list
-            if dataset_name in available_datasets
+            if dataset_name in self.reranking_datasets_infos
         }
         return dataset_info_dict
 
@@ -359,24 +382,35 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         return dataset_names
 
     def dataset_reranking(self, dataset_list: list[str], prompt_spec: PromptSpec):
-        """Rerank the datasets returned by the dataset_retriever.
+        """Rerank datasets based on relevance to a given prompt specification.
+
+        This function takes a list of datasets and a prompt specification,
+        and reranks the datasets based on their relevance to the prompt. It
+        first gathers detailed information about each dataset in the list using the
+        `get_all_dataset_infos` method. Then, it constructs a prompt for reranking
+        and parses its response to identify the most relevant dataset and
+        configuration. The function also includes checks for the validity of the
+        response(hallucinations) and the confidence level of the dataset
+        recommendation.
 
         Args:
-            dataset_list: List of DatasetInfos, as returned by the retriever
-            prompt_spec: prompt whose instruction field we use to retrieve datasets.
+            dataset_list: A list of dataset names to be reranked.
+            prompt_spec: An object containing the prompt specification,
+                        ncluding instruction and examples, used for reranking datasets.
 
         Returns:
-            The most relevant dataset (with the most relevant configuration)
-            from the list of available datasets.
+            dict or None: The most relevant dataset configuration, or None if
+                no suitable dataset is found or if the confidence level
+                in the recommendation is low.
         """
         dataset_info_dict = self.get_all_dataset_infos(dataset_list)
 
         if len(dataset_info_dict.keys()) == 0:
-            return None  # All datasets private/took too long to be retrieved
+            return None
         prompt = construct_prompt_for_dataset_reranking(
             prompt_spec.instruction, prompt_spec.examples, dataset_info_dict
         )
-        response = parse_prompt_to_fields(prompt=prompt, response_type="rerank")
+        response = parse_prompt_to_fields(prompt=prompt, module_name="rerank")
 
         dataset_name, config_name, confidence_level = (
             response["dataset_name"],
@@ -388,25 +422,34 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             or config_name not in dataset_info_dict[dataset_name]["configs"]
         ):
             logger.warning("LLM hallucinated dataset/config name")
-            return None  # None of the datasets are relevant
-        if confidence_level == "low":
-            logger.warning("Confidence in retrieved dataset is low..")
             return None
-
-        # or there is hallucination or reranker is not confident
+        if confidence_level == "low":
+            logger.warning("Confidence in retrieved dataset is low.")
+            return None
 
         return dataset_info_dict[dataset_name]["configs"][config_name]
 
     def canonicalize_dataset_automatically(
         self, top_dataset_info: dict, task_instruction: str
     ):
-        """Use existing functions to canonicalize dataset (instead of using cli).
+        """Automatically canonicalize dataset (instead of cli).
+
+        This function automates the canonicalization of the
+        dataset identified as the most relevant. It starts by checking if
+        the top dataset information exists. If so, it proceeds to automatically
+        select the input and output columns based on the task instruction. The
+        dataset is then loaded, flattened, and renamed according to the columns
+        mapping. Finally, the dataset is canonicalized using the selected columns.
 
         Args:
-            top_dataset_info: Information about the best dataset
-            task_instruction: Prompt spec's instruction field
+            top_dataset_info: Contains info about the top-ranked dataset.
+            task_instruction: A string representing the instruction for the task,
+                              used to guide column selection.
+
         Returns:
-            The most relevant dataset from the list of available datasets.
+            The canonicalized dataset, or None if the dataset is invalid or
+            if column selection fails, or if any other error occurs
+            during the process.
         """
         if top_dataset_info is None:
             logger.warning("None of the retrieved datasets were relevant.")

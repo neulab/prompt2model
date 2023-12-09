@@ -2,8 +2,6 @@
 
 from __future__ import annotations  # noqa FI58
 
-import json
-
 METAPROMPT_BASE = """Your objective is to rerank datasets given a task (and few examples of the task) based on relevancy. Relevant factors involve how suited the dataset is for the task and whether the input/output formats of the task and the dataset data matches. For each dataset, you will be provided with the dataset description, and the configurations available. Each configuration of the dataset will be represented with the config_name, the columns in that configuration, and an example row. Please return a SINGLE tuple of the combination of the most relevant dataset, with the best suited config using their name, along with a confidence level ranging from [low, medium, high] representing how relevant the dataset is to the task. The output format should be a tuple of form (dataset_name,config_name,confidence_level). e.g., (squad,plain_text,low). """  # noqa: E501
 
 INPUT_PROMPT_TEMPLATE = """The following is the task \n {instruction} and these are some examples of the same: {examples} \n
@@ -11,7 +9,7 @@ There are {num} datasets available for this task. \n
 {datasets}.
 The reranking results of the {num} datasets in (dataset_name,config_name,confidence_level) format is: \n{reranking}"""  # noqa: E501
 
-DATASET_TEMPLATE = """[{counter}] **{dataset_name}**\n: Description-{dataset_description}.\n. This dataset has the following configs:\n  """  # noqa: E501
+DATASET_TEMPLATE = """[{counter}] **{dataset_name}**\n: Description-{dataset_description}.\n. The dataset is {popularity_level} This dataset has the following configs:\n  """  # noqa: E501
 CONFIG_TEMPLATE = """\t[{counter}] **{config_name}**\n: The columns in this config are {dataset_columns}.\n An example row from this config is {sample_row}.\n """  # noqa: E501
 
 INCONTEXT_EXAMPLE = """
@@ -96,19 +94,6 @@ The reranking results of the 3 datasets in (dataset_name,config_name,confidence_
 
 """  # noqa: E501
 ENDING_LINE = "After seeing this examples, please provide the reranking of the datasets for this context:"  # noqa: E501
-
-
-def truncate_row(example_row: dict, max_length=50) -> str:
-    """Truncate the row before displaying if it is too long."""
-    truncated_row = {}
-    for key in example_row.keys():
-        curr_row = json.dumps(example_row[key])
-        truncated_row[key] = (
-            curr_row
-            if len(curr_row) <= max_length - 3
-            else curr_row[:max_length] + "..."
-        )
-    return json.dumps(truncated_row)
 
 
 def build_input(instruction: str, examples: str, datasets_infos) -> str:

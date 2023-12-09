@@ -93,7 +93,7 @@ def parse_prompt_to_fields(
     required_keys: list = [],
     optional_keys: list = [],
     max_api_calls: int = 5,
-    response_type: str = "json",
+    module_name: str = "col_selection",
 ) -> dict:
     """Parse prompt into specific fields, and return to the calling function.
 
@@ -107,6 +107,8 @@ def parse_prompt_to_fields(
         optional_keys: Field that may/may not be present in the response
         max_api_calls: Max number of retries, defaults to 5 to avoid
                         being stuck in an infinite loop
+        module_name: The module this is to be used for. Currently supports
+                        rerank and col_selection
 
     Returns:
         Parsed Response or throws error
@@ -131,10 +133,10 @@ def parse_prompt_to_fields(
                 )
             )
             extraction = None
-            if response_type == "json":
+            if module_name == "col_selection":
                 extraction = parse_json(response, required_keys, optional_keys)
 
-            elif response_type == "rerank":
+            elif module_name == "rerank":
                 extraction = parse_reranking_results(response)
             if extraction is not None:
                 return extraction
