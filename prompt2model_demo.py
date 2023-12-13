@@ -181,8 +181,37 @@ def main():
             TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
         )
         line_print("Retrieving dataset...")
+        line_print("Do you want to retrieve dataset automatically? (y/n)")
+        auto_retrieve = False
+        while True:
+            line = input()
+            if line.lower() == "y":
+                auto_retrieve = True
+                break
+            elif line.lower() == "n":
+                auto_retrieve = False
+                break
+            else:
+                line_print("Invalid input. Please enter y or n.")
+
         retriever = DescriptionDatasetRetriever()
-        retrieved_dataset_dict = retriever.retrieve_dataset_dict(prompt_spec)
+
+        if auto_retrieve:
+            while True:
+                line_print("Enter the number of data points you want to transform:")
+                line = input()
+                num_transform = int(line)
+                if num_transform <= 0:
+                    line_print("Invalid input. Please enter a number greater than 0.")
+                    continue
+                status["num_transform"] = num_transform
+                break
+            retrieved_dataset_dict = retriever.retrieve_dataset_dict(
+                prompt_spec, data_transform=True, num_transform=num_transform
+            )
+        else:
+            retrieved_dataset_dict = retriever.retrieve_dataset_dict(prompt_spec)
+
         dataset_has_been_retrieved = True
         if retrieved_dataset_dict is not None:
             retrieved_dataset_dict.save_to_disk("retrieved_dataset_dict")
