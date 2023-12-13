@@ -220,12 +220,14 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         return datasets.DatasetDict(dataset_dict)
 
     def canonicalize_dataset_auto(
-        self, dataset_name: str, prompt_spec, num_transform: int = 3000
+        self, dataset_name: str, prompt_spec: PromptSpec, num_transform: int = 3000
     ) -> datasets.DatasetDict:
         """Canonicalize a dataset into a suitable text-to-text format.
 
         Args:
             dataset_name: The name of the dataset to canonicalize.
+            prompt_spec: A prompt whose instruction field we use to transform datasets
+            num_transform: Number to transform.
 
         Returns:
             A canonicalized dataset.
@@ -236,8 +238,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         dataset = datasets.load_dataset(dataset_name, chosen_config).shuffle().flatten()
 
         if "train" not in dataset:
-            logger.error(f"{dataset_name} must contain a `train` split.")
-            return None
+            raise ValueError("{dataset_name} must contain a `train` split.")
 
         columns_mapping: dict[str, str] = {}
         counter: dict[str, int] = {}
@@ -263,18 +264,13 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         print(f"Loaded dataset. Example rows:\n{example_rows}\n")
         logger.info(f"Loaded dataset. Example rows:\n{example_rows}\n")
 
-        try:
-            input_columns, output_column = self.automatic_column_selection(
-                prompt_spec.instruction,
-                dataset_name,
-                dataset_description,
-                train_columns_formatted,
-                dataset["train"][0],
-            )
-        except RuntimeError:
-            logger.error(f"{dataset_name} failed at column selection. Try another!")
-            return None  # Returning None means that the dataset chosen didn't work,
-            # and we would rather generate a dataset.
+        input_columns, output_column = self.automatic_column_selection(
+            prompt_spec.instruction,
+            dataset_name,
+            dataset_description,
+            train_columns_formatted,
+            dataset["train"][0],
+        )
 
         # remove columns not selected by automatic column selection
         dataset = dataset.remove_columns(
@@ -286,16 +282,12 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         )
         logger.info("Column selection completed")
 
-        try:
-            dataset_transformer = PromptBasedDatasetTransformer()
-            canonicalized_dataset = dataset_transformer.transform_data(
-                prompt_spec=prompt_spec,
-                dataset=dataset["train"],
-                num_transform=num_transform,
-            )
-        except RuntimeError:
-            logger.error(f"{dataset_name} failed at data transformation. Try another!")
-            return None
+        dataset_transformer = PromptBasedDatasetTransformer()
+        canonicalized_dataset = dataset_transformer.transform_data(
+            prompt_spec=prompt_spec,
+            dataset=dataset["train"],
+            num_transform=num_transform,
+        )
         logger.info("Data transformation completed")
 
         example_rows = json.dumps(canonicalized_dataset["train"][0], indent=4)
@@ -445,13 +437,18 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         if data_transform:
             for dataset in sorted_list:
                 print(f"Trying {dataset.name}")
-                canonicalized_dataset = self.canonicalize_dataset_auto(
-                    dataset.name, prompt_spec, num_transform
-                )
+                try:
+                    canonicalized_dataset = self.canonicalize_dataset_auto(
+                        dataset.name, prompt_spec, num_transform
+                    )
+                except Exception as e:
+                    print(f"{dataset.name} failed")
+                    logger.error(f"{dataset.name} failed with {e}")
+                    continue
+
                 if canonicalized_dataset is not None:
                     print(f"{dataset.name} successful")
                     return canonicalized_dataset
-                print(f"{dataset.name} failed")
 
             return None
 

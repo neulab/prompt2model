@@ -1,8 +1,8 @@
 """A simple dataset transformer that uses a plan prompt and transform prompt."""
-
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 
 import datasets
 
@@ -27,17 +27,21 @@ logger = get_formatted_logger("DatasetTransformer")
 
 
 class PromptBasedDatasetTransformer(DatasetTransformer):
-    """A class for transforming given dataset to required format using a plan and a transform prompt."""  # noqa E501
+    """Transform data based on a transform prompt."""
 
     def __init__(
         self,
-        plan_prompt_fn=construct_prompt_for_plan,
-        transform_prompt_fn=construct_prompt_for_transform_data,
+        plan_prompt_fn: Callable[
+            [str, list[dict], str], str
+        ] = construct_prompt_for_plan,
+        transform_prompt_fn: Callable[
+            [str, dict, str, str], str
+        ] = construct_prompt_for_transform_data,
     ):
         """Initialize the class."""
         self.plan_prompt_fn = plan_prompt_fn
         self.transform_prompt_fn = transform_prompt_fn
-        self.plan = None
+        self.plan: str = ""
 
     def canonicalize_dataset_using_samples(
         self,
@@ -45,8 +49,8 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         outputs: list[str],
     ) -> datasets.DatasetDict:
         """Canonicalize a dataset into a suitable text-to-text format."""
-        assert len(inputs) > 0
-        assert len(inputs) == len(outputs)
+        if len(inputs) <= 0 or len(inputs) != len(outputs):
+            raise ValueError("Length of inputs and outputs must be >0 and equal.")
 
         dataset_dict = {}
         dataset_dict["train"] = datasets.Dataset.from_dict(
@@ -60,18 +64,16 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         dataset: datasets.Dataset,
         num_transform: int,
     ) -> datasets.DatasetDict:
-        """Transform the dataset into the required format according to the prompt_spec and dataset."""  # noqa E501
-        # 1. Use the prompt_spec and an example row from the dataset to create a "plan" for the data transformation. # noqa E501
+        """Transform the dataset according to the prompt_spec and dataset."""
         plan_prompt = self.plan_prompt_fn(
-            task_description=prompt_spec.instruction,
-            dataset=dataset,
-            example=prompt_spec.examples,
+            prompt_spec.instruction,
+            dataset,
+            prompt_spec.examples,
         )
         self.plan = make_request_from_prompt(plan_prompt)
 
         print(f"plan: {self.plan}")
 
-        # 2. Use the prompt_spec and the plan to transform each row of the dataset into the required format. # noqa E501
         inputs = []
         outputs = []
 
@@ -82,10 +84,10 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         transform_prompts = []
         for row in dataset:
             transform_prompt = self.transform_prompt_fn(
-                task_description=prompt_spec.instruction,
-                dataset_row=row,
-                example=prompt_spec.examples,
-                plan=self.plan,
+                prompt_spec.instruction,
+                row,
+                prompt_spec.examples,
+                self.plan,
             )
             transform_prompts.append(transform_prompt)
 

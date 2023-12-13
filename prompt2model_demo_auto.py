@@ -1,4 +1,4 @@
-"""An commend line demo to run the whole system."""
+"""A command line demo to run the whole system."""
 
 import json
 import logging
