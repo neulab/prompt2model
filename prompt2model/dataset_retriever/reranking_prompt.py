@@ -2,7 +2,7 @@
 
 from __future__ import annotations  # noqa FI58
 
-METAPROMPT_BASE = """Your objective is to rerank datasets given a task (and few examples of the task) based on relevancy. Relevant factors involve how suited the dataset is for the task and whether the input/output formats of the task and the dataset data matches. For each dataset, you will be provided with the dataset description, and the configurations available. Each configuration of the dataset will be represented with the config_name, the columns in that configuration, and an example row. Please return a SINGLE tuple of the combination of the most relevant dataset, with the best suited config using their name, along with a confidence level ranging from [low, medium, high] representing how relevant the dataset is to the task. The output format should be a tuple of form (dataset_name,config_name,confidence_level). e.g., (squad,plain_text,low). """  # noqa: E501
+METAPROMPT_BASE = """Your objective is to rerank datasets given a task (and few examples of the task) based on relevancy. Relevant factors involve how suited the dataset is for the task and whether the input/output formats of the task and the dataset data match. For each dataset, you will be provided with the dataset description, and the configurations available. Each configuration of the dataset will be represented with the config_name, the columns in that configuration, and an example row. Please return a SINGLE tuple of the combination of the most relevant dataset, with the best suited config using their name, along with a confidence level ranging from [low, medium, high] representing how relevant the dataset is to the task. The output format should be a tuple of form (dataset_name,config_name,confidence_level). e.g., (squad,plain_text,low). """  # noqa: E501
 
 INPUT_PROMPT_TEMPLATE = """The following is the task \n {instruction} and these are some examples of the same: {examples} \n
 There are {num} datasets available for this task. \n
@@ -13,7 +13,7 @@ DATASET_TEMPLATE = """[{counter}] **{dataset_name}**\n: Description-{dataset_des
 CONFIG_TEMPLATE = """\t[{counter}] **{config_name}**\n: The columns in this config are {dataset_columns}.\n An example row from this config is {sample_row}.\n """  # noqa: E501
 
 INCONTEXT_EXAMPLE = """
-An example of this as follows:
+An example is as follows:
 
 The following is the task
  In this task, you're given passages that contain mentions of names of people, places, or things. Some of these mentions refer to the same person, place, or thing. Your job is to write questions that evaluate one's understanding of such references. Good questions are expected to link pronouns (she, her, him, his, their, etc.) or other mentions to people, places, or things to which they may refer. Do not ask questions that can be answered correctly without understanding the paragraph or having multiple answers. Avoid questions that do not link phrases referring to the same entity. For each of your questions, the answer should be one or more phrases in the paragraph, and it should be unambiguous. and these are some examples of the same: Passage: Nearing London, Oliver encounters Jack Dawkins, a pickpocket more commonly known by the nickname the "Artful Dodger", and his sidekick, a boy of a humorous nature named Charley Bates, but Oliver's innocent and trusting nature fails to see any dishonesty in their actions. The Dodger provides Oliver with a free meal and tells him of a gentleman in London who will "give him lodgings for nothing, and never ask for change". Grateful for the unexpected assistance, Oliver follows the Dodger to the "old gentleman's" residence. In this way Oliver unwittingly falls in with an infamous Jewish criminal known as Fagin, the gentleman of whom the Artful Dodger spoke. Ensnared, Oliver lives with Fagin and his gang of juvenile pickpockets in their lair at Saffron Hill for some time, unaware of their criminal occupations. He believes they make wallets and handkerchiefs.
@@ -93,11 +93,24 @@ The reranking results of the 3 datasets in (dataset_name,config_name,confidence_
 (drop,default,medium)
 
 """  # noqa: E501
-ENDING_LINE = "After seeing this examples, please provide the reranking of the datasets for this context:"  # noqa: E501
+ENDING_LINE = "After seeing this example, please provide the reranking of the datasets for this task:"  # noqa: E501
 
 
 def build_input(instruction: str, examples: str, datasets_infos) -> str:
-    """Template function to build input based on arguments."""
+    """Template function to build user specific part of thr prompt.
+
+    Args:
+        instruction (str): Instruction of the task.
+        examples (str): Examples of the task.
+        datasets_infos (dict): Dictionary with dataset information. Each dataset_info
+                               object also has a configs object representing the various
+                               configs of that dataset.
+
+    Returns:
+        str: Builds the reranking prompt by combining instruction, examples, and dataset
+            information into a structured input prompt. Iterates over datasets_infos,
+            and its configurations.
+    """
     dataset_string = ""
     i = 0
     for _, dataset_info in datasets_infos.items():
@@ -132,7 +145,20 @@ def build_input(instruction: str, examples: str, datasets_infos) -> str:
 def construct_prompt_for_dataset_reranking(
     instruction: str, examples: str, datasets_infos
 ) -> str:
-    """Generate prompt for column selection."""
+    """Generate the full prompt for dataset reranking based on the given parameters.
+
+    Args:
+        instruction (str): Instruction of the task.
+        examples (str): Examples of the task.
+        datasets_infos (dict): Dictionary with dataset information. Each dataset_info
+                               object also has a configs object representing the various
+                               configs of that dataset..
+
+    Returns:
+        str: Builds a comprehensive prompt for dataset reranking. This prompt includes
+             the base instructions, incontext example and the prompt returned by the
+             build_input function.
+    """
     prompt_sections = [METAPROMPT_BASE, INCONTEXT_EXAMPLE]
     all_prompts = "\n\n------\n\n".join(prompt_sections) + "\n\n------\n\n"
     input_prompt = build_input(instruction, examples, datasets_infos)
