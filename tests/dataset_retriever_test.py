@@ -2,7 +2,6 @@
 
 from __future__ import annotations  # noqa FI58
 
-import json
 import os
 import pickle
 import tempfile
@@ -17,7 +16,32 @@ from prompt2model.prompt_parser import MockPromptSpec, TaskType
 from test_helpers import MockCompletion, create_test_search_index
 
 # The following variables are specifically for the
-# four automatic column selection tests.
+# four automatic column selection and reranking tests.
+
+SQUAD_DATASET_INFO = {
+    "config_name": "plain_text",
+    "sample_row": {
+        "id": "5733be284776f41900661182",
+        "title": "University_of_Notre_Dame",
+        "context": 'Architecturally, the school has a Catholic character. Atop the Main Building\'s gold dome is a golden statue of the Virgin Mary. Immediately in front of the Main Building and facing it, is a copper statue of Christ with arms upraised with the legend "Venite Ad Me Omnes". Next to the Main Building is the Basilica of the Sacred Heart. Immediately behind the basilica is the Grotto, a Marian place of prayer and reflection. It is a replica of the grotto at Lourdes, France where the Virgin Mary reputedly appeared to Saint Bernadette Soubirous in 1858. At the end of the main drive (and in a direct line that connects through 3 statues and the Gold Dome), is a simple, modern stone statue of Mary.',  # noqa: E501
+        "question": "To whom did the Virgin Mary allegedly appear in 1858 in Lourdes France?",  # noqa: E501
+        "answers.text": ["Saint Bernadette Soubirous"],
+        "answers.answer_start": [515],
+    },
+    "columns": "id, title, context, question, answers_text, answers_answer_start",
+    "columns_mapping": {
+        "id": "id",
+        "title": "title",
+        "context": "context",
+        "question": "question",
+        "answers.text": "answers_text",
+        "answers.answer_start": "answers_answer_start",
+    },
+    "dataset_description": "Stanford Question Answering Dataset (SQuAD) is a reading comprehension dataset, consisting of questions posed by crowdworkers on a set of Wikipedia articles, where the answer to every question is a segment of text, or span, from the corresponding reading passage, or the question might be unanswerable.\n",  # noqa: E501
+    "dataset_name": "squad",
+}
+
+
 INSTRUCTION = "Your task is to generate a relevant answer to a given question. You will be provided with context for each question"  # noqa: E501
 GPT3_RESPONSE_COL_SELECTION_CORRECT = MockCompletion(
     """{\n        \"input\": [\"context\", \"question\"],\n        \"output\": [\"answers\"],\n        \"irrelevant\": [\"id\", \"title\"],\n        \"ambiguous\": []\n}"""  # noqa: E501
@@ -49,6 +73,7 @@ def test_initialize_dataset_retriever():
             max_search_depth=3,
             encoder_model_name=TINY_DUAL_ENCODER_NAME,
             dataset_info_file="test_helpers/dataset_index_tiny.json",
+            reranking_dataset_info_file="test_helpers/reranking_dataset_index_tiny.json",  # noqa: E501
         )
         # This tiny dataset search index contains 3 datasets.
         assert len(retriever.dataset_infos) == 3
@@ -64,21 +89,12 @@ def test_encode_model_retriever():
             max_search_depth=3,
             encoder_model_name=TINY_DUAL_ENCODER_NAME,
             dataset_info_file="test_helpers/dataset_index_tiny.json",
+            reranking_dataset_info_file="test_helpers/reranking_dataset_index_tiny.json",  # noqa: E501
         )
         retriever.initialize_search_index()
         with open(temporary_file, "rb") as f:
             model_vectors, _ = pickle.load(f)
         assert model_vectors.shape == (3, 128)
-
-
-def util_get_squad_dataset_info():
-    """Utilitiy function for returning sqauad dataset object."""
-    with open("test_helpers/dataset_index_w_configs_tiny.json", "r") as f:
-        dataset_info_dict = json.load(f)
-    return dataset_info_dict["squad"]["configs"]["plain_text"]
-
-
-SQUAD_DATASET_INFO = util_get_squad_dataset_info()
 
 
 @patch(
@@ -159,6 +175,7 @@ def test_canonicalize_dataset_using_columns():
             max_search_depth=3,
             encoder_model_name=TINY_DUAL_ENCODER_NAME,
             dataset_info_file="test_helpers/dataset_index_tiny.json",
+            reranking_dataset_info_file="test_helpers/reranking_dataset_index_tiny.json",  # noqa: E501
         )
         mock_dataset = Dataset.from_dict(
             {
@@ -197,18 +214,6 @@ def mock_choose_dataset(self, top_datasets: list[DatasetInfo]) -> str | None:
     return top_datasets[0].name
 
 
-def mock_get_all_dataset_infos(self, dataset_list):
-    """Mock getting dataset info by reading from a tiny file instead."""
-    with open("test_helpers/dataset_index_w_configs_tiny.json", "r") as f:
-        dataset_info_dict = json.load(f)
-    return dataset_info_dict
-
-
-@patch.object(
-    DescriptionDatasetRetriever,
-    "get_all_dataset_infos",
-    new=mock_get_all_dataset_infos,
-)
 @patch(
     "prompt2model.utils.APIAgent.generate_one_completion",
     side_effect=[GPT3_RESPONSE_DATASET_RERANKING_CORRECT],
@@ -218,7 +223,10 @@ def test_dataset_reranking_correct(mocked_parsing_method):
     prompt_spec = MockPromptSpec(
         task_type=TaskType.TEXT_GENERATION, instruction=INSTRUCTION
     )
-    dataset_info = DescriptionDatasetRetriever().dataset_reranking([], prompt_spec)
+    datasets_list = ["squad", "wiki_qa"]
+    dataset_info = DescriptionDatasetRetriever(
+        reranking_dataset_info_file="test_helpers/reranking_dataset_index_tiny.json"
+    ).dataset_reranking(datasets_list, prompt_spec)
     assert dataset_info is not None
     assert dataset_info["dataset_name"] == "squad"
     assert dataset_info["config_name"] == "plain_text"
@@ -238,7 +246,11 @@ def test_dataset_reranking_hallucinate_config(mocked_parsing_method):
     prompt_spec = MockPromptSpec(
         task_type=TaskType.TEXT_GENERATION, instruction=INSTRUCTION
     )
-    dataset_info = DescriptionDatasetRetriever().dataset_reranking([], prompt_spec)
+    datasets_list = ["squad", "wiki_qa"]
+
+    dataset_info = DescriptionDatasetRetriever(
+        reranking_dataset_info_file="test_helpers/reranking_dataset_index_tiny.json"
+    ).dataset_reranking(datasets_list, prompt_spec)
     assert dataset_info is None
 
 
@@ -295,6 +307,7 @@ def test_retrieve_dataset_dict_when_search_index_exists(encode_text):
             max_search_depth=3,
             encoder_model_name=TINY_DUAL_ENCODER_NAME,
             dataset_info_file="test_helpers/dataset_index_tiny.json",
+            reranking_dataset_info_file="test_helpers/reranking_dataset_index_tiny.json",  # noqa: E501
         )
         assert [info.name for info in retriever.dataset_infos] == [
             "search_qa",
@@ -341,6 +354,7 @@ def test_retrieve_dataset_dict_without_existing_search_index(encode_text):
             max_search_depth=3,
             encoder_model_name=TINY_DUAL_ENCODER_NAME,
             dataset_info_file="test_helpers/dataset_index_tiny.json",
+            reranking_dataset_info_file="test_helpers/reranking_dataset_index_tiny.json",  # noqa: E501
         )
         create_test_search_index(temporary_file)
         assert [info.name for info in retriever.dataset_infos] == [

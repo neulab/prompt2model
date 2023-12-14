@@ -9,7 +9,7 @@ There are {num} datasets available for this task. \n
 {datasets}.
 The reranking results of the {num} datasets in (dataset_name,config_name,confidence_level) format is: \n{reranking}"""  # noqa: E501
 
-DATASET_TEMPLATE = """[{counter}] **{dataset_name}**\n: Description-{dataset_description}.\n. The dataset is {popularity_level} This dataset has the following configs:\n  """  # noqa: E501
+DATASET_TEMPLATE = """[{counter}] **{dataset_name}**\n: Description-{dataset_description}.\n. This dataset has the following configs:\n  """  # noqa: E501
 CONFIG_TEMPLATE = """\t[{counter}] **{config_name}**\n: The columns in this config are {dataset_columns}.\n An example row from this config is {sample_row}.\n """  # noqa: E501
 
 INCONTEXT_EXAMPLE = """
