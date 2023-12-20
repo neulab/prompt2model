@@ -93,9 +93,6 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             )
         if not os.path.exists(self.reranking_dataset_info_file):
             # Download the reranking index if one is not on disk already.
-            print("entering this..")
-            assert 0
-
             logger.info("Downloading the Reranking Dataset Index File")
             urllib.request.urlretrieve(
                 "http://phontron.com/data/prompt2model/dataset_reranking_index.json",
