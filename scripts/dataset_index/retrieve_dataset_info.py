@@ -36,7 +36,7 @@ def parse_arguments():
     return args
 
 
-def get_dataset_validity(dataset_name: str, max_retries=5):
+def get_dataset_validity(dataset_name: str, max_retries: int=5) -> bool:
     """Check if a given dataset name is valid on HuggingFace's dataset server.
 
     Also added support for exponential backoff.
