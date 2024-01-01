@@ -101,7 +101,7 @@ def replace_duplicate_columns(original_dataset_columns: list) -> tuple[list, dic
     return new_columns, columns_mapping
 
 
-def fetch_first_row_with_timeout(dataset: datasets.Dataset, timeout=30) -> dict | None:
+def fetch_first_row_with_timeout(dataset: datasets.Dataset, timeout: int=30) -> dict | None:
     """Fetch the first row of a dataset within a specified timeout period.
 
     Args:
