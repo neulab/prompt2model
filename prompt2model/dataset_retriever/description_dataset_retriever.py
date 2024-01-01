@@ -381,7 +381,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         dataset_names = [x.name for x in sorted_list]
         return dataset_names
 
-    def dataset_reranking(self, dataset_list: list[str], prompt_spec: PromptSpec):
+    def rerank_datasets(self, dataset_list: list[str], prompt_spec: PromptSpec):
         """Rerank datasets based on relevance to a given prompt specification.
 
         This function takes a list of datasets and a prompt specification,
