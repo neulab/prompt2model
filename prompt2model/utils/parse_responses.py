@@ -60,7 +60,8 @@ def parse_reranking_results(
         response_string: A string containing three comma separated fields'.
 
     Returns:
-        (dataset_name, config_name, confidence_level) or None
+        a dict with (dataset_name, config_name, confidence_level) fields
+        or None if the response cannot be parsed 
 
     """
     response_text = response.choices[0]["message"]["content"]
