@@ -23,11 +23,13 @@ from prompt2model.model_evaluator import Seq2SeqEvaluator
 from prompt2model.model_executor import GenerationModelExecutor
 from prompt2model.model_retriever import DescriptionModelRetriever
 from prompt2model.model_trainer.generate import GenerationModelTrainer
+from prompt2model.param_selector import OptunaParamSelector
 from prompt2model.prompt_parser import (
     MockPromptSpec,
     PromptBasedInstructionParser,
     TaskType,
 )
+from prompt2model.utils.config import DEFAULT_HYPERPARAMETERS_SPACE
 from prompt2model.utils.logging_utils import get_formatted_logger
 
 
@@ -76,6 +78,45 @@ def print_logo():
     )
 
     line_print(centered_ascii_art)
+
+
+def parse_model_size_limit(line: str, default_size=3e9) -> float:
+    """Parse the user input for the maximum size of the model.
+
+    Args:
+        line: The user input.
+        default_size: The default size to use if the user does not specify a size.
+    """
+    if len(line.strip()) == 0:
+        return default_size
+    model_units = {"B": 1e0, "KB": 1e3, "MB": 1e6, "GB": 1e9, "TB": 1e12, "PB": 1e15}
+    unit_disambiguations = {
+        "KB": ["Kb", "kb", "kilobytes"],
+        "MB": ["Mb", "mb", "megabytes"],
+        "GB": ["Gb", "gb", "gigabytes"],
+        "TB": ["Tb", "tb", "terabytes"],
+        "PB": ["Pb", "pb", "petabytes"],
+        "B": ["b", "bytes"],
+    }
+    unit_matched = False
+    for unit, disambiguations in unit_disambiguations.items():
+        for unit_name in [unit] + disambiguations:
+            if line.strip().endswith(unit_name):
+                unit_matched = True
+                break
+        if unit_matched:
+            break
+    if unit_matched:
+        numerical_part = line.strip()[: -len(unit_name)].strip()
+    else:
+        numerical_part = line.strip()
+
+    if not str.isdecimal(numerical_part):
+        raise ValueError(
+            "Invalid input. Please enter a number (integer " + "or number with units)."
+        )
+    scale_factor = model_units[unit] if unit_matched else 1
+    return int(numerical_part) * scale_factor
 
 
 def main():
@@ -157,6 +198,15 @@ def main():
         and dataset_has_been_retrieved
         and not model_has_been_retrieved
     ):
+        line_print(
+            "Enter the maximum size of the model (by default, enter nothing "
+            + "and we will use 3GB as the limit). You can specify a unit (e.g. "
+            + "3GB, 300Mb). If no unit is given, we assume the size is given in bytes."
+        )
+        max_size_line = input()
+        max_size = parse_model_size_limit(max_size_line)
+        line_print(f"Maximum model size set to {max_size} bytes.")
+
         line_print("Retrieving model...")
         prompt_spec = MockPromptSpec(
             TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
@@ -165,6 +215,7 @@ def main():
             model_descriptions_index_path="huggingface_data/huggingface_models/model_info/",  # noqa E501
             use_bm25=True,
             use_HyDE=True,
+            model_size_limit_bytes=max_size,
         )
         top_model_name = retriever.retrieve(prompt_spec)
         line_print("Here are the models we retrieved.")
@@ -303,46 +354,127 @@ def main():
         evaluator_logger = get_formatted_logger("ModelEvaluator")
         evaluator_logger.setLevel(logging.INFO)
 
+        train_batch_size = None
+
         while True:
-            line = input("Enter the training batch size:")
+            line = input(
+                "Are you interested to train the model with automatic hyperparameter search? Type 'y' for Yes and 'n' for No. "  # noqa E501
+            )
             try:
-                train_batch_size = int(line)
-                assert 0 < train_batch_size
+                assert line in ["y", "n"]
                 break
             except Exception:
-                line_print("The training batch size must be greater than 0.")
+                line_print("The answer should be either y or n")
         time.sleep(1)
 
-        while True:
-            line = input("Enter the number of epochs to train for:")
-            try:
-                num_epochs = int(line)
-                break
-            except ValueError:
-                line_print("Invalid input. Please enter a number.")
-        time.sleep(1)
+        if line == "y":
+            line_print("Starting training with hyperparameter selection.")
+            default_min_num_epochs = DEFAULT_HYPERPARAMETERS_SPACE[
+                "min_num_train_epochs"
+            ]
+            min_num_epochs = input(
+                f"Enter min number of epochs. Press enter to use default value ({default_min_num_epochs}): "  # noqa E501
+            )
+            default_max_num_epochs = DEFAULT_HYPERPARAMETERS_SPACE[
+                "max_num_train_epochs"
+            ]
+            max_num_epochs = input(
+                f"Enter max number of epochs. Press enter to use default value ({default_max_num_epochs}): "  # noqa E501
+            )
+            default_num_trials = 10
+            num_trials = input(
+                f"Enter the number of trials (maximum number of hyperparameter configurations to consider) for hyperparameter search. Press enter to use default value ({default_num_trials}): "  # noqa E501
+            )
+            default_batch_size = DEFAULT_HYPERPARAMETERS_SPACE[
+                "per_device_train_batch_size"
+            ]  # noqa E501
+            max_batch_size = input(
+                "Enter the max batch size. "
+                + f"Press enter to use default ({default_batch_size}): "
+            )
 
-        trainer = GenerationModelTrainer(
-            status["model_name"],
-            has_encoder=True,
-            executor_batch_size=train_batch_size,
-            tokenizer_max_length=1024,
-            sequence_max_length=1280,
-        )
-        args_output_root = Path("result/training_output")
-        args_output_root.mkdir(parents=True, exist_ok=True)
-        line_print("Starting training.")
-        trained_model, trained_tokenizer = trainer.train_model(
-            hyperparameter_choices={
-                "output_dir": str(args_output_root),
-                "save_strategy": "epoch",
-                "num_train_epochs": num_epochs,
-                "per_device_train_batch_size": train_batch_size,
-                "evaluation_strategy": "epoch",
-            },
-            training_datasets=training_datasets,
-            validation_datasets=validation_datasets,
-        )
+            min_num_epochs = (
+                default_min_num_epochs if min_num_epochs == "" else eval(min_num_epochs)
+            )
+            max_num_epochs = (
+                default_max_num_epochs if max_num_epochs == "" else eval(max_num_epochs)
+            )
+            num_trials = 1 if num_trials == "" else eval(num_trials)
+
+            max_batch_size = (
+                DEFAULT_HYPERPARAMETERS_SPACE["per_device_train_batch_size"]
+                if max_batch_size == ""
+                else eval(max_batch_size)
+            )
+
+            trainer = GenerationModelTrainer(
+                status["model_name"],
+                has_encoder=True,
+                executor_batch_size=max_batch_size,
+                tokenizer_max_length=1024,
+                sequence_max_length=1280,
+            )
+            args_output_root = Path("result/training_output")
+            args_output_root.mkdir(parents=True, exist_ok=True)
+            line_print("Starting training.")
+
+            trained_model, trained_tokenizer = OptunaParamSelector(
+                n_trials=num_trials,
+                trainer=trainer,
+            ).select_from_hyperparameters(
+                training_datasets=training_datasets,
+                validation=validation_datasets,
+                hyperparameters={
+                    "min_num_train_epochs": min_num_epochs,
+                    "max_num_train_epochs": max_num_epochs,
+                    "per_device_train_batch_size": [max_batch_size],
+                },
+            )
+            train_batch_size = max_batch_size
+
+        else:
+            line_print("Starting training without hyperparameter selection.")
+            while True:
+                line = input("Enter the training batch size:")
+                try:
+                    train_batch_size = int(line)
+                    assert 0 < train_batch_size
+                    break
+                except Exception:
+                    line_print("The training batch size must be greater than 0.")
+            time.sleep(1)
+
+            while True:
+                line = input("Enter the number of epochs to train for:")
+                try:
+                    num_epochs = int(line)
+                    break
+                except ValueError:
+                    line_print("Invalid input. Please enter a number.")
+            time.sleep(1)
+
+            trainer = GenerationModelTrainer(
+                status["model_name"],
+                has_encoder=True,
+                executor_batch_size=train_batch_size,
+                tokenizer_max_length=1024,
+                sequence_max_length=1280,
+            )
+            args_output_root = Path("result/training_output")
+            args_output_root.mkdir(parents=True, exist_ok=True)
+            line_print("Starting training.")
+            trained_model, trained_tokenizer = trainer.train_model(
+                hyperparameter_choices={
+                    "output_dir": str(args_output_root),
+                    "save_strategy": "epoch",
+                    "num_train_epochs": num_epochs,
+                    "per_device_train_batch_size": train_batch_size,
+                    "evaluation_strategy": "epoch",
+                },
+                training_datasets=training_datasets,
+                validation_datasets=validation_datasets,
+            )
+
         trained_model.save_pretrained(trained_model_root)
         trained_tokenizer.save_pretrained(trained_tokenizer_root)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

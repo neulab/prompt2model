@@ -1,6 +1,10 @@
 """Tools for mocking API responses (for testing purposes)."""
 
-from __future__ import annotations  # noqa FI58
+from __future__ import annotations
+
+import openai
+
+from prompt2model.utils.api_tools import APIAgent
 
 
 class MockCompletion:
@@ -175,6 +179,40 @@ def mock_batch_api_response_identical_completions(
         for _ in prompts
     ]
     return mock_completions
+
+
+class MockAPIAgent(APIAgent):
+    """A mock API agent that always returns the same content."""
+
+    def __init__(self, default_content):
+        """Initialize the API agent."""
+        self.generate_one_call_counter = 0
+        self.generate_batch_call_counter = 0
+        self.default_content = default_content
+
+    def generate_one_completion(
+        self,
+        prompt: str,
+        temperature: float = 0,
+        presence_penalty: float = 0,
+        frequency_penalty: float = 0,
+        token_buffer: int = 300,
+    ) -> openai.Completion:
+        """Return a mocked object and increment the counter."""
+        self.generate_one_call_counter += 1
+        return MockCompletion(content=self.default_content)
+
+    async def generate_batch_completion(
+        self,
+        prompts: list[str],
+        temperature: float = 1,
+        responses_per_request: int = 5,
+        requests_per_minute: int = 80,
+        token_buffer: int = 300,
+    ) -> list[openai.Completion]:
+        """Return a mocked object and increment the counter."""
+        self.generate_batch_call_counter += 1
+        return [MockCompletion(content=self.default_content) for _ in prompts]
 
 
 class UnknownGpt3Exception(Exception):

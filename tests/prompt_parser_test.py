@@ -8,9 +8,13 @@ import openai
 import pytest
 
 from prompt2model.prompt_parser import PromptBasedInstructionParser, TaskType
+from prompt2model.prompt_parser.mock import MockPromptSpec
+from prompt2model.utils import api_tools
 from test_helpers import MockCompletion, UnknownGpt3Exception
+from test_helpers.mock_api import MockAPIAgent
+from test_helpers.test_utils import temp_setattr
 
-logger = logging.getLogger("PromptParser")
+logger = logging.getLogger("ParseJsonResponses")
 GPT3_RESPONSE_WITH_DEMONSTRATIONS = MockCompletion(
     '{"Instruction": "Convert each date from an informal description into a'
     ' MM/DD/YYYY format.", "Demonstrations": "Fifth of November 2024 ->'
@@ -116,7 +120,13 @@ def test_instruction_parser_with_invalid_json(mocked_parsing_method):
             prompt_spec.parse_from_prompt(prompt)
         mock_info.assert_not_called()
         warning_list = [each.args[0] for each in mock_warning.call_args_list]
-        assert warning_list == ["API response was not a valid JSON"] * 3
+        assert (
+            warning_list
+            == [
+                'API response was not a valid JSON: {"Instruction": "A", "Demonstrations": "B}'  # noqa: E501
+            ]
+            * 3
+        )  # noqa: E501
     assert mocked_parsing_method.call_count == 3
     assert prompt_spec._instruction is None
     assert prompt_spec._examples is None
@@ -179,3 +189,17 @@ def test_instruction_parser_with_unexpected_error(mocked_parsing_method):
     # Check that we only tried calling the API once.
     assert mocked_parsing_method.call_count == 1
     gc.collect()
+
+
+def test_prompt_parser_agent_switch():
+    """Test if prompt parser can use a user-set API agent."""
+    my_agent = MockAPIAgent(
+        default_content='{"Instruction": "test response", "Demonstrations": "test response"}'  # noqa: E501
+    )
+    with temp_setattr(api_tools, "default_api_agent", my_agent):
+        prompt_parser = PromptBasedInstructionParser(
+            TaskType.CLASSIFICATION, max_api_calls=3
+        )
+        prompt_spec = MockPromptSpec(TaskType.CLASSIFICATION)
+        prompt_parser.parse_from_prompt(prompt_spec)
+    assert my_agent.generate_one_call_counter == 1

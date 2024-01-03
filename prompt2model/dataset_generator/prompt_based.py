@@ -20,6 +20,7 @@ from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import (
     API_ERRORS,
     APIAgent,
+    api_tools,
     count_tokens_from_string,
     get_formatted_logger,
     handle_api_error,
@@ -449,7 +450,7 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
         generated_examples: list[Example] = []
 
         pbar = tqdm(total=num_examples, desc="Generating examples")
-        chat_api = APIAgent()
+        chat_api = api_tools.default_api_agent
 
         if few_shot_method == "user":
             few_shot_example_string = prompt_spec.examples
