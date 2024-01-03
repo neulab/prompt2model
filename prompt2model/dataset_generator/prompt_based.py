@@ -391,25 +391,26 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
         return responses
 
     def create_retrieved_data_fewshot_string(
-        self, retrieved_data: Dataset, dataset_max_instances: int = 3
+        self, retrieved_dataset: Dataset, n_shots: int = 3
     ) -> str:
         """A method to sample instances from the dataset retrieved.
 
         Args:
-            retrieved_data: the train set of the dataset from the dataset retriever
-            dataset_max_instances: how many instances is used as an example
+            retrieved_dataset: the train set of the dataset from the dataset retriever
+            n_shots: how many instances is used as an example
+
         Returns:
             A string of pairs of examples sourced from the dataset retrieved.
             formatted as if it was a string from the user
         """
-        sample_dataset = retrieved_data[
-            random.sample(range(retrieved_data.num_rows), dataset_max_instances)
+        sample_dataset = retrieved_dataset[
+            random.sample(range(retrieved_dataset.num_rows), n_shots)
         ]
         return "\n\n".join(
             [
                 f"input=\"{sample_dataset['input_col'][i]}\"\n"
                 + f"output=\"{sample_dataset['output_col'][i]}\""
-                for i in range(dataset_max_instances)
+                for i in range(n_shots)
             ]
         )
 
@@ -418,9 +419,9 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
         prompt_spec: PromptSpec,
         num_examples: int,
         split: DatasetSplit = DatasetSplit.TRAIN,
-        retrieved_data: Dataset = None,
+        retrieved_dataset: Dataset = None,
         few_shot_method: str = "user",
-        dataset_max_instances: int = 3,
+        n_shots: int = 3,
     ) -> Dataset:
         """Generates a dataset split using API-based LMs.
 
@@ -434,13 +435,19 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
         Args:
             prompt_spec: PromptParser to be used for generating examples.
             num_examples: The number of examples to be generated.
+            retrieved_dataset: The human-annotated dataset retrieved
+            few_shot_method: a string that indicates fewshot source.
+                'user' means few-shots is from user examples,
+                'retrieved_fixed' is using the same examples everytime,
+                'retrieved_swapout' is using different examples everytime
+            n_shots: how many instances is used as an example
 
         Returns:
             The generated dataset split.
         """
         if (
-            few_shot_method in ["dataset_fixed", "dataset_swapout"]
-            and retrieved_data is None
+            few_shot_method in ["retrieved_fixed", "retrieved_swapout"]
+            and retrieved_dataset is None
         ):
             raise Exception(
                 f"original_data is None when 'sampling_method' is '{few_shot_method}'"
@@ -454,14 +461,16 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
 
         if few_shot_method == "user":
             few_shot_example_string = prompt_spec.examples
-        elif few_shot_method in ["dataset_fixed", "dataset_swapout"]:
+        elif few_shot_method in ["retrieved_fixed", "retrieved_swapout"]:
             few_shot_example_string = self.create_retrieved_data_fewshot_string(
-                retrieved_data, dataset_max_instances
+                retrieved_dataset, n_shots
             )
         else:
             raise Exception(f"'{few_shot_method}' is not a recognized few shot method")
 
         while len(generated_examples) < num_examples:
+            print(few_shot_example_string)
+
             if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
                 logger.warning("Maximum number of API calls reached.")
                 break
@@ -479,10 +488,10 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
                 for _ in range(batch_size)
             ]
 
-            # regenerate few_shot_example_string if few_shot_method is dataset_swapout
-            if few_shot_method == "dataset_swapout":
+            # regenerate few_shot_example_string if few_shot_method is retrieved_swapout
+            if few_shot_method == "retrieved_swapout":
                 few_shot_example_string = self.create_retrieved_data_fewshot_string(
-                    retrieved_data, dataset_max_instances
+                    retrieved_dataset, n_shots
                 )
             try:
                 loop = asyncio.get_event_loop()
