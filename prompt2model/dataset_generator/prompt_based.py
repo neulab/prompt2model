@@ -450,7 +450,7 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
             and retrieved_dataset is None
         ):
             raise Exception(
-                f"original_data is None when 'sampling_method' is '{few_shot_method}'"
+                f"retrieved_dataset can't be None if few shot is '{few_shot_method}'"
             )
 
         all_generated_examples: list[Example] = []
