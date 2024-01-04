@@ -469,8 +469,6 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
             raise Exception(f"'{few_shot_method}' is not a recognized few shot method")
 
         while len(generated_examples) < num_examples:
-            print(few_shot_example_string)
-
             if self.max_api_calls and self.api_call_counter >= self.max_api_calls:
                 logger.warning("Maximum number of API calls reached.")
                 break
@@ -488,11 +486,6 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
                 for _ in range(batch_size)
             ]
 
-            # regenerate few_shot_example_string if few_shot_method is retrieved_swapout
-            if few_shot_method == "retrieved_swapout":
-                few_shot_example_string = self.create_retrieved_data_fewshot_string(
-                    retrieved_dataset, n_shots
-                )
             try:
                 loop = asyncio.get_event_loop()
                 responses = loop.run_until_complete(
@@ -516,6 +509,12 @@ class PromptBasedDatasetGenerator(DatasetGenerator):
             )
 
             pbar.update(len(generated_examples) - prev_length)
+
+            # regenerate few_shot_example_string if few_shot_method is retrieved_swapout
+            if few_shot_method == "retrieved_swapout":
+                few_shot_example_string = self.create_retrieved_data_fewshot_string(
+                    retrieved_dataset, n_shots
+                )
 
         if len(generated_examples) >= num_examples:
             generated_examples = generated_examples[:num_examples]
