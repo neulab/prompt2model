@@ -61,7 +61,7 @@ def parse_reranking_results(
 
     Returns:
         a dict with (dataset_name, config_name, confidence_level) fields
-        or None if the response cannot be parsed 
+        or None if the response cannot be parsed
 
     """
     response_text = response.choices[0]["message"]["content"]
