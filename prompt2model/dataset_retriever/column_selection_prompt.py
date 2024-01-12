@@ -2,8 +2,6 @@
 
 from __future__ import annotations  # noqa FI58
 
-import json
-
 METAPROMPT_BASE = """Your objective is to carefully analyze the task and the dataset mentioned, and decide whether the columns are relevant input, relevant output, irrelevant for the given task, or if it is ambiguous. There should be at most one output column. It is possible to have no relevant columns, in which case return the input and output column as empty lists.  Answer in a json format, with the following keys: input, output, irrelevant, ambiguous"""  # noqa: E501
 METAPROMPT_EXAMPLES = [
     (
@@ -90,19 +88,6 @@ SINGLE_DEMONSTRATION_TEMPLATE = (
 ENDING_LINE = "After seeing these examples with the required columns, please provide the relevant columns for this context:"  # noqa: E501
 
 
-def truncate_row(example_row: dict, max_length=50) -> str:
-    """Truncate the row before displaying if it is too long."""
-    truncated_row = {}
-    for key in example_row.keys():
-        curr_row = json.dumps(example_row[key])
-        truncated_row[key] = (
-            curr_row
-            if len(curr_row) <= max_length - 3
-            else curr_row[:max_length] + "..."
-        )
-    return json.dumps(truncated_row)
-
-
 def build_input(
     instruction: str,
     dataset_name: str,
@@ -116,7 +101,7 @@ def build_input(
         dataset_name=dataset_name,
         dataset_description=dataset_description,
         dataset_columns=dataset_columns,
-        sample_row=truncate_row(sample_row),
+        sample_row=sample_row,
     )
     input_prompt = SINGLE_DEMONSTRATION_TEMPLATE.format(
         prompt=input_prompt, columns=""

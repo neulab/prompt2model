@@ -19,6 +19,7 @@ cached_generated_dataset/
 generated_dataset/
 huggingface_data/huggingface_datasets/dataset_index.json
 huggingface_data/huggingface_datasets/huggingface_datasets_datafinder_index
+huggingface_data/huggingface_datasets/reranking_dataset_index.json
 huggingface_data/huggingface_models/
 retrieved_dataset_dict/
 status.yaml

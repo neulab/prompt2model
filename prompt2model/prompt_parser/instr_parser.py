@@ -10,7 +10,7 @@ from prompt2model.prompt_parser.instr_parser_prompt import (  # isort: split
     construct_prompt_for_instruction_parsing,
 )
 
-from prompt2model.utils.parse_json_responses import parse_prompt_to_fields
+from prompt2model.utils.parse_responses import parse_prompt_to_fields
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
