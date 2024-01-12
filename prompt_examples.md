@@ -93,9 +93,6 @@ output="N/A"
 input="[Posted: 2013-03-22] We will release a new github repository in the next three months."
 output="the next three month == 2013-04"
 
-input="[Posted: 2013-03-22] We will release a new Github repository in the next three months."
-output="N/A"
-
 input="[Posted: 2022-05-17] The company's fiscal year starts on July 1st and ends on June 30th."
 output="July 1st == 2022-07-01 | June 30th == 2022-06-30"
 

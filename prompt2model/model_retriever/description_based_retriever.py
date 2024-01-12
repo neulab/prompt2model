@@ -131,11 +131,10 @@ class DescriptionModelRetriever(ModelRetriever):
         """
         if not os.path.isdir(self.model_descriptions_index_path):
             # If the model descriptions directory is not populated, then populate it.
-            urllib.request.urlretrieve(
-                "http://phontron.com/data/prompt2model/model_info.tgz",
-                "/tmp/model_info.tgz",
+            temporary_file, _ = urllib.request.urlretrieve(
+                "http://phontron.com/data/prompt2model/model_info.tgz"
             )
-            tar = tarfile.open("/tmp/model_info.tgz")
+            tar = tarfile.open(temporary_file)
             os.makedirs(self.model_descriptions_index_path)
             tar.extractall(path=self.model_descriptions_index_path)
 
