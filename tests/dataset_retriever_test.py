@@ -56,8 +56,8 @@ GPT3_RESPONSE_COL_SELECTION_WITH_MORE_THAN_ONE_OUTPUT = MockCompletion(
     """{\n   \"input\": [\"context\", \"question\"],\n     \"output\": [\"answers\", \"title\"],\n        \"irrelevant\": [\"id\", \"title\"],\n        \"ambiguous\": []\n}"""  # noqa: E501
 )
 
-GPT3_RESPONSE_DATASET_RERANKING_CORRECT = MockCompletion("""[squad,plain_text,high]""")
-GPT3_RESPONSE_DATASET_RERANKING_HALLUCINATES_CONFIG = MockCompletion(
+GPT3_RESPONSE_RERANK_DATASETS_CORRECT = MockCompletion("""[squad,plain_text,high]""")
+GPT3_RESPONSE_RERANK_DATASETS_HALLUCINATES_CONFIG = MockCompletion(
     """[squad,not_a_config,high]"""
 )
 
@@ -109,7 +109,11 @@ def test_automatic_column_selection_correct(mocked_parsing_method):
         input_columns,
         output_column,
     ) = DescriptionDatasetRetriever.automatic_column_selection(
-        INSTRUCTION, SQUAD_DATASET_INFO
+        INSTRUCTION,
+        SQUAD_DATASET_INFO["dataset_name"],
+        SQUAD_DATASET_INFO["dataset_description"],
+        SQUAD_DATASET_INFO["columns"],
+        SQUAD_DATASET_INFO["sample_row"],
     )
 
     assert type(input_columns) == list
@@ -127,7 +131,11 @@ def test_automatic_column_selection_unknown_cols(mocked_parsing_method):
     """Check error thrown if there are unknown cols returned in input/output."""
     with pytest.raises(RuntimeError) as exc_info:
         _ = DescriptionDatasetRetriever.automatic_column_selection(
-            INSTRUCTION, SQUAD_DATASET_INFO
+            INSTRUCTION,
+            SQUAD_DATASET_INFO["dataset_name"],
+            SQUAD_DATASET_INFO["dataset_description"],
+            SQUAD_DATASET_INFO["columns"],
+            SQUAD_DATASET_INFO["sample_row"],
         )
         error_info = exc_info.value.args[0]
         assert error_info == "Incorrect columns being parsed"
@@ -141,7 +149,11 @@ def test_automatic_column_selection_without_required_cols(mocked_parsing_method)
     """Check that if input/output columns are missing, an error is thrown."""
     with pytest.raises(StopIteration) as exc_info:
         _ = DescriptionDatasetRetriever.automatic_column_selection(
-            INSTRUCTION, SQUAD_DATASET_INFO
+            INSTRUCTION,
+            SQUAD_DATASET_INFO["dataset_name"],
+            SQUAD_DATASET_INFO["dataset_description"],
+            SQUAD_DATASET_INFO["columns"],
+            SQUAD_DATASET_INFO["sample_row"],
         )
         error_info = exc_info.value.args[0]
         assert error_info == "Maximum number of API calls reached."
@@ -157,7 +169,11 @@ def test_automatic_column_selection_incorrect_number_of_output_cols(
     """Check that if number of input/output columns are wrong, an error is thrown."""
     with pytest.raises(RuntimeError) as exc_info:
         _ = DescriptionDatasetRetriever.automatic_column_selection(
-            INSTRUCTION, SQUAD_DATASET_INFO
+            INSTRUCTION,
+            SQUAD_DATASET_INFO["dataset_name"],
+            SQUAD_DATASET_INFO["dataset_description"],
+            SQUAD_DATASET_INFO["columns"],
+            SQUAD_DATASET_INFO["sample_row"],
         )
         error_info = exc_info.value.args[0]
         assert (
@@ -216,9 +232,9 @@ def mock_choose_dataset(self, top_datasets: list[DatasetInfo]) -> str | None:
 
 @patch(
     "prompt2model.utils.APIAgent.generate_one_completion",
-    side_effect=[GPT3_RESPONSE_DATASET_RERANKING_CORRECT],
+    side_effect=[GPT3_RESPONSE_RERANK_DATASETS_CORRECT],
 )
-def test_dataset_reranking_correct(mocked_parsing_method):
+def test_rerank_datasets_correct(mocked_parsing_method):
     """Test correct working of dataset reranking."""
     prompt_spec = MockPromptSpec(
         task_type=TaskType.TEXT_GENERATION, instruction=INSTRUCTION
@@ -226,7 +242,7 @@ def test_dataset_reranking_correct(mocked_parsing_method):
     datasets_list = ["squad", "wiki_qa"]
     dataset_info = DescriptionDatasetRetriever(
         reranking_dataset_info_file="test_helpers/reranking_dataset_index_tiny.json"
-    ).dataset_reranking(datasets_list, prompt_spec)
+    ).rerank_datasets(datasets_list, prompt_spec)
     assert dataset_info is not None
     assert dataset_info["dataset_name"] == "squad"
     assert dataset_info["config_name"] == "plain_text"
@@ -239,9 +255,9 @@ def test_dataset_reranking_correct(mocked_parsing_method):
 
 @patch(
     "prompt2model.utils.APIAgent.generate_one_completion",
-    side_effect=[GPT3_RESPONSE_DATASET_RERANKING_HALLUCINATES_CONFIG],
+    side_effect=[GPT3_RESPONSE_RERANK_DATASETS_HALLUCINATES_CONFIG],
 )
-def test_dataset_reranking_hallucinate_config(mocked_parsing_method):
+def test_rerank_datasets_hallucinate_config(mocked_parsing_method):
     """Check if dataset reranking returns None if LLM hallucinates config name."""
     prompt_spec = MockPromptSpec(
         task_type=TaskType.TEXT_GENERATION, instruction=INSTRUCTION
@@ -250,11 +266,11 @@ def test_dataset_reranking_hallucinate_config(mocked_parsing_method):
 
     dataset_info = DescriptionDatasetRetriever(
         reranking_dataset_info_file="test_helpers/reranking_dataset_index_tiny.json"
-    ).dataset_reranking(datasets_list, prompt_spec)
+    ).rerank_datasets(datasets_list, prompt_spec)
     assert dataset_info is None
 
 
-def mock_dataset_reranking(self, dataset_list, prompt_spec):
+def mock_rerank_datasets(self, dataset_list, prompt_spec):
     """Mock dataset reranking by just returning squad dataset."""
     return SQUAD_DATASET_INFO
 
@@ -290,8 +306,8 @@ def mock_canonicalize_dataset(self, top_dataset_info, task_instruction) -> Datas
 )
 @patch.object(
     DescriptionDatasetRetriever,
-    "dataset_reranking",
-    new=mock_dataset_reranking,
+    "rerank_datasets",
+    new=mock_rerank_datasets,
 )
 @patch.object(
     DescriptionDatasetRetriever,
@@ -336,8 +352,8 @@ def test_retrieve_dataset_dict_when_search_index_exists(encode_text):
 )
 @patch.object(
     DescriptionDatasetRetriever,
-    "dataset_reranking",
-    new=mock_dataset_reranking,
+    "rerank_datasets",
+    new=mock_rerank_datasets,
 )
 @patch.object(
     DescriptionDatasetRetriever,

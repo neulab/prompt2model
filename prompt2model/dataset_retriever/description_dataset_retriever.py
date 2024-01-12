@@ -229,15 +229,18 @@ class DescriptionDatasetRetriever(DatasetRetriever):
     @staticmethod
     def automatic_column_selection(
         instruction: str,
-        dataset_info: dict,
+        dataset_name: str,
+        dataset_description: str,
+        dataset_columns: str,
+        example_rows: dict,
     ) -> tuple[list[str], str]:
         """Find appropriate input and output columns for a given dataset and tasks."""
         prompt = construct_prompt_for_column_selection(
             instruction,
-            dataset_info["dataset_name"],
-            dataset_info["dataset_description"],
-            dataset_info["columns"],
-            dataset_info["sample_row"],
+            dataset_name,
+            dataset_description,
+            dataset_columns,
+            example_rows,
         )
         required_keys = ["input", "output"]
         optional_keys = ["ambiguous", "irrelevant"]
@@ -250,7 +253,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 "Input columns length was less than 1 or output column length was not 1"
             )
 
-        dataset_columns = dataset_info["columns"]
+        dataset_columns = dataset_columns
         incorrect_columns = [
             col for col in input_columns + output_column if col not in dataset_columns
         ]
@@ -316,7 +319,11 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         assert dataset_info is not None
         try:
             input_columns, output_column = self.automatic_column_selection(
-                prompt_spec.instruction, dataset_info
+                prompt_spec.instruction,
+                dataset_info["dataset_name"],
+                dataset_info["dataset_description"],
+                dataset_info["columns"],
+                dataset_info["sample_row"],
             )
         except RuntimeError:
             logger.error(f"{dataset_name} did not work. Try another!")
@@ -456,7 +463,11 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             return None
         try:
             input_columns, output_column = self.automatic_column_selection(
-                task_instruction, top_dataset_info
+                task_instruction,
+                top_dataset_info["dataset_name"],
+                top_dataset_info["dataset_description"],
+                top_dataset_info["columns"],
+                top_dataset_info["sample_row"],
             )
         except Exception as e:
             logger.warning("Column selection failed: ", e)
@@ -487,7 +498,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         """
         sorted_list = self.retrieve_top_datasets(prompt_spec)
 
-        top_dataset_info = self.dataset_reranking(sorted_list, prompt_spec)
+        top_dataset_info = self.rerank_datasets(sorted_list, prompt_spec)
         print("Datasets Reranked. ")
         return self.canonicalize_dataset_automatically(
             top_dataset_info, prompt_spec.instruction
