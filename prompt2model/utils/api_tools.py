@@ -254,4 +254,4 @@ def count_tokens_from_string(string: str, encoding_name: str = "cl100k_base") ->
 
 # This is the default API agent that is used everywhere if a different agent is not
 # specified
-default_api_agent = APIAgent()
+default_api_agent = APIAgent(max_tokens=4000)

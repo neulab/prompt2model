@@ -11,7 +11,7 @@ from prompt2model.utils.api_tools import API_ERRORS, handle_api_error
 logger = get_formatted_logger("ParseJsonResponses")
 
 
-def extract_response(
+def parse_json(
     response: openai.Completion, required_keys: list, optional_keys: list
 ) -> dict | None:
     """Parse stuctured fields from the API response.
@@ -51,11 +51,50 @@ def extract_response(
     return final_response
 
 
+def parse_reranking_results(
+    response: openai.Completion,
+) -> dict | None:
+    """Parse a formatted string and extract numbers for reranking results.
+
+    Args:
+        response_string: A string containing three comma separated fields'.
+
+    Returns:
+        a dict with (dataset_name, config_name, confidence_level) fields
+        or None if the response cannot be parsed
+
+    """
+    response_text = response.choices[0]["message"]["content"]
+    print("This is response text: ", response_text)
+    fields = [x.strip() for x in response_text[1:-1].split(",")]
+    if len(fields) != 3:
+        logger.warning(
+            "Reranking results are not in the right format: number of fields"
+        )
+        return None
+    dataset_name, config_name, confidence_level = fields
+    CONFIDENCE_LEVELS_ALLOWED = ("low", "medium", "high")
+
+    # Check if the entire string matches the expected pattern
+    if confidence_level not in CONFIDENCE_LEVELS_ALLOWED:
+        logger.warning(
+            "Reranking results are not in the right format: fields are not appropriate"
+        )
+        return None
+
+    return {
+        "dataset_name": dataset_name,
+        "config_name": config_name,
+        "confidence_level": confidence_level,
+    }
+
+
 def parse_prompt_to_fields(
     prompt: str,
-    required_keys: list,
+    required_keys: list = [],
     optional_keys: list = [],
     max_api_calls: int = 5,
+    module_name: str = "col_selection",
 ) -> dict:
     """Parse prompt into specific fields, and return to the calling function.
 
@@ -69,9 +108,13 @@ def parse_prompt_to_fields(
         optional_keys: Field that may/may not be present in the response
         max_api_calls: Max number of retries, defaults to 5 to avoid
                         being stuck in an infinite loop
+        module_name: The module this is to be used for. Currently supports
+                        rerank and col_selection
 
     Returns:
         Parsed Response or throws error
+    Raises:
+        Value Error
     """
     chat_api = api_tools.default_api_agent
     if max_api_calls <= 0:
@@ -90,7 +133,12 @@ def parse_prompt_to_fields(
                     frequency_penalty=0,
                 )
             )
-            extraction = extract_response(response, required_keys, optional_keys)
+            extraction = None
+            if module_name == "col_selection":
+                extraction = parse_json(response, required_keys, optional_keys)
+
+            elif module_name == "rerank":
+                extraction = parse_reranking_results(response)
             if extraction is not None:
                 return extraction
         except API_ERRORS as e:
