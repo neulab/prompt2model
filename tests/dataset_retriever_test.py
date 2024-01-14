@@ -275,7 +275,9 @@ def mock_rerank_datasets(self, dataset_list, prompt_spec):
     return SQUAD_DATASET_INFO
 
 
-def mock_canonicalize_dataset(self, top_dataset_info, task_instruction) -> DatasetDict:
+def mock_canonicalize_dataset(
+    self, top_dataset_info, prompt_spec, auto_transform_data, num_points_to_transform
+) -> DatasetDict:
     """Mock the canonicalize_dataset function by constructing a mock dataset."""
     # Given the dataset of
     # [ [0.9, 0, 0],
