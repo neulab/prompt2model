@@ -151,10 +151,10 @@ def parse_prompt_to_fields(
             raise RuntimeError("Maximum number of API calls reached.") from last_error
 
 
-def make_request_from_prompt(prompt: str, max_api_calls: int = 5) -> str:
-    """Make request from prompt, and return the generated response.
+def make_single_api_request(prompt: str, max_api_calls: int = 5) -> str:
+    """Prompts an LLM using the APIAgent, and returns the response.
 
-    This function calls the required api, has the logic for the retrying,
+    This function calls the required api, has the logic for retrying,
     returns the response back or throws an error
     Args:
         prompt: User prompt into specific fields

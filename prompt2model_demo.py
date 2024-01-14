@@ -181,33 +181,42 @@ def main():
             TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
         )
         line_print("Retrieving dataset...")
-        line_print("Do you want to retrieve dataset automatically? (y/n)")
-        auto_retrieve = False
+        line_print("Do you want to perform data transformation? (y/n)")
+        line_print(
+            "Data transformation converts retrieved data into desired format as per prompt"  # noqa E501
+        )
+        auto_transform_data = False
         while True:
             line = input()
             if line.lower() == "y":
-                auto_retrieve = True
+                auto_transform_data = True
                 break
             elif line.lower() == "n":
-                auto_retrieve = False
+                auto_transform_data = False
                 break
             else:
                 line_print("Invalid input. Please enter y or n.")
 
         retriever = DescriptionDatasetRetriever()
 
-        if auto_retrieve:
+        if auto_transform_data:
             while True:
                 line_print("Enter the number of data points you want to transform:")
                 line = input()
-                num_transform = int(line)
-                if num_transform <= 0:
+                try:
+                    num_points_to_transform = int(line)
+                except ValueError:
+                    line_print("Invalid input. Please enter a number.")
+                    continue
+                if num_points_to_transform <= 0:
                     line_print("Invalid input. Please enter a number greater than 0.")
                     continue
-                status["num_transform"] = num_transform
+                status["num_transform"] = num_points_to_transform
                 break
             retrieved_dataset_dict = retriever.retrieve_dataset_dict(
-                prompt_spec, data_transform=True, num_transform=num_transform
+                prompt_spec,
+                auto_transform_data=True,
+                num_points_to_transform=num_points_to_transform,
             )
         else:
             retrieved_dataset_dict = retriever.retrieve_dataset_dict(prompt_spec)

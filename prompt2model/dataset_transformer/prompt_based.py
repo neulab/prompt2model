@@ -18,10 +18,7 @@ from prompt2model.utils import (
     get_formatted_logger,
     handle_api_error,
 )
-from prompt2model.utils.parse_json_responses import (
-    extract_response,
-    make_request_from_prompt,
-)
+from prompt2model.utils.parse_responses import make_single_api_request, parse_json
 
 logger = get_formatted_logger("DatasetTransformer")
 
@@ -43,12 +40,12 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         self.transform_prompt_fn = transform_prompt_fn
         self.plan: str = ""
 
-    def canonicalize_dataset_using_samples(
+    def make_dataset_from_samples(
         self,
         inputs: list[str],
         outputs: list[str],
     ) -> datasets.DatasetDict:
-        """Canonicalize a dataset into a suitable text-to-text format."""
+        """Given a list of inputs and outputs, make a dataset."""
         if len(inputs) <= 0 or len(inputs) != len(outputs):
             raise ValueError("Length of inputs and outputs must be >0 and equal.")
 
@@ -62,7 +59,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         self,
         prompt_spec: PromptSpec,
         dataset: datasets.Dataset,
-        num_transform: int,
+        num_points_to_transform: int,
     ) -> datasets.DatasetDict:
         """Transform the dataset according to the prompt_spec and dataset."""
         plan_prompt = self.plan_prompt_fn(
@@ -70,16 +67,16 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             dataset,
             prompt_spec.examples,
         )
-        self.plan = make_request_from_prompt(plan_prompt)
+        self.plan = make_single_api_request(plan_prompt)
 
-        print(f"plan: {self.plan}")
+        logger.info(f"Plan created. Plan: {self.plan}")
 
         inputs = []
         outputs = []
 
         required_keys = ["input", "output"]
 
-        max_len = min(num_transform, len(dataset))
+        max_len = min(num_points_to_transform, len(dataset))
         len_count = 0
         transform_prompts = []
         for row in dataset:
@@ -112,7 +109,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
 
         for response in responses:
             try:
-                extraction = extract_response(response, required_keys, [])
+                extraction = parse_json(response, required_keys, [])
                 if extraction is not None:
                     inputs.append(str(extraction["input"]))
                     outputs.append(str(extraction["output"]))
@@ -122,4 +119,4 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
 
         logger.info(f"Requested length: {max_len}\nActual length: {len(inputs)}\n")
 
-        return self.canonicalize_dataset_using_samples(inputs, outputs)
+        return self.make_dataset_from_samples(inputs, outputs)

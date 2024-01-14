@@ -26,9 +26,7 @@ def test_canonicalize_dataset_using_samples():
     dataset_transformer = PromptBasedDatasetTransformer()
     inputs = ["input1", "input2"]
     outputs = ["output1", "output2"]
-    dataset_dict = dataset_transformer.canonicalize_dataset_using_samples(
-        inputs, outputs
-    )
+    dataset_dict = dataset_transformer.make_dataset_from_samples(inputs, outputs)
     assert dataset_dict["train"].column_names == ["input_col", "output_col"]
     assert dataset_dict["train"].shape == (2, 2)
     assert dataset_dict["train"][0]["input_col"] == "input1"
@@ -69,7 +67,7 @@ def test_transform_data(mock_batch_completion, mock_one_completion):
     dataset_dict = dataset_transformer.transform_data(
         prompt_spec=prompt_spec,
         dataset=dataset["train"],
-        num_transform=1,
+        num_points_to_transform=1,
     )
     assert dataset_dict["train"].column_names == ["input_col", "output_col"]
     assert dataset_dict["train"].shape == (1, 2)
