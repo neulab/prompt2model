@@ -201,7 +201,9 @@ def main():
 
         if auto_transform_data:
             while True:
-                line_print("Enter the number of data points you want to transform:")
+                line_print(
+                    "Enter the number of data points you want to transform (Remaining data points in the dataset will be discarded):"  # noqa E501
+                )
                 line = input()
                 try:
                     num_points_to_transform = int(line)
