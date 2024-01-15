@@ -183,7 +183,7 @@ def main():
         line_print("Retrieving dataset...")
         line_print("Do you want to perform data transformation? (y/n)")
         line_print(
-            "Data transformation converts retrieved data into desired format as per prompt"  # noqa E501
+            "Data transformation converts retrieved data into the desired format as per the prompt."  # noqa E501
         )
         auto_transform_data = False
         while True:
@@ -202,7 +202,7 @@ def main():
         if auto_transform_data:
             while True:
                 line_print(
-                    "Enter the number of data points you want to transform (Remaining data points in the dataset will be discarded):"  # noqa E501
+                    "Enter the number of data points you want to transform (the remaining data points in the dataset will be discarded):"  # noqa E501
                 )
                 line = input()
                 try:

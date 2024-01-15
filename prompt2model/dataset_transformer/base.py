@@ -10,7 +10,7 @@ from prompt2model.prompt_parser import PromptSpec
 
 
 class DatasetTransformer(ABC):
-    """A class for transforming given dataset to a desired format."""
+    """A class for transforming a given dataset to a desired format."""
 
     @abstractmethod
     def transform_data(
@@ -26,7 +26,7 @@ class DatasetTransformer(ABC):
             dataset: A dataset split.
             num_points_to_transform: Number of data points you wish to
             transform. Number must be greater than zero. If number is greater
-            than size of dataset, whole dataset will be transformed. ignored
+            than size of dataset, whole dataset will be transformed. Ignored
             if data_transform is False.
 
         Returns:

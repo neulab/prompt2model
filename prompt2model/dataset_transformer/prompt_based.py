@@ -45,7 +45,21 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         inputs: list[str],
         outputs: list[str],
     ) -> datasets.DatasetDict:
-        """Given a list of inputs and outputs, make a dataset."""
+        """Given a list of inputs and outputs, make a dataset.
+
+        This function takes in inputs and outputs, both as list of strings,
+        and returns a DatasetDict object with a single split, "train". It has
+        two columns, "input_col" and "output_col".
+
+
+        Args:
+            inputs: A list of inputs, each input is a string.
+            outputs: A list of outputs, each output is a string.
+
+        Returns:
+            A DatasetDict object with a single split, "train". It has two
+            columns, "input_col" and "output_col".
+        """
         if len(inputs) <= 0 or len(inputs) != len(outputs):
             raise ValueError("Length of inputs and outputs must be >0 and equal.")
 
@@ -73,8 +87,6 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
 
         inputs = []
         outputs = []
-
-        required_keys = ["input", "output"]
 
         max_len = min(num_points_to_transform, len(dataset))
         len_count = 0
@@ -109,7 +121,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
 
         for response in responses:
             try:
-                extraction = parse_json(response, required_keys, [])
+                extraction = parse_json(response, ["input", "output"], [])
                 if extraction is not None:
                     inputs.append(str(extraction["input"]))
                     outputs.append(str(extraction["output"]))
