@@ -149,3 +149,39 @@ def parse_prompt_to_fields(
             # In case we reach maximum number of API calls, we raise an error.
             logger.error("Maximum number of API calls reached.")
             raise RuntimeError("Maximum number of API calls reached.") from last_error
+
+
+def make_single_api_request(prompt: str, max_api_calls: int = 5) -> str:
+    """Prompts an LLM using the APIAgent, and returns the response.
+
+    This function calls the required api, has the logic for retrying,
+    returns the response back or throws an error
+    Args:
+        prompt: User prompt into specific fields
+        max_api_calls: Max number of retries, defaults to 5 to avoid
+                        being stuck in an infinite loop
+    Returns:
+        Response text or throws error
+    """
+    chat_api = api_tools.default_api_agent
+    if max_api_calls <= 0:
+        raise ValueError("max_api_calls must be > 0.")
+
+    api_call_counter = 0
+    last_error = None
+    while True:
+        api_call_counter += 1
+        try:
+            response: openai.ChatCompletion = chat_api.generate_one_completion(
+                prompt, temperature=0.01, presence_penalty=0, frequency_penalty=0
+            )
+            if response is not None:
+                return response.choices[0]["message"]["content"]
+        except API_ERRORS as e:
+            last_error = e
+            handle_api_error(e)
+
+        if api_call_counter >= max_api_calls:
+            # In case we reach maximum number of API calls, we raise an error.
+            logger.error("Maximum number of API calls reached.")
+            raise RuntimeError("Maximum number of API calls reached.") from last_error
