@@ -558,4 +558,4 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         logger.info(f"Rerank completed. Top dataset info: {top_dataset_info}")
         return self.canonicalize_dataset_automatically(
             top_dataset_info, prompt_spec, auto_transform_data, num_points_to_transform
-        )
+        ), top_dataset_info
