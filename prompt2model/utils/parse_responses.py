@@ -6,7 +6,7 @@ import json
 import openai
 
 from prompt2model.utils import api_tools, get_formatted_logger
-from prompt2model.utils.api_tools import API_ERRORS, handle_api_error
+from prompt2model.utils.api_tools import API_ERRORS, handle_api_error, APIAgent
 
 logger = get_formatted_logger("ParseJsonResponses")
 
@@ -117,6 +117,8 @@ def parse_prompt_to_fields(
         Value Error
     """
     chat_api = api_tools.default_api_agent
+    if module_name == "rerank":
+        chat_api = APIAgent(model_name="azure/GPT-3-5-16k-turbo-chat", max_tokens=15000)
     if max_api_calls <= 0:
         raise ValueError("max_api_calls must be > 0.")
 
