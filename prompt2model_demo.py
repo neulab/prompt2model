@@ -31,6 +31,8 @@ from prompt2model.prompt_parser import (
 )
 from prompt2model.utils.config import DEFAULT_HYPERPARAMETERS_SPACE
 from prompt2model.utils.logging_utils import get_formatted_logger
+from prompt2model.utils.api_tools import API_ERRORS, handle_api_error, APIAgent
+import prompt2model.utils.api_tools as api_tools
 
 
 def line_print(input_str: str) -> None:
@@ -121,6 +123,8 @@ def parse_model_size_limit(line: str, default_size=3e9) -> float:
 
 def main():
     """The main function running the whole system."""
+    api_tools.default_api_agent = api_tools.APIAgent(model_name="azure/GPT-3-5-turbo-chat", max_tokens=8000)  # noqa E501
+
     print_logo()
     # Save the status of Prompt2Model for this session,
     # in case the user wishes to stop and continue later.

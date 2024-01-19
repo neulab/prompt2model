@@ -4,12 +4,53 @@ from __future__ import annotations
 import json
 
 import openai
-
+import re
 from prompt2model.utils import api_tools, get_formatted_logger
 from prompt2model.utils.api_tools import API_ERRORS, handle_api_error, APIAgent
 
 logger = get_formatted_logger("ParseJsonResponses")
 
+def find_and_parse_json(
+    response: openai.Completion, required_keys: list, optional_keys: list
+) -> dict | None:
+    """Parse stuctured fields from the API response.
+
+    Args:
+        response: API response.
+        required_keys: Required keys from the response
+        optional_keys: Optional keys from the response
+
+    Returns:
+        If the API response is a valid JSON object and contains the
+        required and optional keys then returns the
+        final response as a Dictionary
+        Else returns None.
+    """
+    response_text = response.choices[0]["message"]["content"]
+    potential_jsons = re.findall(r'\{.*?\}', response_text, re.DOTALL)
+    for response_text in potential_jsons:
+        try:
+            response_json = json.loads(response_text, strict=False)
+        except json.decoder.JSONDecodeError:
+            logger.warning(f"API response was not a valid JSON: {response_text}")
+            continue
+
+        missing_keys = [key for key in required_keys if key not in response_json]
+        if len(missing_keys) != 0:
+            logger.warning(f'API response must contain {", ".join(required_keys)} keys')
+            continue
+
+        final_response = {}
+        for key in required_keys + optional_keys:
+            if key not in response_json:
+                # This is an optional key, so exclude it from the final response.
+                continue
+            if type(response_json[key]) == str:
+                final_response[key] = response_json[key].strip()
+            else:
+                final_response[key] = response_json[key]
+        return final_response
+    return None
 
 def parse_json(
     response: openai.Completion, required_keys: list, optional_keys: list
@@ -117,8 +158,8 @@ def parse_prompt_to_fields(
         Value Error
     """
     chat_api = api_tools.default_api_agent
-    if module_name == "rerank":
-        chat_api = APIAgent(model_name="azure/GPT-3-5-16k-turbo-chat", max_tokens=15000)
+    # if module_name == "rerank":
+    #     chat_api = APIAgent(model_name="azure/GPT-3-5-16k-turbo-sweden", max_tokens=15000)
     if max_api_calls <= 0:
         raise ValueError("max_api_calls must be > 0.")
 

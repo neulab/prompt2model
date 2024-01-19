@@ -240,6 +240,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             dataset_columns,
             example_rows,
         )
+        print(prompt)
         required_keys = ["input", "output"]
         optional_keys = ["ambiguous", "irrelevant"]
 
