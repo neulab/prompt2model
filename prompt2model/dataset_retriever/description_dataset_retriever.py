@@ -487,7 +487,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         except Exception as e:
             logger.warning("Column selection failed: ", e)
             return None
-        logger.info("Column selection completed")
+        logger.info(f"Column selection completed. Selected columns: {input_columns + [output_column]}")
         full_dataset = (
             datasets.load_dataset(
                 top_dataset_info["dataset_name"], top_dataset_info["config_name"]
