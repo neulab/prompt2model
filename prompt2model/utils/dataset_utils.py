@@ -1,7 +1,9 @@
 """Util functions for datasets."""
 
+import datasets
 import requests
 
+from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils.logging_utils import get_formatted_logger
 
 logger = get_formatted_logger("dataset_utils")
@@ -31,3 +33,28 @@ def get_dataset_size(dataset_name):
         if size_dict == {}
         else "{:.2f}".format(size_dict["dataset"]["num_bytes_memory"] / 1024 / 1024)
     )
+
+
+def make_combined_datasets(dataset_list, final_dataset_path):
+    """Comnine multiple datasets into one."""
+
+    input_col = []
+    output_col = []
+    for dataset in dataset_list:
+        input_col.extend(dataset["input_col"])
+        output_col.extend(dataset["output_col"])
+
+    dataset = datasets.Dataset.from_dict(
+        {"input_col": input_col, "output_col": output_col}
+    )
+    dataset.save_to_disk(final_dataset_path)
+
+
+def format_train_data(train_dataset: datasets.Dataset, prompt_spec: PromptSpec):
+    """Formats the train dataset by prefixing instruction"""
+    final_texts = []
+    for row in train_dataset:
+        final_texts.append(
+            f"{prompt_spec.instruction}\ninput={row['input_col']}\noutput={row['output_col']}"
+        )
+    return datasets.Dataset.from_dict({"text": final_texts})
