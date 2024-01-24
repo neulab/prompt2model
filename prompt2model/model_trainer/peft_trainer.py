@@ -47,7 +47,7 @@ class QLoraTrainer:
 
     def qlora_tokenize(self, prompt):
         result = self.tokenizer(
-            prompt['text'],
+            prompt["text"],
             truncation=True,
             max_length=512,
             padding="max_length",
@@ -88,7 +88,7 @@ class QLoraTrainer:
             self.model.is_parallelizable = True
             self.model.model_parallel = True
 
-        output_dir = "./" + self.model_name
+        output_dir = f"./peft_{self.model_name}"
 
         trainer = transformers.Trainer(
             model=self.model,
@@ -132,13 +132,13 @@ class QLoraTrainer:
         )
 
         self.model = PeftModel.from_pretrained(
-            self.model, f"./{self.model_name}/checkpoint-{num_steps}"
+            self.model, f"./peft_{self.model_name}/checkpoint-{num_steps}"
         )
         self.model = self.model.merge_and_unload()
-        self.model.save_pretrained(f"./{self.model_name}/final_tuned_model")
+        self.model.save_pretrained(f"./final_{self.model_name}/final_tuned_model")
         self.model = None
         self.model = AutoModelForCausalLM.from_pretrained(
-            f"./{self.model_name}/final_tuned_model",
+            f"./final_{self.model_name}/final_tuned_model",
             quantization_config=self.bnb_config,
             device_map="auto",
             trust_remote_code=True,
