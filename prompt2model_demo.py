@@ -382,10 +382,9 @@ def main():
             dataset_list = [dataset]
         print("loaded datasets")
 
-        make_combined_datasets(dataset_list, final_dataset_path="combined_dataset")
+        train_dataset = make_combined_datasets(dataset_list)
         line_print("Combined dataset created.")
 
-        train_dataset = datasets.load_from_disk("combined_dataset")
         formatted_train_dataset = format_train_data(train_dataset, prompt_spec)
         print("Formatted train dataset created.")
         trainer = QLoraTrainer()

@@ -47,7 +47,7 @@ def make_combined_datasets(dataset_list, final_dataset_path):
     dataset = datasets.Dataset.from_dict(
         {"input_col": input_col, "output_col": output_col}
     )
-    dataset.save_to_disk(final_dataset_path)
+    return dataset
 
 
 def format_train_data(train_dataset: datasets.Dataset, prompt_spec: PromptSpec):

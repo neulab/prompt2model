@@ -144,6 +144,6 @@ class QLoraTrainer:
             trust_remote_code=True,
         )
         self.tokenizer = AutoTokenizer.from_pretrained(
-            self.model_name, add_bos_token=True, trus_remote_code=True
+            self.model_name, add_bos_token=True, trust_remote_code=True
         )
         return self.model, self.tokenizer
