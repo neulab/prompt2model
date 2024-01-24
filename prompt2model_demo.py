@@ -391,7 +391,7 @@ def main():
         trainer = QLoraTrainer()
         print("Starting to train the model...")
         trained_model, trained_tokenizer = trainer.train_model(
-            formatted_train_dataset, train_batch_size=1, num_steps=1
+            formatted_train_dataset, train_batch_size=2, num_steps=50
         )
         trained_model.save_pretrained(trained_model_root)
         trained_tokenizer.save_pretrained(trained_tokenizer_root)
