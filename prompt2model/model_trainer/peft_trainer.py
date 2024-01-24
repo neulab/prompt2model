@@ -30,8 +30,9 @@ class QLoraTrainer:
             bnb_4bit_compute_dtype=torch.bfloat16,
         )
         print("configs fine")
+        print(f"Attempting to load model {self.model_name}")
         self.model = AutoModelForCausalLM.from_pretrained(
-            model_name, device_map="auto", quantization_config=self.bnb_config
+            self.model_name, device_map="auto", quantization_config=self.bnb_config
         )
         print("Model loaded")
         self.tokenizer = AutoTokenizer.from_pretrained(
