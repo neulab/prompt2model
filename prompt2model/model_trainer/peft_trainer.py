@@ -21,7 +21,7 @@ accelerator = Accelerator(fsdp_plugin=fsdp_plugin)
 
 
 class QLoraTrainer:
-    def __init__(self, model_name="mistralai/Mistral-7B-v0.1") -> None:
+    def __init__(self, model_name="mistralai/Mistral-7B-Instruct-v0.2") -> None:
         self.model_name = model_name
         self.bnb_config = BitsAndBytesConfig(
             load_in_4bit=True,
