@@ -223,13 +223,13 @@ def main():
                     continue
                 status["num_transform"] = num_points_to_transform
                 break
-            retrieved_dataset_dict = retriever.retrieve_dataset_dict(
+            retrieved_dataset_dict, _ = retriever.retrieve_dataset_dict(
                 prompt_spec,
                 auto_transform_data=True,
                 num_points_to_transform=num_points_to_transform,
             )
         else:
-            retrieved_dataset_dict = retriever.retrieve_dataset_dict(prompt_spec)
+            retrieved_dataset_dict, _ = retriever.retrieve_dataset_dict(prompt_spec)
 
         dataset_has_been_retrieved = True
         if retrieved_dataset_dict is not None:
