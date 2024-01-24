@@ -380,12 +380,16 @@ def main():
             dataset_list = [dataset, cached_retrieved_dataset_dict["train"]]
         else:
             dataset_list = [dataset]
+        print("loaded datasets")
 
         make_combined_datasets(dataset_list, final_dataset_path="combined_dataset")
+        line_print("Combined dataset created.")
 
         train_dataset = datasets.load_from_disk("combined_dataset")
         formatted_train_dataset = format_train_data(train_dataset, prompt_spec)
+        print("Formatted train dataset created.")
         trainer = QLoraTrainer()
+        print("Starting to train the model...")
         trained_model, trained_tokenizer = trainer.train_model(
             formatted_train_dataset, train_batch_size=1, num_steps=1
         )
