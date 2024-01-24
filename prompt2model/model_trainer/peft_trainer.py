@@ -31,7 +31,7 @@ class QLoraTrainer:
         )
         print("configs fine")
         self.model = AutoModelForCausalLM.from_pretrained(
-            model_name, quantization_config=self.bnb_config
+            model_name, device_map="auto", quantization_config=self.bnb_config
         )
         print("Model loaded")
         self.tokenizer = AutoTokenizer.from_pretrained(
@@ -46,7 +46,7 @@ class QLoraTrainer:
 
     def qlora_tokenize(self, prompt):
         result = self.tokenizer(
-            prompt,
+            prompt['text'],
             truncation=True,
             max_length=512,
             padding="max_length",
