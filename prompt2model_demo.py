@@ -146,6 +146,9 @@ def main():
                 with open("status.yaml", "r") as f:
                     status = yaml.safe_load(f)
                     print(f"Current status:\n{json.dumps(status, indent=4)}")
+                    prompt_spec = MockPromptSpec(
+                        TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
+                    )
                     break
             else:
                 status = {}
