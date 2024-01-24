@@ -32,12 +32,14 @@ class QLoraTrainer:
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name, quantization_config=self.bnb_config
         )
+        print("Model loaded")
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model_name,
             model_max_length=512,
             padding_side="left",
             add_eos_token=True,
         )
+        print("Tokenizer loaded")
 
         self.tokenizer.pad_token = self.tokenizer.eos_token
 
