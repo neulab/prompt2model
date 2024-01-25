@@ -1,3 +1,5 @@
+import gc
+
 import bitsandbytes
 import datasets
 import torch
@@ -106,7 +108,7 @@ class QLoraTrainer:
                 optim="paged_adamw_8bit",
                 logging_dir="./logs",  # Directory for storing logs
                 save_strategy="steps",  # Save the model checkpoint every logging step
-                save_steps=50,  # Save checkpoints every 50 steps
+                save_steps=5,  # Save checkpoints every 50 steps
                 # evaluation_strategy="steps", # Evaluate the model every logging step
                 # eval_steps=50,               # Evaluate and save checkpoints every 50 steps
                 # do_eval=True,                # Perform evaluation at the end of training
@@ -121,8 +123,11 @@ class QLoraTrainer:
         )
         trainer.train()
 
-        self.model = None
-        self.tokenizer = None
+        del self.model
+        del trainer
+        del self.tokenizer
+        gc.collect()
+        torch.cuda.empty_cache()
 
         self.model = AutoModelForCausalLM.from_pretrained(
             self.model_name,  # Mistral, same as before
@@ -136,7 +141,11 @@ class QLoraTrainer:
         )
         self.model = self.model.merge_and_unload()
         self.model.save_pretrained(f"./final_{self.model_name}/final_tuned_model")
-        self.model = None
+
+        del self.model
+        gc.collect()
+        torch.cuda.empty_cache()
+
         self.model = AutoModelForCausalLM.from_pretrained(
             f"./final_{self.model_name}/final_tuned_model",
             quantization_config=self.bnb_config,
