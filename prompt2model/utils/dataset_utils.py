@@ -35,7 +35,7 @@ def get_dataset_size(dataset_name):
     )
 
 
-def make_combined_datasets(dataset_list, final_dataset_path):
+def make_combined_datasets(dataset_list):
     """Comnine multiple datasets into one."""
 
     input_col = []
