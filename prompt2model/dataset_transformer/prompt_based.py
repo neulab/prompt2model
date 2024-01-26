@@ -5,6 +5,7 @@ import asyncio
 from collections.abc import Callable
 
 import datasets
+import wandb
 
 from prompt2model.dataset_transformer.base import DatasetTransformer
 from prompt2model.dataset_transformer.prompt_template import (
@@ -18,7 +19,10 @@ from prompt2model.utils import (
     get_formatted_logger,
     handle_api_error,
 )
-from prompt2model.utils.parse_responses import make_single_api_request, find_and_parse_json
+from prompt2model.utils.parse_responses import (
+    find_and_parse_json,
+    make_single_api_request,
+)
 
 logger = get_formatted_logger("DatasetTransformer")
 
@@ -81,7 +85,9 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             dataset,
             prompt_spec.examples,
         )
+        wandb.log({"plan_prompt": plan_prompt})
         self.plan = make_single_api_request(plan_prompt)
+        wandb.log({"plan": self.plan})
 
         logger.info(f"Plan created. Plan: {self.plan}")
 
@@ -123,12 +129,18 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             try:
                 extraction = find_and_parse_json(response, ["input", "output"], [])
                 if extraction is not None:
-                    inputs.append(str(extraction["input"]))
-                    outputs.append(str(extraction["output"]))
+                    inputs.append(str("Q: " + extraction["input"].strip() + "\nA:"))
+                    outputs.append(str(extraction["output"].strip()))
             except Exception as e:
                 logger.error(f"Error extracting from response: {response}\nError: {e}")
                 continue
 
         logger.info(f"Requested length: {max_len}\nActual length: {len(inputs)}\n")
+        wandb.log(
+            {
+                "data_transform_actual_length": len(inputs),
+                "data_transform_requested_length": max_len,
+            }
+        )
 
         return self.make_dataset_from_samples(inputs, outputs)

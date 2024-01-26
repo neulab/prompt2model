@@ -4,6 +4,7 @@ import bitsandbytes
 import datasets
 import torch
 import transformers
+import wandb
 from accelerate import Accelerator, FullyShardedDataParallelPlugin
 from peft import LoraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
 from torch.distributed.fsdp.fully_sharded_data_parallel import (
@@ -60,8 +61,13 @@ class QLoraTrainer:
     def train_model(
         self, dataset: datasets.Dataset, train_batch_size: int = 1, num_steps: int = 50
     ):
+        # split hf dataset into train and test
+        splits = dataset.train_test_split(test_size=0.1)
+        train_dataset = splits["train"]
+        eval_dataset = splits["test"]
 
-        dataset = dataset.map(self.qlora_tokenize)
+        train_dataset = train_dataset.map(self.qlora_tokenize)
+        eval_dataset = eval_dataset.map(self.qlora_tokenize)
         self.model.gradient_checkpointing_enable()
         self.model = prepare_model_for_kbit_training(self.model)
 
@@ -94,7 +100,8 @@ class QLoraTrainer:
 
         trainer = transformers.Trainer(
             model=self.model,
-            train_dataset=dataset,
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
             args=transformers.TrainingArguments(
                 output_dir=output_dir,
                 warmup_steps=5,
@@ -109,9 +116,10 @@ class QLoraTrainer:
                 logging_dir="./logs",  # Directory for storing logs
                 save_strategy="steps",  # Save the model checkpoint every logging step
                 save_steps=5,  # Save checkpoints every 50 steps
-                # evaluation_strategy="steps", # Evaluate the model every logging step
-                # eval_steps=50,               # Evaluate and save checkpoints every 50 steps
-                # do_eval=True,                # Perform evaluation at the end of training
+                evaluation_strategy="steps",  # Evaluate the model every logging step
+                eval_steps=5,  # Evaluate and save checkpoints every 50 steps
+                do_eval=True,  # Perform evaluation at the end of training
+                report_to="wandb",  # Enable WandB logging
             ),
             data_collator=transformers.DataCollatorForLanguageModeling(
                 self.tokenizer, mlm=False
@@ -155,4 +163,5 @@ class QLoraTrainer:
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model_name, add_bos_token=True, trust_remote_code=True
         )
+        self.model.config.use_cache = True
         return self.model, self.tokenizer

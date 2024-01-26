@@ -9,6 +9,7 @@ import urllib.request
 
 import datasets
 import torch
+import wandb
 
 from prompt2model.dataset_retriever.base import DatasetInfo, DatasetRetriever
 from prompt2model.dataset_retriever.column_selection_prompt import (
@@ -240,13 +241,14 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             dataset_columns,
             example_rows,
         )
-        print(prompt)
+        wandb.log({"column_selection_prompt": prompt})
         required_keys = ["input", "output"]
         optional_keys = ["ambiguous", "irrelevant"]
 
         response = parse_prompt_to_fields(prompt, required_keys, optional_keys)
         input_columns = response["input"]
         output_column = response["output"]
+        wandb.log({"column_selection_response": response})
         if len(input_columns) < 1 or len(output_column) != 1:
             raise RuntimeError(
                 "Input columns length was less than 1 or output column length was not 1"
@@ -417,6 +419,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         prompt = construct_prompt_for_dataset_reranking(
             prompt_spec.instruction, prompt_spec.examples, dataset_info_dict
         )
+        wandb.log({"reranking_prompt": prompt})
         response = parse_prompt_to_fields(prompt=prompt, module_name="rerank")
 
         dataset_name, config_name, confidence_level = (
@@ -424,6 +427,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             response["config_name"],
             response["confidence_level"],
         )
+        wandb.log({"reranking_response": response})
         if (
             dataset_name not in dataset_info_dict
             or config_name not in dataset_info_dict[dataset_name]["configs"]
@@ -484,10 +488,14 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 top_dataset_info["columns"],
                 top_dataset_info["sample_row"],
             )
+            wandb.log({"input_columns": input_columns, "output_column": output_column})
         except Exception as e:
             logger.warning("Column selection failed: ", e)
+            wandb.log({"column_selection_failed": e})
             return None
-        logger.info(f"Column selection completed. Selected columns: {input_columns + [output_column]}")
+        logger.info(
+            f"Column selection completed. Selected columns: {input_columns + [output_column]}"
+        )
         full_dataset = (
             datasets.load_dataset(
                 top_dataset_info["dataset_name"], top_dataset_info["config_name"]
@@ -516,6 +524,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 num_points_to_transform=num_points_to_transform,
             )
             logger.info("Data transformation completed")
+            wandb.log({"dataset_transformation_complete": True})
 
             example_rows = json.dumps(canonicalized_dataset["train"][0], indent=4)
 
@@ -554,9 +563,11 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             or None if there are no relevant datasets.
         """
         sorted_list = self.retrieve_top_datasets(prompt_spec)
+        wandb.log({"retrieved_datasets": sorted_list})
         logger.info(f"Top datasets retrieved. Top datasets: {sorted_list}")
         top_dataset_info = self.rerank_datasets(sorted_list, prompt_spec)
+        wandb.log({"chosen dataset": top_dataset_info})
         logger.info(f"Rerank completed. Top dataset info: {top_dataset_info}")
         return self.canonicalize_dataset_automatically(
             top_dataset_info, prompt_spec, auto_transform_data, num_points_to_transform
-        ), top_dataset_info
+        )

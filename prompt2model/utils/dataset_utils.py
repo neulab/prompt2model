@@ -50,11 +50,9 @@ def make_combined_datasets(dataset_list):
     return dataset
 
 
-def format_train_data(train_dataset: datasets.Dataset, prompt_spec: PromptSpec):
+def format_train_data(train_dataset: datasets.Dataset):
     """Formats the train dataset by prefixing instruction"""
     final_texts = []
     for row in train_dataset:
-        final_texts.append(
-            f"{prompt_spec.instruction}\ninput={row['input_col']}\noutput={row['output_col']}"
-        )
+        final_texts.append(f"{row['input_col'].strip()} {row['output_col'].strip()}")
     return datasets.Dataset.from_dict({"text": final_texts})
