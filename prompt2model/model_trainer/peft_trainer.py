@@ -73,7 +73,7 @@ class QLoraTrainer:
 
         config = LoraConfig(
             r=8,
-            lora_alpha=32,
+            lora_alpha=16,
             target_modules=[
                 "q_proj",
                 "k_proj",
@@ -104,14 +104,14 @@ class QLoraTrainer:
             eval_dataset=eval_dataset,
             args=transformers.TrainingArguments(
                 output_dir=output_dir,
-                num_train_epochs=2,
+                num_train_epochs=3,
                 warmup_steps=5,
                 per_device_train_batch_size=train_batch_size,
                 gradient_checkpointing=True,
                 gradient_accumulation_steps=2,
                 weight_decay=0.001,
                 max_steps=-1,
-                learning_rate=1e-4,  # Want about 10x smaller than the Mistral learning rate
+                learning_rate=5e-5,  # Want about 10x smaller than the Mistral learning rate
                 logging_steps=50,
                 fp16=True,
                 optim="paged_adamw_8bit",
