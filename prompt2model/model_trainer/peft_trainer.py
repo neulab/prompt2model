@@ -105,7 +105,7 @@ class QLoraTrainer:
             eval_dataset=eval_dataset,
             args=transformers.TrainingArguments(
                 output_dir=output_dir,
-                num_train_epochs=3,
+                num_train_epochs=num_epochs,
                 warmup_steps=5,
                 per_device_train_batch_size=train_batch_size,
                 gradient_checkpointing=True,
