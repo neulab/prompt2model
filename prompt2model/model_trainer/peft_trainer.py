@@ -60,7 +60,7 @@ class QLoraTrainer:
         return result
 
     def train_model(
-        self, dataset: datasets.Dataset, train_batch_size: int = 1, num_epochs=1, alpha=16, r=8, lr=5e-5
+        self, dataset: datasets.Dataset, train_batch_size: int = 1, num_epochs=1, alpha=16, r=8, lr=5e-5, save_folder_path="./"
     ):
         # split hf dataset into train and test
         splits = dataset.train_test_split(test_size=0.1)
@@ -97,7 +97,7 @@ class QLoraTrainer:
             self.model.is_parallelizable = True
             self.model.model_parallel = True
 
-        output_dir = f"./peft_{self.model_name}"
+        output_dir = os.path.join(save_folder_path, "qlora")
 
         trainer = transformers.Trainer(
             model=self.model,
@@ -134,7 +134,7 @@ class QLoraTrainer:
         )
         trainer.train()
 
-        trainer.model.save_pretrained(os.path.join(output_dir, "final_model"))
+        trainer.model.save_pretrained(os.path.join(output_dir, "qlora_model"))
 
         del self.model
         del trainer
@@ -150,17 +150,17 @@ class QLoraTrainer:
         )
 
         self.model = PeftModel.from_pretrained(
-            self.model, os.path.join(output_dir, "final_model")
+            self.model, os.path.join(output_dir, "qlora_model")
         )
         self.model = self.model.merge_and_unload()
-        self.model.save_pretrained(f"./final_{self.model_name}/final_tuned_model")
+        self.model.save_pretrained(os.path.join(output_dir, "final_model"))
 
         del self.model
         gc.collect()
         torch.cuda.empty_cache()
 
         self.model = AutoModelForCausalLM.from_pretrained(
-            f"./final_{self.model_name}/final_tuned_model",
+            os.path.join(output_dir, "final_model"),
             quantization_config=self.bnb_config,
             device_map="auto",
             trust_remote_code=True,
