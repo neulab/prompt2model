@@ -1,4 +1,5 @@
 import gc
+import os
 
 import bitsandbytes
 import datasets
@@ -133,6 +134,8 @@ class QLoraTrainer:
         )
         trainer.train()
 
+        trainer.model.save_pretrained(os.path.join(output_dir, "final_model"))
+
         del self.model
         del trainer
         del self.tokenizer
@@ -147,7 +150,7 @@ class QLoraTrainer:
         )
 
         self.model = PeftModel.from_pretrained(
-            self.model, f"./peft_{self.model_name}/checkpoint-{num_steps}"
+            self.model, os.path.join(output_dir, "final_model")
         )
         self.model = self.model.merge_and_unload()
         self.model.save_pretrained(f"./final_{self.model_name}/final_tuned_model")
