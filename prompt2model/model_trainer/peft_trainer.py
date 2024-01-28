@@ -60,7 +60,7 @@ class QLoraTrainer:
         return result
 
     def train_model(
-        self, dataset: datasets.Dataset, train_batch_size: int = 1, num_steps: int = 50
+        self, dataset: datasets.Dataset, train_batch_size: int = 1, num_epochs=1, alpha=16, r=8, lr=5e-5
     ):
         # split hf dataset into train and test
         splits = dataset.train_test_split(test_size=0.1)
@@ -73,8 +73,8 @@ class QLoraTrainer:
         self.model = prepare_model_for_kbit_training(self.model)
 
         config = LoraConfig(
-            r=8,
-            lora_alpha=16,
+            r=r,
+            lora_alpha=alpha,
             target_modules=[
                 "q_proj",
                 "k_proj",
@@ -112,7 +112,7 @@ class QLoraTrainer:
                 gradient_accumulation_steps=2,
                 weight_decay=0.001,
                 max_steps=-1,
-                learning_rate=5e-5,  # Want about 10x smaller than the Mistral learning rate
+                learning_rate=lr,  # Want about 10x smaller than the Mistral learning rate
                 logging_steps=50,
                 fp16=True,
                 optim="paged_adamw_8bit",
