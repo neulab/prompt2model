@@ -70,6 +70,7 @@ class QLoraTrainer:
         lr=5e-5,
         save_folder_path="./",
         eval_dataset=None,
+        load_best_model_at_end=True,
     ):
         if eval_dataset is None:
             # split hf dataset into train and test
@@ -143,7 +144,7 @@ class QLoraTrainer:
                 eval_steps=50,  # Evaluate and save checkpoints every 50 steps
                 do_eval=True,  # Perform evaluation at the end of training
                 report_to="wandb",  # Enable WandB logging
-                load_best_model_at_end=True,
+                load_best_model_at_end=load_best_model_at_end,
                 metric_for_best_model="eval_loss",
                 greater_is_better=False,
             ),
