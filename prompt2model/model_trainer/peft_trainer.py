@@ -13,6 +13,7 @@ from torch.distributed.fsdp.fully_sharded_data_parallel import (
     FullStateDictConfig,
 )
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from prompt2model.utils.dataset_utils import make_combined_datasets
 
 fsdp_plugin = FullyShardedDataParallelPlugin(
     state_dict_config=FullStateDictConfig(offload_to_cpu=True, rank0_only=False),
@@ -25,8 +26,9 @@ accelerator = Accelerator(fsdp_plugin=fsdp_plugin)
 
 
 class QLoraTrainer:
-    def __init__(self, model_name="mistralai/Mistral-7B-v0.1") -> None:
+    def __init__(self, model_name="mistralai/Mistral-7B-v0.1", eval_size=50) -> None:
         self.model_name = model_name
+        self.eval_size = eval_size
         self.bnb_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_use_double_quant=True,
@@ -60,12 +62,30 @@ class QLoraTrainer:
         return result
 
     def train_model(
-        self, dataset: datasets.Dataset, train_batch_size: int = 1, num_epochs=1, alpha=16, r=8, lr=5e-5, save_folder_path="./"
+        self, dataset: datasets.Dataset,
+        train_batch_size: int = 1,
+        num_epochs=1,
+        alpha=16,
+        r=8,
+        lr=5e-5,
+        save_folder_path="./",
+        eval_dataset=None,
     ):
-        # split hf dataset into train and test
-        splits = dataset.train_test_split(test_size=0.1)
-        train_dataset = splits["train"]
-        eval_dataset = splits["test"]
+        if eval_dataset is None:
+            # split hf dataset into train and test
+            splits = dataset.train_test_split(test_size=0.1)
+            train_dataset = splits["train"]
+            eval_dataset = splits["test"]
+        else:
+            eval_len = len(eval_dataset)
+            wandb.log({"eval_original_size": eval_len})
+            if eval_len < self.eval_size:
+                required_len = self.eval_size - eval_len
+                splits = dataset.train_test_split(test_size=required_len / len(dataset))
+                train_dataset = splits["train"]
+                eval_dataset = make_combined_datasets([splits["test"], eval_dataset])
+            else:
+                train_dataset = dataset
 
         train_dataset = train_dataset.map(self.qlora_tokenize)
         eval_dataset = eval_dataset.map(self.qlora_tokenize)
@@ -123,6 +143,9 @@ class QLoraTrainer:
                 eval_steps=50,  # Evaluate and save checkpoints every 50 steps
                 do_eval=True,  # Perform evaluation at the end of training
                 report_to="wandb",  # Enable WandB logging
+                load_best_model_at_end=True,
+                metric_for_best_model="eval_loss",
+                greater_is_better=False,
             ),
             data_collator=transformers.DataCollatorForLanguageModeling(
                 self.tokenizer, mlm=False
