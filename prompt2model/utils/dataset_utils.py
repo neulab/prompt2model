@@ -35,8 +35,14 @@ def get_dataset_size(dataset_name):
     )
 
 
-def make_combined_datasets(dataset_list):
+def make_combined_datasets(dataset_list, dataset_type="inp_out"):
     """Comnine multiple datasets into one."""
+
+    if dataset_type == "text":
+        text_col = []
+        for dataset in dataset_list:
+            text_col.extend(dataset["text"])
+        return datasets.Dataset.from_dict({"text": text_col})
 
     input_col = []
     output_col = []

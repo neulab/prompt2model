@@ -83,7 +83,7 @@ class QLoraTrainer:
                 required_len = self.eval_size - eval_len
                 splits = dataset.train_test_split(test_size=min(required_len / len(dataset), 0.1))
                 train_dataset = splits["train"]
-                eval_dataset = make_combined_datasets([splits["test"], eval_dataset])
+                eval_dataset = make_combined_datasets([splits["test"], eval_dataset], dataset_type="text")
             else:
                 train_dataset = dataset
 
