@@ -81,7 +81,7 @@ class QLoraTrainer:
             wandb.log({"eval_original_size": eval_len})
             if eval_len < self.eval_size:
                 required_len = self.eval_size - eval_len
-                splits = dataset.train_test_split(test_size=required_len / len(dataset))
+                splits = dataset.train_test_split(test_size=min(required_len / len(dataset), 0.1))
                 train_dataset = splits["train"]
                 eval_dataset = make_combined_datasets([splits["test"], eval_dataset])
             else:
