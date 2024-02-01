@@ -194,3 +194,166 @@ class QLoraTrainer:
         )
         self.model.config.use_cache = True
         return self.model, self.tokenizer
+
+
+class LoraTrainer:
+    def __init__(self, model_name="mistralai/Mistral-7B-v0.1", eval_size=50) -> None:
+        self.model_name = model_name
+        self.eval_size = eval_size
+        print("configs fine")
+        print(f"Attempting to load model {self.model_name}")
+        self.model = AutoModelForCausalLM.from_pretrained(
+            self.model_name, device_map="auto", trust_remote_code=True
+        )
+        print("Model loaded")
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.model_name,
+            model_max_length=512,
+            padding_side="left",
+            add_eos_token=True,
+        )
+        print("Tokenizer loaded")
+
+        self.tokenizer.pad_token = self.tokenizer.eos_token
+
+    def qlora_tokenize(self, prompt):
+        result = self.tokenizer(
+            prompt["text"],
+            truncation=True,
+            max_length=512,
+            padding="max_length",
+        )
+        result["labels"] = result["input_ids"].copy()
+        return result
+
+    def train_model(
+        self, dataset: datasets.Dataset,
+        train_batch_size: int = 1,
+        num_epochs=1,
+        alpha=16,
+        r=8,
+        lr=5e-5,
+        save_folder_path="./",
+        eval_dataset=None,
+        load_best_model_at_end=True,
+    ):
+        if eval_dataset is None:
+            # split hf dataset into train and test
+            splits = dataset.train_test_split(test_size=0.1)
+            train_dataset = splits["train"]
+            eval_dataset = splits["test"]
+        else:
+            eval_len = len(eval_dataset)
+            wandb.log({"eval_original_size": eval_len})
+            if eval_len < self.eval_size:
+                required_len = self.eval_size - eval_len
+                splits = dataset.train_test_split(test_size=min(required_len / len(dataset), 0.1))
+                train_dataset = splits["train"]
+                eval_dataset = make_combined_datasets([splits["test"], eval_dataset], dataset_type="text")
+            else:
+                train_dataset = dataset
+
+        train_dataset = train_dataset.map(self.qlora_tokenize)
+        eval_dataset = eval_dataset.map(self.qlora_tokenize)
+        self.model.gradient_checkpointing_enable()
+        self.model = prepare_model_for_kbit_training(self.model)
+
+        config = LoraConfig(
+            r=r,
+            lora_alpha=alpha,
+            target_modules=[
+                "q_proj",
+                "k_proj",
+                "v_proj",
+                "o_proj",
+                "gate_proj",
+                "up_proj",
+                "down_proj",
+                "lm_head",
+            ],
+            bias="none",
+            lora_dropout=0.05,  # Conventional
+            task_type="CAUSAL_LM",
+        )
+
+        self.model = get_peft_model(self.model, config)
+        self.model = accelerator.prepare_model(self.model)
+
+        if torch.cuda.device_count() > 1:  # If more than 1 GPU
+            self.model.is_parallelizable = True
+            self.model.model_parallel = True
+
+        output_dir = os.path.join(save_folder_path, "lora")
+
+        trainer = transformers.Trainer(
+            model=self.model,
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
+            args=transformers.TrainingArguments(
+                output_dir=output_dir,
+                num_train_epochs=num_epochs,
+                warmup_steps=5,
+                per_device_train_batch_size=train_batch_size,
+                gradient_checkpointing=True,
+                gradient_accumulation_steps=2,
+                weight_decay=0.001,
+                max_steps=-1,
+                learning_rate=lr,  # Want about 10x smaller than the Mistral learning rate
+                logging_steps=50,
+                fp16=True,
+                optim="paged_adamw_32bit",
+                logging_dir="./logs",  # Directory for storing logs
+                save_strategy="steps",  # Save the model checkpoint every logging step
+                save_steps=200,  # Save checkpoints every 50 steps
+                evaluation_strategy="steps",  # Evaluate the model every logging step
+                eval_steps=50,  # Evaluate and save checkpoints every 50 steps
+                do_eval=True,  # Perform evaluation at the end of training
+                report_to="wandb",  # Enable WandB logging
+                load_best_model_at_end=load_best_model_at_end,
+                metric_for_best_model="eval_loss",
+                greater_is_better=False,
+            ),
+            data_collator=transformers.DataCollatorForLanguageModeling(
+                self.tokenizer, mlm=False
+            ),
+        )
+
+        self.model.config.use_cache = (
+            False  # silence the warnings. Please re-enable for inference!
+        )
+        trainer.train()
+
+        trainer.model.save_pretrained(os.path.join(output_dir, "lora_model"))
+
+        del self.model
+        del trainer
+        del self.tokenizer
+        gc.collect()
+        torch.cuda.empty_cache()
+
+        self.model = AutoModelForCausalLM.from_pretrained(
+            self.model_name,  # Mistral, same as before
+            device_map="auto",
+            trust_remote_code=True,
+        )
+
+        self.model = PeftModel.from_pretrained(
+            self.model, os.path.join(output_dir, "lora_model")
+        )
+        self.model = self.model.merge_and_unload()
+        self.model.save_pretrained(os.path.join(output_dir, "final_model"))
+
+        del self.model
+        gc.collect()
+        torch.cuda.empty_cache()
+
+        self.model = AutoModelForCausalLM.from_pretrained(
+            os.path.join(output_dir, "final_model"),
+            device_map="auto",
+            trust_remote_code=True,
+        )
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.model_name, add_bos_token=True, trust_remote_code=True
+        )
+        self.model.config.use_cache = True
+        return self.model, self.tokenizer
