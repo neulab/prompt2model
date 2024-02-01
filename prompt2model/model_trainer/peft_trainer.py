@@ -13,6 +13,7 @@ from torch.distributed.fsdp.fully_sharded_data_parallel import (
     FullStateDictConfig,
 )
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+
 from prompt2model.utils.dataset_utils import make_combined_datasets
 
 fsdp_plugin = FullyShardedDataParallelPlugin(
@@ -62,7 +63,8 @@ class QLoraTrainer:
         return result
 
     def train_model(
-        self, dataset: datasets.Dataset,
+        self,
+        dataset: datasets.Dataset,
         train_batch_size: int = 1,
         num_epochs=1,
         alpha=16,
@@ -82,9 +84,13 @@ class QLoraTrainer:
             wandb.log({"eval_original_size": eval_len})
             if eval_len < self.eval_size:
                 required_len = self.eval_size - eval_len
-                splits = dataset.train_test_split(test_size=min(required_len / len(dataset), 0.1))
+                splits = dataset.train_test_split(
+                    test_size=min(required_len / len(dataset), 0.1)
+                )
                 train_dataset = splits["train"]
-                eval_dataset = make_combined_datasets([splits["test"], eval_dataset], dataset_type="text")
+                eval_dataset = make_combined_datasets(
+                    [splits["test"], eval_dataset], dataset_type="text"
+                )
             else:
                 train_dataset = dataset
 
@@ -198,6 +204,7 @@ class QLoraTrainer:
 
 class LoraTrainer:
     def __init__(self, model_name="mistralai/Mistral-7B-v0.1", eval_size=50) -> None:
+        print("LoraTrainer init")
         self.model_name = model_name
         self.eval_size = eval_size
         print("configs fine")
@@ -227,7 +234,8 @@ class LoraTrainer:
         return result
 
     def train_model(
-        self, dataset: datasets.Dataset,
+        self,
+        dataset: datasets.Dataset,
         train_batch_size: int = 1,
         num_epochs=1,
         alpha=16,
@@ -247,9 +255,13 @@ class LoraTrainer:
             wandb.log({"eval_original_size": eval_len})
             if eval_len < self.eval_size:
                 required_len = self.eval_size - eval_len
-                splits = dataset.train_test_split(test_size=min(required_len / len(dataset), 0.1))
+                splits = dataset.train_test_split(
+                    test_size=min(required_len / len(dataset), 0.1)
+                )
                 train_dataset = splits["train"]
-                eval_dataset = make_combined_datasets([splits["test"], eval_dataset], dataset_type="text")
+                eval_dataset = make_combined_datasets(
+                    [splits["test"], eval_dataset], dataset_type="text"
+                )
             else:
                 train_dataset = dataset
 
