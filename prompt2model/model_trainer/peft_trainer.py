@@ -25,6 +25,19 @@ fsdp_plugin = FullyShardedDataParallelPlugin(
 
 accelerator = Accelerator(fsdp_plugin=fsdp_plugin)
 
+class EvalAccuracyCallback(transformers.TrainerCallback):
+    def __init__(self, val_data):
+        self.val_data = val_data
+
+    def on_evaluate(self, args, state, control, model, tokenizer, **kwargs):
+        # Evaluate the model on the validation set
+        # 1. use the val data
+        # 2. use model and tokenizer
+        # 3. get accuracy
+        # 4. log to wandb
+        pass
+        
+
 
 class QLoraTrainer:
     def __init__(self, model_name="mistralai/Mistral-7B-v0.1", eval_size=50) -> None:
@@ -65,36 +78,17 @@ class QLoraTrainer:
 
     def train_model(
         self,
-        dataset: datasets.Dataset,
+        train_dataset: datasets.Dataset, # columns: "text"
+        eval_dataset: datasets.Dataset, # columns: "text"
+        original_eval_dataset: datasets.Dataset, # columns: "input_col", "output_col"
         train_batch_size: int = 1,
         num_epochs=1,
         alpha=16,
         r=8,
         lr=5e-5,
         save_folder_path="./",
-        eval_dataset=None,
         load_best_model_at_end=True,
     ):
-        if eval_dataset is None:
-            # split hf dataset into train and test
-            splits = dataset.train_test_split(test_size=0.1)
-            train_dataset = splits["train"]
-            eval_dataset = splits["test"]
-        else:
-            eval_len = len(eval_dataset)
-            wandb.log({"eval_original_size": eval_len})
-            if eval_len < self.eval_size:
-                required_len = self.eval_size - eval_len
-                splits = dataset.train_test_split(
-                    test_size=min(required_len / len(dataset), 0.1)
-                )
-                train_dataset = splits["train"]
-                eval_dataset = make_combined_datasets(
-                    [splits["test"], eval_dataset], dataset_type="text"
-                )
-            else:
-                train_dataset = dataset
-
         train_dataset = train_dataset.map(self.qlora_tokenize)
         eval_dataset = eval_dataset.map(self.qlora_tokenize)
         self.model.gradient_checkpointing_enable()
@@ -158,6 +152,7 @@ class QLoraTrainer:
             data_collator=transformers.DataCollatorForLanguageModeling(
                 self.tokenizer, mlm=False
             ),
+            callbacks=[EvalAccuracyCallback(original_eval_dataset)],
         )
 
         self.model.config.use_cache = (
