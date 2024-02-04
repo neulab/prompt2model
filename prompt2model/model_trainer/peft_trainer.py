@@ -52,7 +52,7 @@ class EvalAccuracyCallback(transformers.TrainerCallback):
                 input_text, return_tensors="pt"
             ).input_ids.to(self.device)
             generated_ids = model.generate(
-                inpt_ids,
+                input_ids=inpt_ids,
                 max_new_tokens=max_gen_len,
                 do_sample=False,
                 temperature=0,
@@ -170,14 +170,14 @@ class QLoraTrainer:
                 weight_decay=0.001,
                 max_steps=-1,
                 learning_rate=lr,  # Want about 10x smaller than the Mistral learning rate
-                logging_steps=50,
+                logging_steps=5,
                 fp16=True,
                 optim="paged_adamw_8bit",
                 logging_dir="./logs",  # Directory for storing logs
                 save_strategy="steps",  # Save the model checkpoint every logging step
                 save_steps=200,  # Save checkpoints every 50 steps
                 evaluation_strategy="steps",  # Evaluate the model every logging step
-                eval_steps=50,  # Evaluate and save checkpoints every 50 steps
+                eval_steps=5,  # Evaluate and save checkpoints every 50 steps
                 do_eval=True,  # Perform evaluation at the end of training
                 report_to="wandb",  # Enable WandB logging
                 load_best_model_at_end=load_best_model_at_end,
