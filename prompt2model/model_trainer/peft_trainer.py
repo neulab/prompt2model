@@ -27,8 +27,9 @@ accelerator = Accelerator(fsdp_plugin=fsdp_plugin)
 
 
 class EvalAccuracyCallback(transformers.TrainerCallback):
-    def __init__(self, val_data, eval_tokenizer) -> None:
-        self.val_data = val_data
+    def __init__(self, val_data: datasets.Dataset, eval_tokenizer) -> None:
+        range_len = min(100, len(val_data))
+        self.val_data = val_data.shuffle(seed=42).select(range(range_len))
         self.eval_tokenizer = eval_tokenizer
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -170,14 +171,14 @@ class QLoraTrainer:
                 weight_decay=0.001,
                 max_steps=-1,
                 learning_rate=lr,  # Want about 10x smaller than the Mistral learning rate
-                logging_steps=5,
+                logging_steps=50,
                 fp16=True,
                 optim="paged_adamw_8bit",
                 logging_dir="./logs",  # Directory for storing logs
                 save_strategy="steps",  # Save the model checkpoint every logging step
                 save_steps=200,  # Save checkpoints every 50 steps
                 evaluation_strategy="steps",  # Evaluate the model every logging step
-                eval_steps=5,  # Evaluate and save checkpoints every 50 steps
+                eval_steps=50,  # Evaluate and save checkpoints every 50 steps
                 do_eval=True,  # Perform evaluation at the end of training
                 report_to="wandb",  # Enable WandB logging
                 load_best_model_at_end=load_best_model_at_end,
