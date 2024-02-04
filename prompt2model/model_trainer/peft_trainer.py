@@ -25,18 +25,49 @@ fsdp_plugin = FullyShardedDataParallelPlugin(
 
 accelerator = Accelerator(fsdp_plugin=fsdp_plugin)
 
-class EvalAccuracyCallback(transformers.TrainerCallback):
-    def __init__(self, val_data):
-        self.val_data = val_data
 
-    def on_evaluate(self, args, state, control, model, tokenizer, **kwargs):
+class EvalAccuracyCallback(transformers.TrainerCallback):
+    def __init__(self, val_data, eval_tokenizer) -> None:
+        self.val_data = val_data
+        self.eval_tokenizer = eval_tokenizer
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    def on_evaluate(self, args, state, control, **kwargs):
         # Evaluate the model on the validation set
         # 1. use the val data
         # 2. use model and tokenizer
         # 3. get accuracy
         # 4. log to wandb
-        pass
-        
+        model = kwargs.get("model")
+        metrics = kwargs.get("metrics")
+        val_acc = 0
+        for row in self.val_data:
+            input_text = row["input_col"]
+            target = row["output_col"]
+
+            max_gen_len = (
+                len(self.eval_tokenizer(target, return_tensors="pt").input_ids[0]) + 5
+            )
+            inpt_ids = self.eval_tokenizer(
+                input_text, return_tensors="pt"
+            ).input_ids.to(self.device)
+            generated_ids = model.generate(
+                inpt_ids,
+                max_new_tokens=max_gen_len,
+                do_sample=False,
+                temperature=0,
+            )
+            text = self.eval_tokenizer.decode(
+                generated_ids[0], skip_special_tokens=True
+            )
+            text = text.replace(input_text, "").lower().strip()
+            target = target.lower().strip()
+            if target in text:
+                val_acc += 1
+        val_acc = val_acc / len(self.val_data)
+        wandb.log({"val_acc": val_acc})
+        if metrics is not None:
+            metrics["eval_accuracy"] = val_acc
 
 
 class QLoraTrainer:
@@ -78,9 +109,9 @@ class QLoraTrainer:
 
     def train_model(
         self,
-        train_dataset: datasets.Dataset, # columns: "text"
-        eval_dataset: datasets.Dataset, # columns: "text"
-        original_eval_dataset: datasets.Dataset, # columns: "input_col", "output_col"
+        train_dataset: datasets.Dataset,  # columns: "text"
+        eval_dataset: datasets.Dataset,  # columns: "text"
+        original_eval_dataset: datasets.Dataset,  # columns: "input_col", "output_col"
         train_batch_size: int = 1,
         num_epochs=1,
         alpha=16,
@@ -121,6 +152,10 @@ class QLoraTrainer:
 
         output_dir = os.path.join(save_folder_path, "qlora")
 
+        self.eval_tokenizer = AutoTokenizer.from_pretrained(
+            self.model_name, add_bos_token=True, trust_remote_code=True
+        )
+
         trainer = transformers.Trainer(
             model=self.model,
             train_dataset=train_dataset,
@@ -152,7 +187,9 @@ class QLoraTrainer:
             data_collator=transformers.DataCollatorForLanguageModeling(
                 self.tokenizer, mlm=False
             ),
-            callbacks=[EvalAccuracyCallback(original_eval_dataset)],
+            callbacks=[
+                EvalAccuracyCallback(original_eval_dataset, self.eval_tokenizer)
+            ],
         )
 
         self.model.config.use_cache = (
