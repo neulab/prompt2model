@@ -32,8 +32,6 @@ class PromptBasedInstructionParser(PromptSpec):
         self.task_type = task_type
         self._instruction: str | None = None
         self._examples: str | None = None
-        self.instruction: str | None = None
-        self.examples: str | None = None
         self.max_api_calls = max_api_calls
 
     def parse_from_prompt(self, prompt: str) -> None:
@@ -57,5 +55,3 @@ class PromptBasedInstructionParser(PromptSpec):
     def set_instruction_and_examples(self, instruction="", examples=""):
         self._instruction = instruction
         self._examples = examples
-        self.instruction = instruction
-        self.examples = examples
