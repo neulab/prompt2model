@@ -18,7 +18,10 @@ from prompt2model.utils import (
     get_formatted_logger,
     handle_api_error,
 )
-from prompt2model.utils.parse_responses import make_single_api_request, parse_json
+from prompt2model.utils.parse_responses import (
+    find_and_parse_json,
+    make_single_api_request,
+)
 
 logger = get_formatted_logger("DatasetTransformer")
 
@@ -121,7 +124,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
 
         for response in responses:
             try:
-                extraction = parse_json(response, ["input", "output"], [])
+                extraction = find_and_parse_json(response, ["input", "output"], [])
                 if extraction is not None:
                     inputs.append(str(extraction["input"]))
                     outputs.append(str(extraction["output"]))
