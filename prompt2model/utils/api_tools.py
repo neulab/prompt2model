@@ -43,8 +43,8 @@ class APIAgent:
 
     def __init__(
         self,
-        model_name: str = "gpt-3.5-turbo",
-        max_tokens: int | None = None,
+        model_name: str = "gpt-3.5-turbo-16k",
+        max_tokens: int | None = 4000,
         api_base: str | None = None,
     ):
         """Initialize APIAgent with model_name and max_tokens.
@@ -102,7 +102,6 @@ class APIAgent:
             max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
         else:
             max_tokens = 3 * num_prompt_tokens
-
         response = completion(  # completion gets the key from os.getenv
             model=self.model_name,
             messages=[
@@ -219,22 +218,30 @@ class APIAgent:
         return responses
 
 
-def handle_api_error(e) -> None:
-    """Handle OpenAI errors or related errors that the API may raise.
+MAX_RETRIES=5
+def handle_api_error(e, backoff_duration=1) -> None:
+    """Handle OpenAI errors or related errors with exponential backoff.
 
     Args:
         e: The error to handle. This could be an OpenAI error or a related
            non-fatal error, such as JSONDecodeError or AssertionError.
     """
     logging.error(e)
-    if not isinstance(e, API_ERRORS):
+
+    if not isinstance(e, openai.error.OpenAIError):
         raise e
-    if isinstance(
-        e,
-        (openai.error.APIError, openai.error.Timeout, openai.error.RateLimitError),
-    ):
-        # For these errors, OpenAI recommends waiting before retrying.
-        time.sleep(1)
+
+    if isinstance(e, (openai.error.APIError, openai.error.Timeout, openai.error.RateLimitError)):
+        import re
+        match = re.search(r"Please retry after (\d+) seconds", str(e))
+        if match is not None: 
+            BUFFER_DURATION = 2
+            backoff_duration = int(match.group(1)) + BUFFER_DURATION
+
+        logging.info(f"Retrying in {backoff_duration} seconds...")
+        time.sleep(backoff_duration)
+
+    # raise Exception(f"Max retries ({MAX_RETRIES}) reached. Could not recover from the error.")
 
 
 def count_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> int:

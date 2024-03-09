@@ -124,9 +124,10 @@ def parse_model_size_limit(line: str, default_size=3e9) -> float:
 
 
 def main():
+    import wandb; wandb.init()
     """The main function running the whole system."""
     api_tools.default_api_agent = api_tools.APIAgent(
-        model_name="azure/GPT-3-5-turbo-chat", max_tokens=8000
+        model_name="azure/GPT-3-5-turbo-sweden", max_tokens=4000
     )  # noqa E501
 
     print_logo()

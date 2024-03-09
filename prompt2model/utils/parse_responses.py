@@ -11,7 +11,7 @@ from prompt2model.utils.api_tools import API_ERRORS, handle_api_error, APIAgent
 logger = get_formatted_logger("ParseJsonResponses")
 
 def find_and_parse_json(
-    response: openai.Completion, required_keys: list, optional_keys: list
+    response: openai.Completion, required_keys: list, optional_keys: list = []
 ) -> dict | None:
     """Parse stuctured fields from the API response.
 
@@ -26,31 +26,45 @@ def find_and_parse_json(
         final response as a Dictionary
         Else returns None.
     """
-    response_text = response.choices[0]["message"]["content"]
-    potential_jsons = re.findall(r'\{.*?\}', response_text, re.DOTALL)
-    for response_text in potential_jsons:
-        try:
-            response_json = json.loads(response_text, strict=False)
-        except json.decoder.JSONDecodeError:
-            logger.warning(f"API response was not a valid JSON: {response_text}")
-            continue
+    if type(response) != str and "choices" in response:
+        response = response.choices[0]["message"]["content"]
+    correct_json = find_rightmost_brackets(response)
 
-        missing_keys = [key for key in required_keys if key not in response_json]
-        if len(missing_keys) != 0:
-            logger.warning(f'API response must contain {", ".join(required_keys)} keys')
-            continue
+    try:
+        response_json = json.loads(correct_json, strict=False)
+    except json.decoder.JSONDecodeError:
+        logger.warning(f"API response was not a valid JSON: {correct_json}")
+        return None
 
-        final_response = {}
-        for key in required_keys + optional_keys:
-            if key not in response_json:
-                # This is an optional key, so exclude it from the final response.
-                continue
-            if type(response_json[key]) == str:
-                final_response[key] = response_json[key].strip()
-            else:
-                final_response[key] = response_json[key]
-        return final_response
+    missing_keys = [key for key in required_keys if key not in response_json]
+    if len(missing_keys) != 0:
+        logger.warning(f'API response must contain {", ".join(required_keys)} keys')
+        return None
+
+    final_response = {}
+    for key in required_keys + optional_keys:
+        if key not in response_json:
+            # This is an optional key, so exclude it from the final response.
+            continue
+        if type(response_json[key]) == str:
+            final_response[key] = response_json[key].strip()
+        else:
+            final_response[key] = response_json[key]
+    return final_response
+
+
+def find_rightmost_brackets(text):
+    stack = []
+    for i, char in enumerate(reversed(text)):
+        if char == '}':
+            stack.append(len(text) - i - 1)
+        elif char == '{' and stack:
+            start = len(text) - i - 1
+            end = stack.pop()
+            if not stack:  # Found the rightmost complete set
+                return text[start:end+1]
     return None
+
 
 def parse_json(
     response: openai.Completion, required_keys: list, optional_keys: list
@@ -68,7 +82,9 @@ def parse_json(
         final response as a Dictionary
         Else returns None.
     """
-    response_text = response.choices[0]["message"]["content"]
+    if "choices" in response:
+        response_text = response.choices[0]["message"]["content"]
+    
     try:
         response_json = json.loads(response_text, strict=False)
     except json.decoder.JSONDecodeError:
@@ -130,11 +146,29 @@ def parse_reranking_results(
     }
 
 
+def parse_dataset_config_responses(response):
+    if "choices" in response:
+        response = response["choices"][0]["message"]["content"]
+
+    pattern = r'\*\*(.*?)\*\*'
+
+    match = re.search(pattern, response)
+    if match:
+        response = match.group(1)
+    elif len(response.split())>1:
+        response = response.split()[-1].replace('.', '')
+    return response
+
+
+def parse_reranking_results_v2(response: openai.Completion):
+    response_text = response.choices[0]["message"]["content"]
+    return response_text.strip()
+
 def parse_prompt_to_fields(
     prompt: str,
     required_keys: list = [],
     optional_keys: list = [],
-    max_api_calls: int = 5,
+    max_api_calls: int = 10,
     module_name: str = "col_selection",
 ) -> dict:
     """Parse prompt into specific fields, and return to the calling function.
@@ -171,22 +205,20 @@ def parse_prompt_to_fields(
             response: openai.ChatCompletion | Exception = (
                 chat_api.generate_one_completion(
                     prompt,
-                    temperature=0.01,
-                    presence_penalty=0,
-                    frequency_penalty=0,
+                    temperature=0.0,
                 )
             )
             extraction = None
             if module_name == "col_selection":
-                extraction = parse_json(response, required_keys, optional_keys)
+                extraction = find_and_parse_json(response, required_keys, optional_keys)
 
             elif module_name == "rerank":
-                extraction = parse_reranking_results(response)
+                extraction = parse_dataset_config_responses(response)
             if extraction is not None:
                 return extraction
         except API_ERRORS as e:
             last_error = e
-            handle_api_error(e)
+            handle_api_error(e, backoff_duration=2**api_call_counter)
 
         if api_call_counter >= max_api_calls:
             # In case we reach maximum number of API calls, we raise an error.
@@ -194,7 +226,7 @@ def parse_prompt_to_fields(
             raise RuntimeError("Maximum number of API calls reached.") from last_error
 
 
-def make_single_api_request(prompt: str, max_api_calls: int = 5) -> str:
+def make_single_api_request(prompt: str, max_api_calls: int = 10) -> str:
     """Prompts an LLM using the APIAgent, and returns the response.
 
     This function calls the required api, has the logic for retrying,
@@ -215,14 +247,18 @@ def make_single_api_request(prompt: str, max_api_calls: int = 5) -> str:
     while True:
         api_call_counter += 1
         try:
-            response: openai.ChatCompletion = chat_api.generate_one_completion(
-                prompt, temperature=0.01, presence_penalty=0, frequency_penalty=0
+            response: openai.ChatCompletion =  chat_api.generate_one_completion(
+                    
+                        prompt=prompt,
+                        temperature=0,
+                        presence_penalty=0, frequency_penalty=0
             )
             if response is not None:
                 return response.choices[0]["message"]["content"]
+            
         except API_ERRORS as e:
             last_error = e
-            handle_api_error(e)
+            handle_api_error(e, backoff_duration=2**api_call_counter)
 
         if api_call_counter >= max_api_calls:
             # In case we reach maximum number of API calls, we raise an error.

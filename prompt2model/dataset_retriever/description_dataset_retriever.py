@@ -1,6 +1,7 @@
 """An dual-encoder dataset retriever using HuggingFace dataset descriptions."""
 
-from __future__ import annotations  # noqa FI58
+from __future__ import annotations
+import asyncio  # noqa FI58
 
 import json
 import os
@@ -15,15 +16,26 @@ from prompt2model.dataset_retriever.base import DatasetInfo, DatasetRetriever
 from prompt2model.dataset_retriever.column_selection_prompt import (
     construct_prompt_for_column_selection,
 )
-from prompt2model.dataset_retriever.reranking_prompt import (
+from prompt2model.dataset_retriever.reranking_prompt_v2 import (
     construct_prompt_for_dataset_reranking,
+)
+from prompt2model.dataset_retriever.dataset_confidence_prompt import(
+    construct_prompt_for_dataset_confidence
+)
+from prompt2model.dataset_retriever.task_expansion_prompt import (
+    construct_propmt_for_task_explanation
 )
 from prompt2model.dataset_transformer.prompt_based import PromptBasedDatasetTransformer
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import encode_text, get_formatted_logger, retrieve_objects
 from prompt2model.utils.dataset_utils import get_dataset_size
-from prompt2model.utils.parse_responses import parse_prompt_to_fields
-
+from prompt2model.utils.parse_responses import parse_prompt_to_fields, make_single_api_request, find_and_parse_json, parse_dataset_config_responses
+from prompt2model.utils import (
+    API_ERRORS,
+    api_tools,
+    get_formatted_logger,
+    handle_api_error,
+)
 datasets.utils.logging.disable_progress_bar()
 logger = get_formatted_logger("DescriptionDatasetRetriever")
 
@@ -250,9 +262,10 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         output_column = response["output"]
         wandb.log({"column_selection_response": response})
         if len(input_columns) < 1 or len(output_column) != 1:
-            raise RuntimeError(
-                "Input columns length was less than 1 or output column length was not 1"
-            )
+            logger.warning(f"Incorrect cols: {input_columns}, {output_column}")
+            # raise RuntimeError(
+            #     "Input columns length was less than 1 or output column length was not 1"
+            # )
 
         dataset_columns = dataset_columns
         incorrect_columns = [
@@ -264,7 +277,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 f"not in the list of columns in the dataset ({dataset_columns})."
             )
 
-        return input_columns, output_column[0]
+        return input_columns, output_column[0] if len(output_column)>0 else []
 
     def canonicalize_dataset_using_columns(
         self,
@@ -440,6 +453,68 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
         return dataset_info_dict[dataset_name]["configs"][config_name]
 
+
+    def get_dataset_voted(self,prompt, dict):
+        """Minimum Bayes Risk Decoding"""
+        prompts = [prompt]*3
+        voting = []
+
+        async def generate_responses(prompts):
+            responses = await api_tools.default_api_agent.generate_batch_completion(
+                prompts,
+                temperature=0,
+                responses_per_request=1,
+                requests_per_minute=15,
+            )
+            return responses
+        try:
+            loop = asyncio.get_event_loop()
+            responses = loop.run_until_complete(generate_responses(prompts))
+        except API_ERRORS as e:
+            handle_api_error(e)
+        for response in responses:
+            curr_dataset_name = parse_dataset_config_responses(response)
+            if curr_dataset_name not in dict: 
+                logger.warning("LLM hallucinated dataset/config name: %s", curr_dataset_name)
+                continue
+            voting.append(curr_dataset_name)
+        if len(voting)==0:
+            logger.warning("Voting resulted in no dataset/config.")
+            return None
+        fin_name = max(set(voting), key=voting.count)
+        print("Voting array is: ", voting)
+        return fin_name
+        
+
+    def rerank_datasets_v2(self, dataset_list: list[str], prompt_spec: PromptSpec):
+        dataset_info_dict = self.get_all_dataset_infos(dataset_list)
+
+        if len(dataset_info_dict.keys()) == 0:
+            return None
+        
+        dataset_selection_prompt = construct_prompt_for_dataset_reranking(
+            prompt_spec.instruction, prompt_spec.examples, dataset_info_dict
+        )
+        print(dataset_selection_prompt)
+
+        dataset_name = self.get_dataset_voted(dataset_selection_prompt, dataset_info_dict)
+        if dataset_name is None: return None
+
+        if len(dataset_info_dict[dataset_name]["configs"].keys())>1:
+            config_selection_prompt = construct_prompt_for_dataset_reranking(
+                prompt_spec.instruction, prompt_spec.examples, dataset_info_dict[dataset_name], config=True
+            )
+            print(config_selection_prompt)
+            config_name = self.get_dataset_voted(config_selection_prompt, dataset_info_dict[dataset_name]["configs"])
+            if config_name is None:
+                return None
+        else:
+            config_name = list(dataset_info_dict[dataset_name]["configs"].keys())[0]
+        print(f"Dataset: {dataset_name}, config: {config_name}")
+        return dataset_info_dict[dataset_name]["configs"][config_name]
+
+
+
     def canonicalize_dataset_automatically(
         self,
         top_dataset_info: dict,
@@ -476,13 +551,13 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             if column selection fails, or if any other error occurs
             during the process.
         """
-        task_instruction = prompt_spec.instruction
+        
         if top_dataset_info is None:
             logger.warning("None of the retrieved datasets were relevant.")
             return None
         try:
             input_columns, output_column = self.automatic_column_selection(
-                task_instruction,
+                prompt_spec.instruction,
                 top_dataset_info["dataset_name"],
                 top_dataset_info["dataset_description"],
                 top_dataset_info["columns"],
@@ -519,16 +594,16 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
             dataset_transformer = PromptBasedDatasetTransformer()
             canonicalized_dataset = dataset_transformer.transform_data(
-                prompt_spec=prompt_spec,
+                prompt_spec,
                 dataset=full_dataset["train"],
                 num_points_to_transform=num_points_to_transform,
             )
             logger.info("Data transformation completed")
             wandb.log({"dataset_transformation_complete": True})
 
-            example_rows = json.dumps(canonicalized_dataset["train"][0], indent=4)
-
-            logger.info(f"Transformed dataset. Example row:\n{example_rows}\n")
+            if len(canonicalized_dataset) >0:
+                example_rows = json.dumps(canonicalized_dataset["train"][0], indent=4)
+                logger.info(f"Transformed dataset. Example row:\n{example_rows}\n")
 
             return canonicalized_dataset
         else:
@@ -539,6 +614,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 f"No transformation. Using dataset {top_dataset_info['dataset_name']}"
             )  # noqa E501
             return canonicalized_dataset
+
 
     def retrieve_dataset_dict(
         self,
@@ -565,9 +641,9 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         sorted_list = self.retrieve_top_datasets(prompt_spec)
         wandb.log({"retrieved_datasets": sorted_list})
         logger.info(f"Top datasets retrieved. Top datasets: {sorted_list}")
-        top_dataset_info = self.rerank_datasets(sorted_list, prompt_spec)
+        top_dataset_info = self.rerank_datasets_v2(sorted_list, prompt_spec)
         wandb.log({"chosen dataset": top_dataset_info})
         logger.info(f"Rerank completed. Top dataset info: {top_dataset_info}")
         return self.canonicalize_dataset_automatically(
             top_dataset_info, prompt_spec, auto_transform_data, num_points_to_transform
-        )
+        ), top_dataset_info

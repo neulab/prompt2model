@@ -4,7 +4,7 @@ import json
 
 IMPLICATURES ={
     "task_description":"Predict whether Speaker 2's answer to Speaker 1 counts as a yes or as a no",
-    "samples":"""input=\n\nQ: Speaker 1: 'Have you found him yet? ' Speaker 2: 'We're still looking.' \nA: \noutput=no""",
+    "samples":"""input=\n\n Speaker 1: 'Have you found him yet? ' Speaker 2: 'We're still looking.' \n \noutput=no""",
     "plan":"""1. Create a "Speaker 1" field using the 'text' fields. Expand the text such that speaker 2 can answer in some form of yes or no.
 2. Create a "Speaker 2" field responding to the speaker with either a yes or a no. Ensure that the yes or no is not said directly, but in a roundabout manner.
 3. Combine "Speaker 1" and "Speaker 2" fields to create "input".
@@ -13,14 +13,14 @@ IMPLICATURES ={
 
 Next, I will create a "Speaker 2" field responding to Speaker 1. Since the response should not directly say yes or no, but imply one of them, I'll phrase it as: "Speaker 2: 'Well, there are quite a few options, but it really depends on the specific needs and availability.'"
 
-Now, I'll combine "Speaker 1" and "Speaker 2" fields to create "input". The "input" will be: "Q: Speaker 1: 'Is it easy to find child care services for a preschooler?' Speaker 2: 'Well, there are quite a few options, but it really depends on the specific needs and availability.'"
+Now, I'll combine "Speaker 1" and "Speaker 2" fields to create "input". The "input" will be: " Speaker 1: 'Is it easy to find child care services for a preschooler?' Speaker 2: 'Well, there are quite a few options, but it really depends on the specific needs and availability.'"
 
 Finally, I'll create an "output" field based on whether Speaker 2's response implies a yes or a no. Since Speaker 2's response suggests uncertainty and does not confirm the ease of finding child care, the implied answer is no. Therefore, "output" will be: "no".
 
 Here is the final response JSON with "input" and "output" keys:
 
 {
-    "input": "Q: Speaker 1: 'Is it easy to find child care services for a preschooler?' Speaker 2: 'Well, there are quite a few options, but it really depends on the specific needs and availability.'",
+    "input": " Speaker 1: 'Is it easy to find child care services for a preschooler?' Speaker 2: 'Well, there are quite a few options, but it really depends on the specific needs and availability.'",
     "output": "no"
 }
 """,
@@ -124,7 +124,7 @@ Here is the final response JSON with "input" and "output" keys:
 
 PROVERBS ={
     "task_description":"Find the English proverb corresponding to the given story",
-    "samples":"""input=\nQ: Alice always makes sure to keep an extra case of apples in her house. One week, the local supermarket ran out of apples. Thankfully because of Alice's preparation, she was still able to eat apples that week. Which of the following proverbs best apply to this situation?\n  choice: An ounce of protection is worth a pound of cure.\n  choice: It is better to be safe than sorry.\n  choice: Failing to prepare, you are preparing to fail.\n  choice: A stitch in time saves nine.\n  choice: Hope for the best, prepare for the worst.\nA: \noutput=It is better to be safe than sorry""",
+    "samples":"""input=\n Alice always makes sure to keep an extra case of apples in her house. One week, the local supermarket ran out of apples. Thankfully because of Alice's preparation, she was still able to eat apples that week. Which of the following proverbs best apply to this situation?\n  choice: An ounce of protection is worth a pound of cure.\n  choice: It is better to be safe than sorry.\n  choice: Failing to prepare, you are preparing to fail.\n  choice: A stitch in time saves nine.\n  choice: Hope for the best, prepare for the worst.\n \noutput=It is better to be safe than sorry""",
     "plan":"""1. Expand on the "question" field to create a story that can be related to a proverb.
 2. Generate a new field "choices" that contains a list of English proverbs.
 3. Generate a new field "answer" that contains the English proverb that best applies to the story in the "question" field.
@@ -275,7 +275,7 @@ Here is the final response JSON with "input" and "output" keys:
     },
     {
         "doc_id": "25761154",
-        "title": "Exercise-induced asthma: a practical guide to definitions, diagnosis, prevalence, and treatment.",
+        "title": "Exercise-induced asthm a practical guide to definitions, diagnosis, prevalence, and treatment.",
         "abstract": """[
             "Exercise-induced asthma is defined as an intermittent narrowing of the airways, demonstrated by a decrease in some measure of flow, that the patient experiences as wheezing, chest tightness, coughing, and difficulty breathing that is triggered by exercise.",
             "Exercise will trigger asthma in most individuals who have chronic asthma, as well as in some who do not otherwise have asthma.",
@@ -324,7 +324,7 @@ Here is the final response JSON with "input" and "output" keys:
 
 TRANSFORM_EXEMPLARS ="""Task Description: {task_description}
 
-Exemplar:
+Task Examples:
 {samples}
 
 Data Sample:
@@ -339,63 +339,76 @@ Response:
 
 PLAN_EXEMPLARS ="""Task Description: {task_description}
 
+Task Examples:
 {samples}
 
 Here are samples from a potentially relevant dataset for the task above. Notice how the format below is not as required by the task above.
 
+Dataset Row: 
 {dataset_rows}
-Propose a higher level plan to convert data from the potentially relevant dataset to data in the required format of the original task. Your plan should be a list of sequential steps that can be taken to perform the data transformation. Each step in the plan can take the following actions:
-1. Expand on a particular data field, potentially according to certain criteria
-2. Combine multiple data fields
-3. Generate new data fields as relevant and required, potentially according to certain criteria
-4. Choose data fields that will form "input" and data fields that will form "output"
 
-Plan:
+Plan to convert Dataset Samples to Task Examples is:
 {plan}""" # noqa E501
 
 
-CREATE_PLAN_PROMPT = """You are a Data Transforming Agent. You create a plan to transform data samples from their existing format into the required format for a given task.
+CREATE_PLAN_PROMPT = """You are a Planning Agent. You create a plan to transform data samples from their existing format into the required format for a given task.
+
+-------------------------------------------------
+Here are some examples for your reference.
 
 {in_context_examples}
 
+------------------------------------------------
+Now do the following task: 
+
 Task Description: {task_description}
 
+Task Examples:
 {example}
 
 Here are samples from a potentially relevant dataset for the task above. Notice how the format below is not as required by the task above.
 
+Dataset Samples: 
 {dataset_row}
-Propose a higher level plan to convert data from the potentially relevant dataset to data in the required format of the original task. Your plan should be a list of sequential steps that can be taken to perform the data transformation. Each step in the plan can take the following actions:
-1. Expand on a particular data field, potentially according to certain criteria
-2. Combine multiple data fields
-3. Generate new data fields as relevant and required, potentially according to certain criteria
-4. Choose data fields that will form "input" and data fields that will form "output"
 
-Plan:
+Carefully analyze the  `Task Description` and the `Task Examples`. Propose a higher-level plan to convert data from the Dataset Sample to data in the required format task examples. Your plan should be a list of sequential steps that can be taken to perform the data transformation. You don't need to use all columns, as the dataset may not be fully relevant. Keep steps as simple, explicit and concise as possible. Each step in the plan may take any of the following actions:
+1. Generate new columns as required by the task, and save them 
+2. Expand on a particular column to make it something more relevant to the task and save it
+3. Combine multiple columns from the dataset
+4. Choose columns that will form "input"
+5. After the input field is created, carefully analyze it to choose/generate the output field
+6. Ignore a data sample because it is not all relevant and return null for them. 
+
+Return only the plan.
+
 """ # noqa E501
 
-TRANSFORM_DATA_PROMPT = """You are a Data Transforming Agent. Your job is to:
-1. Read the task description.
-2. Read an exemplar of what an input and output looks like for the task.
-3. Read a particular data sample carefully that needs to be transformed such that it is relevant to the task described.
-4. Read the data transformation plan carefully that will help you convert the particular data sample into a relevant format.
+TRANSFORM_DATA_PROMPT = """You are a Data Transforming Agent. Your job is to transform data from a given format, to the required format. Following are the detailed instructions for the same:
+1. Read the `Task Description`.
+2. An example of the input and output looks like for the task is shown in `Task Examples`
+3. The sample to be transformed is in `Data Sample`. `
+4. Read the data transformation plan carefully that will help you convert the `Data Sample` into the required format. This should be relevant and intune to the `Task Description`
 5. Perform the plan step by step and explain your thinking.
 6. End your response with the transformed sample as a JSON response with exactly 2 fields: "input" and "output".
 
+-------------------------------------------------
+Here are some examples for your reference.
 {in_context_examples}
+------------------------------------------------
+Now do the following task: 
 
 Task Description: {task_description}
 
-Exemplar:
+Task Examples:
 {sample}
 
-Data Sample:
-{dataset_row}
-
-Plan:
 {plan}
 
-Think step by step through the plan and show your working. End your response as a JSON with exactly two fields: "input", and "output"
+Dataset Sample:
+{dataset_row}
+
+
+Think step by step through the plan to convert the above `Dataset Sample` and show your working. End your response as a JSON with exactly two fields: "input", and "output"
 Response:
 """  # noqa E501
 
@@ -417,7 +430,8 @@ def construct_prompt_for_plan(
 ) -> str:
     """Construct prompt for plan."""
 
-    incontext_tasks = [VITAMINC, PROVERBS, IMPLICATURES]
+    # incontext_tasks = [VITAMINC, PROVERBS, IMPLICATURES]
+    incontext_tasks = [VITAMINC]
     incontext_examples = []
 
     for incontext_task in incontext_tasks:
@@ -433,10 +447,7 @@ def construct_prompt_for_plan(
     
     incontext_examples_str = ""
     for i, incontext_example in enumerate(incontext_examples):
-        incontext_examples_str += f"Exemplar {i+1}\n{incontext_example}\n\n"
-    
-    incontext_examples_str += f"Exemplar {len(incontext_examples)+1}"
-
+        incontext_examples_str += f"Incontext Example {i+1}:\n{incontext_example}\n\n"
     return CREATE_PLAN_PROMPT.format(
         in_context_examples= incontext_examples_str,
         task_description=task_description,
@@ -449,7 +460,8 @@ def construct_prompt_for_transform_data(
 ) -> str:
     """Construct prompt for dataset transformation."""
 
-    incontext_tasks = [VITAMINC, PROVERBS, IMPLICATURES]
+    # incontext_tasks = [VITAMINC, PROVERBS, IMPLICATURES]
+    incontext_tasks = [VITAMINC]
     incontext_examples = []
 
     for incontext_task in incontext_tasks:
@@ -466,7 +478,7 @@ def construct_prompt_for_transform_data(
     for i, incontext_example in enumerate(incontext_examples):
         incontext_examples_str += f"Incontext Example {i+1}\n{incontext_example}\n\n"
     
-    incontext_examples_str += f"Incontext Example {len(incontext_examples)+1}"
+    # incontext_examples_str += f"Incontext Example {len(incontext_examples)+1}"
 
     return TRANSFORM_DATA_PROMPT.format(
         in_context_examples= incontext_examples_str,
