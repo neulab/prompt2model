@@ -32,7 +32,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
     def __init__(
         self,
         plan_prompt_fn: Callable[
-            [str, list[dict], str], str
+            [str, list[dict], str, int], str
         ] = construct_prompt_for_plan,
         transform_prompt_fn: Callable[
             [str, dict, str, str], str
@@ -83,6 +83,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             prompt_spec.instruction,
             dataset,
             prompt_spec.examples,
+            min(5, len(dataset)),
         )
         self.plan = make_single_api_request(plan_prompt)
 
