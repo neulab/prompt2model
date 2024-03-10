@@ -3,7 +3,7 @@
 import json
 from typing import Any
 
-IMPLICATURES = {
+IMPLICATURES: dict[str, Any] = {
     "task_description": "Predict whether Speaker 2's answer to Speaker 1 counts as a yes or as a no",
     "samples": """input=\n\nQ: Speaker 1: 'Have you found him yet? ' Speaker 2: 'We're still looking.' \nA: \noutput=no""",
     "plan": """1. Create a "Speaker 1" field using the 'text' fields. Expand the text such that speaker 2 can answer in some form of yes or no.
@@ -124,7 +124,7 @@ Here is the final response JSON with "input" and "output" keys:
     ],
 }
 
-PROVERBS = {
+PROVERBS: dict[str, Any] = {
     "task_description": "Find the English proverb corresponding to the given story",
     "samples": """input=\nQ: Alice always makes sure to keep an extra case of apples in her house. One week, the local supermarket ran out of apples. Thankfully because of Alice's preparation, she was still able to eat apples that week. Which of the following proverbs best apply to this situation?\n  choice: An ounce of protection is worth a pound of cure.\n  choice: It is better to be safe than sorry.\n  choice: Failing to prepare, you are preparing to fail.\n  choice: A stitch in time saves nine.\n  choice: Hope for the best, prepare for the worst.\nA: \noutput=It is better to be safe than sorry""",
     "plan": """1. Expand on the "question" field to create a story that can be related to a proverb.
@@ -215,7 +215,7 @@ Here is the final response JSON with "input" and "output" keys:
     ],
 }
 
-VITAMINC = {
+VITAMINC: dict[str, Any] = {
     "task_description": "Identify whether a claim is True or False or Neither based on a given context",
     "samples": """input=Westlife: According to the British Phonographic Industry ( BPI ) , Westlife has been certified for 13 million albums and 9.8 million singles , with a total of more than 23 million combined sales in the UK . Claim: Westlife made under 23.5 million sales in the UK
 output=Neither""",
@@ -372,7 +372,7 @@ Response:
 """  # noqa E501
 
 
-def truncate_row(example_row: Any, max_length=200) -> str:
+def truncate_row(example_row: dict, max_length=200) -> str:
     """Truncate the row before displaying if it is too long."""
     truncated_row = {}
     for key in example_row.keys():
