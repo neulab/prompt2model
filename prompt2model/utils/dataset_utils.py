@@ -1,5 +1,6 @@
 """Util functions for datasets."""
 
+
 import datasets
 import requests
 
@@ -34,8 +35,23 @@ def get_dataset_size(dataset_name):
     )
 
 
-def make_combined_datasets(dataset_list, dataset_type="inp_out"):
-    """Comnine multiple datasets into one."""
+def make_combined_datasets(
+    dataset_list: list[datasets.Dataset], dataset_type: str = "inp_out"
+) -> datasets.Dataset:
+    """Comnine multiple datasets into one.
+
+    Args:
+        dataset_list: List of datasets to combine.
+        dataset_type: Type of dataset to combine. Can be "text" or "inp_out".
+        "text" is for combining datasets with a single column "text".
+        "inp_out" is for combining datasets with 2 columns "input_col" and "output_col".
+
+    Returns:
+        A combined dataset.
+        Singe column "text" if dataset_type is "text".
+        Two columns "input_col" and "output_col" if dataset_type is "inp_out".
+        ValueError if dataset_type is not "text" or "inp_out".
+    """
     if dataset_type == "text":
         text_col = []
         for dataset in dataset_list:
@@ -54,9 +70,7 @@ def make_combined_datasets(dataset_list, dataset_type="inp_out"):
         return dataset
     else:
         raise ValueError(
-            "dataset_type can be either 'text' or 'inp_out' but got {}".format(
-                dataset_type
-            )
+            f"dataset_type can be either 'text' or 'inp_out' but got {dataset_type}"
         )
 
 

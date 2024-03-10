@@ -4,7 +4,7 @@ import os
 
 from datasets import load_from_disk
 
-from prompt2model.model_trainer.peft_trainer import QLoraTrainer
+from prompt2model.model_trainer.qlora_trainer import QLoraTrainer
 from prompt2model.utils.dataset_utils import format_train_data, make_combined_datasets
 
 if __name__ == "__main__":
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     save_folder_path = "qlora_finetuned_model"
     load_best_model_at_end = False
 
-    trainer = QLoraTrainer()
+    trainer = QLoraTrainer(model_name="mistralai/Mistral-7B-v0.1", model_max_length=512)
 
     trained_model, trained_tokenizer = trainer.train_model(
         formatted_train_dataset,  # passed for fine-tuning the model

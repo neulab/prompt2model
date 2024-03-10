@@ -30,20 +30,25 @@ class EvalAccuracyCallback(transformers.TrainerCallback):
     """A callback to evaluate the model on the validation set and log the accuracy."""
 
     def __init__(self, val_data: datasets.Dataset, eval_tokenizer) -> None:
-        """Initialize the callback with the validation data and tokenizer."""
+        """Initialize the callback with the validation data and tokenizer.
+
+        Args:
+            val_data: The val dataset. Has 2 columns: "input_col" and "output_col".
+            eval_tokenizer: The tokenizer to use for evaluation.
+
+        Note: The val_data is shuffled and a max of 100 samples are used for evaluation.
+        """
         range_len = min(100, len(val_data))
         self.val_data = val_data.shuffle(seed=42).select(range(range_len))
         self.eval_tokenizer = eval_tokenizer
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    def on_evaluate(self, args, state, control, **kwargs):
+    def on_evaluate(self, args, state, control, model, metrics, **kwargs):
         """Evaluate the model on the validation set and log the accuracy."""
         # Evaluate the model on the validation set
         # 1. use the val data
         # 2. use model and tokenizer
         # 3. get accuracy
-        model = kwargs.get("model")
-        metrics = kwargs.get("metrics")
         val_acc = 0
         with torch.no_grad():
             for row in self.val_data:
@@ -79,10 +84,10 @@ class EvalAccuracyCallback(transformers.TrainerCallback):
 class QLoraTrainer:
     """A class for fine-tuning a model using QLora."""
 
-    def __init__(self, model_name="mistralai/Mistral-7B-v0.1", eval_size=50) -> None:
+    def __init__(self, model_name: str, model_max_length: int) -> None:
         """Initialize the QLoraTrainer with a model name and evaluation size."""
         self.model_name = model_name
-        self.eval_size = eval_size
+        self.model_max_length = model_max_length
         self.bnb_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_use_double_quant=True,
@@ -95,7 +100,7 @@ class QLoraTrainer:
         print("Model loaded")
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model_name,
-            model_max_length=512,
+            model_max_length=self.model_max_length,
             padding_side="left",
             add_eos_token=True,
         )
