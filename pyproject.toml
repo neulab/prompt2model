@@ -45,7 +45,8 @@ dependencies = [
     "psutil",
     "protobuf",
     "nest-asyncio",
-    "litellm==0.1.583"
+    "litellm==0.1.583",
+    "peft"
 ]
 
 dynamic = ["version"]
