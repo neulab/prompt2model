@@ -3,8 +3,8 @@
 from __future__ import annotations  # noqa FI58
 
 import json
-import logging
 import os
+import random
 import urllib.request
 
 import datasets
@@ -14,13 +14,17 @@ from prompt2model.dataset_retriever.base import DatasetInfo, DatasetRetriever
 from prompt2model.dataset_retriever.column_selection_prompt import (
     construct_prompt_for_column_selection,
 )
+from prompt2model.dataset_retriever.reranking_prompt import (
+    construct_prompt_for_dataset_reranking,
+)
+from prompt2model.dataset_transformer.prompt_based import PromptBasedDatasetTransformer
 from prompt2model.prompt_parser import PromptSpec
-from prompt2model.utils import encode_text, retrieve_objects
+from prompt2model.utils import encode_text, get_formatted_logger, retrieve_objects
 from prompt2model.utils.dataset_utils import get_dataset_size
-from prompt2model.utils.parse_json_responses import parse_prompt_to_fields
+from prompt2model.utils.parse_responses import parse_prompt_to_fields
 
 datasets.utils.logging.disable_progress_bar()
-logger = logging.getLogger(__name__)
+logger = get_formatted_logger("DescriptionDatasetRetriever")
 
 
 class DescriptionDatasetRetriever(DatasetRetriever):
@@ -35,9 +39,13 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         encoder_model_name: str = "viswavi/datafinder-huggingface-prompt-queries",
         dataset_info_file: str = "huggingface_data/huggingface_datasets/"
         + "dataset_index.json",
+        reranking_dataset_info_file="huggingface_data/huggingface_datasets/"
+        + "reranking_dataset_index.json",
         device: torch.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         ),
+        max_number_of_dataset_rows=3000,
+        allow_gated_datasets=False,
     ):
         """Initialize a dual-encoder retriever against a search index.
 
@@ -47,7 +55,10 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             max_search_depth: The number of most-relevant datasets to retrieve.
             encoder_model_name: The name of the model to use for the dual-encoder.
             dataset_info_file: The file containing dataset names and descriptions.
+            reranking_dataset_info_file: File containing dataset info used for reranking
             device: The device to use for encoding text for our dual-encoder model.
+            max_number_of_dataset_rows: Limit the number of rows for large datasets.
+            allow_gated_datasets: Use only if the user explicitly wants gated datasets
         """
         self.search_index_path = search_index_path
         self.first_stage_search_depth = first_stage_search_depth
@@ -55,6 +66,9 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         self.encoder_model_name = encoder_model_name
         self.device = device
         self.dataset_info_file = dataset_info_file
+        self.reranking_dataset_info_file = reranking_dataset_info_file
+        self.max_number_of_dataset_rows = max_number_of_dataset_rows
+        self.allow_gated_datasets = allow_gated_datasets
         self.initialize_search_index()
 
     def initialize_search_index(self) -> None:
@@ -77,6 +91,16 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                     score=0.0,
                 )
             )
+        if not os.path.exists(self.reranking_dataset_info_file):
+            # Download the reranking index if one is not on disk already.
+            logger.info("Downloading the Reranking Dataset Index File")
+            urllib.request.urlretrieve(
+                "http://phontron.com/data/prompt2model/dataset_reranking_index.json",
+                self.reranking_dataset_info_file,
+            )
+        with open(self.reranking_dataset_info_file, "r") as f:
+            self.reranking_datasets_infos = json.load(f)
+
         if os.path.isdir(self.search_index_path):
             raise ValueError(
                 "Search index must either be a valid file or not exist yet. "
@@ -150,11 +174,12 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         dataset_split: datasets.Dataset,
         input_columns: list[str],
         output_column: str,
+        max_number_of_rows: int,
     ) -> datasets.DatasetDict:
         """Canonicalize a single dataset split into a suitable text-to-text format."""
         input_col = []
         output_col = []
-        for i in range(len(dataset_split)):
+        for i in range(min(len(dataset_split), max_number_of_rows)):
             curr_string = ""
             for col in input_columns:
                 curr_string += f"{col}: {dataset_split[i][col]}\n"
@@ -164,6 +189,40 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         return datasets.Dataset.from_dict(
             {"input_col": input_col, "output_col": output_col}
         )
+
+    def get_all_dataset_infos(self, dataset_list: list[str]) -> dict:
+        """Gather all information about a list of datasets.
+
+        This function iterates over a list of dataset names and retrieves
+        their information from a stored dataset information dictionary. It
+        filters out datasets based on whether users allows for gated_datasets and
+        limits the number of configurations to a maximum of 5 for each dataset.
+
+        Args:
+            dataset_list: A list of dataset names to retrieve information for.
+
+        Returns:
+            dict: A dictionary containing information about the requested datasets.
+                The keys are dataset names and the values are dictionaries
+                with dataset information.
+        """
+        dataset_info_dict = {}
+        for dataset_name in dataset_list:
+            if dataset_name not in self.reranking_datasets_infos:
+                continue
+            if (
+                self.reranking_datasets_infos[dataset_name]["is_gated"]
+                != self.allow_gated_datasets
+            ):
+                continue
+            curr_dataset = self.reranking_datasets_infos[dataset_name]
+            if len(curr_dataset["configs"]) > 5:
+                curr_dataset["configs"] = dict(
+                    random.sample(list(curr_dataset["configs"].items()), 5)
+                )
+            dataset_info_dict[dataset_name] = curr_dataset
+
+        return dataset_info_dict
 
     @staticmethod
     def automatic_column_selection(
@@ -187,12 +246,12 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         response = parse_prompt_to_fields(prompt, required_keys, optional_keys)
         input_columns = response["input"]
         output_column = response["output"]
-
         if len(input_columns) < 1 or len(output_column) != 1:
             raise RuntimeError(
                 "Input columns length was less than 1 or output column length was not 1"
             )
 
+        dataset_columns = dataset_columns
         incorrect_columns = [
             col for col in input_columns + output_column if col not in dataset_columns
         ]
@@ -214,7 +273,10 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         dataset_dict = {}
         for split in dataset:
             dataset_dict[split] = self.canonicalize_dataset_using_columns_for_split(
-                dataset[split], input_columns, output_columns
+                dataset[split],
+                input_columns,
+                output_columns,
+                self.max_number_of_dataset_rows,
             )
         return datasets.DatasetDict(dataset_dict)
 
@@ -248,39 +310,19 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                     )
             self._print_divider()
 
-        dataset = datasets.load_dataset(dataset_name, chosen_config).flatten()
-
-        if "train" not in dataset:
-            raise ValueError("The dataset must contain a `train` split.")
-        columns_mapping: dict[str, str] = {}
-        counter: dict[str, int] = {}
-        # convert flattened columns like answer.text -> answer_text
-        for col in dataset["train"].column_names:
-            new_col = col.replace(".", "_")
-            if new_col in columns_mapping.values():
-                counter[new_col] = counter.get(new_col, 0) + 1
-                new_col = f"{new_col}_{counter[new_col]}"
-            columns_mapping[col] = new_col
-        dataset = dataset.rename_columns(columns_mapping)
-
-        train_columns = dataset["train"].column_names
-        train_columns_formatted = ", ".join(train_columns)
-        dataset_description = dataset["train"].info.description
-
-        if len(dataset["train"]) == 0:
-            raise ValueError("train split is empty.")
-        example_rows = json.dumps(dataset["train"][0], indent=4)
-
-        self._print_divider()
-        print(f"Loaded dataset. Example row:\n{example_rows}\n")
-
+        dataset_info = self.get_all_dataset_infos([dataset_name])
+        if len(dataset_info.keys()) == 0:
+            return None
+        dataset_info = dataset_info[dataset_name]["configs"][chosen_config]
+        if dataset_info is None:
+            return None
         try:
             input_columns, output_column = self.automatic_column_selection(
                 prompt_spec.instruction,
-                dataset_name,
-                dataset_description,
-                train_columns_formatted,
-                dataset["train"][0],
+                dataset_info["dataset_name"],
+                dataset_info["dataset_description"],
+                dataset_info["columns"],
+                dataset_info["sample_row"],
             )
         except RuntimeError:
             logger.error(f"{dataset_name} did not work. Try another!")
@@ -291,6 +333,11 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         print(f'Will use the column "{output_column}" as our target.\n')
         self._print_divider()
 
+        dataset = datasets.load_dataset(
+            dataset_info["dataset_name"], dataset_info["config_name"]
+        ).flatten()
+        dataset = dataset.rename_columns(dataset_info["columns_mapping"])
+
         canonicalized_dataset = self.canonicalize_dataset_using_columns(
             dataset, input_columns, output_column
         )
@@ -299,7 +346,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
     def retrieve_top_datasets(
         self,
         prompt_spec: PromptSpec,
-    ) -> list[DatasetInfo]:
+    ) -> list[str]:
         """Retrieve the top datasets for a prompt.
 
         Specifically, the datasets are scored using a dual-encoder retriever model
@@ -316,6 +363,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             text_to_encode=prompt_spec.instruction,
             device=self.device,
         )
+
         ranked_list = retrieve_objects(
             query_vector,
             self.search_index_path,
@@ -336,22 +384,178 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         ]
         if len(sorted_list) == 0:
             raise ValueError("No datasets retrieved from search index.")
-        return sorted_list
+        dataset_names = [x.name for x in sorted_list]
+        return dataset_names
+
+    def rerank_datasets(self, dataset_list: list[str], prompt_spec: PromptSpec):
+        """Rerank datasets based on relevance to a given prompt specification.
+
+        This function takes a list of datasets and a prompt specification,
+        and reranks the datasets based on their relevance to the prompt. It
+        first gathers detailed information about each dataset in the list using the
+        `get_all_dataset_infos` method. Then, it constructs a prompt for reranking
+        and parses its response to identify the most relevant dataset and
+        configuration. The function also includes checks for the validity of the
+        response(hallucinations) and the confidence level of the dataset
+        recommendation.
+
+        Args:
+            dataset_list: A list of dataset names to be reranked.
+            prompt_spec: An object containing the prompt specification,
+                        ncluding instruction and examples, used for reranking datasets.
+
+        Returns:
+            dict or None: The most relevant dataset configuration, or None if
+                no suitable dataset is found or if the confidence level
+                in the recommendation is low.
+        """
+        dataset_info_dict = self.get_all_dataset_infos(dataset_list)
+
+        if len(dataset_info_dict.keys()) == 0:
+            return None
+        prompt = construct_prompt_for_dataset_reranking(
+            prompt_spec.instruction, prompt_spec.examples, dataset_info_dict
+        )
+        response = parse_prompt_to_fields(prompt=prompt, module_name="rerank")
+
+        dataset_name, config_name, confidence_level = (
+            response["dataset_name"],
+            response["config_name"],
+            response["confidence_level"],
+        )
+        if (
+            dataset_name not in dataset_info_dict
+            or config_name not in dataset_info_dict[dataset_name]["configs"]
+        ):
+            logger.warning("LLM hallucinated dataset/config name")
+            return None
+        if confidence_level == "low":
+            logger.warning("Confidence in retrieved dataset is low.")
+            return None
+
+        return dataset_info_dict[dataset_name]["configs"][config_name]
+
+    def canonicalize_dataset_automatically(
+        self,
+        top_dataset_info: dict,
+        prompt_spec: PromptSpec,
+        auto_transform_data: bool = False,
+        num_points_to_transform: int = 10,
+    ):
+        """Automatically canonicalize dataset (instead of cli).
+
+        This function automates the canonicalization of the
+        dataset identified as the most relevant. It starts by checking if
+        the top dataset information exists. If so, it proceeds to automatically
+        select the input and output columns based on the task instruction. The
+        dataset is then loaded, flattened, and renamed according to the columns
+        mapping. If auto_transform_data is true, num_points_to_transform points
+        from the dataset are transformed by an LLM to desired format according
+        to the prompt_spec, and transformed dataset is returned. If
+        auto_transform_data is false, the dataset is canonicalized using the
+        selected columns.
+
+        Args:
+            top_dataset_info: Contains info about the top-ranked dataset.
+            prompt_spec: prompt object storing the original task and examples.
+            auto_transform_data: Specifies whether a dataset is to be
+            transformed. Samples from the original dataset will be transformed
+            by an LLM to match a desired format as specified by prompt_spec.
+            num_points_to_transform: Number of data points you wish to
+            transform. Number must be greater than zero. If number is greater
+            than size of dataset, whole dataset will be transformed. ignored
+            if data_transform is False.
+
+        Returns:
+            The canonicalized dataset, or None if the dataset is invalid or
+            if column selection fails, or if any other error occurs
+            during the process.
+        """
+        task_instruction = prompt_spec.instruction
+        if top_dataset_info is None:
+            logger.warning("None of the retrieved datasets were relevant.")
+            return None
+        try:
+            input_columns, output_column = self.automatic_column_selection(
+                task_instruction,
+                top_dataset_info["dataset_name"],
+                top_dataset_info["dataset_description"],
+                top_dataset_info["columns"],
+                top_dataset_info["sample_row"],
+            )
+        except Exception as e:
+            logger.warning("Column selection failed: ", e)
+            return None
+        logger.info("Column selection completed")
+        full_dataset = (
+            datasets.load_dataset(
+                top_dataset_info["dataset_name"], top_dataset_info["config_name"]
+            )
+            .shuffle()
+            .flatten()
+        )
+        full_dataset = full_dataset.rename_columns(top_dataset_info["columns_mapping"])
+        logger.info("Dataset loaded")
+
+        if auto_transform_data:
+            # remove columns not selected by automatic column selection
+            full_dataset = full_dataset.remove_columns(
+                [
+                    col_name
+                    for col_name in full_dataset["train"].column_names
+                    if col_name not in input_columns + [output_column]
+                ]
+            )
+            logger.info("Unnecessary columns removed")
+
+            dataset_transformer = PromptBasedDatasetTransformer()
+            canonicalized_dataset = dataset_transformer.transform_data(
+                prompt_spec=prompt_spec,
+                dataset=full_dataset["train"],
+                num_points_to_transform=num_points_to_transform,
+            )
+            logger.info("Data transformation completed")
+
+            example_rows = json.dumps(canonicalized_dataset["train"][0], indent=4)
+
+            logger.info(f"Transformed dataset. Example row:\n{example_rows}\n")
+
+            return canonicalized_dataset
+        else:
+            canonicalized_dataset = self.canonicalize_dataset_using_columns(
+                full_dataset, input_columns, output_column
+            )
+            logger.info(
+                f"No transformation. Using dataset {top_dataset_info['dataset_name']}"
+            )  # noqa E501
+            return canonicalized_dataset
 
     def retrieve_dataset_dict(
         self,
         prompt_spec: PromptSpec,
+        auto_transform_data: bool = False,
+        num_points_to_transform: int = 10,
     ) -> datasets.DatasetDict | None:
         """Select a dataset from a prompt using a dual-encoder retriever.
 
         Args:
-            prompt_spec: A prompt whose instruction field we use to retrieve datasets.
+            prompt_spec: prompt object storing the original task and examples.
+            auto_transform_data: Specifies whether a dataset is to be
+            transformed. Samples from the original dataset will be transformed
+            by an LLM to match a desired format as specified by prompt_spec.
+            num_points_to_transform: Number of data points you wish to
+            transform. Number must be greater than zero. If number is greater
+            than size of dataset, whole dataset will be transformed. ignored
+            if data_transform is False.
 
         Return:
-            A list of relevant datasets dictionaries.
+            The most relevant dataset, canonicalized;
+            or None if there are no relevant datasets.
         """
         sorted_list = self.retrieve_top_datasets(prompt_spec)
-        top_dataset_name = self.choose_dataset_by_cli(sorted_list)
-        if top_dataset_name is None:
-            return None
-        return self.canonicalize_dataset_by_cli(top_dataset_name, prompt_spec)
+        logger.info(f"Top datasets retrieved. Top datasets: {sorted_list}")
+        top_dataset_info = self.rerank_datasets(sorted_list, prompt_spec)
+        logger.info(f"Rerank completed. Top dataset info: {top_dataset_info}")
+        return self.canonicalize_dataset_automatically(
+            top_dataset_info, prompt_spec, auto_transform_data, num_points_to_transform
+        )

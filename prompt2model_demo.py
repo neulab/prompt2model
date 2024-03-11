@@ -181,8 +181,48 @@ def main():
             TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
         )
         line_print("Retrieving dataset...")
+        line_print("Do you want to perform data transformation? (y/n)")
+        line_print(
+            "Data transformation converts retrieved data into the desired format as per the prompt."  # noqa E501
+        )
+        auto_transform_data = False
+        while True:
+            line = input()
+            if line.lower() == "y":
+                auto_transform_data = True
+                break
+            elif line.lower() == "n":
+                auto_transform_data = False
+                break
+            else:
+                line_print("Invalid input. Please enter y or n.")
+
         retriever = DescriptionDatasetRetriever()
-        retrieved_dataset_dict = retriever.retrieve_dataset_dict(prompt_spec)
+
+        if auto_transform_data:
+            while True:
+                line_print(
+                    "Enter the number of data points you want to transform (the remaining data points in the dataset will be discarded):"  # noqa E501
+                )
+                line = input()
+                try:
+                    num_points_to_transform = int(line)
+                except ValueError:
+                    line_print("Invalid input. Please enter a number.")
+                    continue
+                if num_points_to_transform <= 0:
+                    line_print("Invalid input. Please enter a number greater than 0.")
+                    continue
+                status["num_transform"] = num_points_to_transform
+                break
+            retrieved_dataset_dict = retriever.retrieve_dataset_dict(
+                prompt_spec,
+                auto_transform_data=True,
+                num_points_to_transform=num_points_to_transform,
+            )
+        else:
+            retrieved_dataset_dict = retriever.retrieve_dataset_dict(prompt_spec)
+
         dataset_has_been_retrieved = True
         if retrieved_dataset_dict is not None:
             retrieved_dataset_dict.save_to_disk("retrieved_dataset_dict")
