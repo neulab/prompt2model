@@ -18,7 +18,10 @@ from prompt2model.utils import (
     get_formatted_logger,
     handle_api_error,
 )
-from prompt2model.utils.parse_responses import make_single_api_request, parse_json
+from prompt2model.utils.parse_responses import (
+    find_and_parse_json,
+    make_single_api_request,
+)
 
 logger = get_formatted_logger("DatasetTransformer")
 
@@ -29,13 +32,27 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
     def __init__(
         self,
         plan_prompt_fn: Callable[
-            [str, list[dict], str], str
+            [str, str, list[dict], int], str
         ] = construct_prompt_for_plan,
         transform_prompt_fn: Callable[
-            [str, dict, str, str], str
+            [str, str, str, dict], str
         ] = construct_prompt_for_transform_data,
     ):
-        """Initialize the class."""
+        """Initialize the class.
+
+        Args:
+            plan_prompt_fn: A function that takes in a description of the target task,
+            example of the target task,
+            list of dictionaries where each dictionary is a row from a potentially
+            relevant dataset,
+            and the number of rows to use from this potentially relevant dataset,
+            and returns a plan prompt.
+
+            transform_prompt_fn: A function that takes in a description of the target
+            task, an example of the target task,
+            plan for dataset transformation,
+            and the row from a potentially relevant dataset to be transformed.
+        """
         self.plan_prompt_fn = plan_prompt_fn
         self.transform_prompt_fn = transform_prompt_fn
         self.plan: str = ""
@@ -78,8 +95,9 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         """Transform the dataset according to the prompt_spec and dataset."""
         plan_prompt = self.plan_prompt_fn(
             prompt_spec.instruction,
-            dataset,
             prompt_spec.examples,
+            dataset,
+            min(5, len(dataset)),
         )
         self.plan = make_single_api_request(plan_prompt)
 
@@ -94,9 +112,9 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         for row in dataset:
             transform_prompt = self.transform_prompt_fn(
                 prompt_spec.instruction,
-                row,
                 prompt_spec.examples,
                 self.plan,
+                row,
             )
             transform_prompts.append(transform_prompt)
 
@@ -121,7 +139,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
 
         for response in responses:
             try:
-                extraction = parse_json(response, ["input", "output"], [])
+                extraction = find_and_parse_json(response, ["input", "output"], [])
                 if extraction is not None:
                     inputs.append(str(extraction["input"]))
                     outputs.append(str(extraction["output"]))
