@@ -84,7 +84,7 @@ class EvalAccuracyCallback(transformers.TrainerCallback):
 
 
 class QLoRATrainer:
-    """A class for fine-tuning a model using QLora."""
+    """A class for fine-tuning a model using QLoRA."""
 
     def __init__(self, model_name: str, model_max_length: int) -> None:
         """Initialize the QLoRATrainer with a model name and evaluation size."""
@@ -111,7 +111,7 @@ class QLoRATrainer:
         self.tokenizer.pad_token = self.tokenizer.eos_token
 
     def qlora_tokenize(self, prompt):
-        """Tokenize the prompt for QLora training."""
+        """Tokenize the prompt for QLoRA training."""
         result = self.tokenizer(
             prompt["text"],
             truncation=True,
@@ -134,7 +134,7 @@ class QLoRATrainer:
         save_folder_path="./",
         load_best_model_at_end=True,
     ):
-        """Train the model using QLora and return the trained model and tokenizer."""
+        """Train the model using QLoRA and return the trained model and tokenizer."""
         QLORA_MODEL_DIRECTORY = os.path.join(save_folder_path, "qlora")
         train_dataset = train_dataset.map(self.qlora_tokenize)
         eval_dataset = eval_dataset.map(self.qlora_tokenize)

@@ -1,4 +1,4 @@
-"""Example of how to fine-tune a model using the QLoraTrainer class."""
+"""Example of how to fine-tune a model using the QLoRATrainer class."""
 
 import os
 
@@ -22,11 +22,11 @@ if __name__ == "__main__":
 
     # At this point, both train_dataset and eval_dataset are datasets with two
     # columns: "input_col" and "output_col".
-    # We need to format them into a single column, "text", for the QLoraTrainer to use.
+    # We need to format them into a single column, "text", for the QLoRATrainer to use.
     formatted_train_dataset = format_train_data(train_dataset)
     formatted_eval_dataset = format_train_data(eval_dataset)
 
-    # Next, we define the hyperparameters for the QLoraTrainer.
+    # Next, we define the hyperparameters for the QLoRATrainer.
     num_epochs = 1
     qlora_alpha = 8
     qlora_r = 16
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     save_folder_path = "qlora_finetuned_model"
     load_best_model_at_end = False
 
-    # Next, we create a QLoraTrainer object and call the train_model method.
+    # Next, we create a QLoRATrainer object and call the train_model method.
     trainer = QLoRATrainer(model_name="mistralai/Mistral-7B-v0.1", model_max_length=512)
 
     # `formatted_eval_dataset` contains just one column: "text",
