@@ -29,6 +29,8 @@ def find_and_parse_json(
         Else returns None.
     """
     response_text = response.choices[0]["message"]["content"]
+
+    # Find JSON objects in the response, by matching text between curly braces.
     potential_jsons = re.findall(r"\{.*?\}", response_text, re.DOTALL)
     for response_text in potential_jsons:
         try:

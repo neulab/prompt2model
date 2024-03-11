@@ -386,15 +386,15 @@ def truncate_row(example_row: dict, max_length=200) -> str:
 
 
 def construct_prompt_for_plan(
-    task_description: str, dataset: list[dict], example: str, num_rows: int = 5
+    task_description: str, example: str, dataset: list[dict], num_rows: int = 5
 ) -> str:
     """Construct prompt for plan.
 
     Args:
     task_description: str: Description of the task.
+    example: str: Example of the target task.
     dataset: list[dict]: List of dictionaries containing the dataset rows
     of the potentially relevant dataset for the task.
-    example: str: Example of the target task.
     num_rows: int: Number of rows from `dataset` to add to the prompt.
 
     Returns:
@@ -434,9 +434,20 @@ def construct_prompt_for_plan(
 
 
 def construct_prompt_for_transform_data(
-    task_description: str, dataset_row: dict, plan: str, example: str
+    task_description: str, example: str, plan: str, dataset_row: dict
 ) -> str:
-    """Construct prompt for dataset transformation."""
+    """Construct prompt for dataset transformation.
+
+    Args:
+    task_description: str: Description of the task.
+    example: str: Example of the target task.
+    plan: str: Plan for dataset transformation.
+    dataset_row: dict: A dictionary containing the dataset row of the
+    potentially relevant dataset to be transformed.
+
+    Returns:
+    str: Prompt for dataset transformation.
+    """
     incontext_tasks = [VITAMINC, PROVERBS, IMPLICATURES]
     incontext_examples = []
 

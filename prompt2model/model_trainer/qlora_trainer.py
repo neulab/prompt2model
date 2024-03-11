@@ -1,4 +1,4 @@
-"""A trainer class for fine-tuning a model using QLora."""
+"""A trainer class for fine-tuning a model using QLoRA."""
 
 import gc
 import os
@@ -6,8 +6,6 @@ import os
 import datasets
 import torch
 import transformers
-
-# import wandb
 from accelerate import Accelerator, FullyShardedDataParallelPlugin
 from peft import LoraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
 from torch.distributed.fsdp.fully_sharded_data_parallel import (
@@ -15,6 +13,10 @@ from torch.distributed.fsdp.fully_sharded_data_parallel import (
     FullStateDictConfig,
 )
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+
+from prompt2model.utils import get_formatted_logger
+
+logger = get_formatted_logger("QLoRATrainer")
 
 fsdp_plugin = FullyShardedDataParallelPlugin(
     state_dict_config=FullStateDictConfig(offload_to_cpu=True, rank0_only=False),
@@ -59,11 +61,11 @@ class EvalAccuracyCallback(transformers.TrainerCallback):
                     len(self.eval_tokenizer(target, return_tensors="pt").input_ids[0])
                     + 5
                 )
-                inpt_ids = self.eval_tokenizer(
+                input_ids = self.eval_tokenizer(
                     input_text, return_tensors="pt"
                 ).input_ids.to(self.device)
                 generated_ids = model.generate(
-                    input_ids=inpt_ids,
+                    input_ids=input_ids,
                     max_new_tokens=max_gen_len,
                     do_sample=False,
                     temperature=0,
@@ -81,11 +83,11 @@ class EvalAccuracyCallback(transformers.TrainerCallback):
             metrics["eval_accuracy"] = val_acc
 
 
-class QLoraTrainer:
+class QLoRATrainer:
     """A class for fine-tuning a model using QLora."""
 
     def __init__(self, model_name: str, model_max_length: int) -> None:
-        """Initialize the QLoraTrainer with a model name and evaluation size."""
+        """Initialize the QLoRATrainer with a model name and evaluation size."""
         self.model_name = model_name
         self.model_max_length = model_max_length
         self.bnb_config = BitsAndBytesConfig(
@@ -97,14 +99,14 @@ class QLoraTrainer:
         self.model = AutoModelForCausalLM.from_pretrained(
             self.model_name, device_map="auto", quantization_config=self.bnb_config
         )
-        print("Model loaded")
+        logger.info("Model loaded")
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model_name,
             model_max_length=self.model_max_length,
             padding_side="left",
             add_eos_token=True,
         )
-        print("Tokenizer loaded")
+        logger.info("Tokenizer loaded")
 
         self.tokenizer.pad_token = self.tokenizer.eos_token
 
@@ -133,6 +135,7 @@ class QLoraTrainer:
         load_best_model_at_end=True,
     ):
         """Train the model using QLora and return the trained model and tokenizer."""
+        QLORA_MODEL_DIRECTORY = os.path.join(save_folder_path, "qlora")
         train_dataset = train_dataset.map(self.qlora_tokenize)
         eval_dataset = eval_dataset.map(self.qlora_tokenize)
         self.model.gradient_checkpointing_enable()
@@ -163,8 +166,6 @@ class QLoraTrainer:
             self.model.is_parallelizable = True
             self.model.model_parallel = True
 
-        output_dir = os.path.join(save_folder_path, "qlora")
-
         self.eval_tokenizer = AutoTokenizer.from_pretrained(
             self.model_name, add_bos_token=True, trust_remote_code=True
         )
@@ -174,7 +175,7 @@ class QLoraTrainer:
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             args=transformers.TrainingArguments(
-                output_dir=output_dir,
+                output_dir=QLORA_MODEL_DIRECTORY,
                 num_train_epochs=num_epochs,
                 warmup_steps=5,
                 per_device_train_batch_size=train_batch_size,
@@ -186,13 +187,12 @@ class QLoraTrainer:
                 logging_steps=100,
                 fp16=True,
                 optim="paged_adamw_8bit",
-                logging_dir="./logs",  # Directory for storing logs
-                save_strategy="steps",  # Save the model checkpoint every logging step
-                save_steps=200,  # Save checkpoints every 50 steps
-                evaluation_strategy="steps",  # Evaluate the model every logging step
-                eval_steps=100,  # Evaluate and save checkpoints every 50 steps
-                do_eval=True,  # Perform evaluation at the end of training
-                # report_to="wandb",  # Enable WandB logging
+                logging_dir="./logs",
+                save_strategy="steps",
+                save_steps=200,
+                evaluation_strategy="steps",
+                eval_steps=100,
+                do_eval=True,
                 load_best_model_at_end=load_best_model_at_end,
                 metric_for_best_model="eval_loss",
                 greater_is_better=False,
@@ -210,7 +210,9 @@ class QLoraTrainer:
         )
         trainer.train()
 
-        trainer.model.save_pretrained(os.path.join(output_dir, "qlora_model"))
+        trainer.model.save_pretrained(
+            os.path.join(QLORA_MODEL_DIRECTORY, "qlora_model")
+        )
 
         del self.model
         del trainer
@@ -226,17 +228,17 @@ class QLoraTrainer:
         )
 
         self.model = PeftModel.from_pretrained(
-            self.model, os.path.join(output_dir, "qlora_model")
+            self.model, os.path.join(QLORA_MODEL_DIRECTORY, "qlora_model")
         )
         self.model = self.model.merge_and_unload()
-        self.model.save_pretrained(os.path.join(output_dir, "final_model"))
+        self.model.save_pretrained(os.path.join(QLORA_MODEL_DIRECTORY, "final_model"))
 
         del self.model
         gc.collect()
         torch.cuda.empty_cache()
 
         self.model = AutoModelForCausalLM.from_pretrained(
-            os.path.join(output_dir, "final_model"),
+            os.path.join(QLORA_MODEL_DIRECTORY, "final_model"),
             quantization_config=self.bnb_config,
             device_map="auto",
             trust_remote_code=True,
