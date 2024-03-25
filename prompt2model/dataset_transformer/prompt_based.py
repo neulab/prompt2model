@@ -99,10 +99,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             dataset,
             prompt_spec.examples,
         )
-        wandb.log({"plan_prompt": plan_prompt})
-        print("Plan prompt: \n", plan_prompt)
         self.plan = make_single_api_request(plan_prompt, max_api_calls=100)
-        wandb.log({"plan": self.plan})
 
         logger.info(f"Plan created. Plan: {self.plan}")
 
@@ -132,9 +129,6 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             if len_count >= max_len:
                 break
         
-        print(len(transform_prompts))
-
-
         max_allowed_failed_transforms = 1000
         curr_failed_transforms = 0
         counter = 0

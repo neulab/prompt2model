@@ -1,11 +1,12 @@
 """Prompt template for dataset transformer."""
 
 import json
+from typing import Any
 
-IMPLICATURES ={
-    "task_description":"Predict whether Speaker 2's answer to Speaker 1 counts as a yes or as a no",
-    "samples":"""input=\n\n Speaker 1: 'Have you found him yet? ' Speaker 2: 'We're still looking.' \n \noutput=no""",
-    "plan":"""1. Create a "Speaker 1" field using the 'text' fields. Expand the text such that speaker 2 can answer in some form of yes or no.
+IMPLICATURES: dict[str, Any] = {
+    "task_description": "Predict whether Speaker 2's answer to Speaker 1 counts as a yes or as a no",
+    "samples": """input=\n\nQ: Speaker 1: 'Have you found him yet? ' Speaker 2: 'We're still looking.' \nA: \noutput=no""",
+    "plan": """1. Create a "Speaker 1" field using the 'text' fields. Expand the text such that speaker 2 can answer in some form of yes or no.
 2. Create a "Speaker 2" field responding to the speaker with either a yes or a no. Ensure that the yes or no is not said directly, but in a roundabout manner.
 3. Combine "Speaker 1" and "Speaker 2" fields to create "input".
 4. Create an "output" field based on whether speaker 2 replied with a yes or no. If speaker 2 replied with a yes, "output" is yes, else "output" is no.""",
@@ -13,124 +14,125 @@ IMPLICATURES ={
 
 Next, I will create a "Speaker 2" field responding to Speaker 1. Since the response should not directly say yes or no, but imply one of them, I'll phrase it as: "Speaker 2: 'Well, there are quite a few options, but it really depends on the specific needs and availability.'"
 
-Now, I'll combine "Speaker 1" and "Speaker 2" fields to create "input". The "input" will be: " Speaker 1: 'Is it easy to find child care services for a preschooler?' Speaker 2: 'Well, there are quite a few options, but it really depends on the specific needs and availability.'"
+Now, I'll combine "Speaker 1" and "Speaker 2" fields to create "input". The "input" will be: "Q: Speaker 1: 'Is it easy to find child care services for a preschooler?' Speaker 2: 'Well, there are quite a few options, but it really depends on the specific needs and availability.'"
 
 Finally, I'll create an "output" field based on whether Speaker 2's response implies a yes or a no. Since Speaker 2's response suggests uncertainty and does not confirm the ease of finding child care, the implied answer is no. Therefore, "output" will be: "no".
 
 Here is the final response JSON with "input" and "output" keys:
 
 {
-    "input": " Speaker 1: 'Is it easy to find child care services for a preschooler?' Speaker 2: 'Well, there are quite a few options, but it really depends on the specific needs and availability.'",
+    "input": "Q: Speaker 1: 'Is it easy to find child care services for a preschooler?' Speaker 2: 'Well, there are quite a few options, but it really depends on the specific needs and availability.'",
     "output": "no"
 }
 """,
-    "dataset_rows":[
-    {
-        "swda_filename": "sw00utt/sw_0001_4325.utt",
-        "ptb_basename": "4/sw4325",
-        "conversation_no": 4325,
-        "transcript_index": 0,
-        "act_tag": 115,
-        "damsl_act_tag": 26,
-        "caller": "A",
-        "utterance_index": 1,
-        "subutterance_index": 1,
-        "text": "Okay.  /",
-        "pos": "Okay/UH ./.",
-        "trees": "(INTJ (UH Okay) (. .) (-DFL- E_S))",
-        "ptb_treenumbers": "1",
-        "talk_day": "03/23/1992",
-        "length": 5,
-        "topic_description": "CHILD CARE",
-        "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?"
-    },
-    {
-        "swda_filename": "sw00utt/sw_0001_4325.utt",
-        "ptb_basename": "4/sw4325",
-        "conversation_no": 4325,
-        "transcript_index": 1,
-        "act_tag": 82,
-        "damsl_act_tag": 15,
-        "caller": "A",
-        "utterance_index": 1,
-        "subutterance_index": 2,
-        "text": "{D So, }",
-        "pos": "So/UH ,/,",
-        "trees": "(SBARQ (INTJ (UH So)) (, ,) (WHNP-1 (WHNP (WP What) (NN kind)) (PP (IN of) (NP (NP (NN experience)) (PP (-NONE- *ICH*-2))))) (SQ (EDITED (RM (-DFL- \\[)) (SQ-UNF (VBP do) (NP-SBJ (PRP you))) (, ,) (IP (-DFL- \\+))) (VBP do) (NP-SBJ (PRP you)) (RS (-DFL- \\])) (VP (VB have) (NP (-NONE- *T*-1)) (, ,) (ADVP (RB then)) (PP-2 (IN with) (NP (NN child) (NN care))))) (. ?) (-DFL- E_S))",
-        "ptb_treenumbers": "2",
-        "talk_day": "03/23/1992",
-        "length": 5,
-        "topic_description": "CHILD CARE",
-        "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?"
-    },
-    {
-        "swda_filename": "sw00utt/sw_0001_4325.utt",
-        "ptb_basename": "4/sw4325",
-        "conversation_no": 4325,
-        "transcript_index": 2,
-        "act_tag": 206,
-        "damsl_act_tag": 36,
-        "caller": "B",
-        "utterance_index": 2,
-        "subutterance_index": 1,
-        "text": "[ [ I guess, +",
-        "pos": "[ I/PRP ] guess/VBP ,/,",
-        "trees": "(S (EDITED (RM (-DFL- \\[)) (EDITED (RM (-DFL- \\[)) (S (NP-SBJ (PRP I)) (VP-UNF (VBP guess))) (, ,) (IP (-DFL- \\+))) (S (NP-SBJ (PRP I)) (VP-UNF (VBP think))) (, ,) (RS (-DFL- \\])) (IP (-DFL- \\+))) (INTJ (UH uh)) (, ,) (NP-SBJ (PRP I)) (VP (VBP wonder) (RS (-DFL- \\])) (SBAR (IN if) (S (NP-SBJ (DT that)) (VP (VBD worked))))) (. .) (-DFL- E_S))",
-        "ptb_treenumbers": "4",
-        "talk_day": "03/23/1992",
-        "length": 5,
-        "topic_description": "CHILD CARE",
-        "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?"
-    },
-    {
-        "swda_filename": "sw00utt/sw_0001_4325.utt",
-        "ptb_basename": "4/sw4325",
-        "conversation_no": 4325,
-        "transcript_index": 3,
-        "act_tag": 148,
-        "damsl_act_tag": 20,
-        "caller": "A",
-        "utterance_index": 3,
-        "subutterance_index": 1,
-        "text": "What kind of experience [ do you, + do you ] have, then with child care? /",
-        "pos": "[ What/WP kind/NN ] of/IN  [ experience/NN ] do/VBP  [ you/PRP ] ,/, do/VBP  [ you/PRP ] have/VB ,/, then/RB with/IN  [ child/NN care/NN ] ?/.",
-        "trees": "(SBARQ (INTJ (UH So)) (, ,) (WHNP-1 (WHNP (WP What) (NN kind)) (PP (IN of) (NP (NP (NN experience)) (PP (-NONE- *ICH*-2))))) (SQ (EDITED (RM (-DFL- \\[)) (SQ-UNF (VBP do) (NP-SBJ (PRP you))) (, ,) (IP (-DFL- \\+))) (VBP do) (NP-SBJ (PRP you)) (RS (-DFL- \\])) (VP (VB have) (NP (-NONE- *T*-1)) (, ,) (ADVP (RB then)) (PP-2 (IN with) (NP (NN child) (NN care))))) (. ?) (-DFL- E_S))",
-        "ptb_treenumbers": "2",
-        "talk_day": "03/23/1992",
-        "length": 5,
-        "topic_description": "CHILD CARE",
-        "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?"
-    },
-    {
-        "swda_filename": "sw00utt/sw_0001_4325.utt",
-        "ptb_basename": "4/sw4325",
-        "conversation_no": 4325,
-        "transcript_index": 4,
-        "act_tag": 148,
-        "damsl_act_tag": 20,
-        "caller": "B",
-        "utterance_index": 4,
-        "subutterance_index": 1,
-        "text": "I think, ] + {F uh, } I wonder ] if that worked. /",
-        "pos": "[ I/PRP ] think/VBP ,/, uh/UH ,/,  [ I/PRP ] wonder/VBP if/IN that/DT worked/VBD ./.",
-        "trees": "(S (EDITED (RM (-DFL- \\[)) (EDITED (RM (-DFL- \\[)) (S (NP-SBJ (PRP I)) (VP-UNF (VBP guess))) (, ,) (IP (-DFL- \\+))) (S (NP-SBJ (PRP I)) (VP-UNF (VBP think))) (, ,) (RS (-DFL- \\])) (IP (-DFL- \\+))) (INTJ (UH uh)) (, ,) (NP-SBJ (PRP I)) (VP (VBP wonder) (RS (-DFL- \\])) (SBAR (IN if) (S (NP-SBJ (DT that)) (VP (VBD worked))))) (. .) (-DFL- E_S))",
-        "ptb_treenumbers": "4",
-        "talk_day": "03/23/1992",
-        "length": 5,
-        "topic_description": "CHILD CARE",
-        "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?"
-    }
-]}
+    "dataset_rows": [
+        {
+            "swda_filename": "sw00utt/sw_0001_4325.utt",
+            "ptb_basename": "4/sw4325",
+            "conversation_no": 4325,
+            "transcript_index": 0,
+            "act_tag": 115,
+            "damsl_act_tag": 26,
+            "caller": "A",
+            "utterance_index": 1,
+            "subutterance_index": 1,
+            "text": "Okay.  /",
+            "pos": "Okay/UH ./.",
+            "trees": "(INTJ (UH Okay) (. .) (-DFL- E_S))",
+            "ptb_treenumbers": "1",
+            "talk_day": "03/23/1992",
+            "length": 5,
+            "topic_description": "CHILD CARE",
+            "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?",
+        },
+        {
+            "swda_filename": "sw00utt/sw_0001_4325.utt",
+            "ptb_basename": "4/sw4325",
+            "conversation_no": 4325,
+            "transcript_index": 1,
+            "act_tag": 82,
+            "damsl_act_tag": 15,
+            "caller": "A",
+            "utterance_index": 1,
+            "subutterance_index": 2,
+            "text": "{D So, }",
+            "pos": "So/UH ,/,",
+            "trees": "(SBARQ (INTJ (UH So)) (, ,) (WHNP-1 (WHNP (WP What) (NN kind)) (PP (IN of) (NP (NP (NN experience)) (PP (-NONE- *ICH*-2))))) (SQ (EDITED (RM (-DFL- \\[)) (SQ-UNF (VBP do) (NP-SBJ (PRP you))) (, ,) (IP (-DFL- \\+))) (VBP do) (NP-SBJ (PRP you)) (RS (-DFL- \\])) (VP (VB have) (NP (-NONE- *T*-1)) (, ,) (ADVP (RB then)) (PP-2 (IN with) (NP (NN child) (NN care))))) (. ?) (-DFL- E_S))",
+            "ptb_treenumbers": "2",
+            "talk_day": "03/23/1992",
+            "length": 5,
+            "topic_description": "CHILD CARE",
+            "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?",
+        },
+        {
+            "swda_filename": "sw00utt/sw_0001_4325.utt",
+            "ptb_basename": "4/sw4325",
+            "conversation_no": 4325,
+            "transcript_index": 2,
+            "act_tag": 206,
+            "damsl_act_tag": 36,
+            "caller": "B",
+            "utterance_index": 2,
+            "subutterance_index": 1,
+            "text": "[ [ I guess, +",
+            "pos": "[ I/PRP ] guess/VBP ,/,",
+            "trees": "(S (EDITED (RM (-DFL- \\[)) (EDITED (RM (-DFL- \\[)) (S (NP-SBJ (PRP I)) (VP-UNF (VBP guess))) (, ,) (IP (-DFL- \\+))) (S (NP-SBJ (PRP I)) (VP-UNF (VBP think))) (, ,) (RS (-DFL- \\])) (IP (-DFL- \\+))) (INTJ (UH uh)) (, ,) (NP-SBJ (PRP I)) (VP (VBP wonder) (RS (-DFL- \\])) (SBAR (IN if) (S (NP-SBJ (DT that)) (VP (VBD worked))))) (. .) (-DFL- E_S))",
+            "ptb_treenumbers": "4",
+            "talk_day": "03/23/1992",
+            "length": 5,
+            "topic_description": "CHILD CARE",
+            "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?",
+        },
+        {
+            "swda_filename": "sw00utt/sw_0001_4325.utt",
+            "ptb_basename": "4/sw4325",
+            "conversation_no": 4325,
+            "transcript_index": 3,
+            "act_tag": 148,
+            "damsl_act_tag": 20,
+            "caller": "A",
+            "utterance_index": 3,
+            "subutterance_index": 1,
+            "text": "What kind of experience [ do you, + do you ] have, then with child care? /",
+            "pos": "[ What/WP kind/NN ] of/IN  [ experience/NN ] do/VBP  [ you/PRP ] ,/, do/VBP  [ you/PRP ] have/VB ,/, then/RB with/IN  [ child/NN care/NN ] ?/.",
+            "trees": "(SBARQ (INTJ (UH So)) (, ,) (WHNP-1 (WHNP (WP What) (NN kind)) (PP (IN of) (NP (NP (NN experience)) (PP (-NONE- *ICH*-2))))) (SQ (EDITED (RM (-DFL- \\[)) (SQ-UNF (VBP do) (NP-SBJ (PRP you))) (, ,) (IP (-DFL- \\+))) (VBP do) (NP-SBJ (PRP you)) (RS (-DFL- \\])) (VP (VB have) (NP (-NONE- *T*-1)) (, ,) (ADVP (RB then)) (PP-2 (IN with) (NP (NN child) (NN care))))) (. ?) (-DFL- E_S))",
+            "ptb_treenumbers": "2",
+            "talk_day": "03/23/1992",
+            "length": 5,
+            "topic_description": "CHILD CARE",
+            "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?",
+        },
+        {
+            "swda_filename": "sw00utt/sw_0001_4325.utt",
+            "ptb_basename": "4/sw4325",
+            "conversation_no": 4325,
+            "transcript_index": 4,
+            "act_tag": 148,
+            "damsl_act_tag": 20,
+            "caller": "B",
+            "utterance_index": 4,
+            "subutterance_index": 1,
+            "text": "I think, ] + {F uh, } I wonder ] if that worked. /",
+            "pos": "[ I/PRP ] think/VBP ,/, uh/UH ,/,  [ I/PRP ] wonder/VBP if/IN that/DT worked/VBD ./.",
+            "trees": "(S (EDITED (RM (-DFL- \\[)) (EDITED (RM (-DFL- \\[)) (S (NP-SBJ (PRP I)) (VP-UNF (VBP guess))) (, ,) (IP (-DFL- \\+))) (S (NP-SBJ (PRP I)) (VP-UNF (VBP think))) (, ,) (RS (-DFL- \\])) (IP (-DFL- \\+))) (INTJ (UH uh)) (, ,) (NP-SBJ (PRP I)) (VP (VBP wonder) (RS (-DFL- \\])) (SBAR (IN if) (S (NP-SBJ (DT that)) (VP (VBD worked))))) (. .) (-DFL- E_S))",
+            "ptb_treenumbers": "4",
+            "talk_day": "03/23/1992",
+            "length": 5,
+            "topic_description": "CHILD CARE",
+            "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?",
+        },
+    ],
+}
 
-PROVERBS ={
-    "task_description":"Find the English proverb corresponding to the given story",
-    "samples":"""input=\n Alice always makes sure to keep an extra case of apples in her house. One week, the local supermarket ran out of apples. Thankfully because of Alice's preparation, she was still able to eat apples that week. Which of the following proverbs best apply to this situation?\n  choice: An ounce of protection is worth a pound of cure.\n  choice: It is better to be safe than sorry.\n  choice: Failing to prepare, you are preparing to fail.\n  choice: A stitch in time saves nine.\n  choice: Hope for the best, prepare for the worst.\n \noutput=It is better to be safe than sorry""",
-    "plan":"""1. Expand on the "question" field to create a story that can be related to a proverb.
+PROVERBS: dict[str, Any] = {
+    "task_description": "Find the English proverb corresponding to the given story",
+    "samples": """input=\nQ: Alice always makes sure to keep an extra case of apples in her house. One week, the local supermarket ran out of apples. Thankfully because of Alice's preparation, she was still able to eat apples that week. Which of the following proverbs best apply to this situation?\n  choice: An ounce of protection is worth a pound of cure.\n  choice: It is better to be safe than sorry.\n  choice: Failing to prepare, you are preparing to fail.\n  choice: A stitch in time saves nine.\n  choice: Hope for the best, prepare for the worst.\nA: \noutput=It is better to be safe than sorry""",
+    "plan": """1. Expand on the "question" field to create a story that can be related to a proverb.
 2. Generate a new field "choices" that contains a list of English proverbs.
 3. Generate a new field "answer" that contains the English proverb that best applies to the story in the "question" field.
 4. Combine the "question" and "choices" fields to form the "input" field.
 5. Use the "answer" field as the "output" field.""",
-    "transformed_sample":"""First, I expand on the "question" field to create a story. The original question is, "Mike was snowboarding on the snow and hit a piece of ice. He went much faster on the ice because _____ is smoother. (A) snow (B) ice". To expand this into a story, I might say: Mike loved snowboarding, and he often went to the mountains to enjoy his favorite sport. One day, while snowboarding on a familiar snowy slope, he unexpectedly hit a patch of ice. To his surprise, he found himself accelerating much faster on the ice because it was smoother than the snow. This sudden change taught him an important lesson about adaptability and the nature of different surfaces.
+    "transformed_sample": """First, I expand on the "question" field to create a story. The original question is, "Mike was snowboarding on the snow and hit a piece of ice. He went much faster on the ice because _____ is smoother. (A) snow (B) ice". To expand this into a story, I might say: Mike loved snowboarding, and he often went to the mountains to enjoy his favorite sport. One day, while snowboarding on a familiar snowy slope, he unexpectedly hit a patch of ice. To his surprise, he found himself accelerating much faster on the ice because it was smoother than the snow. This sudden change taught him an important lesson about adaptability and the nature of different surfaces.
 
 Next, I generate a new field "choices" that contains a list of English proverbs. The proverbs might be:
 
@@ -151,108 +153,77 @@ Here is the final response JSON with "input" and "output" keys:
     "output": "A smooth sea never made a skilled sailor."
 }
 """,
-    "dataset_rows":[
-    {
-        "id": "QuaRel_V1_Fr_0223",
-        "answer_index": 1,
-        "logical_forms": [
-            "(infer (speed higher world1) (smoothness higher world2) (smoothness higher world1))",
-            "(infer (speed higher world2) (smoothness higher world1) (smoothness higher world2))"
-        ],
-        "logical_form_pretty": "qrel(speed, higher, world1) -> qrel(smoothness, higher, world2) ; qrel(smoothness, higher, world1)",
-        "world_literals": {
-            "world1": [
-                "ice"
+    "dataset_rows": [
+        {
+            "id": "QuaRel_V1_Fr_0223",
+            "answer_index": 1,
+            "logical_forms": [
+                "(infer (speed higher world1) (smoothness higher world2) (smoothness higher world1))",
+                "(infer (speed higher world2) (smoothness higher world1) (smoothness higher world2))",
             ],
-            "world2": [
-                "snow"
-            ]
+            "logical_form_pretty": "qrel(speed, higher, world1) -> qrel(smoothness, higher, world2) ; qrel(smoothness, higher, world1)",
+            "world_literals": {"world1": ["ice"], "world2": ["snow"]},
+            "question": "Mike was snowboarding on the snow and hit a piece of ice. He went much faster on the ice because _____ is smoother. (A) snow (B) ice",
         },
-        "question": "Mike was snowboarding on the snow and hit a piece of ice. He went much faster on the ice because _____ is smoother. (A) snow (B) ice"
-    },
-    {
-        "id": "QuaRel_V1_B5_1403",
-        "answer_index": 0,
-        "logical_forms": [
-            "(infer (time lower world1) (distance higher world2) (distance higher world1))",
-            "(infer (time lower world2) (distance higher world1) (distance higher world2))"
-        ],
-        "logical_form_pretty": "qrel(time, lower, world1) -> qrel(distance, higher, world2) ; qrel(distance, higher, world1)",
-        "world_literals": {
-            "world1": [
-                "Rita"
+        {
+            "id": "QuaRel_V1_B5_1403",
+            "answer_index": 0,
+            "logical_forms": [
+                "(infer (time lower world1) (distance higher world2) (distance higher world1))",
+                "(infer (time lower world2) (distance higher world1) (distance higher world2))",
             ],
-            "world2": [
-                "John"
-            ]
+            "logical_form_pretty": "qrel(time, lower, world1) -> qrel(distance, higher, world2) ; qrel(distance, higher, world1)",
+            "world_literals": {"world1": ["Rita"], "world2": ["John"]},
+            "question": "John and Rita are going for a run.  Rita gets tired and takes a break on the park bench.  After twenty minutes in the park, who has run farther? (A) John (B) Rita",
         },
-        "question": "John and Rita are going for a run.  Rita gets tired and takes a break on the park bench.  After twenty minutes in the park, who has run farther? (A) John (B) Rita"
-    },
-    {
-        "id": "QuaRel_V1_Fr_0455",
-        "answer_index": 1,
-        "logical_forms": [
-            "(infer (speed lower world1) (heat lower world1) (heat lower world2))",
-            "(infer (speed lower world2) (heat lower world2) (heat lower world1))"
-        ],
-        "logical_form_pretty": "qrel(speed, lower, world1) -> qrel(heat, lower, world1) ; qrel(heat, lower, world2)",
-        "world_literals": {
-            "world1": [
-                "ocean"
+        {
+            "id": "QuaRel_V1_Fr_0455",
+            "answer_index": 1,
+            "logical_forms": [
+                "(infer (speed lower world1) (heat lower world1) (heat lower world2))",
+                "(infer (speed lower world2) (heat lower world2) (heat lower world1))",
             ],
-            "world2": [
-                "river"
-            ]
+            "logical_form_pretty": "qrel(speed, lower, world1) -> qrel(heat, lower, world1) ; qrel(heat, lower, world2)",
+            "world_literals": {"world1": ["ocean"], "world2": ["river"]},
+            "question": "The propeller on Kate's boat moved slower in the ocean compared to the river. This means the propeller heated up less in the (A) ocean (B) river",
         },
-        "question": "The propeller on Kate's boat moved slower in the ocean compared to the river. This means the propeller heated up less in the (A) ocean (B) river"
-    },
-    {
-        "id": "QuaRel_V1_Fr_0334",
-        "answer_index": 0,
-        "logical_forms": [
-            "(infer (and (heat low world1) (heat high world2)) (friction higher world2) (friction lower world2))",
-            "(infer (and (heat low world2) (heat high world1)) (friction higher world1) (friction lower world1))"
-        ],
-        "logical_form_pretty": "qval(heat, low, world1), qval(heat, high, world2) -> qrel(friction, higher, world2) ; qrel(friction, lower, world2)",
-        "world_literals": {
-            "world1": [
-                "grass hill"
+        {
+            "id": "QuaRel_V1_Fr_0334",
+            "answer_index": 0,
+            "logical_forms": [
+                "(infer (and (heat low world1) (heat high world2)) (friction higher world2) (friction lower world2))",
+                "(infer (and (heat low world2) (heat high world1)) (friction higher world1) (friction lower world1))",
             ],
-            "world2": [
-                "muddy hill"
-            ]
+            "logical_form_pretty": "qval(heat, low, world1), qval(heat, high, world2) -> qrel(friction, higher, world2) ; qrel(friction, lower, world2)",
+            "world_literals": {"world1": ["grass hill"], "world2": ["muddy hill"]},
+            "question": "A car gets very hot as it drives up a muddy hill, but stays cool as it drives up a grass hill. The car warms on on the muddy hill because the muddy hill has (A) more friction (B) less friction.",
         },
-        "question": "A car gets very hot as it drives up a muddy hill, but stays cool as it drives up a grass hill. The car warms on on the muddy hill because the muddy hill has (A) more friction (B) less friction."
-    },
-    {
-        "id": "QuaRel_V1_B5_1282",
-        "answer_index": 1,
-        "logical_forms": [
-            "(infer (strength lower world1) (distance lower world2) (distance lower world1))",
-            "(infer (strength lower world2) (distance lower world1) (distance lower world2))"
-        ],
-        "logical_form_pretty": "qrel(strength, lower, world1) -> qrel(distance, lower, world2) ; qrel(distance, lower, world1)",
-        "world_literals": {
-            "world1": [
-                "Juan after a hospital stay"
+        {
+            "id": "QuaRel_V1_B5_1282",
+            "answer_index": 1,
+            "logical_forms": [
+                "(infer (strength lower world1) (distance lower world2) (distance lower world1))",
+                "(infer (strength lower world2) (distance lower world1) (distance lower world2))",
             ],
-            "world2": [
-                "Juan when healthy"
-            ]
+            "logical_form_pretty": "qrel(strength, lower, world1) -> qrel(distance, lower, world2) ; qrel(distance, lower, world1)",
+            "world_literals": {
+                "world1": ["Juan after a hospital stay"],
+                "world2": ["Juan when healthy"],
+            },
+            "question": "Juan is injured in a car accident, which necessitates a hospital stay where he is unable to maintain the strength in his arm. Juan notices that his throwing arm feels extremely frail compared to the level of strength it had when he was healthy. If Juan decides to throw a ball with his friend, when will his throw travel less distance? (A) When Juan's arm is healthy (B) When Juan's arm is weak after the hospital stay.",
         },
-        "question": "Juan is injured in a car accident, which necessitates a hospital stay where he is unable to maintain the strength in his arm. Juan notices that his throwing arm feels extremely frail compared to the level of strength it had when he was healthy. If Juan decides to throw a ball with his friend, when will his throw travel less distance? (A) When Juan's arm is healthy (B) When Juan's arm is weak after the hospital stay."
-    }
-]}
+    ],
+}
 
-VITAMINC ={
-    "task_description":"Identify whether a claim is True or False or Neither based on a given context",
-    "samples":"""input=Westlife: According to the British Phonographic Industry ( BPI ) , Westlife has been certified for 13 million albums and 9.8 million singles , with a total of more than 23 million combined sales in the UK . Claim: Westlife made under 23.5 million sales in the UK
+VITAMINC: dict[str, Any] = {
+    "task_description": "Identify whether a claim is True or False or Neither based on a given context",
+    "samples": """input=Westlife: According to the British Phonographic Industry ( BPI ) , Westlife has been certified for 13 million albums and 9.8 million singles , with a total of more than 23 million combined sales in the UK . Claim: Westlife made under 23.5 million sales in the UK
 output=Neither""",
-    "plan":"""1. Combine "abstract" and "title" to create "context".
+    "plan": """1. Combine "abstract" and "title" to create "context".
 2. Create a "claim" field based on "context" using GPT-4 that is either supported or not supported by the "context".
 3. Create an "output" field based on whether "claim" is supported or not by the "context". The value of "output" must be "True", "False", or "Neither".
 4. Combine "context" and "claim" to create "input\"""",
-    "transformed_sample":"""First, I create "context" by combining "title" and "abstract". So, "Context": Microstructural development of human newborn cerebral white matter assessed in vivo by diffusion tensor magnetic resonance imaging. Alterations of the architecture of cerebral white matter in the developing human brain can affect cortical development and result in functional disabilities. A line scan diffusion-weighted magnetic resonance imaging (MRI) sequence...
+    "transformed_sample": """First, I create "context" by combining "title" and "abstract". So, "Context": Microstructural development of human newborn cerebral white matter assessed in vivo by diffusion tensor magnetic resonance imaging. Alterations of the architecture of cerebral white matter in the developing human brain can affect cortical development and result in functional disabilities. A line scan diffusion-weighted magnetic resonance imaging (MRI) sequence...
 Next, I create "claim". I randomly decide that the claim will not be supported by the context. So, "claim": The study found that preterm infants at term showed lower mean diffusion coefficients in the central white matter compared to full-term infants.
 Next, I create "output". Since claim is not supported, output should be false. So, "Output": False.
 Next, I create "input" by combining "Context" and "Claim". So, "input": Microstructural development of human newborn cerebral white matter assessed in vivo by diffusion tensor magnetic resonance imaging. Alterations of the architecture of cerebral white matter in the developing human brain can affect cortical development and result in functional disabilities. A line scan diffusion-weighted magnetic resonance imaging (MRI) sequence...claim: The study found that preterm infants at term showed lower mean diffusion coefficients in the central white matter compared to full-term infants.
@@ -261,56 +232,56 @@ Here is the final response JSON with "input" and "output" keys:
 "input" : "Microstructural development of human newborn cerebral white matter assessed in vivo by diffusion tensor magnetic resonance imaging. Alterations of the architecture of cerebral white matter in the developing human brain can affect cortical development and result in functional disabilities. A line scan diffusion-weighted magnetic resonance imaging (MRI) sequence with diffusion tensor analysis was applied to measure the apparent diffusion coefficient, to calculate relative anisotropy, and to delineate three-dimensional fiber architecture in cerebral white matter in preterm (n = 17) and full-term infants (n = 7). To assess effects of prematurity on cerebral white matter development, early gestation preterm infants (n = 10) were studied a second time at term. In the central white matter the mean apparent diffusion coefficient at 28 wk was high, 1.8 microm2/ms, and decreased toward term to 1.2 microm2/ms. Claim: The study found that preterm infants at term showed lower mean diffusion coefficients in the central white matter compared to full-term infants.",
 "output" : "False"
 }""",
-    "dataset_rows":[
-    {
-    "doc_id": "4983",
-    "title": "Microstructural development of human newborn cerebral white matter assessed in vivo by diffusion tensor magnetic resonance imaging.",
-    "abstract": """[
+    "dataset_rows": [
+        {
+            "doc_id": "4983",
+            "title": "Microstructural development of human newborn cerebral white matter assessed in vivo by diffusion tensor magnetic resonance imaging.",
+            "abstract": """[
         "Alterations of the architecture of cerebral white matter in the developing human brain can affect cortical development and result in functional disabilities.",
         "A line scan diffusion-weighted magnetic resonance imaging (MRI) sequence with diffusion tensor analysis was applied to measure the apparent diffusion coefficient, to calculate relative anisotropy, and to delineate three-dimensional fiber architecture in cerebral white matter in preterm (n = 17) and full-term infants (n = 7).",
         "To assess effects of prematurity on cerebral white matter development, early gestation preterm infants (n = 10) were studied a second time at term.",
         "In the central white matter the mean apparent diffusion coefficient at 28 wk was high, 1.8 microm2/ms, and decreased toward term to 1.2 microm2/ms.",
     ]""",
-    "structured": "False",
-    },
-    {
-        "doc_id": "25761154",
-        "title": "Exercise-induced asthm a practical guide to definitions, diagnosis, prevalence, and treatment.",
-        "abstract": """[
+            "structured": "False",
+        },
+        {
+            "doc_id": "25761154",
+            "title": "Exercise-induced asthma: a practical guide to definitions, diagnosis, prevalence, and treatment.",
+            "abstract": """[
             "Exercise-induced asthma is defined as an intermittent narrowing of the airways, demonstrated by a decrease in some measure of flow, that the patient experiences as wheezing, chest tightness, coughing, and difficulty breathing that is triggered by exercise.",
             "Exercise will trigger asthma in most individuals who have chronic asthma, as well as in some who do not otherwise have asthma.",
             "Definitive diagnosis requires demonstration of a drop in flow rate, typically > or = 13-15% for forced expiratory volume in one second (FEV1) and > or = 15-20% for peak expiratory flow rate (PEFR), after exercise, associated with symptoms.",
             "Prevalence data indicate that this disorder is very common in those who participate in recreational sports as well as in highly competitive athletes, with at least 12-15% of unselected athletes having positive exercise challenges.",
             "Treatment of exercise induced asthma involves use of nonpharmacological measures (such as the use of the refractory period after exercise and prewarming air) as well as use of medications (beta-agonists, cromolyn, and nedocromil).",
             "With treatment, those who suffer from exercise-induced asthma may be able to participate and compete at the highest levels of performance."
-        ]"""
-    },
-    {
-        "doc_id": "17150648",
-        "title": "Leptin regulates glutamate and glucose transporters in hypothalamic astrocytes.",
-        "abstract": """[
+        ]""",
+        },
+        {
+            "doc_id": "17150648",
+            "title": "Leptin regulates glutamate and glucose transporters in hypothalamic astrocytes.",
+            "abstract": """[
             "Glial cells perform critical functions that alter the metabolism and activity of neurons, and there is increasing interest in their role in appetite and energy balance.",
             "Leptin, a key regulator of appetite and metabolism, has previously been reported to influence glial structural proteins and morphology.",
             "Here, we demonstrate that metabolic status and leptin also modify astrocyte-specific glutamate and glucose transporters, indicating that metabolic signals influence synaptic efficacy and glucose uptake and, ultimately, neuronal function.",
             "We found that basal and glucose-stimulated electrical activity of hypothalamic proopiomelanocortin (POMC) neurons in mice were altered in the offspring of mothers fed a high-fat diet.",
             "In adulthood, increased body weight and fasting also altered the expression of glucose and glutamate transporters.",
             "These results demonstrate that whole-organism metabolism alters hypothalamic glial cell activity and suggest that these cells play an important role in the pathology of obesity."
-        ]"""
-    },
-    {
-        "doc_id": "37256966",
-        "title": "Melatonin synthesized by T lymphocytes as a ligand of the retinoic acid-related orphan receptor.",
-        "abstract": """[
+        ]""",
+        },
+        {
+            "doc_id": "37256966",
+            "title": "Melatonin synthesized by T lymphocytes as a ligand of the retinoic acid-related orphan receptor.",
+            "abstract": """[
             "Melatonin modulates a wide array of physiological events with pleiotropic effects on the immune system.",
             "While the relevance of specific melatonin membrane receptors has been well established for several biological functions, retinoic acid-related orphan receptor alpha (RORα) has been suggested as a mediator of nuclear melatonin signalling by results obtained from pharmacological approaches.",
             "However, a melatonin-mediated downstream effect cannot be ruled out, and further evidence is needed to support a direct interaction between melatonin and RORα.",
             "Here, we show that RORα is mainly located in human Jurkat T-cell nucleus, and it is co-immunoprecipitated with melatonin.",
-        ]"""
-    },
-    {
-        "doc_id": "44827480",
-        "title": "Implementation of contemporary oral antiplatelet treatment guidelines in patients with acute coronary syndrome undergoing percutaneous coronary intervention: a report from the GReek AntiPlatelet rEgistry (GRAPE).",
-        "abstract": """[
+        ]""",
+        },
+        {
+            "doc_id": "44827480",
+            "title": "Implementation of contemporary oral antiplatelet treatment guidelines in patients with acute coronary syndrome undergoing percutaneous coronary intervention: a report from the GReek AntiPlatelet rEgistry (GRAPE).",
+            "abstract": """[
             "BACKGROUND Few data exist about the implementation of contemporary oral antiplatelet treatment guidelines in patients with acute coronary syndrome (ACS) undergoing percutaneous coronary intervention (PCI).",
             "METHODS GReek AntiPlatelet rEgistry (GRAPE), initiated on January 2012, is a prospective, observational, multicenter cohort study focusing on contemporary use of P2Y12 inhibitors.",
             "In 1434 patients we evaluated appropriateness of P2Y12 selection initially and at discharge by applying an eligibility-assessing algorithm based on P2Y12 inhibitors' contraindications/specific warnings and precautions.",
@@ -318,9 +289,10 @@ Here is the final response JSON with "input" and "output" keys:
             "The selection of clopidogrel was most commonly less preferable, both initially (69.7%) and at discharge (75.6%).",
             "Appropriate selection of newer agents was high initially (79.2%-82.8%), with further increase as selection at discharge (89.4%-89.8%).",
             "Inappropriate selection of the newer agents was 17.2%-20.8% initially, decreasing to 10.2%-10.6% at discharge.",
-        ]"""
-    }
-]}
+        ]""",
+        },
+    ],
+}
 
 TRANSFORM_EXEMPLARS ="""Task Description: {task_description}
 
