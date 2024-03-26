@@ -17,5 +17,5 @@ __all__ = (  # noqa: F401
     "retrieve_objects",
     "seed_generator",
     "count_tokens_from_string",
-    "get_formatted_logger"
+    "get_formatted_logger",
 )

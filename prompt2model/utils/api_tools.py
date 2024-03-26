@@ -43,7 +43,7 @@ class APIAgent:
 
     def __init__(
         self,
-        model_name: str = "gpt-3.5-turbo-16k",
+        model_name: str = "gpt-3.5-turbo",
         max_tokens: int | None = 4000,
         api_base: str | None = None,
     ):
@@ -218,14 +218,22 @@ class APIAgent:
         return responses
 
 
-MAX_RETRIES=5
 def handle_api_error(e, backoff_duration=1) -> None:
-    """Handle OpenAI errors or related errors with exponential backoff.
+    """
+    Handles API errors raised during API calls.
 
     Args:
-        e: The error to handle. This could be an OpenAI error or a related
-           non-fatal error, such as JSONDecodeError or AssertionError.
+        e: The API error raised.
+        backoff_duration: The duration to wait before retrying the API call.
+
+    Raises:
+        openai.error.OpenAIError: If the error is not an instance of OpenAIError.
+        e: If the error is not an instance of APIError, Timeout, or RateLimitError.
+
+    Returns:
+        None
     """
+
     logging.error(e)
 
     if not isinstance(e, openai.error.OpenAIError):
@@ -234,6 +242,7 @@ def handle_api_error(e, backoff_duration=1) -> None:
     if isinstance(e, (openai.error.APIError, openai.error.Timeout, openai.error.RateLimitError)):
         import re
         match = re.search(r"Please retry after (\d+) seconds", str(e))
+        #If openai mentions how long to sleep use that, else do exponential backoff
         if match is not None: 
             BUFFER_DURATION = 2
             backoff_duration = int(match.group(1)) + BUFFER_DURATION
@@ -241,7 +250,6 @@ def handle_api_error(e, backoff_duration=1) -> None:
         logging.info(f"Retrying in {backoff_duration} seconds...")
         time.sleep(backoff_duration)
 
-    # raise Exception(f"Max retries ({MAX_RETRIES}) reached. Could not recover from the error.")
 
 
 def count_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> int:

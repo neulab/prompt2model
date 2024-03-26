@@ -15,6 +15,8 @@ def find_and_parse_json(
     response: openai.Completion, required_keys: list, optional_keys: list = []
 ) -> dict | None:
     """Parse stuctured fields from the API response.
+    
+    Incase there are multiple json objects in the response, we take the rightmost one
 
     Args:
         response: API response.
@@ -29,7 +31,7 @@ def find_and_parse_json(
     """
     if type(response) != str and "choices" in response:
         response = response.choices[0]["message"]["content"]
-    correct_json = find_rightmost_brackets(response)
+    correct_json = find_rightmost_brackets(response) 
 
     try:
         response_json = json.loads(correct_json, strict=False)
@@ -67,156 +69,40 @@ def find_rightmost_brackets(text):
     return None
 
 
-def find_and_parse_json(
-    response: openai.Completion, required_keys: list, optional_keys: list
-) -> dict | None:
-    """Parse stuctured fields from the API response.
-
-    Args:
-        response: API response.
-        required_keys: Required keys from the response
-        optional_keys: Optional keys from the response
-
-    Returns:
-        If the API response is a valid JSON object and contains the
-        required and optional keys then returns the
-        final response as a Dictionary
-        Else returns None.
-    """
-    response_text = response.choices[0]["message"]["content"]
-
-    # Find JSON objects in the response, by matching text between curly braces.
-    potential_jsons = re.findall(r"\{.*?\}", response_text, re.DOTALL)
-    for response_text in potential_jsons:
-        try:
-            response_json = json.loads(response_text, strict=False)
-        except json.decoder.JSONDecodeError:
-            logger.warning(f"API response was not a valid JSON: {response_text}")
-            continue
-
-        missing_keys = [key for key in required_keys if key not in response_json]
-        if len(missing_keys) != 0:
-            logger.warning(f'API response must contain {", ".join(required_keys)} keys')
-            continue
-
-        final_response = {}
-        for key in required_keys + optional_keys:
-            if key not in response_json:
-                # This is an optional key, so exclude it from the final response.
-                continue
-            if type(response_json[key]) == str:
-                final_response[key] = response_json[key].strip()
-            else:
-                final_response[key] = response_json[key]
-        return final_response
-    return None
-
-
-def parse_json(
-    response: openai.Completion, required_keys: list, optional_keys: list
-) -> dict | None:
-    """Parse stuctured fields from the API response.
-
-    Args:
-        response: API response.
-        required_keys: Required keys from the response
-        optional_keys: Optional keys from the response
-
-    Returns:
-        If the API response is a valid JSON object and contains the
-        required and optional keys then returns the
-        final response as a Dictionary
-        Else returns None.
-    """
-    if "choices" in response:
-        response_text = response.choices[0]["message"]["content"]
-    
-    try:
-        response_json = json.loads(response_text, strict=False)
-    except json.decoder.JSONDecodeError:
-        logger.warning(f"API response was not a valid JSON: {response_text}")
-        return None
-
-    missing_keys = [key for key in required_keys if key not in response_json]
-    if len(missing_keys) != 0:
-        logger.warning(f'API response must contain {", ".join(required_keys)} keys')
-        return None
-
-    final_response = {}
-    for key in required_keys + optional_keys:
-        if key not in response_json:
-            # This is an optional key, so exclude it from the final response.
-            continue
-        if type(response_json[key]) == str:
-            final_response[key] = response_json[key].strip()
-        else:
-            final_response[key] = response_json[key]
-    return final_response
-
-
-def parse_reranking_results(
-    response: openai.Completion,
-) -> dict | None:
-    """Parse a formatted string and extract numbers for reranking results.
-
-    Args:
-        response_string: A string containing three comma separated fields'.
-
-    Returns:
-        a dict with (dataset_name, config_name, confidence_level) fields
-        or None if the response cannot be parsed
-
-    """
-    response_text = response.choices[0]["message"]["content"]
-    print("This is response text: ", response_text)
-    fields = [x.strip() for x in response_text[1:-1].split(",")]
-    if len(fields) != 3:
-        logger.warning(
-            "Reranking results are not in the right format: number of fields"
-        )
-        return None
-    dataset_name, config_name, confidence_level = fields
-    CONFIDENCE_LEVELS_ALLOWED = ("low", "medium", "high")
-
-    # Check if the entire string matches the expected pattern
-    if confidence_level not in CONFIDENCE_LEVELS_ALLOWED:
-        logger.warning(
-            "Reranking results are not in the right format: fields are not appropriate"
-        )
-        return None
-
-    return {
-        "dataset_name": dataset_name,
-        "config_name": config_name,
-        "confidence_level": confidence_level,
-    }
-
+import re
 
 def parse_dataset_config_responses(response):
+    """
+    Parses the response to extract relevant information from dataset/configuration.
+
+    LLMs can return the dataset configuration in different formats - usually either between ** ** or as a sentence.
+
+    Args:
+        response (str): The response containing the dataset configuration.
+
+    Returns:
+        str: The extracted relevant information from the dataset configuration.
+    """
     if "choices" in response:
         response = response["choices"][0]["message"]["content"]
 
-    pattern = r'\*\*(.*?)\*\*'
+    pattern = r'\*\*(.*?)\*\*' 
 
     match = re.search(pattern, response)
     if match:
         response = match.group(1)
     elif len(response.split())>1:
-        response = response.split()[-1].replace('.', '')
+        response = response.split()[-1].replace('.', '') 
     return response
 
-
-def parse_reranking_results_v2(response: openai.Completion):
-    response_text = response.choices[0]["message"]["content"]
-    return response_text.strip()
 
 def parse_prompt_to_fields(
     prompt: str,
     required_keys: list = [],
     optional_keys: list = [],
-    max_api_calls: int = 10,
+    max_api_calls: int = 5,
     module_name: str = "col_selection",
-) -> dict:
+) -> dict | ValueError | RuntimeError:
     """Parse prompt into specific fields, and return to the calling function.
 
     This function calls the required api, has the logic for the retrying,
@@ -234,12 +120,9 @@ def parse_prompt_to_fields(
 
     Returns:
         Parsed Response or throws error
-    Raises:
-        Value Error
+
     """
     chat_api = api_tools.default_api_agent
-    # if module_name == "rerank":
-    #     chat_api = APIAgent(model_name="azure/GPT-3-5-16k-turbo-sweden", max_tokens=15000)
     if max_api_calls <= 0:
         raise ValueError("max_api_calls must be > 0.")
 
@@ -251,7 +134,6 @@ def parse_prompt_to_fields(
             response: openai.ChatCompletion | Exception = (
                 chat_api.generate_one_completion(
                     prompt,
-                    temperature=0.0,
                 )
             )
             extraction = None
@@ -294,7 +176,6 @@ def make_single_api_request(prompt: str, max_api_calls: int = 10) -> str:
         api_call_counter += 1
         try:
             response: openai.ChatCompletion =  chat_api.generate_one_completion(
-                    
                         prompt=prompt,
                         temperature=0,
                         presence_penalty=0, frequency_penalty=0

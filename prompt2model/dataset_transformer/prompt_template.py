@@ -397,13 +397,23 @@ def truncate_row(example_row: dict, max_length=200) -> str:
         )
     return json.dumps(truncated_row)
 
+
 def construct_prompt_for_plan(
     task_description: str, dataset: list[dict], example: str, num_rows: int = 5
 ) -> str:
-    """Construct prompt for plan."""
+    """Construct prompt for plan.
 
-    # incontext_tasks = [VITAMINC, PROVERBS, IMPLICATURES]
-    incontext_tasks = [VITAMINC]
+        Args:
+        task_description: str: Description of the task.
+        example: str: Example of the target task.
+        dataset: list[dict]: List of dictionaries containing the dataset rows
+            of the potentially relevant dataset for the task.
+        num_rows: int: Number of rows from `dataset` to add to the prompt.
+
+    Returns:
+        str: Prompt for creating plan. Plan will be used for dataset transformation
+    """
+    incontext_tasks = [VITAMINC] #using one is enough for now
     incontext_examples = []
 
     for incontext_task in incontext_tasks:
@@ -427,12 +437,22 @@ def construct_prompt_for_plan(
         dataset_row="\n".join(f"{truncate_row(example_row=dataset[i])}\n" for i in range(num_rows)),
     )
 
+
 def construct_prompt_for_transform_data(
     task_description: str, dataset_row: dict, plan: str, example: str
 ) -> str:
-    """Construct prompt for dataset transformation."""
+    """Construct prompt for dataset transformation.
 
-    # incontext_tasks = [VITAMINC, PROVERBS, IMPLICATURES]
+        Args:
+            task_description: str: Description of the task.
+            example: str: Example of the target task.
+            plan: str: Plan for dataset transformation.
+            dataset_row: dict: A dictionary containing the dataset row of the
+                potentially relevant dataset to be transformed.
+        Returns:
+            str: Prompt for dataset transformation.
+    """
+
     incontext_tasks = [VITAMINC]
     incontext_examples = []
 
@@ -450,8 +470,6 @@ def construct_prompt_for_transform_data(
     for i, incontext_example in enumerate(incontext_examples):
         incontext_examples_str += f"Incontext Example {i+1}\n{incontext_example}\n\n"
     
-    # incontext_examples_str += f"Incontext Example {len(incontext_examples)+1}"
-
     return TRANSFORM_DATA_PROMPT.format(
         in_context_examples= incontext_examples_str,
         task_description=task_description,

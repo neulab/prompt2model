@@ -10,7 +10,6 @@ from typing import Any
 
 import datasets
 import requests
-import random
 
 def parse_arguments():
     """Parse command line arguments for the script.
@@ -196,8 +195,6 @@ def get_dataset_configs(dataset_name: str) -> dict:
               details as values.
     """
     config_names = datasets.get_dataset_config_names(dataset_name)
-    if len(config_names) > 10: 
-        config_names = random.sample(list(config_names), 10)
     all_configs = {}
     for config_name in config_names:
         if "train" not in datasets.get_dataset_split_names(dataset_name, config_name):

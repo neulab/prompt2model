@@ -14,7 +14,6 @@ import yaml
 from datasets import concatenate_datasets, load_from_disk
 from termcolor import colored
 
-import prompt2model.utils.api_tools as api_tools
 from prompt2model.dataset_generator.base import DatasetSplit
 from prompt2model.dataset_generator.prompt_based import PromptBasedDatasetGenerator
 from prompt2model.dataset_processor.textualize import TextualizeProcessor
@@ -24,16 +23,13 @@ from prompt2model.model_evaluator import Seq2SeqEvaluator
 from prompt2model.model_executor import GenerationModelExecutor
 from prompt2model.model_retriever import DescriptionModelRetriever
 from prompt2model.model_trainer.generate import GenerationModelTrainer
-from prompt2model.model_trainer.peft_trainer import QLoraTrainer
 from prompt2model.param_selector import OptunaParamSelector
 from prompt2model.prompt_parser import (
     MockPromptSpec,
     PromptBasedInstructionParser,
     TaskType,
 )
-from prompt2model.utils.api_tools import API_ERRORS, APIAgent, handle_api_error
 from prompt2model.utils.config import DEFAULT_HYPERPARAMETERS_SPACE
-from prompt2model.utils.dataset_utils import format_train_data, make_combined_datasets
 from prompt2model.utils.logging_utils import get_formatted_logger
 
 
@@ -124,12 +120,7 @@ def parse_model_size_limit(line: str, default_size=3e9) -> float:
 
 
 def main():
-    import wandb; wandb.init()
     """The main function running the whole system."""
-    api_tools.default_api_agent = api_tools.APIAgent(
-        model_name="azure/GPT-3-5-turbo-sweden", max_tokens=4000
-    )  # noqa E501
-
     print_logo()
     # Save the status of Prompt2Model for this session,
     # in case the user wishes to stop and continue later.
@@ -147,9 +138,6 @@ def main():
                 with open("status.yaml", "r") as f:
                     status = yaml.safe_load(f)
                     print(f"Current status:\n{json.dumps(status, indent=4)}")
-                    prompt_spec = MockPromptSpec(
-                        TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
-                    )
                     break
             else:
                 status = {}
@@ -227,13 +215,13 @@ def main():
                     continue
                 status["num_transform"] = num_points_to_transform
                 break
-            retrieved_dataset_dict, _ = retriever.retrieve_dataset_dict(
+            retrieved_dataset_dict = retriever.retrieve_dataset_dict(
                 prompt_spec,
                 auto_transform_data=True,
                 num_points_to_transform=num_points_to_transform,
             )
         else:
-            retrieved_dataset_dict, _ = retriever.retrieve_dataset_dict(prompt_spec)
+            retrieved_dataset_dict = retriever.retrieve_dataset_dict(prompt_spec)
 
         dataset_has_been_retrieved = True
         if retrieved_dataset_dict is not None:
@@ -381,20 +369,206 @@ def main():
             dataset_list = [dataset, cached_retrieved_dataset_dict["train"]]
         else:
             dataset_list = [dataset]
-        print("loaded datasets")
 
-        train_dataset = make_combined_datasets(dataset_list)
-        line_print("Combined dataset created.")
-
-        formatted_train_dataset = format_train_data(train_dataset, prompt_spec)
-        print("Formatted train dataset created.")
-        trainer = QLoraTrainer()
-        print("Starting to train the model...")
-        trained_model, trained_tokenizer = trainer.train_model(
-            formatted_train_dataset, train_batch_size=2, num_steps=50
+        line_print("Processing datasets.")
+        instruction = status["instruction"]
+        t5_processor = TextualizeProcessor(has_encoder=True)
+        t5_modified_dataset_dicts = t5_processor.process_dataset_lists(
+            instruction,
+            dataset_list,
+            train_proportion=0.7,
+            val_proportion=0.1,
+            maximum_example_num={"train": 3500, "val": 500, "test": 1000},
         )
+        processor_logger = get_formatted_logger("DatasetProcessor")
+        processor_logger.setLevel(logging.INFO)
+        training_datasets = []
+        validation_datasets = []
+        test_datasets = []
+        for idx, modified_dataset_dict in enumerate(t5_modified_dataset_dicts):
+            training_datasets.append(modified_dataset_dict["train"])
+            validation_datasets.append(modified_dataset_dict["val"])
+            test_datasets.append(modified_dataset_dict["test"])
+        trainer_logger = get_formatted_logger("ModelTrainer")
+        trainer_logger.setLevel(logging.INFO)
+        evaluator_logger = get_formatted_logger("ModelEvaluator")
+        evaluator_logger.setLevel(logging.INFO)
+
+        train_batch_size = None
+
+        while True:
+            line = input(
+                "Are you interested to train the model with automatic hyperparameter search? Type 'y' for Yes and 'n' for No. "  # noqa E501
+            )
+            try:
+                assert line in ["y", "n"]
+                break
+            except Exception:
+                line_print("The answer should be either y or n")
+        time.sleep(1)
+
+        if line == "y":
+            line_print("Starting training with hyperparameter selection.")
+            default_min_num_epochs = DEFAULT_HYPERPARAMETERS_SPACE[
+                "min_num_train_epochs"
+            ]
+            min_num_epochs = input(
+                f"Enter min number of epochs. Press enter to use default value ({default_min_num_epochs}): "  # noqa E501
+            )
+            default_max_num_epochs = DEFAULT_HYPERPARAMETERS_SPACE[
+                "max_num_train_epochs"
+            ]
+            max_num_epochs = input(
+                f"Enter max number of epochs. Press enter to use default value ({default_max_num_epochs}): "  # noqa E501
+            )
+            default_num_trials = 10
+            num_trials = input(
+                f"Enter the number of trials (maximum number of hyperparameter configurations to consider) for hyperparameter search. Press enter to use default value ({default_num_trials}): "  # noqa E501
+            )
+            default_batch_size = DEFAULT_HYPERPARAMETERS_SPACE[
+                "per_device_train_batch_size"
+            ]  # noqa E501
+            max_batch_size = input(
+                "Enter the max batch size. "
+                + f"Press enter to use default ({default_batch_size}): "
+            )
+
+            min_num_epochs = (
+                default_min_num_epochs if min_num_epochs == "" else eval(min_num_epochs)
+            )
+            max_num_epochs = (
+                default_max_num_epochs if max_num_epochs == "" else eval(max_num_epochs)
+            )
+            num_trials = 1 if num_trials == "" else eval(num_trials)
+
+            max_batch_size = (
+                DEFAULT_HYPERPARAMETERS_SPACE["per_device_train_batch_size"]
+                if max_batch_size == ""
+                else eval(max_batch_size)
+            )
+
+            trainer = GenerationModelTrainer(
+                status["model_name"],
+                has_encoder=True,
+                executor_batch_size=max_batch_size,
+                tokenizer_max_length=1024,
+                sequence_max_length=1280,
+            )
+            args_output_root = Path("result/training_output")
+            args_output_root.mkdir(parents=True, exist_ok=True)
+            line_print("Starting training.")
+
+            trained_model, trained_tokenizer = OptunaParamSelector(
+                n_trials=num_trials,
+                trainer=trainer,
+            ).select_from_hyperparameters(
+                training_datasets=training_datasets,
+                validation=validation_datasets,
+                hyperparameters={
+                    "min_num_train_epochs": min_num_epochs,
+                    "max_num_train_epochs": max_num_epochs,
+                    "per_device_train_batch_size": [max_batch_size],
+                },
+            )
+            train_batch_size = max_batch_size
+
+        else:
+            line_print("Starting training without hyperparameter selection.")
+            while True:
+                line = input("Enter the training batch size:")
+                try:
+                    train_batch_size = int(line)
+                    assert 0 < train_batch_size
+                    break
+                except Exception:
+                    line_print("The training batch size must be greater than 0.")
+            time.sleep(1)
+
+            while True:
+                line = input("Enter the number of epochs to train for:")
+                try:
+                    num_epochs = int(line)
+                    break
+                except ValueError:
+                    line_print("Invalid input. Please enter a number.")
+            time.sleep(1)
+
+            trainer = GenerationModelTrainer(
+                status["model_name"],
+                has_encoder=True,
+                executor_batch_size=train_batch_size,
+                tokenizer_max_length=1024,
+                sequence_max_length=1280,
+            )
+            args_output_root = Path("result/training_output")
+            args_output_root.mkdir(parents=True, exist_ok=True)
+            line_print("Starting training.")
+            trained_model, trained_tokenizer = trainer.train_model(
+                hyperparameter_choices={
+                    "output_dir": str(args_output_root),
+                    "save_strategy": "epoch",
+                    "num_train_epochs": num_epochs,
+                    "per_device_train_batch_size": train_batch_size,
+                    "evaluation_strategy": "epoch",
+                },
+                training_datasets=training_datasets,
+                validation_datasets=validation_datasets,
+            )
+
         trained_model.save_pretrained(trained_model_root)
         trained_tokenizer.save_pretrained(trained_tokenizer_root)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        trained_model = transformers.AutoModelForSeq2SeqLM.from_pretrained(
+            trained_model_root
+        ).to(device)
+        trained_tokenizer = transformers.AutoTokenizer.from_pretrained(
+            trained_tokenizer_root
+        )
+        line_print("Finished training. Now evaluating on the test set.")
+        test_dataset = concatenate_datasets(test_datasets)
+
+        model_executor = GenerationModelExecutor(
+            trained_model,
+            trained_tokenizer,
+            train_batch_size,
+            tokenizer_max_length=1024,
+            sequence_max_length=1280,
+        )
+        t5_outputs = model_executor.make_prediction(
+            test_set=test_dataset, input_column="model_input"
+        )
+        evaluator = Seq2SeqEvaluator()
+        metric_values = evaluator.evaluate_model(
+            test_dataset,
+            "model_output",
+            t5_outputs,
+            encoder_model_name="xlm-roberta-base",
+        )
+        line_print(metric_values)
+        with open(RESULT_PATH / "metric.txt", "w") as result_file:
+            for metric_name, metric_value in metric_values.items():
+                result_file.write(f"{metric_name}: {metric_value}\n")
+        status["model_has_been_trained"] = model_has_been_trained = True
+        status["trained_model_root"] = str(trained_model_root)
+        status["trained_tokenizer_root"] = str(trained_tokenizer_root)
+        with open("status.yaml", "w") as f:
+            yaml.safe_dump(status, f)
+        line_print("Model has been trained and evaluated.")
+
+    t5_model = transformers.AutoModelForSeq2SeqLM.from_pretrained(
+        status["trained_model_root"]
+    ).to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+    t5_tokenizer = transformers.AutoTokenizer.from_pretrained(
+        status["trained_tokenizer_root"]
+    )
+    model_executor = GenerationModelExecutor(
+        t5_model, t5_tokenizer, 1, tokenizer_max_length=1024, sequence_max_length=1280
+    )
+    prompt_spec = MockPromptSpec(
+        TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
+    )
+    interface_t5 = create_gradio(model_executor, prompt_spec)
+    interface_t5.launch(share=True)
 
 
 if __name__ == "__main__":

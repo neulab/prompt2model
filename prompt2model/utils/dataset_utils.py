@@ -3,7 +3,6 @@
 import datasets
 import requests
 
-from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils.logging_utils import get_formatted_logger
 
 logger = get_formatted_logger("dataset_utils")
