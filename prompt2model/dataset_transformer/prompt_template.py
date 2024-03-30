@@ -399,7 +399,7 @@ def truncate_row(example_row: dict, max_length=200) -> str:
 
 
 def construct_prompt_for_plan(
-    task_description: str, dataset: list[dict], example: str, num_rows: int = 5
+    task_description: str,example: str, dataset: list[dict],  num_rows: int = 5
 ) -> str:
     """Construct prompt for plan.
 
@@ -439,7 +439,7 @@ def construct_prompt_for_plan(
 
 
 def construct_prompt_for_transform_data(
-    task_description: str, dataset_row: dict, plan: str, example: str
+    task_description: str, dataset_row: str, plan: str, example: str
 ) -> str:
     """Construct prompt for dataset transformation.
 

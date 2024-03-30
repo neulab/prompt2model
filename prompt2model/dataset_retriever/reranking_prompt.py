@@ -1,3 +1,4 @@
+""" This module contains the functions to generate the prompt for dataset reranking. """
 from __future__ import annotations  # noqa FI58
 
 METAPROMPT_BASE_DATASET = """Your objective is to choose the most relevant dataset for a given a task (and few examples of the task). For each dataset, you will be provided with the dataset description, and tags related to the dataset which provide meta-information about the dataset. Please return the most relevant dataset, e.g. squad """  # noqa: E501
@@ -20,15 +21,19 @@ DATASET_TEMPLATE = """[{counter}] **{dataset_name}**:\nDescription-{dataset_desc
 CONFIG_TEMPLATE = """\t[{counter}] **{config_name}**\n: The columns in this config are {dataset_columns}.\n An example row from this config is {sample_row}.\n """  # noqa: E501
 
 
-def build_datasets_prompt(instruction: str, examples: str, datasets_infos):
-    """Constructs a prompt that describes each dataset.
+def build_datasets_prompt(instruction: str, examples: str, datasets_infos: dict):
+    """
+    Builds the prompt for dataset reranking.
 
     Args:
-        datasets_infos (dict): Dictionary with dataset information.
+        instruction (str): Task instructions
+        examples (str): Task Examples
+        datasets_infos (dict): A dictionary containing information about all datasets.
 
     Returns:
-        str: A string that lists each dataset with its description and tags.
+        str: The input prompt for dataset retrieval.
     """
+
     dataset_string = ""
     for i, (dataset_name, dataset_info) in enumerate(datasets_infos.items(), start=1):
         dataset_string += f"""{DATASET_TEMPLATE.format(
@@ -48,15 +53,16 @@ def build_datasets_prompt(instruction: str, examples: str, datasets_infos):
 
 
 def build_configs_prompt(instruction: str, examples: str, dataset_info: dict):
-    """Constructs a prompt for selecting relevant configurations from a given dataset.
+    """
+    Builds the prompt for config reranking.
 
     Args:
-        instruction (str): Instruction of the task.
-        examples (str): Examples of the task.
-        dataset_info (dict): Information about the dataset and its configurations.
+        instruction (str): Task instructions
+        examples (str): Task Examples
+        datasets_infos (dict): A dictionary containing information about the specific dataset, which includes config information.
 
     Returns:
-        str: A string that lists each configuration with its details for the specified dataset.
+        str: The input prompt for dataset retrieval.
     """
     configs_string = ""
     for j, config in dataset_info["configs"].items():
@@ -78,7 +84,7 @@ def build_configs_prompt(instruction: str, examples: str, dataset_info: dict):
     return input_prompt
     
 
-def construct_prompt_for_dataset_reranking(instruction: str, examples: str, datasets_infos,is_config:bool=False):
+def construct_prompt_for_dataset_reranking(instruction: str, examples: str, datasets_infos: dict,is_config:bool=False):
     """Generate the full prompt for dataset reranking based on the given parameters.
 
     Args:

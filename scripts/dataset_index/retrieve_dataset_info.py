@@ -11,6 +11,7 @@ from typing import Any
 import datasets
 import requests
 
+
 def parse_arguments():
     """Parse command line arguments for the script.
 

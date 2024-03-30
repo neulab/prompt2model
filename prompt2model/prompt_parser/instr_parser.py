@@ -56,7 +56,7 @@ class PromptBasedInstructionParser(PromptSpec):
         self._instruction = extraction["Instruction"]
         self._examples = extraction["Demonstrations"]
 
-    def set_instruction_and_examples(self, instruction="", examples=""):
+    def set_instruction_and_examples(self, instruction:str="", examples:str="")->None:
         """Set the instruction and examples directly."""
         self._instruction = instruction
         self._examples = examples

@@ -34,36 +34,48 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
     """Transform data based on a transform prompt."""
 
     def __init__(
-        self,
-        num_points_to_transform: int ,
-        max_allowed_failed_transforms: int,
-        plan_prompt_fn: Callable[
-            [str, list[dict], str], str
-        ] = construct_prompt_for_plan,
-        transform_prompt_fn: Callable[
-            [str, dict, str, str], str
-        ] = construct_prompt_for_transform_data,
+            self,
+            num_points_to_transform: int ,
+            max_allowed_failed_transforms: int,
+            plan_prompt_fn: Callable[
+                [str, list[dict], str], str
+            ] = construct_prompt_for_plan,
+            transform_prompt_fn: Callable[
+                [str, dict, str, str], str
+            ] = construct_prompt_for_transform_data,
 
-    ):
-        """Initialize the class."""
-        self.plan_prompt_fn = plan_prompt_fn
-        self.transform_prompt_fn = transform_prompt_fn
-        self.plan: str = ""
-        self.num_points_to_transform = num_points_to_transform
-        self.curr_failed_transforms = 0
-        self.max_allowed_failed_transforms = max_allowed_failed_transforms
+        ):
+            """
+            Initializes an instance of the PromptBasedDatasetTransformer class.
+
+            Args:
+                num_points_to_transform (int): The number of points to transform.
+                max_allowed_failed_transforms (int): The maximum number of failed transforms allowed.
+                plan_prompt_fn (Callable[[str, list[dict], str], str], optional): The function to construct the prompt for plan data. Defaults to construct_prompt_for_plan.
+                transform_prompt_fn (Callable[[str, dict, str, str], str], optional): The function to construct the prompt for transform data. Defaults to construct_prompt_for_transform_data.
+            """
+            
+            self.plan_prompt_fn = plan_prompt_fn
+            self.transform_prompt_fn = transform_prompt_fn
+            self.plan: str = ""
+            self.num_points_to_transform = num_points_to_transform
+            self.curr_failed_transforms = 0
+            self.max_allowed_failed_transforms = max_allowed_failed_transforms
 
 
-    def generate_task_explanation(self, prompt_spec) -> str:
+    def generate_task_explanation(self, prompt_spec: PromptSpec) -> str:
+        """ Generate task explanation"""
         task_explanation_prompt = construct_prompt_for_task_explanation(prompt_spec.instruction, prompt_spec.examples)
         return make_single_api_request(task_explanation_prompt, max_api_calls=10)
 
-    def generate_plan(self, task_explanation, dataset, prompt_spec) -> str:
+    def generate_plan(self, task_explanation:str, dataset:datasets.Dataset, prompt_spec: PromptSpec) -> str:
+        """ Generate plan for the task"""
         plan_prompt = self.plan_prompt_fn(task_explanation, dataset, prompt_spec.examples)
-        return make_single_api_request(plan_prompt, max_api_calls=100)
+        return make_single_api_request(plan_prompt, max_api_calls=10)
 
     
     def generate_transform_prompts(self, task_explanation:str,  dataset:datasets.Dataset, prompt_spec:PromptSpec,) -> List[str]:
+        """ Get transform prompts for each row in the dataset."""
         transform_prompts = []
         for i in range(min(self.num_points_to_transform, len(dataset))):
             row = dataset[i]
@@ -72,8 +84,8 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         return transform_prompts
 
     
-    def generate_responses(self, transform_prompts_batch) -> List[str]:
-
+    def generate_responses(self, transform_prompts_batch:List[str]) -> List[str]:
+        """ Generate responses for the transform prompts."""
         async def generate_responses_async(transform_prompts):
             """
             Generate responses asynchronously using the specified model.
@@ -86,7 +98,6 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             )
             return responses
         
-
         try:
             loop = asyncio.get_event_loop()
             responses = loop.run_until_complete(generate_responses_async(transform_prompts_batch))
@@ -96,7 +107,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         return responses
 
 
-    def process_responses(self, responses:list, prompt_spec) -> Tuple[List[str], List[str]]:
+    def process_responses(self, responses:list, prompt_spec: PromptSpec) -> Tuple[List[str], List[str]]:
         """
         Process the responses received from the API. Also write the current set of inputs and outputs to a file.
 
@@ -143,7 +154,17 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
 
         return inputs, outputs
     
-    def transform_data(self, prompt_spec, dataset: datasets.Dataset) -> datasets.DatasetDict:
+    def transform_data(self, prompt_spec:PromptSpec, dataset: datasets.Dataset) -> tuple[list[str], list[str]]:
+        """
+        Transforms the given dataset based on the provided prompt specification.
+
+        Args:
+            prompt_spec (PromptSpec): The prompt specification object that defines the transformation rules.
+            dataset (datasets.Dataset): The dataset to be transformed.
+
+        Returns:
+            A tuple containing two lists: inputs and outputs.
+        """
         task_explanation = self.generate_task_explanation(prompt_spec)
         self.plan = self.generate_plan(task_explanation, dataset, prompt_spec)
         logger.info(f"Plan created. Plan: {self.plan}")

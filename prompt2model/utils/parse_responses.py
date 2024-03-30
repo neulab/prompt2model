@@ -56,7 +56,8 @@ def find_and_parse_json(
     return final_response
 
 
-def find_rightmost_brackets(text):
+def find_rightmost_brackets(text:str)->str|None:
+    """Find the rightmost complete set of brackets in a string."""
     stack = []
     for i, char in enumerate(reversed(text)):
         if char == '}':
@@ -71,7 +72,7 @@ def find_rightmost_brackets(text):
 
 import re
 
-def parse_dataset_config_responses(response):
+def parse_dataset_config_responses(response:dict)->str:
     """
     Parses the response to extract relevant information from dataset/configuration.
 
