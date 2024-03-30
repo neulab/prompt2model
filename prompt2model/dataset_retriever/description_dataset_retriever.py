@@ -53,7 +53,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         allow_gated_datasets=False,
         auto_transform_data: bool = False,
         num_points_to_transform: int = 3000,
-        max_allowed_failed_transforms: int = 1000,
+        max_allowed_failed_transforms: int = None,
         max_datasets_to_choose: int=3,
         num_votes = 5
     ):
@@ -87,6 +87,8 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         self.auto_transform_data = auto_transform_data
         self.num_points_to_transform = num_points_to_transform
         self.max_allowed_failed_transforms = max_allowed_failed_transforms
+        if max_allowed_failed_transforms is None:
+            self.max_allowed_failed_transforms = num_points_to_transform//3
         self.max_datasets_to_choose = max_datasets_to_choose
         self.num_votes = num_votes
         self.initialize_search_index()
@@ -444,7 +446,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         return datasets.DatasetDict(dataset_dict)
     
 
-    def get_rerank_with_highest_votes(self, prompt, infos_dict, num_votes=3):
+    def get_rerank_with_highest_votes(self, prompt, infos_dict):
         """
         Returns the dataset/config name with the highest number of votes based on the given prompt.
 
@@ -458,7 +460,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         """
         voting = []
 
-        for _ in range(num_votes):
+        for _ in range(self.num_votes):
             curr_name = parse_prompt_to_fields(prompt, module_name="rerank")
             if curr_name not in infos_dict: 
                 logger.warning("LLM hallucinated dataset/config name: %s", curr_name)
@@ -473,7 +475,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         return chosen_one
         
 
-    def rerank_datasets(self, datasets_info_dict:dict, prompt_spec: PromptSpec, num_votes) -> str,str:
+    def rerank_datasets(self, datasets_info_dict:dict, prompt_spec: PromptSpec) -> tuple[str, str] | None:
         """Rerank datasets based on relevance to a given prompt specification.
 
         This function takes a list of datasets and a prompt specification,
@@ -499,7 +501,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             prompt_spec.instruction, prompt_spec.examples, datasets_info_dict
         )
 
-        dataset_name = self.get_rerank_with_highest_votes(dataset_selection_prompt, datasets_info_dict, num_votes)
+        dataset_name = self.get_rerank_with_highest_votes(dataset_selection_prompt, datasets_info_dict)
         if dataset_name is None: return None, None
 
         time.sleep(10) # To avoid rate limiting
@@ -526,6 +528,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         self,
         top_dataset_info: dict,
         prompt_spec: PromptSpec,
+        num_points_to_transform=0
     ):
         """Automatically canonicalize dataset (instead of cli).
 
@@ -589,7 +592,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             )
             logger.info("Unnecessary columns removed")
 
-            dataset_transformer = PromptBasedDatasetTransformer(num_points_to_transform=self.num_points_to_transform, max_allowed_failed_transforms=self.max_allowed_failed_transforms)            
+            dataset_transformer = PromptBasedDatasetTransformer(num_points_to_transform=num_points_to_transform, max_allowed_failed_transforms=self.max_allowed_failed_transforms)            
             inputs, outputs = dataset_transformer.transform_data(
                 prompt_spec,
                 dataset=full_dataset["train"]
@@ -635,7 +638,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
             dataset_info = datasets_info_dict[dataset_name]["configs"][config_name]
             canonicalized_dataset = self.canonicalize_dataset_automatically(
-                dataset_info, prompt_spec, self.num_points_to_transform - curr_datasets_size + self.max_allowed_failed_transforms
+                dataset_info, prompt_spec, self.num_points_to_transform - curr_datasets_size 
             )
             curr_datasets_size += len(canonicalized_dataset["train"]["input_col"])
             inputs += canonicalized_dataset["train"]["input_col"]

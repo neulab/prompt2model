@@ -63,7 +63,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         return make_single_api_request(plan_prompt, max_api_calls=100)
 
     
-    def generate_transform_prompts(self, task_explanation:str, prompt_spec:PromptSpec, dataset:datasets.Dataset) -> List[str]:
+    def generate_transform_prompts(self, task_explanation:str,  dataset:datasets.Dataset, prompt_spec:PromptSpec,) -> List[str]:
         transform_prompts = []
         for i in range(min(self.num_points_to_transform, len(dataset))):
             row = dataset[i]
@@ -78,7 +78,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             """
             Generate responses asynchronously using the specified model.
             """
-            responses = await api_tools.APIAgent(model_name="azure/GPT-3-5-turbo-sweden", max_tokens=4000).generate_batch_completion(
+            responses = await api_tools.APIAgent(model_name="azure/GPT-3-5-turbo-chat", max_tokens=4000).generate_batch_completion(
                 transform_prompts,
                 temperature=0,
                 responses_per_request=1,
@@ -110,6 +110,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             - outputs: A list of transformed output strings.
         """
         inputs, outputs = [], []
+        counter=0
         for response in responses:
             try:
                 extraction = find_and_parse_json(response, ["input", "output"], [])
@@ -128,6 +129,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
                     if counter < 2:
                         logger.info(f"inputs\n{str1}\n\nouputs\n{str2}")
                         counter += 1
+                    counter+=1
 
             except Exception as e:
                 logger.error(f"Error extracting from response: {e}")
@@ -154,7 +156,6 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             curr_inputs, curr_outputs = self.process_responses(responses, prompt_spec)
             inputs.extend(curr_inputs)
             outputs.extend(curr_outputs)
-
             if self.curr_failed_transforms > self.max_allowed_failed_transforms:
                 logger.error(f"Exceeded max allowed failed transforms: {self.curr_failed_transforms}")
                 break

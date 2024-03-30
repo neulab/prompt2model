@@ -1,0 +1,49 @@
+Input: 
+Output: 
+Input: Q: "strong themes of familial ties and spirituality that are powerful and moving without stooping to base melodrama "
+A:, Q: "i 'd much rather watch teens poking their genitals into fruit pies "
+A:, Q: "high-concept "
+A:, Q: is both convincing and radiant
+A:
+Output: positive, negative, positive, positive
+Input: Q: is n't merely offensive
+A:, Q: "berling and b\u00e9art ... continue to impress , and isabelle huppert ... again shows uncanny skill in getting under the skin of her characters "
+A:, Q: the film is , arguably , the most accomplished work to date from hong kong 's versatile stanley kwan .
+A:, Q: "rubbo 's humorously tendentious intervention into the who-wrote-shakespeare controversy . "
+A:, Q: "comes from its soul 's - eye view of how well-meaning patronizing masked a social injustice , at least as represented by this case "
+A:, Q: we can tell what it is supposed to be , but ca n't really call it a work of art .
+A:, Q: "as with so many merchandised-to-the-max movies of this type , more time appears to have gone into recruiting the right bands for the playlist and the costuming of the stars than into the script , whi...
+A:, Q: a compelling allegory about the last days of germany 's democratic weimar republic .
+A:, Q: easy feel-good sentiments
+A:, Q: 're never quite sure where self-promotion ends and the truth begins
+A:, Q: a little melodramatic , but with enough hope to keep you engaged .
+A:, Q: rush to the theater
+A:
+Output: negative, positive, positive, positive, positive, negative, negative, positive, positive, negative, positive, positive
+Input: Q: "lowbrow "
+A:, Q: "wasting away "
+A:, Q: "blade 2 is definitely a cut above the rest . "
+A:, Q: "satisfyingly scarifying , fresh and old-fashioned at the same time "
+A:, Q: "the buoyant energy level "
+A:, Q: "we 've liked klein 's other work but rollerball left us cold . "
+A:, Q: "raise audience 's spirits "
+A:, Q: are many tense scenes in trapped
+A:, Q: is having fun with it all
+A:, Q: "farrelly brothers-style , down-and-dirty laugher "
+A:, Q: "as shameful "
+A:, Q: a dashing and absorbing
+A:, Q: "shimmering cinematography that lends the setting the ethereal beauty of an asian landscape painting "
+A:
+Output: negative, negative, positive, positive, positive, negative, positive, positive, positive, positive, negative, positive, positive
+Input: Q: "filter out the complexity "
+A:, Q: "of classic romantic comedy to which it aspires "
+A:, Q: "a hilarious ode to middle america and "
+A:, Q: "sufficiently "
+A:, Q: "plunging deeper "
+A:, Q: "you 'd grab your kids and run and then probably call the police . "
+A:, Q: "faith , love and power "
+A:, Q: "there is no doubt that krawczyk deserves a huge amount of the credit for the film 's thoroughly winning tone . "
+A:, Q: "the pretensions -- and disposable story -- sink the movie . "
+A:, Q: "veers like a drunken driver through heavy traffic "
+A:
+Output: positive, positive, positive, positive, positive, negative, positive, positive, negative, negative

@@ -453,7 +453,8 @@ def construct_prompt_for_transform_data(
             str: Prompt for dataset transformation.
     """
 
-    incontext_tasks = [VITAMINC]
+    # incontext_tasks = [VITAMINC]
+    incontext_tasks = []
     incontext_examples = []
 
     for incontext_task in incontext_tasks:
