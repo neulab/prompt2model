@@ -219,8 +219,7 @@ class APIAgent:
 
 
 def handle_api_error(e, backoff_duration=1) -> None:
-    """
-    Handles API errors raised during API calls.
+    """Handles API errors raised during API calls.
 
     Args:
         e: The API error raised.
@@ -233,23 +232,24 @@ def handle_api_error(e, backoff_duration=1) -> None:
     Returns:
         None
     """
-
     logging.error(e)
 
     if not isinstance(e, openai.error.OpenAIError):
         raise e
 
-    if isinstance(e, (openai.error.APIError, openai.error.Timeout, openai.error.RateLimitError)):
+    if isinstance(
+        e, (openai.error.APIError, openai.error.Timeout, openai.error.RateLimitError)
+    ):
         import re
+
         match = re.search(r"Please retry after (\d+) seconds", str(e))
-        #If openai mentions how long to sleep use that, else do exponential backoff
-        if match is not None: 
+        # If openai mentions how long to sleep use that, else do exponential backoff
+        if match is not None:
             BUFFER_DURATION = 2
             backoff_duration = int(match.group(1)) + BUFFER_DURATION
 
         logging.info(f"Retrying in {backoff_duration} seconds...")
         time.sleep(backoff_duration)
-
 
 
 def count_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> int:

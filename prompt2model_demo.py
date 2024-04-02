@@ -154,7 +154,9 @@ def main():
     dataset_has_been_generated = status.get("dataset_has_been_generated", False)
     model_has_been_trained = status.get("model_has_been_trained", False)
     if not propmt_has_been_parsed:
-        prompt = "sentiment detection, where sentiments can be [positive, negative, neutral]"
+        prompt = (
+            "sentiment detection, where sentiments can be [positive, negative, neutral]"
+        )
         # line_print(
         #     "Enter your task description and few-shot examples (or 'done' to finish):"
         # )
@@ -197,8 +199,6 @@ def main():
         #     else:
         #         line_print("Invalid input. Please enter y or n.")
 
-        
-
         if auto_transform_data:
             while True:
                 line_print(
@@ -215,7 +215,11 @@ def main():
                     continue
                 status["num_transform"] = num_points_to_transform
                 break
-        retriever = DescriptionDatasetRetriever(auto_transform_data=auto_transform_data, num_points_to_transform=num_points_to_transform, num_votes=1)
+        retriever = DescriptionDatasetRetriever(
+            auto_transform_data=auto_transform_data,
+            num_points_to_transform=num_points_to_transform,
+            num_votes=1,
+        )
         retrieved_dataset_dict = retriever.retrieve_dataset_dict(prompt_spec)
         breakpoint()
 

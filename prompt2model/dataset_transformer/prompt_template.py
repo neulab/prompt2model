@@ -294,7 +294,7 @@ Here is the final response JSON with "input" and "output" keys:
     ],
 }
 
-TRANSFORM_EXEMPLARS ="""Task Description: {task_description}
+TRANSFORM_EXEMPLARS = """Task Description: {task_description}
 
 Task Examples:
 {samples}
@@ -307,9 +307,9 @@ Plan:
 
 Think step by step through the plan and show your working. End your response as a JSON with exactly two fields: "input", and "output"
 Response:
-{transformed_sample}""" # noqa E501
+{transformed_sample}"""  # noqa E501
 
-PLAN_EXEMPLARS ="""Task Description: {task_description}
+PLAN_EXEMPLARS = """Task Description: {task_description}
 
 Task Examples:
 {samples}
@@ -320,7 +320,7 @@ Dataset Row:
 {dataset_rows}
 
 Plan to convert Dataset Samples to Task Examples is:
-{plan}""" # noqa E501
+{plan}"""  # noqa E501
 
 
 CREATE_PLAN_PROMPT = """You are a Planning Agent. You create a plan to transform data samples from their existing format into the required format for a given task.
@@ -353,7 +353,7 @@ Carefully analyze the  `Task Description` and the `Task Examples`. Propose a hig
 
 Return only the plan.
 
-""" # noqa E501
+"""  # noqa E501
 
 TRANSFORM_DATA_PROMPT = """You are a Data Transforming Agent. Your job is to transform data from a given format, to the required format. Following are the detailed instructions for the same:
 1. Read the `Task Description`.
@@ -399,7 +399,7 @@ def truncate_row(example_row: dict, max_length=200) -> str:
 
 
 def construct_prompt_for_plan(
-    task_description: str,example: str, dataset: list[dict],  num_rows: int = 5
+    task_description: str, example: str, dataset: list[dict], num_rows: int = 5
 ) -> str:
     """Construct prompt for plan.
 
@@ -413,11 +413,14 @@ def construct_prompt_for_plan(
     Returns:
         str: Prompt for creating plan. Plan will be used for dataset transformation
     """
-    incontext_tasks = [VITAMINC] #using one is enough for now
+    incontext_tasks = [VITAMINC]  # using one is enough for now
     incontext_examples = []
 
     for incontext_task in incontext_tasks:
-        dataset_rows = "\n".join(f"{truncate_row(example_row=row)}\n" for row in incontext_task["dataset_rows"])
+        dataset_rows = "\n".join(
+            f"{truncate_row(example_row=row)}\n"
+            for row in incontext_task["dataset_rows"]
+        )
 
         incontext_example = PLAN_EXEMPLARS.format(
             task_description=incontext_task["task_description"],
@@ -426,15 +429,15 @@ def construct_prompt_for_plan(
             plan=incontext_task["plan"],
         )
         incontext_examples.append(incontext_example)
-    
+
     incontext_examples_str = ""
     for i, incontext_example in enumerate(incontext_examples):
         incontext_examples_str += f"Incontext Example {i+1}:\n{incontext_example}\n\n"
     return CREATE_PLAN_PROMPT.format(
-        in_context_examples= incontext_examples_str,
+        in_context_examples=incontext_examples_str,
         task_description=task_description,
         example=example,
-        dataset_row="\n".join(f"{truncate_row(example_row=dataset[i])}\n" for i in range(num_rows)),
+        dataset_row="\n".join(f"{dataset[i]}\n" for i in range(num_rows)),
     )
 
 
@@ -443,18 +446,17 @@ def construct_prompt_for_transform_data(
 ) -> str:
     """Construct prompt for dataset transformation.
 
-        Args:
-            task_description: str: Description of the task.
-            example: str: Example of the target task.
-            plan: str: Plan for dataset transformation.
-            dataset_row: dict: A dictionary containing the dataset row of the
-                potentially relevant dataset to be transformed.
-        Returns:
-            str: Prompt for dataset transformation.
-    """
+    Args:
+        task_description: str: Description of the task.
+        example: str: Example of the target task.
+        plan: str: Plan for dataset transformation.
+        dataset_row: dict: A dictionary containing the dataset row of the
+            potentially relevant dataset to be transformed.
 
-    # incontext_tasks = [VITAMINC]
-    incontext_tasks = []
+    Returns:
+        str: Prompt for dataset transformation.
+    """
+    incontext_tasks = [VITAMINC]
     incontext_examples = []
 
     for incontext_task in incontext_tasks:
@@ -466,15 +468,15 @@ def construct_prompt_for_transform_data(
             transformed_sample=incontext_task["transformed_sample"],
         )
         incontext_examples.append(incontext_example)
-    
+
     incontext_examples_str = ""
     for i, incontext_example in enumerate(incontext_examples):
         incontext_examples_str += f"Incontext Example {i+1}\n{incontext_example}\n\n"
-    
+
     return TRANSFORM_DATA_PROMPT.format(
-        in_context_examples= incontext_examples_str,
+        in_context_examples=incontext_examples_str,
         task_description=task_description,
         sample=example,
-        dataset_row=truncate_row(dataset_row),
-        plan=plan
+        dataset_row=dataset_row,
+        plan=plan,
     )

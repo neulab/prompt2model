@@ -3,19 +3,21 @@ from __future__ import annotations
 
 import json
 import re
+from typing import Any
 
 import openai
-import re
+
 from prompt2model.utils import api_tools, get_formatted_logger
-from prompt2model.utils.api_tools import API_ERRORS, handle_api_error, APIAgent
+from prompt2model.utils.api_tools import API_ERRORS, handle_api_error
 
 logger = get_formatted_logger("ParseJsonResponses")
+
 
 def find_and_parse_json(
     response: openai.Completion, required_keys: list, optional_keys: list = []
 ) -> dict | None:
     """Parse stuctured fields from the API response.
-    
+
     Incase there are multiple json objects in the response, we take the rightmost one
 
     Args:
@@ -31,7 +33,11 @@ def find_and_parse_json(
     """
     if type(response) != str and "choices" in response:
         response = response.choices[0]["message"]["content"]
-    correct_json = find_rightmost_brackets(response) 
+    correct_json = find_rightmost_brackets(response)
+
+    if correct_json is None:
+        logger.warning("No valid JSON found in the response.")
+        return None
 
     try:
         response_json = json.loads(correct_json, strict=False)
@@ -56,45 +62,45 @@ def find_and_parse_json(
     return final_response
 
 
-def find_rightmost_brackets(text:str)->str|None:
+def find_rightmost_brackets(text: str) -> str | None:
     """Find the rightmost complete set of brackets in a string."""
     stack = []
     for i, char in enumerate(reversed(text)):
-        if char == '}':
+        if char == "}":
             stack.append(len(text) - i - 1)
-        elif char == '{' and stack:
+        elif char == "{" and stack:
             start = len(text) - i - 1
             end = stack.pop()
             if not stack:  # Found the rightmost complete set
-                return text[start:end+1]
+                return text[start : end + 1]
     return None
 
 
-import re
+def parse_dataset_config_responses(response: openai.ChatCompletion) -> dict:
+    """Parses the response to extract relevant information from dataset/configuration.
 
-def parse_dataset_config_responses(response:dict)->str:
-    """
-    Parses the response to extract relevant information from dataset/configuration.
-
-    LLMs can return the dataset configuration in different formats - usually either between ** ** or as a sentence.
+    LLMs can return the dataset configuration in different formats -
+    usually either between ** ** or as a sentence.
 
     Args:
         response (str): The response containing the dataset configuration.
 
     Returns:
-        str: The extracted relevant information from the dataset configuration.
+        dict: The extracted relevant information from the dataset configuration.
     """
     if "choices" in response:
-        response = response["choices"][0]["message"]["content"]
+        response_str = response["choices"][0]["message"]["content"]
+    else:
+        response_str = response
 
-    pattern = r'\*\*(.*?)\*\*' 
+    pattern = r"\*\*(.*?)\*\*"
 
-    match = re.search(pattern, response)
+    match = re.search(pattern, response_str)
     if match:
-        response = match.group(1)
-    elif len(response.split())>1:
-        response = response.split()[-1].replace('.', '') 
-    return response
+        dataset_config = match.group(1)
+    elif len(response_str.split()) > 1:
+        dataset_config = response_str.split()[-1].replace(".", "")
+    return {"name": dataset_config}
 
 
 def parse_prompt_to_fields(
@@ -103,7 +109,7 @@ def parse_prompt_to_fields(
     optional_keys: list = [],
     max_api_calls: int = 5,
     module_name: str = "col_selection",
-) -> dict | ValueError | RuntimeError:
+) -> dict[str, Any]:
     """Parse prompt into specific fields, and return to the calling function.
 
     This function calls the required api, has the logic for the retrying,
@@ -120,7 +126,12 @@ def parse_prompt_to_fields(
                         rerank and col_selection
 
     Returns:
-        Parsed Response or throws error
+        Parsed Response as a dictionary.
+
+    Raises:
+        ValueError: If max_api_calls is not greater than 0.
+        RuntimeError: If the maximum number of API calls is reached.
+        Other exceptions as appropriate for other error conditions.
 
     """
     chat_api = api_tools.default_api_agent
@@ -137,7 +148,7 @@ def parse_prompt_to_fields(
                     prompt,
                 )
             )
-            extraction = None
+            extraction: dict[str, Any] | None = None
             if module_name == "col_selection":
                 extraction = find_and_parse_json(response, required_keys, optional_keys)
 
@@ -176,14 +187,12 @@ def make_single_api_request(prompt: str, max_api_calls: int = 10) -> str:
     while True:
         api_call_counter += 1
         try:
-            response: openai.ChatCompletion =  chat_api.generate_one_completion(
-                        prompt=prompt,
-                        temperature=0,
-                        presence_penalty=0, frequency_penalty=0
+            response: openai.ChatCompletion = chat_api.generate_one_completion(
+                prompt=prompt, temperature=0, presence_penalty=0, frequency_penalty=0
             )
             if response is not None:
                 return response.choices[0]["message"]["content"]
-            
+
         except API_ERRORS as e:
             last_error = e
             handle_api_error(e, backoff_duration=2**api_call_counter)

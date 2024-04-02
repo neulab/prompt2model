@@ -34,10 +34,6 @@ class PromptBasedInstructionParser(PromptSpec):
         self._examples: str | None = None
         self.max_api_calls = max_api_calls
 
-    def set_instruction_and_examples(self, instruction="", examples=""):
-        self._instruction = instruction
-        self._examples = examples
-        
     def parse_from_prompt(self, prompt: str) -> None:
         """Parse prompt into specific fields, stored as class member variables.
 
@@ -50,13 +46,21 @@ class PromptBasedInstructionParser(PromptSpec):
         """
         parsing_prompt_for_chatgpt = construct_prompt_for_instruction_parsing(prompt)
         required_keys = ["Instruction", "Demonstrations"]
-        extraction = parse_prompt_to_fields(
-            parsing_prompt_for_chatgpt, required_keys, max_api_calls=self.max_api_calls
-        )
-        self._instruction = extraction["Instruction"]
-        self._examples = extraction["Demonstrations"]
+        try:
+            extraction = parse_prompt_to_fields(
+                parsing_prompt_for_chatgpt,
+                required_keys,
+                max_api_calls=self.max_api_calls,
+            )
+            self._instruction = extraction["Instruction"]
+            self._examples = extraction["Demonstrations"]
+        except Exception as e:
+            print(e)
+            extraction = None
 
-    def set_instruction_and_examples(self, instruction:str="", examples:str="")->None:
+    def set_instruction_and_examples(
+        self, instruction: str = "", examples: str = ""
+    ) -> None:
         """Set the instruction and examples directly."""
         self._instruction = instruction
         self._examples = examples

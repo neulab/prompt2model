@@ -1,4 +1,4 @@
-""" This module contains the functions to generate the prompt for dataset reranking. """
+"""This module contains the functions to generate the prompt for dataset reranking."""
 from __future__ import annotations  # noqa FI58
 
 METAPROMPT_BASE_DATASET = """Your objective is to choose the most relevant dataset for a given a task (and few examples of the task). For each dataset, you will be provided with the dataset description, and tags related to the dataset which provide meta-information about the dataset. Please return the most relevant dataset, e.g. squad """  # noqa: E501
@@ -22,8 +22,7 @@ CONFIG_TEMPLATE = """\t[{counter}] **{config_name}**\n: The columns in this conf
 
 
 def build_datasets_prompt(instruction: str, examples: str, datasets_infos: dict):
-    """
-    Builds the prompt for dataset reranking.
+    """Builds the prompt for dataset reranking.
 
     Args:
         instruction (str): Task instructions
@@ -33,7 +32,6 @@ def build_datasets_prompt(instruction: str, examples: str, datasets_infos: dict)
     Returns:
         str: The input prompt for dataset retrieval.
     """
-
     dataset_string = ""
     for i, (dataset_name, dataset_info) in enumerate(datasets_infos.items(), start=1):
         dataset_string += f"""{DATASET_TEMPLATE.format(
@@ -53,13 +51,13 @@ def build_datasets_prompt(instruction: str, examples: str, datasets_infos: dict)
 
 
 def build_configs_prompt(instruction: str, examples: str, dataset_info: dict):
-    """
-    Builds the prompt for config reranking.
+    """Builds the prompt for config reranking.
 
     Args:
         instruction (str): Task instructions
         examples (str): Task Examples
-        datasets_infos (dict): A dictionary containing information about the specific dataset, which includes config information.
+        datasets_infos (dict): A dictionary containing information about
+            the specific dataset, which includes config information.
 
     Returns:
         str: The input prompt for dataset retrieval.
@@ -72,28 +70,34 @@ def build_configs_prompt(instruction: str, examples: str, dataset_info: dict):
                                             dataset_columns = config["columns"],
                                             sample_row = config["sample_row"]
                                             )}\n"""  # noqa: E501
-    
+
     input_prompt = INPUT_PROMPT_CONFIG_TEMPLATE.format(
         instruction=instruction,
         examples=examples,
-        dataset_name = config["dataset_name"],
-        dataset_description = config["dataset_description"],
-        configs = configs_string,
+        dataset_name=config["dataset_name"],
+        dataset_description=config["dataset_description"],
+        configs=configs_string,
         num=len(dataset_info["configs"]),
     )
     return input_prompt
-    
 
-def construct_prompt_for_dataset_reranking(instruction: str, examples: str, datasets_infos: dict,is_config:bool=False):
+
+def construct_prompt_for_dataset_reranking(
+    instruction: str,
+    examples: str,
+    datasets_infos: dict,
+    is_config: bool = False,
+):
     """Generate the full prompt for dataset reranking based on the given parameters.
 
     Args:
         instruction (str): Instruction of the task.
         examples (str): Examples of the task.
-        datasets_infos (dict): Dictionary with dataset/config information. Each dataset_info
-                               object also has a configs object representing the various
-                               configs of that dataset
-        is_config (bool): bool: Whether the prompt is for dataset reranking or config reranking
+        datasets_infos (dict): Dictionary with dataset/config information. Each
+                               dataset_info object also has a configs object
+                               representing the various configs of that dataset
+        is_config (bool): bool: Whether the prompt is for dataset
+                                reranking or config reranking
 
     Returns:
         str: Builds a comprehensive prompt for dataset reranking. This prompt includes
@@ -109,8 +113,6 @@ def construct_prompt_for_dataset_reranking(instruction: str, examples: str, data
 
     prompt_sections = [metaprompt_base]
     all_prompts = "\n\n------\n\n".join(prompt_sections) + "\n\n------\n\n"
-    all_prompts +=  input_prompt
+    all_prompts += input_prompt
 
     return all_prompts
-
-

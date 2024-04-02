@@ -33,12 +33,13 @@ output="Europe"
 
     # run this pipeline to retrieve relevant datasets, rerank them,
     # and transform them based on the prompt
-    retriever = DescriptionDatasetRetriever()
     num_points_to_transform = 20
-    retrieved_dataset_dict = retriever.retrieve_dataset_dict(
-        prompt_spec,
+    retriever = DescriptionDatasetRetriever(
         auto_transform_data=True,
         num_points_to_transform=num_points_to_transform,
+    )
+    retrieved_dataset_dict = retriever.retrieve_dataset_dict(
+        prompt_spec,
     )
 
     # save the final dataset to disk
