@@ -129,7 +129,6 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             )
         if not os.path.exists(self.search_index_path):
             logger.info("Creating dataset descriptions")
-
             encode_text(
                 self.encoder_model_name,
                 text_to_encode=[x.description for x in self.dataset_infos],
@@ -238,7 +237,6 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             ):
                 continue
             curr_dataset = self.reranking_datasets_infos[dataset_name]
-
             dataset_info_dict[dataset_name] = curr_dataset
 
         return dataset_info_dict
@@ -266,7 +264,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         input_columns = response["input"]
         output_column = response["output"]
         if len(input_columns) < 1 or len(output_column) != 1:
-            raise RuntimeError(f"Incorrect cols: {input_columns}, {output_column}")
+            raise RuntimeError(f"Incorrect number of cols: {input_columns}, {output_column} ") # noqa: E501
 
         dataset_columns = dataset_columns
         incorrect_columns = [
@@ -278,7 +276,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 f"not in the list of columns in the dataset ({dataset_columns})."
             )
 
-        return input_columns, output_column[0] if len(output_column) > 0 else []
+        return input_columns, output_column[0]
 
     def canonicalize_dataset_using_columns(
         self,
@@ -597,7 +595,6 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             inputs, outputs = dataset_transformer.transform_data(
                 prompt_spec, dataset=full_dataset["train"]
             )
-            # This should return input/output.
             canonicalized_dataset = self.make_dataset_from_samples(inputs, outputs)
             logger.info("Data transformation completed")
 
