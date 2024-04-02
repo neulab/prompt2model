@@ -1,8 +1,7 @@
 """An dual-encoder dataset retriever using HuggingFace dataset descriptions."""
 
-from __future__ import annotations
+from __future__ import annotations  # noqa FI58
 
-import asyncio  # noqa FI58
 import json
 import os
 import random
@@ -264,7 +263,9 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         input_columns = response["input"]
         output_column = response["output"]
         if len(input_columns) < 1 or len(output_column) != 1:
-            raise RuntimeError(f"Incorrect number of cols: {input_columns}, {output_column} ") # noqa: E501
+            raise RuntimeError(
+                f"Incorrect number of cols: {input_columns}, {output_column} "
+            )  # noqa: E501
 
         dataset_columns = dataset_columns
         incorrect_columns = [
@@ -459,8 +460,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 logger.warning("LLM hallucinated dataset/config name: %s", curr_name)
                 voting.append(None)
                 continue
-            voting.append(curr_name)
-
+            voting.append(curr_name["name"])
         if len(voting) == 0:
             logger.warning("Voting resulted in no dataset/config.")
             return None
@@ -482,7 +482,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         recommendation.
 
         Args:
-            dataset_list: A list of dataset names to be reranked.
+            datasets_info_dict: The datasets to be considered
             prompt_spec: An object containing the prompt specification,
                         ncluding instruction and examples, used for reranking datasets.
 
@@ -494,10 +494,10 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         dataset_selection_prompt = construct_prompt_for_dataset_reranking(
             prompt_spec.instruction, prompt_spec.examples, datasets_info_dict
         )
-
         dataset_name = self.get_rerank_with_highest_votes(
-            dataset_selection_prompt, datasets_info_dict
+            prompt=dataset_selection_prompt, infos_dict=datasets_info_dict
         )
+
         if dataset_name is None:
             return None, None
 
@@ -521,7 +521,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             config_name = self.get_rerank_with_highest_votes(
                 config_selection_prompt, curr_dataset["configs"]
             )
-
+        logger.info(f"Chosen dataset and config: {dataset_name=} {config_name=}")
         return dataset_name, config_name
 
     def canonicalize_dataset_automatically(
@@ -731,6 +731,6 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             or None if there are no relevant datasets.
         """
         sorted_list = self.retrieve_top_datasets(prompt_spec)
-        logger.info(f"Top datasets retrieved. Top datasets: {sorted_list}")
+        logger.info("Top datasets retrieved.")
 
         return self.create_dataset(prompt_spec, sorted_list)

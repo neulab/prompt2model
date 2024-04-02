@@ -34,8 +34,8 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
 
     def __init__(
         self,
-        num_points_to_transform: int,
-        max_allowed_failed_transforms: int,
+        num_points_to_transform: int = 10,
+        max_allowed_failed_transforms: int = 3,
         plan_prompt_fn: Callable[
             [str, str, list[dict]], str
         ] = construct_prompt_for_plan,
@@ -122,7 +122,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
     ) -> tuple[list[str], list[str]]:
         """Process the responses received from the API.
 
-        Also write the current set of inputs and outputs to a file.
+        Also write the current set of inputs and outputs to a dump text just in case.
 
         Args:
             responses: A list of response strings from the API.
@@ -134,7 +134,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             - outputs: A list of transformed output strings.
         """
         inputs, outputs = [], []
-        counter = 0
+        show_sample_flag = True
         for response in responses:
             try:
                 extraction = find_and_parse_json(response, ["input", "output"], [])
@@ -142,18 +142,15 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
                     if extraction["input"] is None or extraction["output"] is None:
                         raise ValueError("Input or output is None")
                     input = str(extraction["input"]).strip()
+                    output = str(extraction["output"]).strip()
                     if input in prompt_spec.examples:
                         raise ValueError("Repeated Task Examples from prompt")
 
-                    str1 = str("Q: " + input + "\nA:")
-                    str2 = str(extraction["output"]).strip()
-
-                    inputs.append(str1)
-                    outputs.append(str2)
-                    if counter < 2:
-                        logger.info(f"inputs\n{str1}\n\nouputs\n{str2}")
-                        counter += 1
-                    counter += 1
+                    inputs.append(input)
+                    outputs.append(output)
+                    if show_sample_flag:
+                        logger.info(f"inputs\n{input}\n\nouputs\n{output}")
+                        show_sample_flag = False
 
             except Exception as e:
                 logger.error(f"Error extracting from response: {e}")

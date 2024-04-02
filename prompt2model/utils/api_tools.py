@@ -5,6 +5,7 @@ from __future__ import annotations  # noqa FI58
 import asyncio
 import json
 import logging
+import re
 import time
 
 import aiolimiter
@@ -219,14 +220,15 @@ class APIAgent:
 
 
 def handle_api_error(e, backoff_duration=1) -> None:
-    """Handles API errors raised during API calls.
+    """Handle OpenAI errors or related errors that the API may raise.
+
+    Sleeps incase error is some type of timeout, else throws error.
 
     Args:
         e: The API error raised.
         backoff_duration: The duration to wait before retrying the API call.
 
     Raises:
-        openai.error.OpenAIError: If the error is not an instance of OpenAIError.
         e: If the error is not an instance of APIError, Timeout, or RateLimitError.
 
     Returns:
@@ -240,7 +242,6 @@ def handle_api_error(e, backoff_duration=1) -> None:
     if isinstance(
         e, (openai.error.APIError, openai.error.Timeout, openai.error.RateLimitError)
     ):
-        import re
 
         match = re.search(r"Please retry after (\d+) seconds", str(e))
         # If openai mentions how long to sleep use that, else do exponential backoff

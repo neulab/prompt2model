@@ -399,7 +399,7 @@ def truncate_row(example_row: dict, max_length=200) -> str:
 
 
 def construct_prompt_for_plan(
-    task_description: str, example: str, dataset: list[dict], num_rows: int = 5
+    task_description: str, example: str, dataset: list[dict], num_rows: int = None
 ) -> str:
     """Construct prompt for plan.
 
@@ -413,6 +413,8 @@ def construct_prompt_for_plan(
     Returns:
         str: Prompt for creating plan. Plan will be used for dataset transformation
     """
+    if not num_rows:
+        num_rows = min(len(dataset), 5)
     incontext_tasks = [VITAMINC]  # using one is enough for now
     incontext_examples = []
 

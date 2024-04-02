@@ -63,19 +63,19 @@ def build_configs_prompt(instruction: str, examples: str, dataset_info: dict):
         str: The input prompt for dataset retrieval.
     """
     configs_string = ""
-    for j, config in dataset_info["configs"].items():
+    for j, (config_name, config_info) in enumerate(dataset_info["configs"].items()):
         configs_string += f"""{CONFIG_TEMPLATE.format(
                                             counter = chr(ord('a')+j),
-                                            config_name = config["config_name"],
-                                            dataset_columns = config["columns"],
-                                            sample_row = config["sample_row"]
+                                            config_name = config_name,
+                                            dataset_columns = config_info["columns"],
+                                            sample_row = config_info["sample_row"]
                                             )}\n"""  # noqa: E501
 
     input_prompt = INPUT_PROMPT_CONFIG_TEMPLATE.format(
         instruction=instruction,
         examples=examples,
-        dataset_name=config["dataset_name"],
-        dataset_description=config["dataset_description"],
+        dataset_name=dataset_info["dataset_name"],
+        dataset_description=dataset_info["description"],
         configs=configs_string,
         num=len(dataset_info["configs"]),
     )

@@ -179,6 +179,8 @@ def main():
         line_print("Prompt parsed.")
 
     if propmt_has_been_parsed and not dataset_has_been_retrieved:
+        retriever_logger = get_formatted_logger("DescriptionDatasetRetriever")
+        retriever_logger.setLevel(logging.INFO)
         prompt_spec = MockPromptSpec(
             TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
         )

@@ -31,7 +31,7 @@ def find_and_parse_json(
         final response as a Dictionary
         Else returns None.
     """
-    if type(response) != str and "choices" in response:
+    if type(response) != str and hasattr(response, "choices"):
         response = response.choices[0]["message"]["content"]
     correct_json = find_rightmost_brackets(response)
 
@@ -88,17 +88,18 @@ def parse_dataset_config_responses(response: openai.ChatCompletion) -> dict:
     Returns:
         dict: The extracted relevant information from the dataset configuration.
     """
-    if "choices" in response:
-        response_str = response["choices"][0]["message"]["content"]
+    if type(response) != str and hasattr(response, "choices"):
+        response_str = response.choices[0]["message"]["content"]
     else:
         response_str = response
 
     pattern = r"\*\*(.*?)\*\*"
 
     match = re.search(pattern, response_str)
+    dataset_config = ""
     if match:
         dataset_config = match.group(1)
-    elif len(response_str.split()) > 1:
+    elif len(response_str.split()) >= 1:
         dataset_config = response_str.split()[-1].replace(".", "")
     return {"name": dataset_config}
 
@@ -131,7 +132,6 @@ def parse_prompt_to_fields(
     Raises:
         ValueError: If max_api_calls is not greater than 0.
         RuntimeError: If the maximum number of API calls is reached.
-        Other exceptions as appropriate for other error conditions.
 
     """
     chat_api = api_tools.default_api_agent
@@ -146,6 +146,9 @@ def parse_prompt_to_fields(
             response: openai.ChatCompletion | Exception = (
                 chat_api.generate_one_completion(
                     prompt,
+                    temperature=0.01,
+                    presence_penalty=0,
+                    frequency_penalty=0,
                 )
             )
             extraction: dict[str, Any] | None = None
@@ -188,7 +191,7 @@ def make_single_api_request(prompt: str, max_api_calls: int = 10) -> str:
         api_call_counter += 1
         try:
             response: openai.ChatCompletion = chat_api.generate_one_completion(
-                prompt=prompt, temperature=0, presence_penalty=0, frequency_penalty=0
+                prompt=prompt, temperature=0.01, presence_penalty=0, frequency_penalty=0
             )
             if response is not None:
                 return response.choices[0]["message"]["content"]
