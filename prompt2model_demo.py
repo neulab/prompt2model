@@ -132,7 +132,7 @@ def main():
 
     while True:
         line_print("Do you want to start from scratch? (y/n)")
-        answer = "y"
+        answer = input()
         if answer.lower() == "n":
             if os.path.isfile("status.yaml"):
                 with open("status.yaml", "r") as f:
@@ -154,19 +154,17 @@ def main():
     dataset_has_been_generated = status.get("dataset_has_been_generated", False)
     model_has_been_trained = status.get("model_has_been_trained", False)
     if not propmt_has_been_parsed:
-        prompt = (
-            "sentiment detection, where sentiments can be [positive, negative, neutral]"
+        prompt = ""
+        line_print(
+            "Enter your task description and few-shot examples (or 'done' to finish):"
         )
-        # line_print(
-        #     "Enter your task description and few-shot examples (or 'done' to finish):"
-        # )
-        # time.sleep(2)
-        # while True:
-        #     line = input()
-        #     if line == "done":
-        #         break
-        #     prompt += line + "\n"
-        # line_print("Parsing prompt...")
+        time.sleep(2)
+        while True:
+            line = input()
+            if line == "done":
+                break
+            prompt += line + "\n"
+        line_print("Parsing prompt...")
         prompt_spec = PromptBasedInstructionParser(task_type=TaskType.TEXT_GENERATION)
         prompt_spec.parse_from_prompt(prompt)
 
@@ -189,24 +187,24 @@ def main():
         line_print(
             "Data transformation converts retrieved data into the desired format as per the prompt."  # noqa E501
         )
-        auto_transform_data = True
-        # while True:
-        #     line = input()
-        #     if line.lower() == "y":
-        #         auto_transform_data = True
-        #         break
-        #     elif line.lower() == "n":
-        #         auto_transform_data = False
-        #         break
-        #     else:
-        #         line_print("Invalid input. Please enter y or n.")
+        auto_transform_data = False
+        while True:
+            line = input()
+            if line.lower() == "y":
+                auto_transform_data = True
+                break
+            elif line.lower() == "n":
+                auto_transform_data = False
+                break
+            else:
+                line_print("Invalid input. Please enter y or n.")
 
         if auto_transform_data:
             while True:
                 line_print(
                     "Enter the number of data points you want to transform (the remaining data points in the dataset will be discarded):"  # noqa E501
                 )
-                line = 10
+                line = input()
                 try:
                     num_points_to_transform = int(line)
                 except ValueError:
@@ -220,10 +218,8 @@ def main():
         retriever = DescriptionDatasetRetriever(
             auto_transform_data=auto_transform_data,
             num_points_to_transform=num_points_to_transform,
-            num_votes=1,
         )
         retrieved_dataset_dict = retriever.retrieve_dataset_dict(prompt_spec)
-        breakpoint()
 
         dataset_has_been_retrieved = True
         if retrieved_dataset_dict is not None:
