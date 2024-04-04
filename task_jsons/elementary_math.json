@@ -1,0 +1,74 @@
+{
+    "prompt_instruction": "This task tests whether a Language Model can answer a multiple choice mathematical word problem along with a hint in form of arithmetic operation sequences expressed in mathematical form",
+    "multiple_choice_grade": 0.24869927159209157,
+    "calibration_multiple_choice_brier_score_ground_truth_val": [
+        0.28451587718456045,
+        0.2785469023005196,
+        0.27536372597467357
+    ],
+    "_runtime": 10125.928107261658,
+    "eval/loss": 0.9346407651901244,
+    "eval/runtime": 35.8744,
+    "model_created": true,
+    "train/global_step": 726,
+    "train/learning_rate": 0.000004160887656033288,
+    "multiple_choice_grade_ground_truth_val": [
+        0.235,
+        0.25,
+        0.26
+    ],
+    "_wandb.runtime": 10125,
+    "train/loss": 0.5049,
+    "train/epoch": 3,
+    "train/total_flos": 127248978709315580,
+    "final_generations": {
+        "_type": "table-file",
+        "ncols": 4,
+        "nrows": 200,
+        "sha256": "c870d1c79c9f2537b17504653bf304bc48b9a82fc26a4bf3d4ee1d0d6c6f0af3",
+        "artifact_path": "wandb-client-artifact://s8542qp5hwpie580d5tcj0n10xg4xv16j9l7oc7z7lm7g065mke98ma7ssve9jwauvy7ez5titv854wp6mcqpvqu9b5nzn9r73i4mmlsv6xpc6rtbg2zmfrjnrjzh70l:latest/final_generations.table.json",
+        "_latest_artifact_path": "wandb-client-artifact://s8542qp5hwpie580d5tcj0n10xg4xv16j9l7oc7z7lm7g065mke98ma7ssve9jwauvy7ez5titv854wp6mcqpvqu9b5nzn9r73i4mmlsv6xpc6rtbg2zmfrjnrjzh70l:latest/final_generations.table.json",
+        "path": "media/table/final_generations_32_c870d1c79c9f2537b175.table.json",
+        "size": 191514
+    },
+    "_step": 33,
+    "retrieved_dataset": "test_tasks_retrieved_data/elementary_math_qa.question_only_retrieved_dataset",
+    "expected_calibration_error": 0.6447770805132188,
+    "train/train_steps_per_second": 0.171,
+    "normalized_aggregate_score_ground_truth_val": [
+        4.351536855976609,
+        6.2269969176241275,
+        7.4773036253891405
+    ],
+    "checkpoint_step": [
+        "200",
+        "400",
+        "600"
+    ],
+    "normalized_aggregate_score": 6.0643659722852865,
+    "retrieved_dataset_artifact": {
+        "_latest_artifact_path": "wandb-client-artifact://8pfejl733kibstr73h56j2c2dm148wgmpazimfe292fwibi4kwebimeljbzkili2t3guftifjq6y4qyl5t7jlpovt52i3qhsjqn8hc8kpnnr06c7171jqcwgoqbwwp0h:latest/retrieved_dataset_artifact.table.json",
+        "path": "media/table/retrieved_dataset_artifact_3_b6235bd85fc1fa54e141.table.json",
+        "size": 553355,
+        "_type": "table-file",
+        "ncols": 2,
+        "nrows": 2152,
+        "sha256": "b6235bd85fc1fa54e1412d7a55d961bfe136b01b0e1b3e10570966e1d873c934",
+        "artifact_path": "wandb-client-artifact://8pfejl733kibstr73h56j2c2dm148wgmpazimfe292fwibi4kwebimeljbzkili2t3guftifjq6y4qyl5t7jlpovt52i3qhsjqn8hc8kpnnr06c7171jqcwgoqbwwp0h:latest/retrieved_dataset_artifact.table.json"
+    },
+    "expected_calibration_error_ground_truth_val": [
+        0.6848354555788231,
+        0.6698354555788231,
+        0.6558363634125561
+    ],
+    "used_model": "mistralai/Mistral-7B-v0.1",
+    "prompt_examples": "input=\nWhat is the answer to the following math word problem?:when average age of 21 members are 0 , how many members greater than 0 ?\n choice:20\n choice:25\n choice:21\n choice:17\n choice:24\nA: \noutput=20\n\ninput=\nWhat is the answer to the following math word problem?:7 machines at a certain factory operate at the same constant rate . if 6 of these machines , operating simultaneously , take 42 hours to fill a certain production order , how many fewer hours does it take all 7 machines , operating simultaneously , to fill the same production order ?\n choice:4\n choice:7\n choice:5\n choice:3\n choice:6\nA: \noutput=6\n\ninput=\nWhat is the answer to the following math word problem?:one night 40 percent of the female officers on a police force were on duty . if 240 officers were on duty that night and half of these were female officers , how many female officers were on the police force ?\n choice:000\n choice:1\n choice:90\n choice:270\n choice:500\n choice:300\nA: \noutput=300",
+    "train/train_loss": 0.7241752955539167,
+    "eval/samples_per_second": 6.021,
+    "calibration_multiple_choice_brier_score": 0.2784503346564006,
+    "val_acc": 0.53,
+    "train/train_runtime": 4255.3607,
+    "eval/steps_per_second": 0.753,
+    "train/train_samples_per_second": 1.365,
+    "_timestamp": 1707574360.2309885
+}

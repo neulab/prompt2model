@@ -11,6 +11,7 @@ from prompt2model.dataset_transformer.base import DatasetTransformer
 from prompt2model.dataset_transformer.prompt_template import (
     construct_prompt_for_plan,
     construct_prompt_for_transform_data,
+    construct_prompt_for_task_requirements,
 )
 from prompt2model.dataset_retriever.task_expansion_prompt import (
     construct_propmt_for_task_explanation
@@ -36,10 +37,10 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
     def __init__(
         self,
         plan_prompt_fn: Callable[
-            [str, list[dict], str], str
+            [str, str, list[dict], str], str
         ] = construct_prompt_for_plan,
         transform_prompt_fn: Callable[
-            [str, dict, str, str], str
+            [str, str, dict, str, str], str
         ] = construct_prompt_for_transform_data,
     ):
         """Initialize the class."""
@@ -92,22 +93,38 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         num_points_to_transform: int,
     ) -> datasets.DatasetDict:
         """Transform the dataset according to the prompt_spec and dataset."""
+        intermediate_info_dict = {}
+        
         task_explanation_prompt = construct_propmt_for_task_explanation(prompt_spec.instruction, prompt_spec.examples)
         task_explanation = make_single_api_request(task_explanation_prompt, max_api_calls=10)
+        
+        task_requirements_prompt = construct_prompt_for_task_requirements(task_explanation, prompt_spec.examples)
+        task_requirements = make_single_api_request(task_requirements_prompt, max_api_calls=10)
+        
+        intermediate_info_dict["task_explanation"] = (task_explanation, task_requirements)
+        
+        
         plan_prompt = self.plan_prompt_fn(
             task_explanation,
+            task_requirements,
             dataset,
             prompt_spec.examples,
         )
-        wandb.log({"plan_prompt": plan_prompt})
+        # wandb.log({"plan_prompt": plan_prompt})
         print("Plan prompt: \n", plan_prompt)
         self.plan = make_single_api_request(plan_prompt, max_api_calls=100)
-        wandb.log({"plan": self.plan})
+        # wandb.log({"plan": self.plan})
+        
+        intermediate_info_dict["plan"] = self.plan
 
         logger.info(f"Plan created. Plan: {self.plan}")
 
         inputs = []
         outputs = []
+        
+        og_examples = []
+        transformed_examples = []
+        cot_responses = []
 
         max_len = min(num_points_to_transform, len(dataset))
         len_count = 0
@@ -116,6 +133,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         for row in dataset:
             transform_prompt = self.transform_prompt_fn(
                 task_explanation,
+                task_requirements,
                 row,
                 self.plan,
                 prompt_spec.examples,
@@ -127,6 +145,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
                 print(transform_prompt)
                 flag = True
             transform_prompts.append(transform_prompt)
+            og_examples.append(row)
 
             len_count += 1
             if len_count >= max_len:
@@ -197,9 +216,9 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
 
 
         async def generate_responses(transform_prompts):
-            responses = await api_tools.APIAgent(model_name="azure/GPT-3-5-turbo-sweden", max_tokens=4000).generate_batch_completion(
+            responses = await api_tools.APIAgent(model_name="azure/GPT-3-5-turbo-sweden", max_tokens=2000).generate_batch_completion(
                 transform_prompts,
-                temperature=0,
+                temperature=0.1,
                 responses_per_request=1,
                 requests_per_minute=15,
             )
@@ -219,6 +238,11 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             temp1 = []
             temp2 = []
             for response in responses:
+                try:
+                    response_text = response.choices[0]["message"]["content"]
+                    cot_responses.append(response_text)
+                except Exception as e:
+                    cot_responses.append(None)
 
                 try:
                     extraction = find_and_parse_json(response, ["input", "output"], [])
@@ -233,6 +257,8 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
                         
                         str1 = str("Q: " + input + "\nA:")
                         str2 = str(extraction["output"]).strip()
+                        
+                        transformed_examples.append(f"input={str1}\n\noutput={str2}\n\n")
 
                         temp1.append(str1)
                         temp2.append(str2)
@@ -243,6 +269,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
 
                 except Exception as e:
                     logger.error(f"Error extracting from response: {e}")
+                    transformed_examples.append(None)
                     curr_failed_transforms +=1
                     if curr_failed_transforms > max_allowed_failed_transforms:
                         dataset_dict = {}
@@ -257,6 +284,10 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
                 with open('temp_dump_arithmetic_simple_q.txt', 'a') as file:
                     file.write('Input: ' + ', '.join(map(str, temp1)) + '\n')
                     file.write('Output: ' + ', '.join(map(str, temp2)) + '\n')
+            
+            intermediate_info_dict["og_examples"] = og_examples
+            intermediate_info_dict["transformed_examples"] = transformed_examples
+            intermediate_info_dict["cot_responses"] = cot_responses
 
         logger.info(f"Requested length: {max_len}\nActual length: {len(inputs)}\n")
-        return self.make_dataset_from_samples(inputs, outputs)
+        return self.make_dataset_from_samples(inputs, outputs), intermediate_info_dict

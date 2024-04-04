@@ -126,4 +126,3 @@ def construct_prompt_for_dataset_reranking(instruction: str, examples: str, data
 
     return all_prompts
 
-

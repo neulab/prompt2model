@@ -1,0 +1,84 @@
+{
+    "train/epoch": 3,
+    "final_generations": {
+        "ncols": 4,
+        "nrows": 200,
+        "sha256": "eb5a4e71171b840320185749db6a066d610d36a5566a1d2e035ec77cb7931d91",
+        "artifact_path": "wandb-client-artifact://eawey7sefkw8jbbm0yn2bm589iqrtqorek88kj69n0ov021ka1nplleszfj6j3dsww1lwiy1cwm93tafkhomg6x3nfl9irs71m2e6t1ao83trkk4yh7j16lxml4d9lw9:latest/final_generations.table.json",
+        "_latest_artifact_path": "wandb-client-artifact://eawey7sefkw8jbbm0yn2bm589iqrtqorek88kj69n0ov021ka1nplleszfj6j3dsww1lwiy1cwm93tafkhomg6x3nfl9irs71m2e6t1ao83trkk4yh7j16lxml4d9lw9:latest/final_generations.table.json",
+        "path": "media/table/final_generations_42_eb5a4e71171b84032018.table.json",
+        "size": 385281,
+        "_type": "table-file"
+    },
+    "train/global_step": 1020,
+    "_timestamp": 1707574786.741757,
+    "prompt_examples": "input=\nToday, Jessica went to the restaurant. Between what times could they have gone?\nWe know that: \nJessica woke up at 6am.\nLisa saw Jessica waiting at the train station from 6am to 12pm.\nLinda saw Jessica getting a coffee at the cafe from 12pm to 2pm.\nSarah saw Jessica walking towards the Statue of Liberty from 2pm to 6pm.\nThe restaurant was closed after 7pm.\nBetween what times could Jessica have gone to the restaurant?\n  choice: 2pm to 6pm\n  choice: 6pm to 7pm\n  choice: 12pm to 2pm\n  choice: 6am to 12pm\nPossible times: \noutput=6pm to 7pm\n\ninput=\nToday, Jason went to the movies. Between what times could they have gone?\nWe know that: \nJason woke up at 9am.\nJames saw Jason buying lunch at the deli from 9am to 11am.\nDavid saw Jason attending class at the school from 1pm to 2pm.\nElizabeth saw Jason buying clothes at the mall from 2pm to 3pm.\nMary saw Jason playing tennis at the tennis court from 3pm to 6pm.\nThe movies was closed after 6pm.\nBetween what times could Jason have gone to the movies?\n  choice: 1pm to 2pm\n  choice: 3pm to 6pm\n  choice: 11am to 1pm\n  choice: 2pm to 3pm\nPossible times: \noutput=11am to 1pm\n\ninput=\nToday, William went to the market. Between what times could they have gone?\nWe know that: \nWilliam woke up at 6am.\nElizabeth saw William driving to the water park from 6am to 7am.\nBetty saw William sitting on a rooftop from 7am to 8am.\nJames saw William buying a bike at the bike shop from 8am to 9am.\nJason saw William fixing their computer at the electronic store from 9am to 10am.\nKimberly saw William working at the office from 10am to 11am.\nThe market was closed after 12pm.\nBetween what times could William have gone to the market?\n  choice: 11am to 12pm\n  choice: 8am to 9am\n  choice: 10am to 11am\n  choice: 7am to 8am\nPossible times: \noutput=11am to 12pm",
+    "train/train_samples_per_second": 1.137,
+    "normalized_aggregate_score": 1.200000000000001,
+    "train/train_steps_per_second": 0.142,
+    "_step": 43,
+    "checkpoint_step": [
+        "200",
+        "400",
+        "600",
+        "800",
+        "1000"
+    ],
+    "eval/steps_per_second": 0.726,
+    "expected_calibration_error": 0.7446144996647764,
+    "used_model": "mistralai/Mistral-7B-v0.1",
+    "prompt_instruction": "Answer questions about which times certain events could have occurred",
+    "retrieved_dataset_artifact": {
+        "nrows": 3025,
+        "sha256": "b8c84a71b3114052ec268de7e4f073726746896be9b4de2450eb9574e19a5581",
+        "artifact_path": "wandb-client-artifact://qgnv384khjwkgctphv59myndofyn8oetwvciucp33nv6zpblnjfu0i5v93b2n4b017bxiomolhqgo5s1oved1esls31yhjj48ra5ueqiemred5d0digztu0zz27lc2g8:latest/retrieved_dataset_artifact.table.json",
+        "_latest_artifact_path": "wandb-client-artifact://qgnv384khjwkgctphv59myndofyn8oetwvciucp33nv6zpblnjfu0i5v93b2n4b017bxiomolhqgo5s1oved1esls31yhjj48ra5ueqiemred5d0digztu0zz27lc2g8:latest/retrieved_dataset_artifact.table.json",
+        "path": "media/table/retrieved_dataset_artifact_3_b8c84a71b3114052ec26.table.json",
+        "size": 1120162,
+        "_type": "table-file",
+        "ncols": 2
+    },
+    "retrieved_dataset": "test_tasks_retrieved_data/temporal_sequences_retrieved_dataset",
+    "train/learning_rate": 0.000002463054187192118,
+    "multiple_choice_grade": 0.259,
+    "calibration_multiple_choice_brier_score_ground_truth_val": [
+        0.3643132698820314,
+        0.40336442221796776,
+        0.4024269222488766,
+        0.3974278301238195,
+        0.3974278301238195
+    ],
+    "_wandb.runtime": 10189,
+    "train/loss": 0.0159,
+    "eval/samples_per_second": 5.793,
+    "normalized_aggregate_score_ground_truth_val": [
+        9.333333333333334,
+        -7.333333333333332,
+        -7.333333333333332,
+        -6.000000000000002,
+        -6.000000000000002
+    ],
+    "train/train_runtime": 7182.324,
+    "val_acc": 0.96,
+    "eval/runtime": 52.3071,
+    "model_created": true,
+    "train/train_loss": 0.0811124390539001,
+    "calibration_multiple_choice_brier_score": 0.371370232617603,
+    "expected_calibration_error_ground_truth_val": [
+        0.777381522319955,
+        0.8086144996647764,
+        0.8048638187585693,
+        0.7948638187585693,
+        0.7948638187585693
+    ],
+    "_runtime": 10190.405653953552,
+    "eval/loss": 0.01566634513437748,
+    "train/total_flos": 178691919826649100,
+    "multiple_choice_grade_ground_truth_val": [
+        0.32,
+        0.195,
+        0.195,
+        0.205,
+        0.205
+    ]
+}

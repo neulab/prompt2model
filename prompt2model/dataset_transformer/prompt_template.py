@@ -351,6 +351,98 @@ Plan to convert Dataset Samples to Task Examples is:
 {plan}""" # noqa E501
 
 
+CREATE_TASK_REQUIREMENTS_PROMPT = """You are a Requirements Creator Agent. You will be shown a task description and some task examples. You have to create a list of concrete requirements to ensure that if someone were to create a dataset for this task, they must follow the list of requirements you create. Requirements must fall into 2 types: Format requirements and Content requirements.
+
+Task Description: {task_explanation}
+Task Examples:
+{task_examples}
+
+Please create a list of requirements for the above task."""
+
+CREATE_TASK_REQUIREMENTS_PROMPT2 = """You are a Requirements Creator Agent. You will be shown a task description and some task examples. You have to create a list of concrete requirements to ensure that if someone were to create a dataset for this task, they must follow the list of requirements you create. Requirements must fall into 2 types: Format requirements and Content requirements.
+
+-------------------------------------------------
+Here are some examples for your reference.
+
+
+Task Description: The task involves solving linguistic puzzles that resemble the structure of Rosetta Stone translations. The Rosetta Stone is famous for having the same text inscribed in three different scripts, which allowed for the deciphering of Egyptian hieroglyphs. In this task, the goal is to translate phrases from one language to another using given examples as a guide.
+
+The task description provides pairs of sentences, where the first sentence is in English and the second sentence is in an "Other" language, which represents a constructed or unknown language. The English sentences contain a variety of elements such as adjectives (e.g., "big", "fast"), nouns (e.g., "dogs", "monkeys"), verbs in different tenses (e.g., "will remember," "hit"), and complex structures involving relative clauses (e.g., "that the fabulous dolphin praised").
+
+The "Other" language sentences are composed of words that do not correspond directly to English words in a one-to-one manner. Instead, they seem to follow a pattern or structure that can be deduced by analyzing the provided examples. The task requires the solver to identify the patterns and rules governing the translation between English and the "Other" language.
+
+The input consists of several example sentences in both English and the "Other" language, followed by a sentence in the "Other" language without its English counterpart. The output is the expected translation of the provided "Other" language sentence into English.
+
+The format of the input/output examples is consistent:
+
+- The English sentence is always preceded by the label "English:".
+- The "Other" language sentence is always preceded by the label "Other:".
+- The output is an English/Other sentence without any preceding label.
+
+The general trend in the examples suggests that there is a systematic way to translate between the two languages, which may involve understanding the grammar, syntax, and vocabulary of the "Other" language as it relates to English. The task requires careful analysis of the given examples to decode the structure and create a translation for the final "Other" language sentence into English.
+Task Examples:
+input=English: the small monkeys will want the fabulous dogs that a tall person praises Other: qecoweye mumede ludopuzi zotoqozi qahosa duqide buwuvazi keyuxezi pu mumene fupapujo hukaqojo
+English: the tall children that will touch slow birds will like fabulous frogs that slapped the small person Other: wawoweye sahoweye duqine rukopujo piyoqojo pu mumede buwupuzi yafaqozi tisomoye mumene ludovajo keyuxejo pu duqine fupapujo cayiqojo
+English: the big dogs that a tall monkey touches slap the excellent person Other: tisosaye sahosa duqide buwuvazi zotoxezi pu mumede zicipuzi hukaqozi mumene fudavajo keyuxejo
+English: the fabulous person will praise a small frog Other: qahowe mumede fupavazi keyuxezi duqine ludovajo cayixejo\nEnglish: the small person will dislike the slow dogs Other: qovowe mumede ludovazi keyuxezi mumene rukopujo hukaqojo
+English: slow birds touch a big dog Other:
+output=sahosaye duqide rukopuzi piyoqozi duqine zicivajo hukaxejo
+
+input=Other: qahaku juvoku jema kogeguda wisukuzo necikuwa pude English: the big cats will remember small birds
+Other: qahaku juvoku qiro bebaguda qahakuzo fuxokuwa pude English: the fast cats will want the small crows
+Other: qahaku neciku jema yokepada qahabuzo firibuwa pude English: the big birds hit the small dog
+Other: qahaku cunuku qajo yokeguda gugegu wisukuzo firikuwa pude he wisubuzo necibuwa seku English: the short people will hit a excellent bird that will like small dogs
+Other: wisuku fuxoku pani yokexuda he qahaku firiku qajo rijupada wisubuzo cunubuwa qiro English: the short dogs that slow crows hit see a fast person
+Other: wisubu fuxobu qiro kogegu bebaguda wisukuzo necikuwa qajo he qahakuzo necikuwa pude English:
+output=a fast crow will remember the small birds that will want short birds
+
+input=English: the big dog sees the fast monkeys that the fabulous dolphin praised Other: kerazu kaxuso fabuso keragu feneco gilico xo kerazu bisoso pebiso dabomo texiqa
+English: the big dog will see the excellent monkey that will dislike the slow frog Other: kerazu kaxuso fabuso kerazu feneso wejaso xo kerazu hiwiso yopaso sotena texina
+English: the slow birds that see the fast dolphins will slap the big dog that hit fabulous monkeys Other: keragu wazoco yopaco xo keragu bisoco gilico texiyoqa kerazu kaxuso fabuso xo dufegu feneco pebico sevemo yivuyona
+English: the fabulous monkeys will touch big dolphins that slapped the fast frogs Other: keragu feneco pebico dufegu bisoco fabuco xo keragu hiwico gilico yivuyomo xuquyona
+English: the big frogs that the tall dolphins touched will dislike the fabulous bird Other: keragu hiwico fabuco xo keragu bisoco maquco xuquyomo kerazu wazoso pebiso soteyona
+English: the fabulous monkeys disliked the fast dogs Other:
+output=keragu feneco pebico keragu kaxuco gilico soteyomo
+
+Please create a list of requirements for the above task.
+
+### Format Requirements
+
+1. **Input Dataset Format**:
+   - Each example must start with the label "English:" followed by a sentence in English.
+   - Right after the English sentence, the label "Other:" followed by the sentence in the constructed or unknown language must be provided.
+   - Multiple such pairs of "English" and "Other" should be a part of the input.
+   - The final sentence must start with the label "English:". The "Other" translation for the final sentence must not be provided in the input.
+
+2. **Output Dataset Format**:
+   - The output must be a sentence either in English or the "Other" language, matching the translation direction requested in the input.
+
+### Content Requirements
+
+1. **Diversity of Sentences**:
+   - The dataset must include a wide variety of sentence structures, including simple, compound, and complex sentences.
+   - Sentences must include various grammatical elements such as nouns, verbs in different tenses, adjectives, and relative clauses.
+
+2. **Vocabulary Range**:
+   - The dataset must cover a broad vocabulary range in both English and the "Other" language, including parts of speech such as nouns, verbs, adjectives, and adverbs.
+   - Specific focus must be given to include diverse thematic vocabulary like animals, objects, actions, and qualities.
+
+3. **Syntax and Grammar Rules of the "Other" Language**:
+   - The "Other" language sentences must follow a consistent yet distinct syntax and grammatical structure from English. The rules governing these constructions must be logical and decipherable from the given examples.
+   - The relationship between the English sentences and their "Other" language counterparts must be consistent across the dataset, facilitating the deduction of translation rules.
+
+4. **Consistency in Translation**:
+   - The translation between English and the "Other" language must be consistent throughout the dataset. The same English word or phrase must translate to the same word or phrase in the "Other" language across different examples, except where grammatical structures necessitate variation.
+
+-------------------------------------------------
+Now create requirements for the following task:
+
+Task Description: {task_explanation}
+Task Examples:
+{task_examples}
+
+Please create a list of requirements for the above task."""
+
 CREATE_PLAN_PROMPT = """You are a Planning Agent. You create a plan to transform data samples from their existing format into the required format for a given task.
 
 -------------------------------------------------
@@ -382,6 +474,190 @@ Carefully analyze the  `Task Description` and the `Task Examples`. Propose a hig
 Return only the plan.
 
 """ # noqa E501
+
+PLAN_INCONTEXT_EXAMPLE = """Task Description: The task involves solving linguistic puzzles that resemble the structure of Rosetta Stone translations. The Rosetta Stone is famous for having the same text inscribed in three scripts, which allowed for the deciphering of Egyptian hieroglyphs. In this task, the goal is to decipher an unknown language (referred to as "Other") by using English sentences and their corresponding translations in the Other language.
+The general trend in the task examples is that each input consists of pairs of sentences, one in English and one in the Other language. These sentences are meant to be parallel in meaning, allowing the solver to deduce the meaning of individual words or phrases in the Other language based on their English counterparts.
+The output is a translation of a new sentence from English into the Other language, using the knowledge gained from the input examples. The solver must identify patterns and correspondences between the two languages to construct the correct translation.
+The format of the input/output examples is as follows:
+- The input begins with the label "English:" followed by an English sentence, then "Other:" followed by the corresponding sentence in the Other language. This pattern repeats for several pairs of sentences.
+- The output is a single sentence in the Other language, which is the translation of a new English sentence not provided in the input.
+The task requires careful analysis of the given sentences to identify which words or phrases in the Other language correspond to those in English. This involves recognizing patterns in word order, grammatical structure, and vocabulary usage. The solver must then apply these patterns to produce a correct translation of the new English sentence into the Other language.
+Task Examples:
+input=English: the small monkeys will want the fabulous dogs that a tall person praises Other: qecoweye mumede ludopuzi zotoqozi qahosa duqide buwuvazi keyuxezi pu mumene fupapujo hukaqojo
+English: the tall children that will touch slow birds will like fabulous frogs that slapped the small person Other: wawoweye sahoweye duqine rukopujo piyoqojo pu mumede buwupuzi yafaqozi tisomoye mumene ludovajo keyuxejo pu duqine fupapujo cayiqojo
+English: the big dogs that a tall monkey touches slap the excellent person Other: tisosaye sahosa duqide buwuvazi zotoxezi pu mumede zicipuzi hukaqozi mumene fudavajo keyuxejo
+English: the fabulous person will praise a small frog Other: qahowe mumede fupavazi keyuxezi duqine ludovajo cayixejo
+English: the small person will dislike the slow dogs Other: qovowe mumede ludovazi keyuxezi mumene rukopujo hukaqojo
+English: slow birds touch a big dog Other:
+output=sahosaye duqide rukopuzi piyoqozi duqine zicivajo hukaxejo
+input=Other: qahaku juvoku jema kogeguda wisukuzo necikuwa pude English: the big cats will remember small birds
+Other: qahaku juvoku qiro bebaguda qahakuzo fuxokuwa pude English: the fast cats will want the small crows
+Other: qahaku neciku jema yokepada qahabuzo firibuwa pude English: the big birds hit the small dog
+Other: qahaku cunuku qajo yokeguda gugegu wisukuzo firikuwa pude he wisubuzo necibuwa seku English: the short people will hit a excellent bird that will like small dogs
+Other: wisuku fuxoku pani yokexuda he qahaku firiku qajo rijupada wisubuzo cunubuwa qiro English: the short dogs that slow crows hit see a fast person
+Other: wisubu fuxobu qiro kogegu bebaguda wisukuzo necikuwa qajo he qahakuzo necikuwa pude English:
+output=a fast crow will remember the small birds that will want short birds
+input=English: the big dog sees the fast monkeys that the fabulous dolphin praised Other: kerazu kaxuso fabuso keragu feneco gilico xo kerazu bisoso pebiso dabomo texiqa
+English: the big dog will see the excellent monkey that will dislike the slow frog Other: kerazu kaxuso fabuso kerazu feneso wejaso xo kerazu hiwiso yopaso sotena texina
+English: the slow birds that see the fast dolphins will slap the big dog that hit fabulous monkeys Other: keragu wazoco yopaco xo keragu bisoco gilico texiyoqa kerazu kaxuso fabuso xo dufegu feneco pebico sevemo yivuyona
+English: the fabulous monkeys will touch big dolphins that slapped the fast frogs Other: keragu feneco pebico dufegu bisoco fabuco xo keragu hiwico gilico yivuyomo xuquyona
+English: the big frogs that the tall dolphins touched will dislike the fabulous bird Other: keragu hiwico fabuco xo keragu bisoco maquco xuquyomo kerazu wazoso pebiso soteyona
+English: the fabulous monkeys disliked the fast dogs Other:
+output=keragu feneco pebico keragu kaxuco gilico soteyomo
+Task Requirements:
+### Format Requirements
+1. **Input Dataset Format**:
+   - Each input example must begin with the label "English:" followed by an English sentence.
+   - Immediately following the English sentence, the label "Other:" must be used, followed by the corresponding sentence in the Other language.
+   - This pattern of "English:" and "Other:" sentence pairs should repeat for a set number of examples within each input.
+   - The final input sentence must be labeled "English:" and not be followed by its "Other:" translation, indicating it is the sentence to be translated in the output.
+2. **Output Dataset Format**:
+   - The output must be a single sentence in the Other language, which is the translation of the final English sentence provided in the input.
+   - No label is required for the output sentence.
+### Content Requirements
+1. **Parallel Sentence Structure**:
+   - The English sentences and their corresponding Other language sentences must be parallel in meaning to facilitate the deduction of individual word or phrase meanings.
+   - The dataset should include sentences of varying lengths and complexities to challenge the solver's ability to deduce patterns.
+2. **Vocabulary and Grammar Consistency**:
+   - The dataset must maintain consistency in vocabulary and grammar between the English sentences and their Other language counterparts.
+   - Each English word or phrase should have a consistent corresponding word or phrase in the Other language, except where grammatical rules cause variations.
+3. **Pattern Recognition and Deciphering**:
+   - The Other language sentences must contain discernible patterns in word order, grammatical structure, and vocabulary usage that can be identified and used to construct translations.
+   - The dataset should be designed to allow solvers to apply identified patterns to translate new English sentences into the Other language accurately.
+4. **Complexity and Variety**:
+   - Sentences should include a mix of different grammatical elements such as nouns, verbs (in various tenses), adjectives, adverbs, and prepositions.
+   - The dataset should incorporate a range of sentence types, including declarative, interrogative, and imperative sentences, to provide a comprehensive understanding of the Other language's structure.
+5. **Logical and Systematic Language Rules**:
+   - The Other language must follow a set of logical and systematic language rules that can be deduced from the input examples.
+   - These rules should be internally consistent within the dataset and should not contradict between examples.
+6. **Cultural and Thematic Elements**:
+   - The dataset may include cultural or thematic elements that are consistently represented in both the English and Other language sentences to add depth to the puzzle-solving experience.
+   - Such elements should not interfere with the logical structure of the language rules and should be used to enhance the learning and deciphering process.
+Here are samples from a potentially relevant dataset for the task above. Notice how the format below is not as required by the task above.
+Dataset Samples:
+{\"sentence\": "\"It covered taxes and charges.\"", "fol_translation": "\"exists x1.(exists x2.(_tax(x2) & _cover(x1,x2)) & exists x3.(_charge(x3) & _cover(x1,x3)))\""}
+{\"sentence\": "\"Some scenes take place.\"", "fol_translation": "\"exists x1.(_scene(x1) & exists x2.(_place(x2) & _take(x1,x2)))\""}
+{\"sentence\": "\"any mass produced television or projector.\"", "fol_translation": "\"all x1.(_mass(x1) -> exists x2.((_projector(x2) | _television(x2)) & _produce(x1,x2)))\""}
+{\"sentence\": "\"I imagined exhilaration and excitement.\"", "fol_translation": "\"exists x1 x2.(_excitement(x2) & _exhilaration(x2) & _imagine(x1,x2))\""}
+{\"sentence\": "\"No destination is unreachable.\"", "fol_translation": "\"all x1.(_destination(x1) -> -_unreachable(x1))\""}
+Carefully analyze the  `Task Description`, `Task Examples`, and `Task Requirements`. Propose a higher-level plan to convert data from the Dataset Sample to data in the required format task examples. Your plan should be a list of sequential steps that can be taken to perform the data transformation. You don't need to use all fields, as the dataset may not be fully relevant. Keep steps as simple, explicit and concise as possible. Each step in the plan has the following format:
+<step_number>. [STEP_TYPE]: [STEP_EXPLANATION]
+[STEP_REQUIREMENTS]
+STEP_TYPE can be one of the following:
+- CREATE: This represents creating a new field, through either generating new knowledge not present in the data sample, or a combination of multiple existing fields.
+- MODIFY: This represents modifying an existing field by changing the text of that field based on certain requirements. These requirements could simply be minor formatting modifications, or they might be reasoning based complex modifications that require to change the style/content of the sample to match the required task requirements.
+- USE_THEME: This represents using the theme of an existing field in order to create a new field based in that theme. This should be used when the relevance of a field is not enough to be modified directly, however the field has some theme that can be utilized.
+- IGNORE: This represents deeming a particular field to be entirely irrelevant to the point that theme can also not be derived/used from it.
+- REVIEW: This represents a final checking step that ensures the final "input" and "output" fields are as per the Task Description and Task Requirements. In case there is an issue, the review step should correct the final fields to adhere to the Task Requirements.
+STEP_EXPLANATION is a basic explanation of which field(s) the STEP_TYPE is being applied and why, in the larger context of the overall transformation.
+STEP_REQUIREMENTS are a bulleted list of sentences where each item in the list is a requirement that must be followed for that step to have been carried out successfully.
+Please return only the plan.
+
+1. IGNORE: the "fol_translation" field.The FOL (First-order Logic) translations have no relation to a constructed language or "Other" language, and are not even in a format that we can USE_THEME. These are logical representations of the English sentences and do not serve the purpose of language deciphering or translation.
+   
+2. MODIFY: the "sentence" field to add a label. Since the task requires English sentences paired with translations in an "Other" language, the existing English sentences will be used as a base, but we will create fictional translations to pair with them in a later step. The modification involves formatting the sentences to have "English:" and "Other:" labels before the English text and its corresponding fictional translation, respectively.
+   - STEP_REQUIREMENTS:
+     - Every "sentence" field should be prepended with "English:" followed by the original English text.
+
+3. USE_THEME: Use the theme from the "sentence" field to create three more english sentences, and name this field "english_sentences". Ensure these new examples also have the "English" labels prepended.
+   - STEP_REQUIREMENTS:
+     - Every "sentence" field should be prepended with "English:" followed by the original English text.
+     - A corresponding "Other:" sentence in a fictional language must be generated for each English sentence.
+     - The English sentences and their corresponding Other language sentences must be parallel in meaning to facilitate the deduction of individual word or phrase meanings.
+
+3. CREATE: fictional translations for each English sentence, and name this field "other_sentences". Based on the English sentences, fictional translations will be crafted to simulate parallel sentences in the "Other" language. These translations should be consistent in terms of vocabulary and grammatical structures used across different sentences to allow for the deciphering process mentioned in the Task Description.
+   - STEP_REQUIREMENTS:
+     - Ensure created fictional translations align in meaning with the English sentences.
+     - Maintain consistent terminology and grammatical patterns in the "Other" language for words and structures present in the English sentences.
+     
+4. CREATE: "question_sentence" which is a new English sentence that uses the vocabulary and grammatical structures previously introduced. This sentence will serve as a translation challenge for users, applying the patterns they've identified. This step involves generating an additional "English:" label without a corresponding "Other:" translation.
+   - STEP_REQUIREMENTS:
+     - New English sentences should logically follow from and utilize vocabulary or grammatical structures introduced in previous sentence pairs.
+     - Do not provide the "Other" language translation for these new English sentences, as they are meant to be the output challenge for solvers.
+
+5. CREATE: create "output" which is the "other" translation of the original "question_sentence".
+   - STEP_REQUIREMENTS:
+     - Ensure that the translation logically follows from and utilize vocabulary or grammatical structures introduced in previous sentence pairs
+
+6. CREATE: "input" that combines "english_sentences" and "other_sentences" with each translation pair on one line with "English:" and "Other:" labels prepended to each translation pair. Also add the "question_sentence" and the final "Other" label at the end
+   - STEP_REQUIREMENTS:
+     - Ensure that the input formatting is following from the formatting of the input in the task examples.
+     
+5. REVIEW: the entire transformed dataset to ensure it meets Task Requirements.
+   - STEP_REQUIREMENTS:
+     - Confirm that all sentences are correctly labeled as "English:" or "Other:" as appropriate.
+     - Ensure there is a translation challenge at the end of each set without the "Other:" translation provided.
+     - Verify that vocabulary and grammar are consistent across the dataset, making the puzzles solvable.
+     - Ensure a logical and systematic approach can be applied to decipher the "Other" language based on the examples given."""
+
+CREATE_PLAN_PROMPT2 = """You are a Planning Agent. You create a plan to transform data samples from their existing format into the required format for a given task.
+
+-------------------------------------------------
+Here is an example for your reference.
+
+{plan_incontext_example}
+
+-------------------------------------------------
+Now do the following task:
+
+Task Description: {task_description}
+
+Task Examples:
+{example}
+
+Task Requirements:
+{task_requirements}
+
+Here are samples from a potentially relevant dataset for the task above. Notice how the format below is not as required by the task above.
+
+Dataset Samples: 
+{dataset_row}
+
+Carefully analyze the  `Task Description`, `Task Examples`, and `Task Requirements`. Propose a higher-level plan to convert data from the Dataset Sample to data in the required format task examples. Your plan should be a list of sequential steps that can be taken to perform the data transformation. You don't need to use all fields, as the dataset may not be fully relevant. Keep steps as simple, explicit and concise as possible. Each step in the plan has the following format:
+<step_number>. [STEP_TYPE]: [STEP_EXPLANATION]
+[STEP_REQUIREMENTS]
+
+STEP_TYPE can be one of the following:
+- CREATE: This represents creating a new field, through either generating new knowledge not present in the data sample, or a combination of multiple existing fields.
+- MODIFY: This represents modifying an existing field by changing the text of that field based on certain requirements. These requirements could simply be minor formatting modifications, or they might be reasoning based complex modifications that require to change the style/content of the sample to match the required task requirements.
+- USE_THEME: This represents using the theme of an existing field in order to create a new field based in that theme. This should be used when the relevance of a field is not enough to be modified directly, however the field has some theme that can be utilized.
+- IGNORE: This represents deeming a particular field to be entirely irrelevant to the point that theme can also not be derived/used from it.
+- REVIEW: This represents a final checking step that ensures the final "input" and "output" fields are as per the Task Description and Task Requirements. In case there is an issue, the review step should correct the final fields to adhere to the Task Requirements.
+
+STEP_EXPLANATION is a basic explanation of which field(s) the STEP_TYPE is being applied and why, in the larger context of the overall transformation.
+
+STEP_REQUIREMENTS are a bulleted list of sentences where each item in the list is a requirement that must be followed for that step to have been carried out successfully.
+
+Please return only the plan.""" # noqa E501
+
+TRANSFORM_DATA_PROMPT2 = """You are a Data Transforming Agent. Your job is to transform data from a given format, to the required format. Following are the detailed instructions for the same:
+1. Read the `Task Description` and `Task Requirements`.
+2. An example of the input and output looks like for the task is shown in `Task Examples`
+3. The sample to be transformed is in `Data Sample`.
+4. Read the data transformation plan carefully that will help you convert the `Data Sample` into the required format. This should be relevant and intune to the `Task Description`
+5. Perform the plan step by step and explain your thinking.
+6. Ensure that each step is covering the requirements mentioned for that step.
+7. Ensure that the final transformed sample adheres to the `Task Description` and `Task Requirements`.
+8. End your response with the transformed sample as a JSON response with exactly 2 fields: "input" and "output".
+
+Task Description: {task_description}
+
+Task Examples:
+{sample}
+
+Task Requirements:
+{task_requirements}
+
+Transformation plan:
+{plan}
+
+Dataset Sample:
+{dataset_row}
+
+
+Think step by step through the plan to convert the above `Dataset Sample` and show your working. End your response as a JSON with exactly two fields: "input", and "output"
+Response:
+"""  # noqa E501
 
 TRANSFORM_DATA_PROMPT = """You are a Data Transforming Agent. Your job is to transform data from a given format, to the required format. Following are the detailed instructions for the same:
 1. Read the `Task Description`.
@@ -425,8 +701,14 @@ def truncate_row(example_row: dict, max_length=200) -> str:
         )
     return json.dumps(truncated_row)
 
+def construct_prompt_for_task_requirements(task_explanation: str, task_examples: str):
+    return CREATE_TASK_REQUIREMENTS_PROMPT2.format(
+        task_explanation=task_explanation,
+        task_examples=task_examples,
+    )
+
 def construct_prompt_for_plan(
-    task_description: str, dataset: list[dict], example: str, num_rows: int = 5
+    task_description: str, task_requirements:str, dataset: list[dict], example: str, num_rows: int = 5
 ) -> str:
     """Construct prompt for plan."""
 
@@ -448,15 +730,17 @@ def construct_prompt_for_plan(
     incontext_examples_str = ""
     for i, incontext_example in enumerate(incontext_examples):
         incontext_examples_str += f"Incontext Example {i+1}:\n{incontext_example}\n\n"
-    return CREATE_PLAN_PROMPT.format(
-        in_context_examples= incontext_examples_str,
+    return CREATE_PLAN_PROMPT2.format(
+        # in_context_examples= incontext_examples_str,
+        plan_incontext_example=PLAN_INCONTEXT_EXAMPLE,
         task_description=task_description,
         example=example,
+        task_requirements=task_requirements,
         dataset_row="\n".join(f"{truncate_row(example_row=dataset[i])}\n" for i in range(num_rows)),
     )
 
 def construct_prompt_for_transform_data(
-    task_description: str, dataset_row: dict, plan: str, example: str
+    task_description: str, task_requirements:str, dataset_row: dict, plan: str, example: str
 ) -> str:
     """Construct prompt for dataset transformation."""
 
@@ -480,10 +764,14 @@ def construct_prompt_for_transform_data(
     
     # incontext_examples_str += f"Incontext Example {len(incontext_examples)+1}"
 
-    return TRANSFORM_DATA_PROMPT.format(
-        in_context_examples= incontext_examples_str,
+    return TRANSFORM_DATA_PROMPT2.format(
         task_description=task_description,
         sample=example,
+        task_requirements=task_requirements,
         dataset_row=truncate_row(dataset_row),
         plan=plan
     )
+
+# if __name__=="__main__":
+#     planprompt = construct_prompt_for_plan("a", "b", [{"sentence": "It covered taxes and charges.", "fol_translation": "exists x1.(exists x2.(_tax(x2) & _cover(x1,x2)) & exists x3.(_charge(x3) & _cover(x1,x3)))"}, {"sentence": "Some scenes take place.", "fol_translation": "exists x1.(_scene(x1) & exists x2.(_place(x2) & _take(x1,x2)))"}, {"sentence": "any mass produced television or projector.", "fol_translation": "all x1.(_mass(x1) -> exists x2.((_projector(x2) | _television(x2)) & _produce(x1,x2)))"}, {"sentence": "I imagined exhilaration and excitement.", "fol_translation": "exists x1 x2.(_excitement(x2) & _exhilaration(x2) & _imagine(x1,x2))"}, {"sentence": "No destination is unreachable.", "fol_translation": "all x1.(_destination(x1) -> -_unreachable(x1))"}], "c")
+#     print(planprompt)

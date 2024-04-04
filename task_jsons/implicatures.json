@@ -1,0 +1,84 @@
+{
+    "train/learning_rate": 0.0000017892644135188868,
+    "normalized_aggregate_score": 40.24390243902438,
+    "train/total_flos": 177202090186113020,
+    "train/train_loss": 1.2658556137311352,
+    "retrieved_dataset": "test_tasks_ret_og_data/implicatures/retrieved_dataset",
+    "val_acc": 0.99,
+    "prompt_instruction": "Predict whether Speaker 2's answer to Speaker 1 counts as a yes or as a no",
+    "eval/steps_per_second": 0.775,
+    "multiple_choice_grade_ground_truth_val": [
+        0.66,
+        0.685,
+        0.7,
+        0.745,
+        0.71
+    ],
+    "_runtime": 6655.008152008057,
+    "train/epoch": 3,
+    "eval/runtime": 49.0271,
+    "calibration_multiple_choice_brier_score": 0.256081507039291,
+    "train/loss": 1.0325,
+    "model_created": true,
+    "normalized_aggregate_score_ground_truth_val": [
+        32.00000000000001,
+        37.000000000000014,
+        39.99999999999999,
+        49,
+        41.99999999999999
+    ],
+    "eval/samples_per_second": 6.119,
+    "_step": 43,
+    "eval/loss": 1.3467813730239868,
+    "checkpoint_step": [
+        "200",
+        "400",
+        "600",
+        "800",
+        "1000"
+    ],
+    "train/global_step": 1011,
+    "train/train_steps_per_second": 0.172,
+    "train/train_samples_per_second": 1.382,
+    "expected_calibration_error_ground_truth_val": [
+        0.22746481665175564,
+        0.20246481665175564,
+        0.21746708654519065,
+        0.21246527063044263,
+        0.2524630007370075
+    ],
+    "calibration_multiple_choice_brier_score_ground_truth_val": [
+        0.2812295725563326,
+        0.25623184244976754,
+        0.25873275030409326,
+        0.2337341123225929,
+        0.27122957263877107
+    ],
+    "_wandb.runtime": 6654,
+    "_timestamp": 1707996267.740316,
+    "used_model": "mistralai/Mistral-7B-v0.1",
+    "final_generations": {
+        "size": 82048,
+        "_type": "table-file",
+        "ncols": 4,
+        "nrows": 200,
+        "sha256": "06325f5abd1328e716490b78d38b0f80a3c64a7a48237f76da6d8fc1ebbb4d7c",
+        "artifact_path": "wandb-client-artifact://p5jbph7kaz1kh80u3meyt0wuc1vre03z69kujnvy7y2xhf34cicc0yk10tk14qh9t6cspkghnty5tijoy9arw1175py1guqwvi3t5e9cydgvueb3hj7zzw7bi4wl90w6:latest/final_generations.table.json",
+        "_latest_artifact_path": "wandb-client-artifact://p5jbph7kaz1kh80u3meyt0wuc1vre03z69kujnvy7y2xhf34cicc0yk10tk14qh9t6cspkghnty5tijoy9arw1175py1guqwvi3t5e9cydgvueb3hj7zzw7bi4wl90w6:latest/final_generations.table.json",
+        "path": "media/table/final_generations_42_06325f5abd1328e71649.table.json"
+    },
+    "retrieved_dataset_artifact": {
+        "path": "media/table/retrieved_dataset_artifact_3_bbc63ac2a1699180075e.table.json",
+        "size": 97130,
+        "_type": "table-file",
+        "ncols": 2,
+        "nrows": 3000,
+        "sha256": "bbc63ac2a1699180075e4106976f706b306449fd5a48227a0dd595434b31941d",
+        "artifact_path": "wandb-client-artifact://y2b5g1vp4skcw04pn1jsim43u87w93hrnmnj99x03u94jsmwec5hz4c1kaul9ac1oaablxdma7j30ps2vnv73jeq1cgsbquecpifmv114fv3einz4w1o4j1cq5g7igm3:latest/retrieved_dataset_artifact.table.json",
+        "_latest_artifact_path": "wandb-client-artifact://y2b5g1vp4skcw04pn1jsim43u87w93hrnmnj99x03u94jsmwec5hz4c1kaul9ac1oaablxdma7j30ps2vnv73jeq1cgsbquecpifmv114fv3einz4w1o4j1cq5g7igm3:latest/retrieved_dataset_artifact.table.json"
+    },
+    "prompt_examples": "input=\n\nQ: Speaker 1: 'Have you found him yet? ' Speaker 2: 'We're still looking.' \nA: \noutput=no\n\ninput=\n\nQ: Speaker 1: 'You want to do this to the whole world?' Speaker 2: 'So the whole world will be exactly how I want.' \nA: \noutput=yes\n\ninput=\n\nQ: Speaker 1: 'Would he fire me?' Speaker 2: 'He's all bark and no bite.' \nA: \noutput=no",
+    "train/train_runtime": 5861.3222,
+    "multiple_choice_grade": 0.7012195121951219,
+    "expected_calibration_error": 0.213383630723813
+}

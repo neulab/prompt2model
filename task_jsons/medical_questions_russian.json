@@ -1,0 +1,84 @@
+{
+    "train/train_steps_per_second": 0.168,
+    "_runtime": 6974.8947768211365,
+    "_timestamp": 1707998420.5381908,
+    "train/loss": 0.6735,
+    "train/train_runtime": 6014.315,
+    "eval/runtime": 50.3306,
+    "train/global_step": 1011,
+    "train/epoch": 3,
+    "multiple_choice_grade_ground_truth_val": [
+        0.495,
+        0.495,
+        0.495,
+        0.495,
+        0.495
+    ],
+    "normalized_aggregate_score_ground_truth_val": [
+        -1.0000000000000009,
+        -1.0000000000000009,
+        -1.0000000000000009,
+        -1.0000000000000009,
+        -1.0000000000000009
+    ],
+    "eval/loss": 1.2225196361541748,
+    "prompt_instruction": "The task to measure the model's ability to \"understand\" medical text (in Russian) and answer a clarifying yes/no question.",
+    "retrieved_dataset_artifact": {
+        "path": "media/table/retrieved_dataset_artifact_3_37f6a4cbcf22d76b82af.table.json",
+        "size": 739615,
+        "_type": "table-file",
+        "ncols": 2,
+        "nrows": 3000,
+        "sha256": "37f6a4cbcf22d76b82af4b3450537ed5712ff170644e91410997c8b42ef6c51a",
+        "artifact_path": "wandb-client-artifact://xf8426a4j4qve0vt1t3ab8uvvacilj56l5j831ftb1h4pwqseepszbzlx5m2sl4o636x0lkz4paou341ijwwrj029kkyf9sjqo0rwgwol6vo274s1ohnjfgoa688yuw1:latest/retrieved_dataset_artifact.table.json",
+        "_latest_artifact_path": "wandb-client-artifact://xf8426a4j4qve0vt1t3ab8uvvacilj56l5j831ftb1h4pwqseepszbzlx5m2sl4o636x0lkz4paou341ijwwrj029kkyf9sjqo0rwgwol6vo274s1ohnjfgoa688yuw1:latest/retrieved_dataset_artifact.table.json"
+    },
+    "calibration_multiple_choice_brier_score": 0.21972620811092333,
+    "retrieved_dataset": "test_tasks_ret_og_data/medical_questions_russian/retrieved_dataset",
+    "expected_calibration_error": 0.06835316826013836,
+    "train/train_samples_per_second": 1.347,
+    "expected_calibration_error_ground_truth_val": [
+        0.05000408580818324,
+        0.06749432526641219,
+        0.0699940982770687,
+        0.08499273634100761,
+        0.07249387128772516
+    ],
+    "_step": 43,
+    "model_created": true,
+    "train/total_flos": 177202090186113020,
+    "final_generations": {
+        "nrows": 200,
+        "sha256": "5f08c57757fecdbe7f9e8b3cd9bc6a385f008463e4d89c42025e3a0523b402e0",
+        "artifact_path": "wandb-client-artifact://j48bmmsa23n12dw56tnz51bdzr1n1v2l3da8zyvzogadiphrka2yml9igs98ahh7quzh1743tq6k1n7v9ry5hccv3phzzm6v0377hngd8rc2dd52sr5qpdyqjny92uv9:latest/final_generations.table.json",
+        "_latest_artifact_path": "wandb-client-artifact://j48bmmsa23n12dw56tnz51bdzr1n1v2l3da8zyvzogadiphrka2yml9igs98ahh7quzh1743tq6k1n7v9ry5hccv3phzzm6v0377hngd8rc2dd52sr5qpdyqjny92uv9:latest/final_generations.table.json",
+        "path": "media/table/final_generations_42_5f08c57757fecdbe7f9e.table.json",
+        "size": 1830419,
+        "_type": "table-file",
+        "ncols": 4
+    },
+    "val_acc": 0.99,
+    "prompt_examples": "input=Контекст: Биматопрост относится к синтетическим простамидам, по химической структуре сходен с простагландином F 2α (PGF2α). Биматопрост не оказывает влияния ни на один из известных типов рецепторов простагландина. Гипотензивное действие биматопроста осуществляется за счет усиления оттока внутриглазной жидкости через трабекулу и по увеосклеральному пути глаза.\nВопрос: Биматопрост это офтальмологический препарат?\nОтвет: \noutput=да\n\ninput=Контекст: Почечная недостаточность — это синдром, развивающийся в результате тяжелых нарушений почечных процессов, приводящих к расстройству гомеостаза, и характеризующийся азотемией, нарушением водно-электролитного состава и кислотно-основного состояния организма. Острая почечная недостаточность может возникнуть внезапно вследствие острых, чаще всего обратимых заболеваний почек. Хроническая почечная недостаточность развивается постепенно в результате прогрессирующей необратимой утраты функционирующей паренхимы.\nВопрос: Водно-электролитный состав при почечной недостаточности остаётся в норме?\nОтвет: \noutput=нет\n\ninput=Контекст: Нейтропении наследственные — группа редких наследственных заболеваний с почти полным отсутствием в крови нейтрофилов, обнаруживаемым постоянно (постоянные нейтропении) или через равные промежутки времени (периодические нейтропении). Как правило, болезни наследуются рецессивно. Патогенез первичных механизмов нейтропении изучен недостаточно, инфекционные воспалительные процессы обусловлены нейтропенией. Клиническая картина — склонность к инфекциям (как правило, стафилококковым), тяжелый пародонтоз с детства (обнаженные шейки зубов, их расшатывание и выпадение). При периодической форме болезни — лихорадка и инфекции строго периодичны и соответствуют дням нейтропении. В крови почти полностью отсутствуют нейтрофилы, повышено число эозинофилов и моноцитов.\nВопрос: Заболевание связано с крайне пониженным содержанием нейтрофилов в крови?\nОтвет: \noutput=да",
+    "multiple_choice_grade": 0.5,
+    "eval/samples_per_second": 5.961,
+    "_wandb.runtime": 6973,
+    "train/train_loss": 1.2300931122135574,
+    "normalized_aggregate_score": 0,
+    "calibration_multiple_choice_brier_score_ground_truth_val": [
+        0.22750000018548688,
+        0.2337486383215596,
+        0.22749909231055143,
+        0.21499954635106744,
+        0.22124954629954327
+    ],
+    "used_model": "mistralai/Mistral-7B-v0.1",
+    "checkpoint_step": [
+        "200",
+        "400",
+        "600",
+        "800",
+        "1000"
+    ],
+    "train/learning_rate": 0.0000014910536779324056,
+    "eval/steps_per_second": 0.755
+}

@@ -97,11 +97,12 @@ class APIAgent:
             An OpenAI-like response object if there were no errors in generation.
             In case of API-specific error, Exception object is captured and returned.
         """
-        num_prompt_tokens = count_tokens_from_string(prompt)
-        if self.max_tokens:
-            max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
-        else:
-            max_tokens = 3 * num_prompt_tokens
+        # num_prompt_tokens = count_tokens_from_string(prompt)
+        # if self.max_tokens:
+        #     max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
+        # else:
+        #     max_tokens = 3 * num_prompt_tokens
+        max_tokens = self.max_tokens
         response = completion(  # completion gets the key from os.getenv
             model=self.model_name,
             messages=[
@@ -192,11 +193,12 @@ class APIAgent:
                         await asyncio.sleep(10)
                 return {"choices": [{"message": {"content": ""}}]}
 
-        num_prompt_tokens = max(count_tokens_from_string(prompt) for prompt in prompts)
-        if self.max_tokens:
-            max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
-        else:
-            max_tokens = 3 * num_prompt_tokens
+        # num_prompt_tokens = max(count_tokens_from_string(prompt) for prompt in prompts)
+        # if self.max_tokens:
+        #     max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
+        # else:
+        #     max_tokens = 3 * num_prompt_tokens
+        max_tokens = self.max_tokens
 
         async_responses = [
             _throttled_completion_acreate(

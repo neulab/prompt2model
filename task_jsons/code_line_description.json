@@ -1,0 +1,40 @@
+{
+    "_wandb.runtime": 1512,
+    "train/epoch": 0.15,
+    "eval/runtime": 97.9411,
+    "_runtime": 1512.9537420272827,
+    "train/loss": 0.6529,
+    "used_model": "mistralai/Mistral-7B-v0.1",
+    "prompt_instruction": "Give an English language description of Python code",
+    "train/learning_rate": 0.00009534653465346536,
+    "_timestamp": 1707806467.570753,
+    "retrieved_dataset": "code_line_description_retrieved_dataset_old",
+    "eval/steps_per_second": 0.766,
+    "generated_dataset_artifact": {
+        "_latest_artifact_path": "wandb-client-artifact://54o9ypf21j4f9kl66rtp5ivesimeqhbj9y5s41781tr56eyc52i3bgxrv2ouv0szu0o5o7miv9y7ngr4a9mdx1no0nn0merpw36m3zld10f87e8xzzsj5gztspe2x1a9:latest/generated_dataset_artifact.table.json",
+        "path": "media/table/generated_dataset_artifact_4_259090c928251d5925db.table.json",
+        "size": 779045,
+        "_type": "table-file",
+        "ncols": 2,
+        "nrows": 3000,
+        "sha256": "259090c928251d5925dbbb8ed4ab599ea8032cc55f91c045e62083dbf7558d4a",
+        "artifact_path": "wandb-client-artifact://54o9ypf21j4f9kl66rtp5ivesimeqhbj9y5s41781tr56eyc52i3bgxrv2ouv0szu0o5o7miv9y7ngr4a9mdx1no0nn0merpw36m3zld10f87e8xzzsj5gztspe2x1a9:latest/generated_dataset_artifact.table.json"
+    },
+    "_step": 7,
+    "error": "CUDA out of memory. Tried to allocate 104.70 GiB. GPU 0 has a total capacty of 47.54 GiB of which 36.56 GiB is free. Including non-PyTorch memory, this process has 10.84 GiB memory in use. Of the allocated memory 7.90 GiB is allocated by PyTorch, and 2.62 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF",
+    "eval/loss": 0.6048485040664673,
+    "prompt_examples": "input=\nPython code:\nnum = 5\nfactorial = 1\nfor i in range(1,num + 1):\n    factorial = factorial*i\nprint('The factorial of',num,'is',factorial)\n\n  choice: checks if a number is positive or negative\n  choice: prints the factorial of number 5\n  choice: checks if 20 is negative number\n  choice: prints 'The factorial of 10 is 3628800'\n\nEnglish language description:\n\noutput=prints the factorial of number 5\n\ninput=\nPython code:\ndef greet(name):\n    print ('Hello', name)\ngreet('Linda')\n\n  choice: prints 'Hello Linda'\n  choice: prints 'python 3.7'\n  choice: greets Jack\n  choice: prints 'Hello World!'\n\nEnglish language description:\n\noutput=prints 'Hello Linda'\n\ninput=\nPython code:\nx = 5\ny = 10\nx = x ^ y\ny = x ^ y\nx = x ^ y\n\n  choice: prints x times y\n  choice: y is equal to y raised to power x\n  choice: swaps x and y\n  choice: assigns x and y value 50\n  choice: x is equal to x raised to power y\n\nEnglish language description:\n\noutput=swaps x and y",
+    "generated_dataset": true,
+    "train/global_step": 100,
+    "eval/samples_per_second": 6.126,
+    "retrieved_dataset_artifact": {
+        "_latest_artifact_path": "wandb-client-artifact://lm5day0kh86vgtrx3cygtaueud8a5lz9136y64cx5lemn58hjbwcdwne2jja5deamwnk6e4rvaqis92qxk59g60qawgfeif163b528ap12acpm1yoweoaqfv7gmmw21v:latest/retrieved_dataset_artifact.table.json",
+        "path": "media/table/retrieved_dataset_artifact_3_88e58f50b4fd09373a95.table.json",
+        "size": 61192640,
+        "_type": "table-file",
+        "ncols": 2,
+        "nrows": 3000,
+        "sha256": "88e58f50b4fd09373a9538e94b29ee2a151a79eb0fe8d60fc39067ab006cef08",
+        "artifact_path": "wandb-client-artifact://lm5day0kh86vgtrx3cygtaueud8a5lz9136y64cx5lemn58hjbwcdwne2jja5deamwnk6e4rvaqis92qxk59g60qawgfeif163b528ap12acpm1yoweoaqfv7gmmw21v:latest/retrieved_dataset_artifact.table.json"
+    }
+}
