@@ -48,7 +48,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         max_number_of_dataset_rows=3000,
         allow_gated_datasets=False,
         auto_transform_data: bool = False,
-        num_points_to_transform: int = 3000,
+        total_num_points_to_transform: int = 3000,
         max_allowed_failed_transforms: int = None,
         max_datasets_to_choose: int = 3,
         num_votes=5,
@@ -66,8 +66,10 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             max_number_of_dataset_rows: Limit the number of rows for large datasets.
             allow_gated_datasets: Use only if the user explicitly wants gated datasets
             auto_transform_data: Automatically transform data to match the prompt.
-            num_points_to_transform: Number of data points to transform.
-            max_allowed_failed_transforms: Maximum number of failed transforms allowed.
+            total_num_points_to_transform: Number of data points to transform across all datasets.
+            max_allowed_failed_transforms: Maximum number of failed transforms allowed 
+                        for a given dataset. Skip the dataset if it exceed the 
+                        maximum number of allowed transforms.
             max_datasets_to_choose: Maximum number of datasets to choose from.
             num_votes: Number of votes to consider for reranking.
         """
@@ -424,7 +426,9 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             columns, "input_col" and "output_col".
         """
         updated_inputs, updated_outputs = [], []
-        if len(inputs) < 0 or len(inputs) != len(outputs):
+        dataset_dict = {}
+
+        if len(inputs) <= 0 or len(inputs) != len(outputs):
             logger.error("Length of inputs and outputs must be >0 and equal.")
         else:
             for i, o in zip(inputs, outputs):
@@ -434,10 +438,9 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 else:
                     logger.warning(f"Input or output is None: {i} {o}")
 
-        dataset_dict = {}
-        dataset_dict["train"] = datasets.Dataset.from_dict(
-            {"input_col": updated_inputs, "output_col": updated_outputs}
-        )
+            dataset_dict["train"] = datasets.Dataset.from_dict(
+                {"input_col": updated_inputs, "output_col": updated_outputs}
+            )
         return datasets.DatasetDict(dataset_dict)
 
     def get_rerank_with_highest_votes(self, prompt, infos_dict):
@@ -459,11 +462,8 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             if curr_name["name"] not in infos_dict:
                 logger.warning("LLM hallucinated dataset/config name: %s", curr_name)
                 voting.append(None)
-                continue
-            voting.append(curr_name["name"])
-        if len(voting) == 0:
-            logger.warning("Voting resulted in no dataset/config.")
-            return None
+            else:
+                voting.append(curr_name["name"])
         chosen_one = max(set(voting), key=voting.count)
         return chosen_one
 
@@ -521,7 +521,9 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             config_name = self.get_rerank_with_highest_votes(
                 config_selection_prompt, curr_dataset["configs"]
             )
+        
         logger.info(f"Chosen dataset and config: {dataset_name=} {config_name=}")
+        #config name being None gets handled in calling function
         return dataset_name, config_name
 
     def canonicalize_dataset_automatically(
@@ -543,7 +545,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         Args:
             top_dataset_info: Contains info about the top-ranked dataset.
             prompt_spec: prompt object storing the original task and examples.
-
+            num_points_to_transform: Number of points to transform for a given dataset
         Returns:
             The canonicalized dataset, or None if the dataset is invalid or
             if column selection fails, or if any other error occurs
@@ -606,9 +608,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 example_rows = json.dumps(canonicalized_dataset["train"][0], indent=4)
 
                 logger.info(f"Transformed dataset. Example row:\n{example_rows}\n")
-            else:
-                dataset_name = top_dataset_info["dataset_name"]
-                logger.info(f"{dataset_name} exceed max allowed transforms..")
+
 
             return canonicalized_dataset
         else:
@@ -648,15 +648,15 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 datasets_info_dict, prompt_spec
             )
             if dataset_name is None:
-                # If it couldn't find a relevant dataset (even after voting)
-                # stop trying to find more datasets.
+                # If it couldn't find a relevant dataset from reranking
+                # (even after voting) stop trying to find more datasets.
                 return None
             number_of_chosen_datasets += 1
 
             if config_name is None:
                 del datasets_info_dict[
                     dataset_name
-                ]  # TODO: Is this deleting the right thing?
+                ] 
                 continue  # If it couldn't find a relevant config, delete the entire dataset. # noqa: E501
 
             dataset_info = datasets_info_dict[dataset_name]["configs"][config_name]

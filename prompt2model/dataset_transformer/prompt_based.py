@@ -92,14 +92,12 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             transform_prompts.append(transform_prompt)
         return transform_prompts
 
-    def generate_responses(self, transform_prompts_batch: list[str]) -> list[str]:
-        """Generate responses for the transform prompts."""
+    def generate_responses(self, transform_prompts_batch: list[str], model_name="gpt-3.5-turbo") -> list[str]:
+        """Generate responses for the transform prompts. Use gpt 3.5 for transformation as it is cheaper."""
 
         async def generate_responses_async(transform_prompts):
             """Generate responses asynchronously using the specified model."""
-            responses = await api_tools.APIAgent(
-                model_name="azure/GPT-3-5-turbo-chat", max_tokens=4000
-            ).generate_batch_completion(
+            responses = await api_tools.APIAgent(model_name=model_name).generate_batch_completion(
                 transform_prompts,
                 temperature=0,
                 responses_per_request=1,
@@ -121,8 +119,6 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         self, responses: list, prompt_spec: PromptSpec
     ) -> tuple[list[str], list[str]]:
         """Process the responses received from the API.
-
-        Also write the current set of inputs and outputs to a dump text just in case.
 
         Args:
             responses: A list of response strings from the API.
@@ -158,9 +154,6 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
                 if self.curr_failed_transforms > self.max_allowed_failed_transforms:
                     break
 
-        with open("dump.txt", "a") as file:
-            file.write("Input: " + ", ".join(map(str, inputs)) + "\n")
-            file.write("Output: " + ", ".join(map(str, outputs)) + "\n")
 
         return inputs, outputs
 
@@ -197,7 +190,9 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
                 logger.error(
                     f"Exceeded max allowed failed transforms: {self.curr_failed_transforms}"  # noqa: E501
                 )
+                self.max_allowed_failed_transforms = 0
                 break
+                
 
         logger.info(
             f"Requested length: {self.num_points_to_transform}\nActual length: {len(inputs)}\n"  # noqa: E501

@@ -37,6 +37,7 @@ ERROR_ERRORS_TO_MESSAGES = {
     openai.error.ServiceUnavailableError: "API service unavailable error: {e}",
     openai.error.APIError: "API error: {e}",
 }
+BUFFER_DURATION = 2
 
 
 class APIAgent:
@@ -44,14 +45,14 @@ class APIAgent:
 
     def __init__(
         self,
-        model_name: str = "gpt-3.5-turbo",
+        model_name: str = "gpt-4",
         max_tokens: int | None = 4000,
         api_base: str | None = None,
     ):
         """Initialize APIAgent with model_name and max_tokens.
 
         Args:
-            model_name: Name fo the model to use (by default, gpt-3.5-turbo).
+            model_name: Name fo the model to use (by default, gpt-4).
             max_tokens: The maximum number of tokens to generate. Defaults to the max
                 value for the model if available through litellm.
             api_base: Custom endpoint for Hugging Face's inference API.
@@ -225,7 +226,8 @@ def handle_api_error(e, backoff_duration=1) -> None:
     Sleeps incase error is some type of timeout, else throws error.
 
     Args:
-        e: The API error raised.
+        e: The error to handle. This could be an OpenAI error or a related
+           non-fatal error, such as JSONDecodeError or AssertionError.
         backoff_duration: The duration to wait before retrying the API call.
 
     Raises:
@@ -246,7 +248,6 @@ def handle_api_error(e, backoff_duration=1) -> None:
         match = re.search(r"Please retry after (\d+) seconds", str(e))
         # If openai mentions how long to sleep use that, else do exponential backoff
         if match is not None:
-            BUFFER_DURATION = 2
             backoff_duration = int(match.group(1)) + BUFFER_DURATION
 
         logging.info(f"Retrying in {backoff_duration} seconds...")
