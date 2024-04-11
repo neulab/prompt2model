@@ -206,18 +206,18 @@ def main():
                 )
                 line = input()
                 try:
-                    num_points_to_transform = int(line)
+                    total_num_points_to_transform = int(line)
                 except ValueError:
                     line_print("Invalid input. Please enter a number.")
                     continue
-                if num_points_to_transform <= 0:
+                if total_num_points_to_transform <= 0:
                     line_print("Invalid input. Please enter a number greater than 0.")
                     continue
-                status["num_transform"] = num_points_to_transform
+                status["num_transform"] = total_num_points_to_transform
                 break
         retriever = DescriptionDatasetRetriever(
             auto_transform_data=auto_transform_data,
-            num_points_to_transform=num_points_to_transform,
+            total_num_points_to_transform=total_num_points_to_transform,
         )
         retrieved_dataset_dict = retriever.retrieve_dataset_dict(prompt_spec)
 

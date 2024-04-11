@@ -92,12 +92,29 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             transform_prompts.append(transform_prompt)
         return transform_prompts
 
-    def generate_responses(self, transform_prompts_batch: list[str], model_name="gpt-3.5-turbo") -> list[str]:
-        """Generate responses for the transform prompts. Use gpt 3.5 for transformation as it is cheaper."""
+    def generate_responses(
+        self, transform_prompts_batch: list[str], model_name="gpt-3.5-turbo"
+    ) -> list[str]:
+        """Generate responses for the given transform prompts.
+
+        Args:
+            transform_prompts_batch (list[str]): A list of transform prompts.
+            model_name (str, optional): The name of the model to use. Defaults to
+                    "gpt-3.5-turbo" to save costs.
+
+        Returns:
+            list[str]: A list of generated responses.
+
+        Raises:
+            API_ERRORS: If there is an error with the API.
+
+        """
 
         async def generate_responses_async(transform_prompts):
             """Generate responses asynchronously using the specified model."""
-            responses = await api_tools.APIAgent(model_name=model_name).generate_batch_completion(
+            responses = await api_tools.APIAgent(
+                model_name=model_name
+            ).generate_batch_completion(
                 transform_prompts,
                 temperature=0,
                 responses_per_request=1,
@@ -154,7 +171,6 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
                 if self.curr_failed_transforms > self.max_allowed_failed_transforms:
                     break
 
-
         return inputs, outputs
 
     def transform_data(
@@ -192,7 +208,6 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
                 )
                 self.max_allowed_failed_transforms = 0
                 break
-                
 
         logger.info(
             f"Requested length: {self.num_points_to_transform}\nActual length: {len(inputs)}\n"  # noqa: E501

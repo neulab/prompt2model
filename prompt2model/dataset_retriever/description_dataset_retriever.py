@@ -66,9 +66,10 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             max_number_of_dataset_rows: Limit the number of rows for large datasets.
             allow_gated_datasets: Use only if the user explicitly wants gated datasets
             auto_transform_data: Automatically transform data to match the prompt.
-            total_num_points_to_transform: Number of data points to transform across all datasets.
-            max_allowed_failed_transforms: Maximum number of failed transforms allowed 
-                        for a given dataset. Skip the dataset if it exceed the 
+            total_num_points_to_transform: Number of data points to transform across
+                                    all datasets.
+            max_allowed_failed_transforms: Maximum number of failed transforms allowed
+                        for a given dataset. Skip the dataset if it exceed the
                         maximum number of allowed transforms.
             max_datasets_to_choose: Maximum number of datasets to choose from.
             num_votes: Number of votes to consider for reranking.
@@ -83,9 +84,9 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         self.max_number_of_dataset_rows = max_number_of_dataset_rows
         self.allow_gated_datasets = allow_gated_datasets
         self.auto_transform_data = auto_transform_data
-        self.num_points_to_transform = num_points_to_transform
+        self.total_num_points_to_transform = total_num_points_to_transform
         if max_allowed_failed_transforms is None:
-            self.max_allowed_failed_transforms: int = num_points_to_transform // 3
+            self.max_allowed_failed_transforms: int = total_num_points_to_transform // 3
         else:
             self.max_allowed_failed_transforms = max_allowed_failed_transforms
 
@@ -521,9 +522,9 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             config_name = self.get_rerank_with_highest_votes(
                 config_selection_prompt, curr_dataset["configs"]
             )
-        
+
         logger.info(f"Chosen dataset and config: {dataset_name=} {config_name=}")
-        #config name being None gets handled in calling function
+        # config name being None gets handled in calling function
         return dataset_name, config_name
 
     def canonicalize_dataset_automatically(
@@ -609,7 +610,6 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
                 logger.info(f"Transformed dataset. Example row:\n{example_rows}\n")
 
-
             return canonicalized_dataset
         else:
             canonicalized_dataset = self.canonicalize_dataset_using_columns(
@@ -626,7 +626,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         """Combine multiple datasets to get the required size.
 
         Args:
-            dataset_list (list[dict]): A list of dictionaries representing the datasets.
+            datasets_info_dict (dict): A list of dictionaries representing the datasets.
             prompt_spec (PromptSpec): An object representing the prompt specification.
 
         Returns:
@@ -640,7 +640,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         dataset_contributions = {}
         number_of_chosen_datasets = 0
         while (
-            curr_datasets_size < self.num_points_to_transform
+            curr_datasets_size < self.total_num_points_to_transform
             and len(datasets_info_dict.keys()) > 0
             and number_of_chosen_datasets <= self.max_datasets_to_choose
         ):
@@ -654,16 +654,14 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             number_of_chosen_datasets += 1
 
             if config_name is None:
-                del datasets_info_dict[
-                    dataset_name
-                ] 
+                del datasets_info_dict[dataset_name]
                 continue  # If it couldn't find a relevant config, delete the entire dataset. # noqa: E501
 
             dataset_info = datasets_info_dict[dataset_name]["configs"][config_name]
             canonicalized_dataset = self.canonicalize_dataset_automatically(
                 dataset_info,
                 prompt_spec,
-                self.num_points_to_transform - curr_datasets_size,
+                self.total_num_points_to_transform - curr_datasets_size,
             )
             curr_datasets_size += len(canonicalized_dataset["train"]["input_col"])
             inputs += canonicalized_dataset["train"]["input_col"]
