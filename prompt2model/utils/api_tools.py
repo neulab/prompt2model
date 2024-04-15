@@ -169,14 +169,14 @@ class APIAgent:
                         if isinstance(
                             e,
                             (
-                                openai.ServiceUnavailableError,
+                                openai.APIStatusError,
                                 openai.APIError,
                             ),
                         ):
                             logging.warning(
                                 ERROR_ERRORS_TO_MESSAGES[type(e)].format(e=e)
                             )
-                        elif isinstance(e, openai.InvalidRequestError):
+                        elif isinstance(e, openai.BadRequestError):
                             logging.warning(ERROR_ERRORS_TO_MESSAGES[type(e)])
                             return {
                                 "choices": [
