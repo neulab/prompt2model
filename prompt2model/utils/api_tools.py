@@ -10,7 +10,6 @@ import time
 import aiolimiter
 import litellm.utils
 import openai
-import openai.error
 import tiktoken
 from aiohttp import ClientSession
 from litellm import acompletion, completion
@@ -22,18 +21,18 @@ API_ERRORS = (
     openai.APIError,
     openai.Timeout,
     openai.RateLimitError,
-    openai.ServiceUnavailableError,
-    openai.InvalidRequestError,
+    openai.BadRequestError,
+    openai.APIStatusError,
     json.decoder.JSONDecodeError,
     AssertionError,
 )
 
 ERROR_ERRORS_TO_MESSAGES = {
-    openai.InvalidRequestError: "API Invalid Request: Prompt was filtered",
+    openai.BadRequestError: "API Invalid Request: Prompt was filtered",
     openai.RateLimitError: "API rate limit exceeded. Sleeping for 10 seconds.",
     openai.APIConnectionError: "Error Communicating with API",
     openai.Timeout: "API Timeout Error: API Timeout",
-    openai.ServiceUnavailableError: "API service unavailable error: {e}",
+    openai.APIStatusError: "API service unavailable error: {e}",
     openai.APIError: "API error: {e}",
 }
 
@@ -97,11 +96,12 @@ class APIAgent:
             An OpenAI-like response object if there were no errors in generation.
             In case of API-specific error, Exception object is captured and returned.
         """
-        num_prompt_tokens = count_tokens_from_string(prompt)
-        if self.max_tokens:
-            max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
-        else:
-            max_tokens = 3 * num_prompt_tokens
+        # num_prompt_tokens = count_tokens_from_string(prompt)
+        # if self.max_tokens:
+        #     max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
+        # else:
+        #     max_tokens = 3 * num_prompt_tokens
+        max_tokens = self.max_tokens
 
         response = completion(  # completion gets the key from os.getenv
             model=self.model_name,
