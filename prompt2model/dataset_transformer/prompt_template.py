@@ -2,10 +2,10 @@
 
 import json
 
-IMPLICATURES ={
-    "task_description":"Predict whether Speaker 2's answer to Speaker 1 counts as a yes or as a no",
-    "samples":"""input=\n\n Speaker 1: 'Have you found him yet? ' Speaker 2: 'We're still looking.' \n \noutput=no""",
-    "plan":"""1. Create a "Speaker 1" field using the 'text' fields. Expand the text such that speaker 2 can answer in some form of yes or no.
+IMPLICATURES = {
+    "task_description": "Predict whether Speaker 2's answer to Speaker 1 counts as a yes or as a no",
+    "samples": """input=\n\n Speaker 1: 'Have you found him yet? ' Speaker 2: 'We're still looking.' \n \noutput=no""",
+    "plan": """1. Create a "Speaker 1" field using the 'text' fields. Expand the text such that speaker 2 can answer in some form of yes or no.
 2. Create a "Speaker 2" field responding to the speaker with either a yes or a no. Ensure that the yes or no is not said directly, but in a roundabout manner.
 3. Combine "Speaker 1" and "Speaker 2" fields to create "input".
 4. Create an "output" field based on whether speaker 2 replied with a yes or no. If speaker 2 replied with a yes, "output" is yes, else "output" is no.""",
@@ -24,113 +24,114 @@ Here is the final response JSON with "input" and "output" keys:
     "output": "no"
 }
 """,
-    "dataset_rows":[
-    {
-        "swda_filename": "sw00utt/sw_0001_4325.utt",
-        "ptb_basename": "4/sw4325",
-        "conversation_no": 4325,
-        "transcript_index": 0,
-        "act_tag": 115,
-        "damsl_act_tag": 26,
-        "caller": "A",
-        "utterance_index": 1,
-        "subutterance_index": 1,
-        "text": "Okay.  /",
-        "pos": "Okay/UH ./.",
-        "trees": "(INTJ (UH Okay) (. .) (-DFL- E_S))",
-        "ptb_treenumbers": "1",
-        "talk_day": "03/23/1992",
-        "length": 5,
-        "topic_description": "CHILD CARE",
-        "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?"
-    },
-    {
-        "swda_filename": "sw00utt/sw_0001_4325.utt",
-        "ptb_basename": "4/sw4325",
-        "conversation_no": 4325,
-        "transcript_index": 1,
-        "act_tag": 82,
-        "damsl_act_tag": 15,
-        "caller": "A",
-        "utterance_index": 1,
-        "subutterance_index": 2,
-        "text": "{D So, }",
-        "pos": "So/UH ,/,",
-        "trees": "(SBARQ (INTJ (UH So)) (, ,) (WHNP-1 (WHNP (WP What) (NN kind)) (PP (IN of) (NP (NP (NN experience)) (PP (-NONE- *ICH*-2))))) (SQ (EDITED (RM (-DFL- \\[)) (SQ-UNF (VBP do) (NP-SBJ (PRP you))) (, ,) (IP (-DFL- \\+))) (VBP do) (NP-SBJ (PRP you)) (RS (-DFL- \\])) (VP (VB have) (NP (-NONE- *T*-1)) (, ,) (ADVP (RB then)) (PP-2 (IN with) (NP (NN child) (NN care))))) (. ?) (-DFL- E_S))",
-        "ptb_treenumbers": "2",
-        "talk_day": "03/23/1992",
-        "length": 5,
-        "topic_description": "CHILD CARE",
-        "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?"
-    },
-    {
-        "swda_filename": "sw00utt/sw_0001_4325.utt",
-        "ptb_basename": "4/sw4325",
-        "conversation_no": 4325,
-        "transcript_index": 2,
-        "act_tag": 206,
-        "damsl_act_tag": 36,
-        "caller": "B",
-        "utterance_index": 2,
-        "subutterance_index": 1,
-        "text": "[ [ I guess, +",
-        "pos": "[ I/PRP ] guess/VBP ,/,",
-        "trees": "(S (EDITED (RM (-DFL- \\[)) (EDITED (RM (-DFL- \\[)) (S (NP-SBJ (PRP I)) (VP-UNF (VBP guess))) (, ,) (IP (-DFL- \\+))) (S (NP-SBJ (PRP I)) (VP-UNF (VBP think))) (, ,) (RS (-DFL- \\])) (IP (-DFL- \\+))) (INTJ (UH uh)) (, ,) (NP-SBJ (PRP I)) (VP (VBP wonder) (RS (-DFL- \\])) (SBAR (IN if) (S (NP-SBJ (DT that)) (VP (VBD worked))))) (. .) (-DFL- E_S))",
-        "ptb_treenumbers": "4",
-        "talk_day": "03/23/1992",
-        "length": 5,
-        "topic_description": "CHILD CARE",
-        "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?"
-    },
-    {
-        "swda_filename": "sw00utt/sw_0001_4325.utt",
-        "ptb_basename": "4/sw4325",
-        "conversation_no": 4325,
-        "transcript_index": 3,
-        "act_tag": 148,
-        "damsl_act_tag": 20,
-        "caller": "A",
-        "utterance_index": 3,
-        "subutterance_index": 1,
-        "text": "What kind of experience [ do you, + do you ] have, then with child care? /",
-        "pos": "[ What/WP kind/NN ] of/IN  [ experience/NN ] do/VBP  [ you/PRP ] ,/, do/VBP  [ you/PRP ] have/VB ,/, then/RB with/IN  [ child/NN care/NN ] ?/.",
-        "trees": "(SBARQ (INTJ (UH So)) (, ,) (WHNP-1 (WHNP (WP What) (NN kind)) (PP (IN of) (NP (NP (NN experience)) (PP (-NONE- *ICH*-2))))) (SQ (EDITED (RM (-DFL- \\[)) (SQ-UNF (VBP do) (NP-SBJ (PRP you))) (, ,) (IP (-DFL- \\+))) (VBP do) (NP-SBJ (PRP you)) (RS (-DFL- \\])) (VP (VB have) (NP (-NONE- *T*-1)) (, ,) (ADVP (RB then)) (PP-2 (IN with) (NP (NN child) (NN care))))) (. ?) (-DFL- E_S))",
-        "ptb_treenumbers": "2",
-        "talk_day": "03/23/1992",
-        "length": 5,
-        "topic_description": "CHILD CARE",
-        "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?"
-    },
-    {
-        "swda_filename": "sw00utt/sw_0001_4325.utt",
-        "ptb_basename": "4/sw4325",
-        "conversation_no": 4325,
-        "transcript_index": 4,
-        "act_tag": 148,
-        "damsl_act_tag": 20,
-        "caller": "B",
-        "utterance_index": 4,
-        "subutterance_index": 1,
-        "text": "I think, ] + {F uh, } I wonder ] if that worked. /",
-        "pos": "[ I/PRP ] think/VBP ,/, uh/UH ,/,  [ I/PRP ] wonder/VBP if/IN that/DT worked/VBD ./.",
-        "trees": "(S (EDITED (RM (-DFL- \\[)) (EDITED (RM (-DFL- \\[)) (S (NP-SBJ (PRP I)) (VP-UNF (VBP guess))) (, ,) (IP (-DFL- \\+))) (S (NP-SBJ (PRP I)) (VP-UNF (VBP think))) (, ,) (RS (-DFL- \\])) (IP (-DFL- \\+))) (INTJ (UH uh)) (, ,) (NP-SBJ (PRP I)) (VP (VBP wonder) (RS (-DFL- \\])) (SBAR (IN if) (S (NP-SBJ (DT that)) (VP (VBD worked))))) (. .) (-DFL- E_S))",
-        "ptb_treenumbers": "4",
-        "talk_day": "03/23/1992",
-        "length": 5,
-        "topic_description": "CHILD CARE",
-        "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?"
-    }
-]}
+    "dataset_rows": [
+        {
+            "swda_filename": "sw00utt/sw_0001_4325.utt",
+            "ptb_basename": "4/sw4325",
+            "conversation_no": 4325,
+            "transcript_index": 0,
+            "act_tag": 115,
+            "damsl_act_tag": 26,
+            "caller": "A",
+            "utterance_index": 1,
+            "subutterance_index": 1,
+            "text": "Okay.  /",
+            "pos": "Okay/UH ./.",
+            "trees": "(INTJ (UH Okay) (. .) (-DFL- E_S))",
+            "ptb_treenumbers": "1",
+            "talk_day": "03/23/1992",
+            "length": 5,
+            "topic_description": "CHILD CARE",
+            "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?",
+        },
+        {
+            "swda_filename": "sw00utt/sw_0001_4325.utt",
+            "ptb_basename": "4/sw4325",
+            "conversation_no": 4325,
+            "transcript_index": 1,
+            "act_tag": 82,
+            "damsl_act_tag": 15,
+            "caller": "A",
+            "utterance_index": 1,
+            "subutterance_index": 2,
+            "text": "{D So, }",
+            "pos": "So/UH ,/,",
+            "trees": "(SBARQ (INTJ (UH So)) (, ,) (WHNP-1 (WHNP (WP What) (NN kind)) (PP (IN of) (NP (NP (NN experience)) (PP (-NONE- *ICH*-2))))) (SQ (EDITED (RM (-DFL- \\[)) (SQ-UNF (VBP do) (NP-SBJ (PRP you))) (, ,) (IP (-DFL- \\+))) (VBP do) (NP-SBJ (PRP you)) (RS (-DFL- \\])) (VP (VB have) (NP (-NONE- *T*-1)) (, ,) (ADVP (RB then)) (PP-2 (IN with) (NP (NN child) (NN care))))) (. ?) (-DFL- E_S))",
+            "ptb_treenumbers": "2",
+            "talk_day": "03/23/1992",
+            "length": 5,
+            "topic_description": "CHILD CARE",
+            "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?",
+        },
+        {
+            "swda_filename": "sw00utt/sw_0001_4325.utt",
+            "ptb_basename": "4/sw4325",
+            "conversation_no": 4325,
+            "transcript_index": 2,
+            "act_tag": 206,
+            "damsl_act_tag": 36,
+            "caller": "B",
+            "utterance_index": 2,
+            "subutterance_index": 1,
+            "text": "[ [ I guess, +",
+            "pos": "[ I/PRP ] guess/VBP ,/,",
+            "trees": "(S (EDITED (RM (-DFL- \\[)) (EDITED (RM (-DFL- \\[)) (S (NP-SBJ (PRP I)) (VP-UNF (VBP guess))) (, ,) (IP (-DFL- \\+))) (S (NP-SBJ (PRP I)) (VP-UNF (VBP think))) (, ,) (RS (-DFL- \\])) (IP (-DFL- \\+))) (INTJ (UH uh)) (, ,) (NP-SBJ (PRP I)) (VP (VBP wonder) (RS (-DFL- \\])) (SBAR (IN if) (S (NP-SBJ (DT that)) (VP (VBD worked))))) (. .) (-DFL- E_S))",
+            "ptb_treenumbers": "4",
+            "talk_day": "03/23/1992",
+            "length": 5,
+            "topic_description": "CHILD CARE",
+            "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?",
+        },
+        {
+            "swda_filename": "sw00utt/sw_0001_4325.utt",
+            "ptb_basename": "4/sw4325",
+            "conversation_no": 4325,
+            "transcript_index": 3,
+            "act_tag": 148,
+            "damsl_act_tag": 20,
+            "caller": "A",
+            "utterance_index": 3,
+            "subutterance_index": 1,
+            "text": "What kind of experience [ do you, + do you ] have, then with child care? /",
+            "pos": "[ What/WP kind/NN ] of/IN  [ experience/NN ] do/VBP  [ you/PRP ] ,/, do/VBP  [ you/PRP ] have/VB ,/, then/RB with/IN  [ child/NN care/NN ] ?/.",
+            "trees": "(SBARQ (INTJ (UH So)) (, ,) (WHNP-1 (WHNP (WP What) (NN kind)) (PP (IN of) (NP (NP (NN experience)) (PP (-NONE- *ICH*-2))))) (SQ (EDITED (RM (-DFL- \\[)) (SQ-UNF (VBP do) (NP-SBJ (PRP you))) (, ,) (IP (-DFL- \\+))) (VBP do) (NP-SBJ (PRP you)) (RS (-DFL- \\])) (VP (VB have) (NP (-NONE- *T*-1)) (, ,) (ADVP (RB then)) (PP-2 (IN with) (NP (NN child) (NN care))))) (. ?) (-DFL- E_S))",
+            "ptb_treenumbers": "2",
+            "talk_day": "03/23/1992",
+            "length": 5,
+            "topic_description": "CHILD CARE",
+            "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?",
+        },
+        {
+            "swda_filename": "sw00utt/sw_0001_4325.utt",
+            "ptb_basename": "4/sw4325",
+            "conversation_no": 4325,
+            "transcript_index": 4,
+            "act_tag": 148,
+            "damsl_act_tag": 20,
+            "caller": "B",
+            "utterance_index": 4,
+            "subutterance_index": 1,
+            "text": "I think, ] + {F uh, } I wonder ] if that worked. /",
+            "pos": "[ I/PRP ] think/VBP ,/, uh/UH ,/,  [ I/PRP ] wonder/VBP if/IN that/DT worked/VBD ./.",
+            "trees": "(S (EDITED (RM (-DFL- \\[)) (EDITED (RM (-DFL- \\[)) (S (NP-SBJ (PRP I)) (VP-UNF (VBP guess))) (, ,) (IP (-DFL- \\+))) (S (NP-SBJ (PRP I)) (VP-UNF (VBP think))) (, ,) (RS (-DFL- \\])) (IP (-DFL- \\+))) (INTJ (UH uh)) (, ,) (NP-SBJ (PRP I)) (VP (VBP wonder) (RS (-DFL- \\])) (SBAR (IN if) (S (NP-SBJ (DT that)) (VP (VBD worked))))) (. .) (-DFL- E_S))",
+            "ptb_treenumbers": "4",
+            "talk_day": "03/23/1992",
+            "length": 5,
+            "topic_description": "CHILD CARE",
+            "prompt": "FIND OUT WHAT CRITERIA THE OTHER CALLER WOULD USE IN SELECTING CHILD CARE SERVICES FOR A PRESCHOOLER.  IS IT EASY OR DIFFICULT TO FIND SUCH CARE?",
+        },
+    ],
+}
 
-PROVERBS ={
-    "task_description":"Find the English proverb corresponding to the given story",
-    "samples":"""input=\n Alice always makes sure to keep an extra case of apples in her house. One week, the local supermarket ran out of apples. Thankfully because of Alice's preparation, she was still able to eat apples that week. Which of the following proverbs best apply to this situation?\n  choice: An ounce of protection is worth a pound of cure.\n  choice: It is better to be safe than sorry.\n  choice: Failing to prepare, you are preparing to fail.\n  choice: A stitch in time saves nine.\n  choice: Hope for the best, prepare for the worst.\n \noutput=It is better to be safe than sorry""",
-    "plan":"""1. Expand on the "question" field to create a story that can be related to a proverb.
+PROVERBS = {
+    "task_description": "Find the English proverb corresponding to the given story",
+    "samples": """input=\n Alice always makes sure to keep an extra case of apples in her house. One week, the local supermarket ran out of apples. Thankfully because of Alice's preparation, she was still able to eat apples that week. Which of the following proverbs best apply to this situation?\n  choice: An ounce of protection is worth a pound of cure.\n  choice: It is better to be safe than sorry.\n  choice: Failing to prepare, you are preparing to fail.\n  choice: A stitch in time saves nine.\n  choice: Hope for the best, prepare for the worst.\n \noutput=It is better to be safe than sorry""",
+    "plan": """1. Expand on the "question" field to create a story that can be related to a proverb.
 2. Generate a new field "choices" that contains a list of English proverbs.
 3. Generate a new field "answer" that contains the English proverb that best applies to the story in the "question" field.
 4. Combine the "question" and "choices" fields to form the "input" field.
 5. Use the "answer" field as the "output" field.""",
-    "transformed_sample":"""First, I expand on the "question" field to create a story. The original question is, "Mike was snowboarding on the snow and hit a piece of ice. He went much faster on the ice because _____ is smoother. (A) snow (B) ice". To expand this into a story, I might say: Mike loved snowboarding, and he often went to the mountains to enjoy his favorite sport. One day, while snowboarding on a familiar snowy slope, he unexpectedly hit a patch of ice. To his surprise, he found himself accelerating much faster on the ice because it was smoother than the snow. This sudden change taught him an important lesson about adaptability and the nature of different surfaces.
+    "transformed_sample": """First, I expand on the "question" field to create a story. The original question is, "Mike was snowboarding on the snow and hit a piece of ice. He went much faster on the ice because _____ is smoother. (A) snow (B) ice". To expand this into a story, I might say: Mike loved snowboarding, and he often went to the mountains to enjoy his favorite sport. One day, while snowboarding on a familiar snowy slope, he unexpectedly hit a patch of ice. To his surprise, he found himself accelerating much faster on the ice because it was smoother than the snow. This sudden change taught him an important lesson about adaptability and the nature of different surfaces.
 
 Next, I generate a new field "choices" that contains a list of English proverbs. The proverbs might be:
 
@@ -151,108 +152,77 @@ Here is the final response JSON with "input" and "output" keys:
     "output": "A smooth sea never made a skilled sailor."
 }
 """,
-    "dataset_rows":[
-    {
-        "id": "QuaRel_V1_Fr_0223",
-        "answer_index": 1,
-        "logical_forms": [
-            "(infer (speed higher world1) (smoothness higher world2) (smoothness higher world1))",
-            "(infer (speed higher world2) (smoothness higher world1) (smoothness higher world2))"
-        ],
-        "logical_form_pretty": "qrel(speed, higher, world1) -> qrel(smoothness, higher, world2) ; qrel(smoothness, higher, world1)",
-        "world_literals": {
-            "world1": [
-                "ice"
+    "dataset_rows": [
+        {
+            "id": "QuaRel_V1_Fr_0223",
+            "answer_index": 1,
+            "logical_forms": [
+                "(infer (speed higher world1) (smoothness higher world2) (smoothness higher world1))",
+                "(infer (speed higher world2) (smoothness higher world1) (smoothness higher world2))",
             ],
-            "world2": [
-                "snow"
-            ]
+            "logical_form_pretty": "qrel(speed, higher, world1) -> qrel(smoothness, higher, world2) ; qrel(smoothness, higher, world1)",
+            "world_literals": {"world1": ["ice"], "world2": ["snow"]},
+            "question": "Mike was snowboarding on the snow and hit a piece of ice. He went much faster on the ice because _____ is smoother. (A) snow (B) ice",
         },
-        "question": "Mike was snowboarding on the snow and hit a piece of ice. He went much faster on the ice because _____ is smoother. (A) snow (B) ice"
-    },
-    {
-        "id": "QuaRel_V1_B5_1403",
-        "answer_index": 0,
-        "logical_forms": [
-            "(infer (time lower world1) (distance higher world2) (distance higher world1))",
-            "(infer (time lower world2) (distance higher world1) (distance higher world2))"
-        ],
-        "logical_form_pretty": "qrel(time, lower, world1) -> qrel(distance, higher, world2) ; qrel(distance, higher, world1)",
-        "world_literals": {
-            "world1": [
-                "Rita"
+        {
+            "id": "QuaRel_V1_B5_1403",
+            "answer_index": 0,
+            "logical_forms": [
+                "(infer (time lower world1) (distance higher world2) (distance higher world1))",
+                "(infer (time lower world2) (distance higher world1) (distance higher world2))",
             ],
-            "world2": [
-                "John"
-            ]
+            "logical_form_pretty": "qrel(time, lower, world1) -> qrel(distance, higher, world2) ; qrel(distance, higher, world1)",
+            "world_literals": {"world1": ["Rita"], "world2": ["John"]},
+            "question": "John and Rita are going for a run.  Rita gets tired and takes a break on the park bench.  After twenty minutes in the park, who has run farther? (A) John (B) Rita",
         },
-        "question": "John and Rita are going for a run.  Rita gets tired and takes a break on the park bench.  After twenty minutes in the park, who has run farther? (A) John (B) Rita"
-    },
-    {
-        "id": "QuaRel_V1_Fr_0455",
-        "answer_index": 1,
-        "logical_forms": [
-            "(infer (speed lower world1) (heat lower world1) (heat lower world2))",
-            "(infer (speed lower world2) (heat lower world2) (heat lower world1))"
-        ],
-        "logical_form_pretty": "qrel(speed, lower, world1) -> qrel(heat, lower, world1) ; qrel(heat, lower, world2)",
-        "world_literals": {
-            "world1": [
-                "ocean"
+        {
+            "id": "QuaRel_V1_Fr_0455",
+            "answer_index": 1,
+            "logical_forms": [
+                "(infer (speed lower world1) (heat lower world1) (heat lower world2))",
+                "(infer (speed lower world2) (heat lower world2) (heat lower world1))",
             ],
-            "world2": [
-                "river"
-            ]
+            "logical_form_pretty": "qrel(speed, lower, world1) -> qrel(heat, lower, world1) ; qrel(heat, lower, world2)",
+            "world_literals": {"world1": ["ocean"], "world2": ["river"]},
+            "question": "The propeller on Kate's boat moved slower in the ocean compared to the river. This means the propeller heated up less in the (A) ocean (B) river",
         },
-        "question": "The propeller on Kate's boat moved slower in the ocean compared to the river. This means the propeller heated up less in the (A) ocean (B) river"
-    },
-    {
-        "id": "QuaRel_V1_Fr_0334",
-        "answer_index": 0,
-        "logical_forms": [
-            "(infer (and (heat low world1) (heat high world2)) (friction higher world2) (friction lower world2))",
-            "(infer (and (heat low world2) (heat high world1)) (friction higher world1) (friction lower world1))"
-        ],
-        "logical_form_pretty": "qval(heat, low, world1), qval(heat, high, world2) -> qrel(friction, higher, world2) ; qrel(friction, lower, world2)",
-        "world_literals": {
-            "world1": [
-                "grass hill"
+        {
+            "id": "QuaRel_V1_Fr_0334",
+            "answer_index": 0,
+            "logical_forms": [
+                "(infer (and (heat low world1) (heat high world2)) (friction higher world2) (friction lower world2))",
+                "(infer (and (heat low world2) (heat high world1)) (friction higher world1) (friction lower world1))",
             ],
-            "world2": [
-                "muddy hill"
-            ]
+            "logical_form_pretty": "qval(heat, low, world1), qval(heat, high, world2) -> qrel(friction, higher, world2) ; qrel(friction, lower, world2)",
+            "world_literals": {"world1": ["grass hill"], "world2": ["muddy hill"]},
+            "question": "A car gets very hot as it drives up a muddy hill, but stays cool as it drives up a grass hill. The car warms on on the muddy hill because the muddy hill has (A) more friction (B) less friction.",
         },
-        "question": "A car gets very hot as it drives up a muddy hill, but stays cool as it drives up a grass hill. The car warms on on the muddy hill because the muddy hill has (A) more friction (B) less friction."
-    },
-    {
-        "id": "QuaRel_V1_B5_1282",
-        "answer_index": 1,
-        "logical_forms": [
-            "(infer (strength lower world1) (distance lower world2) (distance lower world1))",
-            "(infer (strength lower world2) (distance lower world1) (distance lower world2))"
-        ],
-        "logical_form_pretty": "qrel(strength, lower, world1) -> qrel(distance, lower, world2) ; qrel(distance, lower, world1)",
-        "world_literals": {
-            "world1": [
-                "Juan after a hospital stay"
+        {
+            "id": "QuaRel_V1_B5_1282",
+            "answer_index": 1,
+            "logical_forms": [
+                "(infer (strength lower world1) (distance lower world2) (distance lower world1))",
+                "(infer (strength lower world2) (distance lower world1) (distance lower world2))",
             ],
-            "world2": [
-                "Juan when healthy"
-            ]
+            "logical_form_pretty": "qrel(strength, lower, world1) -> qrel(distance, lower, world2) ; qrel(distance, lower, world1)",
+            "world_literals": {
+                "world1": ["Juan after a hospital stay"],
+                "world2": ["Juan when healthy"],
+            },
+            "question": "Juan is injured in a car accident, which necessitates a hospital stay where he is unable to maintain the strength in his arm. Juan notices that his throwing arm feels extremely frail compared to the level of strength it had when he was healthy. If Juan decides to throw a ball with his friend, when will his throw travel less distance? (A) When Juan's arm is healthy (B) When Juan's arm is weak after the hospital stay.",
         },
-        "question": "Juan is injured in a car accident, which necessitates a hospital stay where he is unable to maintain the strength in his arm. Juan notices that his throwing arm feels extremely frail compared to the level of strength it had when he was healthy. If Juan decides to throw a ball with his friend, when will his throw travel less distance? (A) When Juan's arm is healthy (B) When Juan's arm is weak after the hospital stay."
-    }
-]}
+    ],
+}
 
-VITAMINC ={
-    "task_description":"Identify whether a claim is True or False or Neither based on a given context",
-    "samples":"""input=Westlife: According to the British Phonographic Industry ( BPI ) , Westlife has been certified for 13 million albums and 9.8 million singles , with a total of more than 23 million combined sales in the UK . Claim: Westlife made under 23.5 million sales in the UK
+VITAMINC = {
+    "task_description": "Identify whether a claim is True or False or Neither based on a given context",
+    "samples": """input=Westlife: According to the British Phonographic Industry ( BPI ) , Westlife has been certified for 13 million albums and 9.8 million singles , with a total of more than 23 million combined sales in the UK . Claim: Westlife made under 23.5 million sales in the UK
 output=Neither""",
-    "plan":"""1. Combine "abstract" and "title" to create "context".
+    "plan": """1. Combine "abstract" and "title" to create "context".
 2. Create a "claim" field based on "context" using GPT-4 that is either supported or not supported by the "context".
 3. Create an "output" field based on whether "claim" is supported or not by the "context". The value of "output" must be "True", "False", or "Neither".
 4. Combine "context" and "claim" to create "input\"""",
-    "transformed_sample":"""First, I create "context" by combining "title" and "abstract". So, "Context": Microstructural development of human newborn cerebral white matter assessed in vivo by diffusion tensor magnetic resonance imaging. Alterations of the architecture of cerebral white matter in the developing human brain can affect cortical development and result in functional disabilities. A line scan diffusion-weighted magnetic resonance imaging (MRI) sequence...
+    "transformed_sample": """First, I create "context" by combining "title" and "abstract". So, "Context": Microstructural development of human newborn cerebral white matter assessed in vivo by diffusion tensor magnetic resonance imaging. Alterations of the architecture of cerebral white matter in the developing human brain can affect cortical development and result in functional disabilities. A line scan diffusion-weighted magnetic resonance imaging (MRI) sequence...
 Next, I create "claim". I randomly decide that the claim will not be supported by the context. So, "claim": The study found that preterm infants at term showed lower mean diffusion coefficients in the central white matter compared to full-term infants.
 Next, I create "output". Since claim is not supported, output should be false. So, "Output": False.
 Next, I create "input" by combining "Context" and "Claim". So, "input": Microstructural development of human newborn cerebral white matter assessed in vivo by diffusion tensor magnetic resonance imaging. Alterations of the architecture of cerebral white matter in the developing human brain can affect cortical development and result in functional disabilities. A line scan diffusion-weighted magnetic resonance imaging (MRI) sequence...claim: The study found that preterm infants at term showed lower mean diffusion coefficients in the central white matter compared to full-term infants.
@@ -261,56 +231,56 @@ Here is the final response JSON with "input" and "output" keys:
 "input" : "Microstructural development of human newborn cerebral white matter assessed in vivo by diffusion tensor magnetic resonance imaging. Alterations of the architecture of cerebral white matter in the developing human brain can affect cortical development and result in functional disabilities. A line scan diffusion-weighted magnetic resonance imaging (MRI) sequence with diffusion tensor analysis was applied to measure the apparent diffusion coefficient, to calculate relative anisotropy, and to delineate three-dimensional fiber architecture in cerebral white matter in preterm (n = 17) and full-term infants (n = 7). To assess effects of prematurity on cerebral white matter development, early gestation preterm infants (n = 10) were studied a second time at term. In the central white matter the mean apparent diffusion coefficient at 28 wk was high, 1.8 microm2/ms, and decreased toward term to 1.2 microm2/ms. Claim: The study found that preterm infants at term showed lower mean diffusion coefficients in the central white matter compared to full-term infants.",
 "output" : "False"
 }""",
-    "dataset_rows":[
-    {
-    "doc_id": "4983",
-    "title": "Microstructural development of human newborn cerebral white matter assessed in vivo by diffusion tensor magnetic resonance imaging.",
-    "abstract": """[
+    "dataset_rows": [
+        {
+            "doc_id": "4983",
+            "title": "Microstructural development of human newborn cerebral white matter assessed in vivo by diffusion tensor magnetic resonance imaging.",
+            "abstract": """[
         "Alterations of the architecture of cerebral white matter in the developing human brain can affect cortical development and result in functional disabilities.",
         "A line scan diffusion-weighted magnetic resonance imaging (MRI) sequence with diffusion tensor analysis was applied to measure the apparent diffusion coefficient, to calculate relative anisotropy, and to delineate three-dimensional fiber architecture in cerebral white matter in preterm (n = 17) and full-term infants (n = 7).",
         "To assess effects of prematurity on cerebral white matter development, early gestation preterm infants (n = 10) were studied a second time at term.",
         "In the central white matter the mean apparent diffusion coefficient at 28 wk was high, 1.8 microm2/ms, and decreased toward term to 1.2 microm2/ms.",
     ]""",
-    "structured": "False",
-    },
-    {
-        "doc_id": "25761154",
-        "title": "Exercise-induced asthm a practical guide to definitions, diagnosis, prevalence, and treatment.",
-        "abstract": """[
+            "structured": "False",
+        },
+        {
+            "doc_id": "25761154",
+            "title": "Exercise-induced asthm a practical guide to definitions, diagnosis, prevalence, and treatment.",
+            "abstract": """[
             "Exercise-induced asthma is defined as an intermittent narrowing of the airways, demonstrated by a decrease in some measure of flow, that the patient experiences as wheezing, chest tightness, coughing, and difficulty breathing that is triggered by exercise.",
             "Exercise will trigger asthma in most individuals who have chronic asthma, as well as in some who do not otherwise have asthma.",
             "Definitive diagnosis requires demonstration of a drop in flow rate, typically > or = 13-15% for forced expiratory volume in one second (FEV1) and > or = 15-20% for peak expiratory flow rate (PEFR), after exercise, associated with symptoms.",
             "Prevalence data indicate that this disorder is very common in those who participate in recreational sports as well as in highly competitive athletes, with at least 12-15% of unselected athletes having positive exercise challenges.",
             "Treatment of exercise induced asthma involves use of nonpharmacological measures (such as the use of the refractory period after exercise and prewarming air) as well as use of medications (beta-agonists, cromolyn, and nedocromil).",
             "With treatment, those who suffer from exercise-induced asthma may be able to participate and compete at the highest levels of performance."
-        ]"""
-    },
-    {
-        "doc_id": "17150648",
-        "title": "Leptin regulates glutamate and glucose transporters in hypothalamic astrocytes.",
-        "abstract": """[
+        ]""",
+        },
+        {
+            "doc_id": "17150648",
+            "title": "Leptin regulates glutamate and glucose transporters in hypothalamic astrocytes.",
+            "abstract": """[
             "Glial cells perform critical functions that alter the metabolism and activity of neurons, and there is increasing interest in their role in appetite and energy balance.",
             "Leptin, a key regulator of appetite and metabolism, has previously been reported to influence glial structural proteins and morphology.",
             "Here, we demonstrate that metabolic status and leptin also modify astrocyte-specific glutamate and glucose transporters, indicating that metabolic signals influence synaptic efficacy and glucose uptake and, ultimately, neuronal function.",
             "We found that basal and glucose-stimulated electrical activity of hypothalamic proopiomelanocortin (POMC) neurons in mice were altered in the offspring of mothers fed a high-fat diet.",
             "In adulthood, increased body weight and fasting also altered the expression of glucose and glutamate transporters.",
             "These results demonstrate that whole-organism metabolism alters hypothalamic glial cell activity and suggest that these cells play an important role in the pathology of obesity."
-        ]"""
-    },
-    {
-        "doc_id": "37256966",
-        "title": "Melatonin synthesized by T lymphocytes as a ligand of the retinoic acid-related orphan receptor.",
-        "abstract": """[
+        ]""",
+        },
+        {
+            "doc_id": "37256966",
+            "title": "Melatonin synthesized by T lymphocytes as a ligand of the retinoic acid-related orphan receptor.",
+            "abstract": """[
             "Melatonin modulates a wide array of physiological events with pleiotropic effects on the immune system.",
             "While the relevance of specific melatonin membrane receptors has been well established for several biological functions, retinoic acid-related orphan receptor alpha (RORα) has been suggested as a mediator of nuclear melatonin signalling by results obtained from pharmacological approaches.",
             "However, a melatonin-mediated downstream effect cannot be ruled out, and further evidence is needed to support a direct interaction between melatonin and RORα.",
             "Here, we show that RORα is mainly located in human Jurkat T-cell nucleus, and it is co-immunoprecipitated with melatonin.",
-        ]"""
-    },
-    {
-        "doc_id": "44827480",
-        "title": "Implementation of contemporary oral antiplatelet treatment guidelines in patients with acute coronary syndrome undergoing percutaneous coronary intervention: a report from the GReek AntiPlatelet rEgistry (GRAPE).",
-        "abstract": """[
+        ]""",
+        },
+        {
+            "doc_id": "44827480",
+            "title": "Implementation of contemporary oral antiplatelet treatment guidelines in patients with acute coronary syndrome undergoing percutaneous coronary intervention: a report from the GReek AntiPlatelet rEgistry (GRAPE).",
+            "abstract": """[
             "BACKGROUND Few data exist about the implementation of contemporary oral antiplatelet treatment guidelines in patients with acute coronary syndrome (ACS) undergoing percutaneous coronary intervention (PCI).",
             "METHODS GReek AntiPlatelet rEgistry (GRAPE), initiated on January 2012, is a prospective, observational, multicenter cohort study focusing on contemporary use of P2Y12 inhibitors.",
             "In 1434 patients we evaluated appropriateness of P2Y12 selection initially and at discharge by applying an eligibility-assessing algorithm based on P2Y12 inhibitors' contraindications/specific warnings and precautions.",
@@ -318,11 +288,12 @@ Here is the final response JSON with "input" and "output" keys:
             "The selection of clopidogrel was most commonly less preferable, both initially (69.7%) and at discharge (75.6%).",
             "Appropriate selection of newer agents was high initially (79.2%-82.8%), with further increase as selection at discharge (89.4%-89.8%).",
             "Inappropriate selection of the newer agents was 17.2%-20.8% initially, decreasing to 10.2%-10.6% at discharge.",
-        ]"""
-    }
-]}
+        ]""",
+        },
+    ],
+}
 
-TRANSFORM_EXEMPLARS ="""Task Description: {task_description}
+TRANSFORM_EXEMPLARS = """Task Description: {task_description}
 
 Task Examples:
 {samples}
@@ -335,9 +306,9 @@ Plan:
 
 Think step by step through the plan and show your working. End your response as a JSON with exactly two fields: "input", and "output"
 Response:
-{transformed_sample}""" # noqa E501
+{transformed_sample}"""  # noqa E501
 
-PLAN_EXEMPLARS ="""Task Description: {task_description}
+PLAN_EXEMPLARS = """Task Description: {task_description}
 
 Task Examples:
 {samples}
@@ -348,7 +319,7 @@ Dataset Row:
 {dataset_rows}
 
 Plan to convert Dataset Samples to Task Examples is:
-{plan}""" # noqa E501
+{plan}"""  # noqa E501
 
 
 CREATE_TASK_REQUIREMENTS_PROMPT = """You are a Requirements Creator Agent. You will be shown a task description and some task examples. You have to create a list of concrete requirements to ensure that if someone were to create a dataset for this task, they must follow the list of requirements you create. Requirements must fall into 2 types: Format requirements and Content requirements.
@@ -473,7 +444,7 @@ Carefully analyze the  `Task Description` and the `Task Examples`. Propose a hig
 
 Return only the plan.
 
-""" # noqa E501
+"""  # noqa E501
 
 PLAN_INCONTEXT_EXAMPLE = """Task Description: The task involves solving linguistic puzzles that resemble the structure of Rosetta Stone translations. The Rosetta Stone is famous for having the same text inscribed in three scripts, which allowed for the deciphering of Egyptian hieroglyphs. In this task, the goal is to decipher an unknown language (referred to as "Other") by using English sentences and their corresponding translations in the Other language.
 The general trend in the task examples is that each input consists of pairs of sentences, one in English and one in the Other language. These sentences are meant to be parallel in meaning, allowing the solver to deduce the meaning of individual words or phrases in the Other language based on their English counterparts.
@@ -590,6 +561,187 @@ Please return only the plan.
      - Verify that vocabulary and grammar are consistent across the dataset, making the puzzles solvable.
      - Ensure a logical and systematic approach can be applied to decipher the "Other" language based on the examples given."""
 
+
+TRANSFORM_INCONTEXT_EXAMPLE = """Task Description: The task involves analyzing a given concept that is a combination of two or more words (e.g., "smelly trucks," "sliced apples," "casual shirts") and determining which of several provided sentences best characterizes that concept. The concept is a compound noun phrase that combines an adjective or verb with a noun, creating a new meaning that is not simply the sum of its parts but has emergent semantic properties.
+
+The input is structured as follows:
+- The word "Concept:" followed by the compound noun phrase.
+- The word "Question:" followed by a prompt asking which sentence best characterizes the given concept.
+- A series of "choice:" entries, each followed by a sentence that could potentially describe the concept.
+
+The output is a single sentence chosen from the provided choices that best captures the essence or a significant attribute of the concept in question. This sentence should reflect the emergent semantic properties of the concept, which means it should be relevant to the specific combination of words and not just to one of the words in isolation.
+
+The task requires an understanding of the meanings of the individual words, how they combine to create a new meaning, and the ability to discern which of the provided sentences aligns with this new meaning. It is important to note that the correct characterization is not necessarily a literal description but rather one that captures the most salient or defining feature of the concept as it is commonly understood.
+
+The format of the input/output examples is consistent, with the input presenting a structured query and the output providing a clear, concise answer. The choices given in the input are diverse and may include irrelevant or misleading options, which requires careful consideration to identify the most appropriate response. The task does not require an explanation for the choice, only the identification of the correct sentence.
+
+Task Examples:
+input=Concept: smelly trucks. Question: Which of the following sentences best characterizes smelly trucks?
+choice: Smelly trucks emit lots of black smoke.
+choice: Smelly trucks are very efficient.
+choice: Smelly trucks are lightweight.
+choice: Smelly trucks are painted red.
+output=Smelly trucks emit lots of black smoke.
+
+input=Concept: sliced apples. Question: Which of the following sentences best characterizes sliced apples?
+choice: Sliced apples are very sharp.
+choice: Sliced apples are cooked in a pie.
+choice: Sliced apples tend to bleed a lot.
+choice: Sliced apples are dysfunctional.
+output=Sliced apples are cooked in a pie.
+
+input=Concept: casual shirts. Question: Which of the following sentences best characterizes casual shirts?
+choice: Casual shirts do not want relationships.
+choice: Casual shirts use a lot of swear words.
+choice: Casual shirts are pulled over your head.
+choice: Casual shirts should be worn at formal dinner parties.
+output=Casual shirts are pulled over your head.
+
+Task Requirements:
+### Format Requirements
+
+1. **Input Dataset Format**:
+   - The input must begin with the word "Concept:" followed by a compound noun phrase.
+   - Following the concept, the input must include the word "Question:" followed by a prompt asking which sentence best characterizes the given concept.
+   - A list of potential characterizations must be provided, each beginning with the word "choice:" followed by a sentence.
+   - The choices must be clearly numbered or bulleted to distinguish between different options.
+
+2. **Output Dataset Format**:
+   - The output must be a single sentence selected from the provided choices.
+   - The chosen sentence must be presented as a standalone statement without the "choice:" label or any numbering/bullet points.
+
+### Content Requirements
+
+1. **Relevance of Choices**:
+   - The sentences provided as choices must be relevant to the concept and vary in their degree of accuracy in characterizing the concept.
+   - At least one choice must accurately reflect the emergent semantic properties of the compound noun phrase, while other choices may be less relevant or misleading.
+
+2. **Diversity of Concepts**:
+   - The dataset must include a diverse range of compound noun phrases, combining different adjectives or verbs with nouns to create varied concepts.
+   - The concepts should cover a wide array of topics and themes to ensure a broad semantic field is represented.
+
+3. **Complexity of Characterizations**:
+   - The characterizations should not be overly simplistic or generic but should require an understanding of the nuanced meaning created by the combination of words in the concept.
+   - The correct characterization should capture the most salient or defining feature of the concept as it is commonly understood, which may not be a literal description.
+
+4. **Clarity and Ambiguity**:
+   - The correct choice must be unambiguously the best characterization among the provided options.
+   - The incorrect choices should be plausible enough to require careful consideration but should not be so close in meaning to the correct choice as to create ambiguity.
+
+5. **Consistency in Concept Presentation**:
+   - The compound noun phrases must be presented consistently, with the adjective or verb preceding the noun.
+   - The format and punctuation of the concept and choices must be uniform across the dataset to avoid confusion.
+
+6. **Emergent Semantic Properties**:
+   - The dataset creators must ensure that the correct choice for each concept reflects emergent semantic properties, meaning the concept's meaning is more than just the sum of its parts.
+   - The choices must be crafted to test the understanding of these emergent properties rather than just the meaning of individual words.
+
+Transformation plan:
+1. USE_THEME: Use the theme from the "acceptable_concept" field to create a new field named "Concept".
+   - STEP_REQUIREMENTS:
+     - Form a compound noun phrase using "acceptable_concept" and an adjective/verb.
+     - Format the compound noun phrase with the label "Concept:" followed by the phrase.
+
+2. CREATE: Create a new field named "Question" that asks which sentence best characterizes the given concept.
+   - STEP_REQUIREMENTS:
+     - The field should be formatted as "Question: Which of the following sentences best characterizes [compound noun phrase]?"
+
+3. MODIFY: Modify the "property_phrase" field to serve as one of the choices in the input dataset.
+   - STEP_REQUIREMENTS:
+     - Prepend the phrase with "choice:" to align with the required input format.
+     - Ensure the sentence is relevant and reflects an emergent semantic property of the concept.
+
+4. CREATE: Generate additional choice sentences that vary in relevance and accuracy in characterizing the concept.
+   - STEP_REQUIREMENTS:
+     - Create at least three additional sentences that are plausible but incorrect in describing the concept.
+     - Each sentence must begin with "choice:" followed by the sentence.
+
+5. CREATE: Formulate the "input" field by combining the "Concept", "Question", and all "choice" fields.
+   - STEP_REQUIREMENTS:
+     - Ensure all parts are clearly separated and formatted according to the task requirements.
+     - Include the compound noun phrase, the question prompt, and all choice sentences in a structured and numbered or bulleted format.
+
+6. CREATE: Select the "output" field which is the correct choice sentence that best characterizes the concept.
+   - STEP_REQUIREMENTS:
+     - Choose the sentence that best captures the emergent semantic properties of the concept.
+     - The output should be a standalone sentence without the "choice:" label or any numbering.
+
+7. REVIEW: Review the entire transformed dataset to ensure it meets all task requirements.
+   - STEP_REQUIREMENTS:
+     - Verify that the "Concept" is presented consistently and correctly.
+     - Check that the "Question" is clear and correctly asks about the characterization of the concept.
+     - Confirm that all "choice" entries are relevant and appropriately challenging.
+     - Ensure the "output" correctly identifies the best characterization among the provided choices.
+     - Confirm that the format and punctuation are uniform across the dataset.
+
+Dataset Sample:
+{"property": "\"contains nozzles\"", "acceptable_concept": "\"coffee_maker\"", "unacceptable_concept": "\"toaster\"", "prefix_acceptable": "\"a coffee maker\"", "prefix_unacceptable": "\"a toaster\"", "property_phrase": "\"contains nozzles.\""}
+
+
+Think step by step through the plan to convert the above `Dataset Sample` and show your working. End your response as a JSON with exactly two fields: "input", and "output"
+Response:
+
+### Step-by-Step Transformation Plan Execution
+
+#### Step 1: USE_THEME
+- **Task**: Use the theme from the "acceptable_concept" field to create a new field named "Concept".
+- **Action**: Extract the value "coffee_maker" from "acceptable_concept" and combine it with an adjective to form a compound noun phrase. I'll choose the adjective "automated" to create "automated coffee maker".
+- **Result**: "Concept: automated coffee maker"
+- **Verification**: The concept is correctly formatted with the adjective preceding the noun, adhering to the task requirements.
+
+#### Step 2: CREATE
+- **Task**: Create a new field named "Question" that asks which sentence best characterizes the given concept.
+- **Action**: Format the question to include the newly created compound noun phrase.
+- **Result**: "Question: Which of the following sentences best characterizes automated coffee maker?"
+- **Verification**: The question is correctly formatted and clearly asks about the characterization of the concept.
+
+#### Step 3: MODIFY
+- **Task**: Modify the "property_phrase" field to serve as one of the choices in the input dataset.
+- **Action**: Take the "property_phrase" "contains nozzles." and prepend it with "choice:".
+- **Result**: "choice: Contains nozzles."
+- **Verification**: The choice is relevant and correctly formatted, but it does not reflect an emergent semantic property as effectively as it could. No additional result needed as it serves as a plausible but less accurate choice.
+
+#### Step 4: CREATE
+- **Task**: Generate additional choice sentences that vary in relevance and accuracy in characterizing the concept.
+- **Action**: Create three additional sentences:
+  - "choice: Is used primarily for making tea."
+  - "choice: Can be carried in a pocket."
+  - "choice: Brews coffee automatically."
+- **Result**: These choices provide a range of relevance, with one directly relevant to the concept.
+- **Verification**: The choices are diverse and formatted correctly. The choice "Brews coffee automatically." is identified as the most accurate and relevant, aligning with the emergent properties of the concept.
+
+#### Step 5: CREATE
+- **Task**: Formulate the "input" field by combining the "Concept", "Question", and all "choice" fields.
+- **Action**: Assemble all parts into a structured format.
+- **Result**: 
+  ```
+  Concept: automated coffee maker. Question: Which of the following sentences best characterizes automated coffee maker?
+  choice: Contains nozzles.
+  choice: Is used primarily for making tea.
+  choice: Can be carried in a pocket.
+  choice: Brews coffee automatically.
+  ```
+- **Verification**: The input is structured and formatted according to the task requirements, with clear separation and labeling of each part.
+
+#### Step 6: CREATE
+- **Task**: Select the "output" field which is the correct choice sentence that best characterizes the concept.
+- **Action**: Choose the sentence that best captures the emergent semantic properties of the concept.
+- **Result**: "Brews coffee automatically."
+- **Verification**: The chosen output accurately reflects the most salient feature of the concept and is presented without any labels or numbering, as required.
+
+#### Step 7: REVIEW
+- **Task**: Review the entire transformed dataset to ensure it meets all task requirements.
+- **Action**: Check consistency, clarity, relevance, and formatting.
+- **Result**: All requirements are met, and the format is consistent.
+- **Verification**: The dataset adheres to all specified requirements, ensuring clarity and relevance in the characterization of the concept.
+
+### Final JSON Response
+{
+  "input": "Concept: automated coffee maker. Question: Which of the following sentences best characterizes automated coffee maker? choice: Contains nozzles. choice: Is used primarily for making tea. choice: Can be carried in a pocket. choice: Brews coffee automatically.",
+  "output": "Brews coffee automatically."
+}
+"""
+
 CREATE_PLAN_PROMPT2 = """You are a Planning Agent. You create a plan to transform data samples from their existing format into the required format for a given task.
 
 -------------------------------------------------
@@ -628,17 +780,24 @@ STEP_EXPLANATION is a basic explanation of which field(s) the STEP_TYPE is being
 
 STEP_REQUIREMENTS are a bulleted list of sentences where each item in the list is a requirement that must be followed for that step to have been carried out successfully.
 
-Please return only the plan.""" # noqa E501
+Please return only the plan."""  # noqa E501
 
 TRANSFORM_DATA_PROMPT2 = """You are a Data Transforming Agent. Your job is to transform data from a given format, to the required format. Following are the detailed instructions for the same:
 1. Read the `Task Description` and `Task Requirements`.
-2. An example of the input and output looks like for the task is shown in `Task Examples`
+2. An example of what the input and output looks like for the task is shown in `Task Examples`
 3. The sample to be transformed is in `Data Sample`.
 4. Read the data transformation plan carefully that will help you convert the `Data Sample` into the required format. This should be relevant and intune to the `Task Description`
 5. Perform the plan step by step and explain your thinking.
 6. Ensure that each step is covering the requirements mentioned for that step.
 7. Ensure that the final transformed sample adheres to the `Task Description` and `Task Requirements`.
 8. End your response with the transformed sample as a JSON response with exactly 2 fields: "input" and "output".
+
+-------------------------------------------------
+Here is an example for your reference.
+
+{transform_incontext_example}
+
+-------------------------------------------------
 
 Task Description: {task_description}
 
@@ -701,14 +860,20 @@ def truncate_row(example_row: dict, max_length=200) -> str:
         )
     return json.dumps(truncated_row)
 
+
 def construct_prompt_for_task_requirements(task_explanation: str, task_examples: str):
     return CREATE_TASK_REQUIREMENTS_PROMPT2.format(
         task_explanation=task_explanation,
         task_examples=task_examples,
     )
 
+
 def construct_prompt_for_plan(
-    task_description: str, task_requirements:str, dataset: list[dict], example: str, num_rows: int = 5
+    task_description: str,
+    task_requirements: str,
+    dataset: list[dict],
+    example: str,
+    num_rows: int = 5,
 ) -> str:
     """Construct prompt for plan."""
 
@@ -717,7 +882,10 @@ def construct_prompt_for_plan(
     incontext_examples = []
 
     for incontext_task in incontext_tasks:
-        dataset_rows = "\n".join(f"{truncate_row(example_row=row)}\n" for row in incontext_task["dataset_rows"])
+        dataset_rows = "\n".join(
+            f"{truncate_row(example_row=row)}\n"
+            for row in incontext_task["dataset_rows"]
+        )
 
         incontext_example = PLAN_EXEMPLARS.format(
             task_description=incontext_task["task_description"],
@@ -726,7 +894,7 @@ def construct_prompt_for_plan(
             plan=incontext_task["plan"],
         )
         incontext_examples.append(incontext_example)
-    
+
     incontext_examples_str = ""
     for i, incontext_example in enumerate(incontext_examples):
         incontext_examples_str += f"Incontext Example {i+1}:\n{incontext_example}\n\n"
@@ -736,11 +904,18 @@ def construct_prompt_for_plan(
         task_description=task_description,
         example=example,
         task_requirements=task_requirements,
-        dataset_row="\n".join(f"{truncate_row(example_row=dataset[i])}\n" for i in range(num_rows)),
+        dataset_row="\n".join(
+            f"{truncate_row(example_row=dataset[i])}\n" for i in range(num_rows)
+        ),
     )
 
+
 def construct_prompt_for_transform_data(
-    task_description: str, task_requirements:str, dataset_row: dict, plan: str, example: str
+    task_description: str,
+    task_requirements: str,
+    dataset_row: dict,
+    plan: str,
+    example: str,
 ) -> str:
     """Construct prompt for dataset transformation."""
 
@@ -757,20 +932,22 @@ def construct_prompt_for_transform_data(
             transformed_sample=incontext_task["transformed_sample"],
         )
         incontext_examples.append(incontext_example)
-    
+
     incontext_examples_str = ""
     for i, incontext_example in enumerate(incontext_examples):
         incontext_examples_str += f"Incontext Example {i+1}\n{incontext_example}\n\n"
-    
+
     # incontext_examples_str += f"Incontext Example {len(incontext_examples)+1}"
 
     return TRANSFORM_DATA_PROMPT2.format(
+        transform_incontext_example=TRANSFORM_INCONTEXT_EXAMPLE,
         task_description=task_description,
         sample=example,
         task_requirements=task_requirements,
         dataset_row=truncate_row(dataset_row),
-        plan=plan
+        plan=plan,
     )
+
 
 # if __name__=="__main__":
 #     planprompt = construct_prompt_for_plan("a", "b", [{"sentence": "It covered taxes and charges.", "fol_translation": "exists x1.(exists x2.(_tax(x2) & _cover(x1,x2)) & exists x3.(_charge(x3) & _cover(x1,x3)))"}, {"sentence": "Some scenes take place.", "fol_translation": "exists x1.(_scene(x1) & exists x2.(_place(x2) & _take(x1,x2)))"}, {"sentence": "any mass produced television or projector.", "fol_translation": "all x1.(_mass(x1) -> exists x2.((_projector(x2) | _television(x2)) & _produce(x1,x2)))"}, {"sentence": "I imagined exhilaration and excitement.", "fol_translation": "exists x1 x2.(_excitement(x2) & _exhilaration(x2) & _imagine(x1,x2))"}, {"sentence": "No destination is unreachable.", "fol_translation": "all x1.(_destination(x1) -> -_unreachable(x1))"}], "c")
