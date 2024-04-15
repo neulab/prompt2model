@@ -19,7 +19,7 @@ from tqdm.asyncio import tqdm_asyncio
 # so openai errors are valid even when using other services.
 API_ERRORS = (
     openai.APIError,
-    openai.Timeout,
+    openai.APITimeoutError,
     openai.RateLimitError,
     openai.BadRequestError,
     openai.APIStatusError,
@@ -31,7 +31,7 @@ ERROR_ERRORS_TO_MESSAGES = {
     openai.BadRequestError: "API Invalid Request: Prompt was filtered",
     openai.RateLimitError: "API rate limit exceeded. Sleeping for 10 seconds.",
     openai.APIConnectionError: "Error Communicating with API",
-    openai.Timeout: "API Timeout Error: API Timeout",
+    openai.APITimeoutError: "API Timeout Error: API Timeout",
     openai.APIStatusError: "API service unavailable error: {e}",
     openai.APIError: "API error: {e}",
 }
@@ -230,7 +230,7 @@ def handle_api_error(e) -> None:
         raise e
     if isinstance(
         e,
-        (openai.APIError, openai.Timeout, openai.RateLimitError),
+        (openai.APIError, openai.APITimeoutError, openai.RateLimitError),
     ):
         # For these errors, OpenAI recommends waiting before retrying.
         time.sleep(1)
