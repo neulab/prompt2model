@@ -1,6 +1,6 @@
-# from prompt2model.prompt_parser import PromptSpec, PromptBasedInstructionParser, TaskType
-# from prompt2model.dataset_retriever.description_dataset_retriever_v2 import DescriptionDatasetRetriever_V2
-# import wandb
+from prompt2model.prompt_parser import PromptSpec, PromptBasedInstructionParser, TaskType
+from prompt2model.dataset_retriever.description_dataset_retriever_v2 import DescriptionDatasetRetriever_V2
+import wandb
 import os
 
 from prompt2model.utils import api_tools
@@ -43,8 +43,6 @@ if __name__ == "__main__":
     )
 
     print(api_tools.default_api_agent.generate_one_completion("whats up?"))
-
-    exit()
 
     # task_list = ["cause_and_effect", "code_line_description", "elementary_math", "implicatures", "medical_questions_russian", "temporal_sequences"]
     task_list = [
