@@ -96,12 +96,11 @@ class APIAgent:
             An OpenAI-like response object if there were no errors in generation.
             In case of API-specific error, Exception object is captured and returned.
         """
-        # num_prompt_tokens = count_tokens_from_string(prompt)
-        # if self.max_tokens:
-        #     max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
-        # else:
-        #     max_tokens = 3 * num_prompt_tokens
-        max_tokens = self.max_tokens
+        num_prompt_tokens = count_tokens_from_string(prompt)
+        if self.max_tokens:
+            max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
+        else:
+            max_tokens = 3 * num_prompt_tokens
 
         response = completion(  # completion gets the key from os.getenv
             model=self.model_name,
