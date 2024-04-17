@@ -43,7 +43,21 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             [str, str, dict, str, str], str
         ] = construct_prompt_for_transform_data,
     ):
-        """Initialize the class."""
+        """Initialize the class.
+
+        Args:
+            plan_prompt_fn: A function that takes in a description of the target task,
+            example of the target task,
+            list of dictionaries where each dictionary is a row from a potentially
+            relevant dataset,
+            and the number of rows to use from this potentially relevant dataset,
+            and returns a plan prompt.
+
+            transform_prompt_fn: A function that takes in a description of the target
+            task, an example of the target task,
+            plan for dataset transformation,
+            and the row from a potentially relevant dataset to be transformed.
+        """
         self.plan_prompt_fn = plan_prompt_fn
         self.transform_prompt_fn = transform_prompt_fn
         self.plan: str = ""
@@ -109,6 +123,8 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             task_requirements,
             dataset,
             prompt_spec.examples,
+            dataset,
+            min(5, len(dataset)),
         )
         # wandb.log({"plan_prompt": plan_prompt})
         print("Plan prompt: \n", plan_prompt)
