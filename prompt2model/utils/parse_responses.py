@@ -77,7 +77,7 @@ def find_rightmost_brackets(text: str) -> str | None:
 
 
 def parse_dataset_config_responses(response: openai.ChatCompletion) -> dict:
-    """Parses the response to extract relevant information from dataset/configuration.
+    """Parse the response to extract relevant information from dataset/configuration.
 
     LLMs can return the dataset configuration in different formats -
     usually either between ** ** or as a sentence.
