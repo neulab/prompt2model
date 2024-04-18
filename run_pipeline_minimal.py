@@ -1,12 +1,21 @@
-from prompt2model.prompt_parser import PromptSpec, PromptBasedInstructionParser, TaskType
-from prompt2model.dataset_retriever.description_dataset_retriever_v2 import DescriptionDatasetRetriever_V2
-import wandb
+import json
 import os
 
+from dotenv import load_dotenv
+
+import wandb
+from prompt2model.dataset_retriever.description_dataset_retriever_v2 import (
+    DescriptionDatasetRetriever_V2,
+)
+from prompt2model.prompt_parser import (
+    PromptBasedInstructionParser,
+    PromptSpec,
+    TaskType,
+)
 from prompt2model.utils import api_tools
 from prompt2model.utils.api_tools import APIAgent
 
-# import json
+load_dotenv()
 
 
 def get_tasks(path, task_list=[]):
@@ -37,12 +46,7 @@ def get_tasks(path, task_list=[]):
 
 
 if __name__ == "__main__":
-
-    api_tools.default_api_agent = APIAgent(
-        model_name="gpt-4-turbo-2024-04-09", max_tokens=2000
-    )
-
-    print(api_tools.default_api_agent.generate_one_completion("whats up?"))
+    print("IMPORTS COMPLETE")
 
     # task_list = ["cause_and_effect", "code_line_description", "elementary_math", "implicatures", "medical_questions_russian", "temporal_sequences"]
     task_list = [
@@ -50,13 +54,17 @@ if __name__ == "__main__":
         "implicatures",
         "medical_questions_russian",
         "temporal_sequences",
+        "code_line_description",
+        "elementary_math",
     ]
     # task_list = ["conc_comb"]
-
     os.environ["AZURE_API_BASE"] = "https://vijay-gpt-4-sweden.openai.azure.com/"
     os.environ["AZURE_API_VERSION"] = "2023-05-15"
+    # api_tools.default_api_agent = APIAgent(
+    #     model_name="azure/vijay-gpt-4-turbo-sweden", max_tokens=2000
+    # )
     api_tools.default_api_agent = APIAgent(
-        model_name="azure/vijay-gpt-4-turbo-sweden", max_tokens=2000
+        model_name="gpt-4-turbo-2024-04-09", max_tokens=2000
     )
 
     task_to_dataset_config_chosen = {
@@ -68,7 +76,7 @@ if __name__ == "__main__":
         "temporal_sequences": ("squad", "plain_text"),
     }
 
-    prompt_version = "transform_w_incontext_test"
+    prompt_version = "transform_w_incontext_test_all_gpt4"
     # task_name = "implicatures"
     # task_description = "Predict whether Speaker 2's answer to Speaker 1 counts as a yes or as a no"
     # task_examples = "input=\n\nQ: Speaker 1: 'Have you found him yet? ' Speaker 2: 'We're still looking.' \nA: \noutput=no\n\ninput=\n\nQ: Speaker 1: 'You want to do this to the whole world?' Speaker 2: 'So the whole world will be exactly how I want.' \nA: \noutput=yes\n\ninput=\n\nQ: Speaker 1: 'Would he fire me?' Speaker 2: 'He's all bark and no bite.' \nA: \noutput=no"
@@ -85,6 +93,8 @@ if __name__ == "__main__":
         wandb.log(
             {"task_description": task_description, "task_examples": task_examples}
         )
+
+        print("TASK NAME: ", task_name)
 
         chosen_ds_config = task_to_dataset_config_chosen.get(task_name, None)
         chosen_ds_config = [chosen_ds_config] if chosen_ds_config is not None else None

@@ -1,8 +1,8 @@
 """An dual-encoder dataset retriever using HuggingFace dataset descriptions."""
 
 from __future__ import annotations
-import asyncio  # noqa FI58
 
+import asyncio  # noqa FI58
 import json
 import os
 import random
@@ -10,32 +10,39 @@ import urllib.request
 
 import datasets
 import torch
-import wandb
 
+import wandb
 from prompt2model.dataset_retriever.base import DatasetInfo, DatasetRetriever
 from prompt2model.dataset_retriever.column_selection_prompt import (
     construct_prompt_for_column_selection,
 )
+from prompt2model.dataset_retriever.dataset_confidence_prompt import (
+    construct_prompt_for_dataset_confidence,
+)
 from prompt2model.dataset_retriever.reranking_prompt_v2 import (
     construct_prompt_for_dataset_reranking,
 )
-from prompt2model.dataset_retriever.dataset_confidence_prompt import(
-    construct_prompt_for_dataset_confidence
-)
 from prompt2model.dataset_retriever.task_expansion_prompt import (
-    construct_propmt_for_task_explanation
+    construct_propmt_for_task_explanation,
 )
 from prompt2model.dataset_transformer.prompt_based import PromptBasedDatasetTransformer
 from prompt2model.prompt_parser import PromptSpec
-from prompt2model.utils import encode_text, get_formatted_logger, retrieve_objects
-from prompt2model.utils.dataset_utils import get_dataset_size
-from prompt2model.utils.parse_responses import parse_prompt_to_fields, make_single_api_request, find_and_parse_json, parse_dataset_config_responses
 from prompt2model.utils import (
     API_ERRORS,
     api_tools,
+    encode_text,
     get_formatted_logger,
     handle_api_error,
+    retrieve_objects,
 )
+from prompt2model.utils.dataset_utils import get_dataset_size
+from prompt2model.utils.parse_responses import (
+    find_and_parse_json,
+    make_single_api_request,
+    parse_dataset_config_responses,
+    parse_prompt_to_fields,
+)
+
 datasets.utils.logging.disable_progress_bar()
 logger = get_formatted_logger("DescriptionDatasetRetriever")
 
@@ -125,7 +132,7 @@ class DescriptionDatasetRetriever_V2(DatasetRetriever):
             encode_text(
                 self.encoder_model_name,
                 # text_to_encode=[self.reranking_datasets_infos[x]['description'] for x in self.reranking_datasets_infos.keys()],
-                text_to_encode =[x.description for x in self.dataset_infos],
+                text_to_encode=[x.description for x in self.dataset_infos],
                 encoding_file=self.search_index_path,
                 device=self.device,
             )
@@ -245,7 +252,7 @@ class DescriptionDatasetRetriever_V2(DatasetRetriever):
         example_rows: dict,
     ) -> tuple[list[str], str]:
         """Find appropriate input and output columns for a given dataset and tasks."""
-        
+
         prompt = construct_prompt_for_column_selection(
             instruction,
             dataset_name,
@@ -277,7 +284,7 @@ class DescriptionDatasetRetriever_V2(DatasetRetriever):
                 f"not in the list of columns in the dataset ({dataset_columns})."
             )
 
-        return input_columns, output_column[0] if len(output_column)>0 else []
+        return input_columns, output_column[0] if len(output_column) > 0 else []
 
     def canonicalize_dataset_using_columns(
         self,
@@ -453,57 +460,64 @@ class DescriptionDatasetRetriever_V2(DatasetRetriever):
 
         return dataset_info_dict[dataset_name]["configs"][config_name]
 
-
-    def get_dataset_voted(self,prompt, dict, num_votes = 3):
+    def get_dataset_voted(self, prompt, dict, num_votes=3):
         """Minimum Bayes Risk Decoding"""
         voting = []
 
         for _ in range(num_votes):
             curr_dataset_name = parse_prompt_to_fields(prompt, module_name="rerank")
-            if curr_dataset_name not in dict: 
-                logger.warning("LLM hallucinated dataset/config name: %s", curr_dataset_name)
+            if curr_dataset_name not in dict:
+                logger.warning(
+                    "LLM hallucinated dataset/config name: %s", curr_dataset_name
+                )
                 voting.append(None)
                 continue
             voting.append(curr_dataset_name)
 
-        if len(voting)==0:
+        if len(voting) == 0:
             logger.warning("Voting resulted in no dataset/config.")
             return None
         fin_name = max(set(voting), key=voting.count)
         print("Voting array is: ", voting)
         return fin_name
-        
 
-    def rerank_datasets_v2(self, datasets_info_dict:dict, prompt_spec: PromptSpec, num_votes):
+    def rerank_datasets_v2(
+        self, datasets_info_dict: dict, prompt_spec: PromptSpec, num_votes
+    ):
 
         dataset_selection_prompt = construct_prompt_for_dataset_reranking(
             prompt_spec.instruction, prompt_spec.examples, datasets_info_dict
         )
         print(dataset_selection_prompt)
 
-        dataset_name = self.get_dataset_voted(dataset_selection_prompt, datasets_info_dict, num_votes)
-        if dataset_name is None: return None
-        import time; time.sleep(10)
-        if len(datasets_info_dict[dataset_name]["configs"].keys())>1:
+        dataset_name = self.get_dataset_voted(
+            dataset_selection_prompt, datasets_info_dict, num_votes
+        )
+        if dataset_name is None:
+            return None
+        import time
+
+        time.sleep(10)
+        if len(datasets_info_dict[dataset_name]["configs"].keys()) > 1:
             curr_dataset = datasets_info_dict[dataset_name]
             if len(curr_dataset["configs"]) > 10:
                 curr_dataset["configs"] = dict(
                     random.sample(list(curr_dataset["configs"].items()), 10)
-                  )
+                )
             config_selection_prompt = construct_prompt_for_dataset_reranking(
                 prompt_spec.instruction, prompt_spec.examples, curr_dataset, config=True
             )
 
             print(config_selection_prompt)
-            config_name = self.get_dataset_voted(config_selection_prompt, curr_dataset["configs"], num_votes)
+            config_name = self.get_dataset_voted(
+                config_selection_prompt, curr_dataset["configs"], num_votes
+            )
             if config_name is None:
-                return dataset_name #We use this in MBR
+                return dataset_name  # We use this in MBR
         else:
             config_name = list(datasets_info_dict[dataset_name]["configs"].keys())[0]
         print(f"Dataset: {dataset_name}, config: {config_name}")
         return datasets_info_dict[dataset_name]["configs"][config_name]
-
-
 
     def canonicalize_dataset_automatically(
         self,
@@ -541,9 +555,9 @@ class DescriptionDatasetRetriever_V2(DatasetRetriever):
             if column selection fails, or if any other error occurs
             during the process.
         """
-        
+
         intermediate_info_dict = {}
-        
+
         if top_dataset_info is None:
             logger.warning("None of the retrieved datasets were relevant.")
             return None, 0
@@ -551,12 +565,13 @@ class DescriptionDatasetRetriever_V2(DatasetRetriever):
             top_dataset_info["sample_row"] = json.loads(top_dataset_info["sample_row"])
             for key in top_dataset_info["columns_mapping"]:
                 new_key = top_dataset_info["columns_mapping"][key]
-                if new_key!=key:
-                    top_dataset_info["sample_row"][new_key] = top_dataset_info["sample_row"][key]
+                if new_key != key:
+                    top_dataset_info["sample_row"][new_key] = top_dataset_info[
+                        "sample_row"
+                    ][key]
                     del top_dataset_info["sample_row"][key]
-            
-            
-            top_dataset_info["sample_row"] = json.dumps(top_dataset_info["sample_row"] )
+
+            top_dataset_info["sample_row"] = json.dumps(top_dataset_info["sample_row"])
 
             input_columns, output_column = self.automatic_column_selection(
                 prompt_spec.instruction,
@@ -566,7 +581,9 @@ class DescriptionDatasetRetriever_V2(DatasetRetriever):
                 top_dataset_info["sample_row"],
             )
             # wandb.log({"input_columns": input_columns, "output_column": output_column})
-            intermediate_info_dict["selected_cols"] = str(input_columns + [output_column])
+            intermediate_info_dict["selected_cols"] = str(
+                input_columns + [output_column]
+            )
         except Exception as e:
             logger.warning("Column selection failed: ", e)
             wandb.log({"column_selection_failed": e})
@@ -583,7 +600,7 @@ class DescriptionDatasetRetriever_V2(DatasetRetriever):
         )
         full_dataset = full_dataset.rename_columns(top_dataset_info["columns_mapping"])
         logger.info("Dataset loaded")
-        actual_size = min(len(full_dataset["train"]),num_points_to_transform)
+        actual_size = min(len(full_dataset["train"]), num_points_to_transform)
         if auto_transform_data:
             # remove columns not selected by automatic column selection
             full_dataset = full_dataset.remove_columns(
@@ -596,25 +613,34 @@ class DescriptionDatasetRetriever_V2(DatasetRetriever):
             logger.info("Unnecessary columns removed")
 
             dataset_transformer = PromptBasedDatasetTransformer()
-            
-            canonicalized_dataset, intermediate_info_dict_trans = dataset_transformer.transform_data(
+
+            (
+                canonicalized_dataset,
+                intermediate_info_dict_trans,
+            ) = dataset_transformer.transform_data(
                 prompt_spec,
                 dataset=full_dataset["train"],
                 num_points_to_transform=num_points_to_transform,
             )
             # concat intermediate_info_dict with intermediate_info_dict_trans
-            intermediate_info_dict = {**intermediate_info_dict, **intermediate_info_dict_trans}
-            
+            intermediate_info_dict = {
+                **intermediate_info_dict,
+                **intermediate_info_dict_trans,
+            }
+
             logger.info("Data transformation completed")
             wandb.log({"dataset_transformation_complete": True})
-            if canonicalized_dataset and "train" in canonicalized_dataset and len(canonicalized_dataset["train"])>0:
+            if (
+                canonicalized_dataset
+                and "train" in canonicalized_dataset
+                and len(canonicalized_dataset["train"]) > 0
+            ):
                 example_rows = json.dumps(canonicalized_dataset["train"][0], indent=4)
 
                 logger.info(f"Transformed dataset. Example row:\n{example_rows}\n")
-            else: 
+            else:
                 dataset_name = top_dataset_info["dataset_name"]
                 logger.info(f"{dataset_name} exceed max allowed transforms..")
-
 
             return canonicalized_dataset, actual_size, intermediate_info_dict
         else:
@@ -626,7 +652,16 @@ class DescriptionDatasetRetriever_V2(DatasetRetriever):
             )  # noqa E501
             return canonicalized_dataset, actual_size
 
-    def get_datasets_of_required_size(self, dataset_list, prompt_spec, auto_transform_data, num_points_to_transform, required_size=3000, max_datasets_to_choose=4, num_votes=5):
+    def get_datasets_of_required_size(
+        self,
+        dataset_list,
+        prompt_spec,
+        auto_transform_data,
+        num_points_to_transform,
+        required_size=3000,
+        max_datasets_to_choose=4,
+        num_votes=5,
+    ):
         datasets_info_dict = self.get_all_dataset_infos(dataset_list)
         curr_datasets_size = 0
         final_inputs = []
@@ -636,38 +671,66 @@ class DescriptionDatasetRetriever_V2(DatasetRetriever):
         number_of_chosen_datasets = 0
         original_sizes = 0
         buffer_for_transforms = 1000
-        while curr_datasets_size < required_size and len(datasets_info_dict.keys()) > 0 and number_of_chosen_datasets < max_datasets_to_choose and original_sizes < 10000:
-            dataset_info = self.rerank_datasets_v2(datasets_info_dict, prompt_spec, num_votes=num_votes)
-            if dataset_info is None: return None 
+        while (
+            curr_datasets_size < required_size
+            and len(datasets_info_dict.keys()) > 0
+            and number_of_chosen_datasets < max_datasets_to_choose
+            and original_sizes < 10000
+        ):
+            dataset_info = self.rerank_datasets_v2(
+                datasets_info_dict, prompt_spec, num_votes=num_votes
+            )
+            if dataset_info is None:
+                return None
             if type(dataset_info) == str:
                 del datasets_info_dict[dataset_info]
-                continue # We do this to justify that maybe the dataset that got picked was terrible, and there should be another shot at picking dataset. 
+                continue  # We do this to justify that maybe the dataset that got picked was terrible, and there should be another shot at picking dataset.
             canocalized_dataset, actual_size = self.canonicalize_dataset_automatically(
-                dataset_info, prompt_spec, auto_transform_data, required_size - curr_datasets_size + buffer_for_transforms
-                )
+                dataset_info,
+                prompt_spec,
+                auto_transform_data,
+                required_size - curr_datasets_size + buffer_for_transforms,
+            )
             curr_datasets_size += len(canocalized_dataset["train"])
             final_inputs += canocalized_dataset["train"]["input_col"]
             final_outputs += canocalized_dataset["train"]["output_col"]
             curr_dataset_name = dataset_info["dataset_name"]
             curr_config_name = dataset_info["config_name"]
-            dataset_contributions[f"{curr_dataset_name}_{curr_config_name}"] = len(canocalized_dataset["train"])
+            dataset_contributions[f"{curr_dataset_name}_{curr_config_name}"] = len(
+                canocalized_dataset["train"]
+            )
             original_sizes += actual_size
-            original_dataset_sizes[f"{curr_dataset_name}_{curr_config_name}"] = actual_size
-            if len(datasets_info_dict[curr_dataset_name]["configs"]) == 1: 
+            original_dataset_sizes[
+                f"{curr_dataset_name}_{curr_config_name}"
+            ] = actual_size
+            if len(datasets_info_dict[curr_dataset_name]["configs"]) == 1:
                 del datasets_info_dict[curr_dataset_name]
             else:
                 del datasets_info_dict[curr_dataset_name]["configs"][curr_config_name]
             number_of_chosen_datasets += 1
-            wandb.log({"dataset_contributions": dataset_contributions })
+            wandb.log({"dataset_contributions": dataset_contributions})
             wandb.log({"original_dataset_sizes": original_dataset_sizes})
         dataset_dict = {}
-        if len(final_inputs) != len(final_outputs) or len(final_inputs)==0: return None
+        if len(final_inputs) != len(final_outputs) or len(final_inputs) == 0:
+            return None
         dataset_dict["train"] = datasets.Dataset.from_dict(
-            {"input_col": final_inputs[:required_size], "output_col": final_outputs[:required_size]}
+            {
+                "input_col": final_inputs[:required_size],
+                "output_col": final_outputs[:required_size],
+            }
         )
         return datasets.DatasetDict(dataset_dict)
-    
-    def get_n_transformed_datasets(self, dataset_list, prompt_spec, auto_transform_data, num_points_to_transform=10, num_datasets_to_choose=4, num_votes=5, chosen_ds_config: list[tuple]=None):
+
+    def get_n_transformed_datasets(
+        self,
+        dataset_list,
+        prompt_spec,
+        auto_transform_data,
+        num_points_to_transform=10,
+        num_datasets_to_choose=4,
+        num_votes=5,
+        chosen_ds_config: list[tuple] = None,
+    ):
         datasets_info_dict = self.get_all_dataset_infos(dataset_list)
         log_dict = {
             "reranker_choices": [],
@@ -678,7 +741,7 @@ class DescriptionDatasetRetriever_V2(DatasetRetriever):
             "transformed_examples": [],
             "cot_responses": [],
         }
-        
+
         curr_datasets_size = 0
         final_inputs = []
         final_outputs = []
@@ -687,85 +750,117 @@ class DescriptionDatasetRetriever_V2(DatasetRetriever):
         number_of_chosen_datasets = 0
         original_sizes = 0
         buffer_for_transforms = 1000
-        
+
         if chosen_ds_config is not None:
             for dataset_name, config_name in chosen_ds_config:
                 dataset_info = datasets_info_dict[dataset_name]["configs"][config_name]
-                canocalized_dataset, actual_size, intermediate_info_dict = self.canonicalize_dataset_automatically(
-                    dataset_info, prompt_spec, auto_transform_data, num_points_to_transform
-                    )
+                (
+                    canocalized_dataset,
+                    actual_size,
+                    intermediate_info_dict,
+                ) = self.canonicalize_dataset_automatically(
+                    dataset_info,
+                    prompt_spec,
+                    auto_transform_data,
+                    num_points_to_transform,
+                )
                 final_inputs += canocalized_dataset["train"]["input_col"]
                 final_outputs += canocalized_dataset["train"]["output_col"]
                 curr_dataset_name = dataset_info["dataset_name"]
                 curr_config_name = dataset_info["config_name"]
                 for key in log_dict.keys():
-                    if key=="reranker_choices":
+                    if key == "reranker_choices":
                         log_dict[key].append(f"{curr_dataset_name}_{curr_config_name}")
                     else:
                         log_dict[key].append(intermediate_info_dict.get(key, None))
-                dataset_contributions[f"{curr_dataset_name}_{curr_config_name}"] = len(canocalized_dataset["train"])
+                dataset_contributions[f"{curr_dataset_name}_{curr_config_name}"] = len(
+                    canocalized_dataset["train"]
+                )
                 original_sizes += actual_size
-                original_dataset_sizes[f"{curr_dataset_name}_{curr_config_name}"] = actual_size
-                if len(datasets_info_dict[curr_dataset_name]["configs"]) == 1: 
+                original_dataset_sizes[
+                    f"{curr_dataset_name}_{curr_config_name}"
+                ] = actual_size
+                if len(datasets_info_dict[curr_dataset_name]["configs"]) == 1:
                     del datasets_info_dict[dataset_name]
                 else:
-                    del datasets_info_dict[curr_dataset_name]["configs"][curr_config_name]
+                    del datasets_info_dict[curr_dataset_name]["configs"][
+                        curr_config_name
+                    ]
                 number_of_chosen_datasets += 1
                 # wandb.log({"dataset_contributions": dataset_contributions })
                 # wandb.log({"original_dataset_sizes": original_dataset_sizes})
-        else:        
+        else:
             for i in range(num_datasets_to_choose):
-                dataset_info = self.rerank_datasets_v2(datasets_info_dict, prompt_spec, num_votes=num_votes)
+                dataset_info = self.rerank_datasets_v2(
+                    datasets_info_dict, prompt_spec, num_votes=num_votes
+                )
                 if dataset_info is None:
                     wandb.log({"error": f"dataset reranking failed at {i}th dataset"})
                     wandb.log(log_dict)
                     return None
                 if type(dataset_info) == str:
-                    wandb.log({f"config_error_{dataset_info}": f"unable to pick config for {dataset_info}"})
+                    wandb.log(
+                        {
+                            f"config_error_{dataset_info}": f"unable to pick config for {dataset_info}"
+                        }
+                    )
                     for key in log_dict.keys():
                         log_dict[key].append(None)
                     del datasets_info_dict[dataset_info]
-                    continue # We do this to justify that maybe the dataset that got picked was terrible, and there should be another shot at picking dataset. 
-                canocalized_dataset, actual_size, intermediate_info_dict = self.canonicalize_dataset_automatically(
-                    dataset_info, prompt_spec, auto_transform_data, num_points_to_transform= num_points_to_transform
-                    )
-                
+                    continue  # We do this to justify that maybe the dataset that got picked was terrible, and there should be another shot at picking dataset.
+                (
+                    canocalized_dataset,
+                    actual_size,
+                    intermediate_info_dict,
+                ) = self.canonicalize_dataset_automatically(
+                    dataset_info,
+                    prompt_spec,
+                    auto_transform_data,
+                    num_points_to_transform=num_points_to_transform,
+                )
+
                 final_inputs += canocalized_dataset["train"]["input_col"]
                 final_outputs += canocalized_dataset["train"]["output_col"]
                 curr_dataset_name = dataset_info["dataset_name"]
                 curr_config_name = dataset_info["config_name"]
-                
+
                 for key in log_dict.keys():
-                    if key=="reranker_choices":
+                    if key == "reranker_choices":
                         log_dict[key].append(f"{curr_dataset_name}_{curr_config_name}")
                     else:
                         log_dict[key].append(intermediate_info_dict.get(key, None))
-                
-                dataset_contributions[f"{curr_dataset_name}_{curr_config_name}"] = len(canocalized_dataset["train"])
+
+                dataset_contributions[f"{curr_dataset_name}_{curr_config_name}"] = len(
+                    canocalized_dataset["train"]
+                )
                 original_sizes += actual_size
-                original_dataset_sizes[f"{curr_dataset_name}_{curr_config_name}"] = actual_size
-                if len(datasets_info_dict[curr_dataset_name]["configs"]) == 1: 
+                original_dataset_sizes[
+                    f"{curr_dataset_name}_{curr_config_name}"
+                ] = actual_size
+                if len(datasets_info_dict[curr_dataset_name]["configs"]) == 1:
                     del datasets_info_dict[curr_dataset_name]
                 else:
-                    del datasets_info_dict[curr_dataset_name]["configs"][curr_config_name]
+                    del datasets_info_dict[curr_dataset_name]["configs"][
+                        curr_config_name
+                    ]
                 number_of_chosen_datasets += 1
                 # wandb.log({"dataset_contributions": dataset_contributions })
                 # wandb.log({"original_dataset_sizes": original_dataset_sizes})
         wandb.log(log_dict)
         dataset_dict = {}
-        if len(final_inputs) != len(final_outputs) or len(final_inputs)==0: return None
+        if len(final_inputs) != len(final_outputs) or len(final_inputs) == 0:
+            return None
         dataset_dict["train"] = datasets.Dataset.from_dict(
             {"input_col": final_inputs[:3000], "output_col": final_outputs[:3000]}
         )
         return datasets.DatasetDict(dataset_dict)
-
 
     def retrieve_dataset_dict(
         self,
         prompt_spec: PromptSpec,
         auto_transform_data: bool = False,
         num_points_to_transform: int = 10,
-        num_votes = 5
+        num_votes=5,
     ) -> datasets.DatasetDict | None:
         """Select a dataset from a prompt using a dual-encoder retriever.
 
@@ -786,17 +881,25 @@ class DescriptionDatasetRetriever_V2(DatasetRetriever):
         sorted_list = self.retrieve_top_datasets(prompt_spec)
         wandb.log({"retrieved_datasets": sorted_list})
         logger.info(f"Top datasets retrieved. Top datasets: {sorted_list}")
-        #TODO: Add info about top datasets_info for bigbench if required. 
-        return self.get_datasets_of_required_size(sorted_list, prompt_spec, auto_transform_data=auto_transform_data, num_points_to_transform=num_points_to_transform), {}
-    
+        # TODO: Add info about top datasets_info for bigbench if required.
+        return (
+            self.get_datasets_of_required_size(
+                sorted_list,
+                prompt_spec,
+                auto_transform_data=auto_transform_data,
+                num_points_to_transform=num_points_to_transform,
+            ),
+            {},
+        )
+
     def retrieve_dataset_dict_minimal(
         self,
         prompt_spec: PromptSpec,
         auto_transform_data: bool = False,
         num_points_to_transform: int = 10,
-        num_votes = 5,
-        num_datasets_to_choose = 4,
-        chosen_ds_config = None
+        num_votes=5,
+        num_datasets_to_choose=4,
+        chosen_ds_config=None,
     ) -> datasets.DatasetDict | None:
         """Select a dataset from a prompt using a dual-encoder retriever.
 
@@ -817,5 +920,14 @@ class DescriptionDatasetRetriever_V2(DatasetRetriever):
         sorted_list = self.retrieve_top_datasets(prompt_spec)
         wandb.log({"retrieved_datasets": sorted_list})
         logger.info(f"Top datasets retrieved. Top datasets: {sorted_list}")
-        #TODO: Add info about top datasets_info for bigbench if required. 
-        return self.get_n_transformed_datasets(sorted_list, prompt_spec, auto_transform_data=auto_transform_data, num_points_to_transform=num_points_to_transform, num_datasets_to_choose=num_datasets_to_choose, num_votes= num_votes, chosen_ds_config=chosen_ds_config)
+        print("DATASETS RETRIEVED")
+        # TODO: Add info about top datasets_info for bigbench if required.
+        return self.get_n_transformed_datasets(
+            sorted_list,
+            prompt_spec,
+            auto_transform_data=auto_transform_data,
+            num_points_to_transform=num_points_to_transform,
+            num_datasets_to_choose=num_datasets_to_choose,
+            num_votes=num_votes,
+            chosen_ds_config=chosen_ds_config,
+        )

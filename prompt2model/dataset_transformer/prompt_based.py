@@ -5,16 +5,16 @@ import asyncio
 from collections.abc import Callable
 
 import datasets
-import wandb
 
+import wandb
+from prompt2model.dataset_retriever.task_expansion_prompt import (
+    construct_propmt_for_task_explanation,
+)
 from prompt2model.dataset_transformer.base import DatasetTransformer
 from prompt2model.dataset_transformer.prompt_template import (
     construct_prompt_for_plan,
-    construct_prompt_for_transform_data,
     construct_prompt_for_task_requirements,
-)
-from prompt2model.dataset_retriever.task_expansion_prompt import (
-    construct_propmt_for_task_explanation
+    construct_prompt_for_transform_data,
 )
 from prompt2model.prompt_parser import PromptSpec
 from prompt2model.utils import (
@@ -84,15 +84,13 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         """
         if len(inputs) < 0 or len(inputs) != len(outputs):
             raise ValueError("Length of inputs and outputs must be >0 and equal.")
-        updated_inputs, updated_outputs = [],[]
-        for i,o in zip(inputs, outputs):
+        updated_inputs, updated_outputs = [], []
+        for i, o in zip(inputs, outputs):
             if i is not None and o is not None:
                 updated_inputs.append(i)
                 updated_outputs.append(o)
             else:
                 print("Input/output was None")
-                
-            
 
         dataset_dict = {}
         dataset_dict["train"] = datasets.Dataset.from_dict(
@@ -108,36 +106,41 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
     ) -> datasets.DatasetDict:
         """Transform the dataset according to the prompt_spec and dataset."""
         intermediate_info_dict = {}
-        
-        task_explanation_prompt = construct_propmt_for_task_explanation(prompt_spec.instruction, prompt_spec.examples)
-        task_explanation = make_single_api_request(task_explanation_prompt, max_api_calls=10)
-        
-        task_requirements_prompt = construct_prompt_for_task_requirements(task_explanation, prompt_spec.examples)
-        task_requirements = make_single_api_request(task_requirements_prompt, max_api_calls=10)
-        
-        intermediate_info_dict["task_explanation"] = (task_explanation, task_requirements)
-        
-        
-        plan_prompt = self.plan_prompt_fn(
+
+        task_explanation_prompt = construct_propmt_for_task_explanation(
+            prompt_spec.instruction, prompt_spec.examples
+        )
+        task_explanation = make_single_api_request(
+            task_explanation_prompt, max_api_calls=10
+        )
+
+        task_requirements_prompt = construct_prompt_for_task_requirements(
+            task_explanation, prompt_spec.examples
+        )
+        task_requirements = make_single_api_request(
+            task_requirements_prompt, max_api_calls=10
+        )
+
+        intermediate_info_dict["task_explanation"] = (
             task_explanation,
             task_requirements,
-            dataset,
-            prompt_spec.examples,
-            dataset,
-            min(5, len(dataset)),
+        )
+
+        plan_prompt = self.plan_prompt_fn(
+            task_explanation, task_requirements, dataset, prompt_spec.examples
         )
         # wandb.log({"plan_prompt": plan_prompt})
         print("Plan prompt: \n", plan_prompt)
         self.plan = make_single_api_request(plan_prompt, max_api_calls=100)
         # wandb.log({"plan": self.plan})
-        
+
         intermediate_info_dict["plan"] = self.plan
 
         logger.info(f"Plan created. Plan: {self.plan}")
 
         inputs = []
         outputs = []
-        
+
         og_examples = []
         transformed_examples = []
         cot_responses = []
@@ -153,7 +156,6 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
                 row,
                 self.plan,
                 prompt_spec.examples,
-           
             )
             if not flag:
 
@@ -166,9 +168,8 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             len_count += 1
             if len_count >= max_len:
                 break
-        
-        print(len(transform_prompts))
 
+        print(len(transform_prompts))
 
         max_allowed_failed_transforms = 1000
         curr_failed_transforms = 0
@@ -188,12 +189,12 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         #         if extraction is not None:
         #             if extraction["input"] is None or  extraction["output"] is  None:
         #                 raise ValueError("Input or output is None")
-                    
+
         #             input = str(extraction["input"]).strip()
 
         #             if input in prompt_spec.examples:
         #                 raise ValueError("Repeated Task Examples from prompt")
-                    
+
         #             str1 = str("Q: " + input + "\nA:")
         #             str2 = str(extraction["output"]).strip()
 
@@ -217,36 +218,43 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         # elif counter%50==0:
         #     inputs += temp1
         #     outputs += temp2
-            
+
         #     with open('temp_dump_gpt_4_cause_effect.txt', 'a') as file:
         #         file.write('Input: ' + ', '.join(map(str, temp1)) + '\n')
         #         file.write('Output: ' + ', '.join(map(str, temp2)) + '\n')
-            
-
-                    
 
         # logger.info(f"Requested length: {max_len}\nActual length: {len(inputs)}\n")
         # return self.make_dataset_from_samples(inputs, outputs)
 
-
-
-
         async def generate_responses(transform_prompts):
-            responses = await api_tools.APIAgent(model_name="azure/GPT-3-5-turbo-sweden", max_tokens=2000).generate_batch_completion(
+            # responses = await api_tools.APIAgent(model_name="azure/GPT-3-5-turbo-sweden", max_tokens=2000).generate_batch_completion(
+            #     transform_prompts,
+            #     temperature=0.1,
+            #     responses_per_request=1,
+            #     requests_per_minute=15,
+            # )
+
+            responses = await api_tools.APIAgent(
+                model_name="gpt-4-turbo-2024-04-09", max_tokens=2000
+            ).generate_batch_completion(
                 transform_prompts,
                 temperature=0.1,
                 responses_per_request=1,
                 requests_per_minute=15,
             )
             return responses
-        
+
         max_allowed_failed_transforms = 1000
         curr_failed_transforms = 0
-        for batch_indices in range(0,len(transform_prompts), 100):
-            transform_prompt_batch = transform_prompts[batch_indices:batch_indices+100]
+        for batch_indices in range(0, len(transform_prompts), 100):
+            transform_prompt_batch = transform_prompts[
+                batch_indices : batch_indices + 100
+            ]
             try:
                 loop = asyncio.get_event_loop()
-                responses = loop.run_until_complete(generate_responses(transform_prompt_batch))
+                responses = loop.run_until_complete(
+                    generate_responses(transform_prompt_batch)
+                )
             except API_ERRORS as e:
                 handle_api_error(e)
 
@@ -263,44 +271,51 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
                 try:
                     extraction = find_and_parse_json(response, ["input", "output"], [])
                     if extraction is not None:
-                        if extraction["input"] is None or  extraction["output"] is  None:
+                        if extraction["input"] is None or extraction["output"] is None:
                             raise ValueError("Input or output is None")
-                        
+
                         input = str(extraction["input"]).strip()
 
                         if input in prompt_spec.examples:
                             raise ValueError("Repeated Task Examples from prompt")
-                        
+
                         str1 = str("Q: " + input + "\nA:")
                         str2 = str(extraction["output"]).strip()
-                        
-                        transformed_examples.append(f"input={str1}\n\noutput={str2}\n\n")
+
+                        transformed_examples.append(
+                            f"input={str1}\n\noutput={str2}\n\n"
+                        )
 
                         temp1.append(str1)
                         temp2.append(str2)
-                        if counter <2:
-                            #Just for printing some input/output examples
+                        if counter < 2:
+                            # Just for printing some input/output examples
                             print(f"inputs\n{str1}\n\nouputs\n{str2}")
-                            counter +=1
+                            counter += 1
 
                 except Exception as e:
                     logger.error(f"Error extracting from response: {e}")
                     transformed_examples.append(None)
-                    curr_failed_transforms +=1
+                    curr_failed_transforms += 1
                     if curr_failed_transforms > max_allowed_failed_transforms:
                         dataset_dict = {}
-                        dataset_dict["train"] = datasets.Dataset.from_dict({"input_col":[], "output_col":[]})#Dont bother with this dataset, just skip it.
+                        dataset_dict["train"] = datasets.Dataset.from_dict(
+                            {"input_col": [], "output_col": []}
+                        )  # Dont bother with this dataset, just skip it.
                         return datasets.DatasetDict(dataset_dict)
 
                     continue
-            if len(temp1)!=len(temp2): logger.error(f"input and output arrays are not same length: {len(temp1)} {len(temp2)}")
+            if len(temp1) != len(temp2):
+                logger.error(
+                    f"input and output arrays are not same length: {len(temp1)} {len(temp2)}"
+                )
             else:
                 inputs += temp1
                 outputs += temp2
-                with open('temp_dump_arithmetic_simple_q.txt', 'a') as file:
-                    file.write('Input: ' + ', '.join(map(str, temp1)) + '\n')
-                    file.write('Output: ' + ', '.join(map(str, temp2)) + '\n')
-            
+                with open("temp_dump_arithmetic_simple_q.txt", "a") as file:
+                    file.write("Input: " + ", ".join(map(str, temp1)) + "\n")
+                    file.write("Output: " + ", ".join(map(str, temp2)) + "\n")
+
             intermediate_info_dict["og_examples"] = og_examples
             intermediate_info_dict["transformed_examples"] = transformed_examples
             intermediate_info_dict["cot_responses"] = cot_responses

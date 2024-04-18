@@ -141,85 +141,88 @@ class APIAgent:
         Returns:
             List of generated responses.
         """
-        openai.aiosession.set(ClientSession())
-        limiter = aiolimiter.AsyncLimiter(requests_per_minute)
+        # openai.aiosession.set(ClientSession())
+        async with ClientSession() as session:
+            limiter = aiolimiter.AsyncLimiter(requests_per_minute)
 
-        async def _throttled_completion_acreate(
-            model: str,
-            messages: list[dict[str, str]],
-            temperature: float,
-            max_tokens: int,
-            n: int,
-            top_p: float,
-            limiter: aiolimiter.AsyncLimiter,
-        ):
-            async with limiter:
-                for _ in range(3):
-                    try:
-                        return await acompletion(
-                            model=model,
-                            messages=messages,
-                            api_base=self.api_base,
-                            temperature=temperature,
-                            max_tokens=max_tokens,
-                            n=n,
-                            top_p=top_p,
-                        )
-                    except tuple(ERROR_ERRORS_TO_MESSAGES.keys()) as e:
-                        if isinstance(
-                            e,
-                            (
-                                openai.APIStatusError,
-                                openai.APIError,
-                            ),
-                        ):
-                            logging.warning(
-                                ERROR_ERRORS_TO_MESSAGES[type(e)].format(e=e)
+            async def _throttled_completion_acreate(
+                model: str,
+                messages: list[dict[str, str]],
+                temperature: float,
+                max_tokens: int,
+                n: int,
+                top_p: float,
+                limiter: aiolimiter.AsyncLimiter,
+            ):
+                async with limiter:
+                    for _ in range(3):
+                        try:
+                            return await acompletion(
+                                model=model,
+                                messages=messages,
+                                api_base=self.api_base,
+                                temperature=temperature,
+                                max_tokens=max_tokens,
+                                n=n,
+                                top_p=top_p,
                             )
-                        elif isinstance(e, openai.BadRequestError):
-                            logging.warning(ERROR_ERRORS_TO_MESSAGES[type(e)])
-                            return {
-                                "choices": [
-                                    {
-                                        "message": {
-                                            "content": "Invalid Request: Prompt was filtered"  # noqa E501
+                        except tuple(ERROR_ERRORS_TO_MESSAGES.keys()) as e:
+                            if isinstance(
+                                e,
+                                (
+                                    openai.APIStatusError,
+                                    openai.APIError,
+                                ),
+                            ):
+                                logging.warning(
+                                    ERROR_ERRORS_TO_MESSAGES[type(e)].format(e=e)
+                                )
+                            elif isinstance(e, openai.BadRequestError):
+                                logging.warning(ERROR_ERRORS_TO_MESSAGES[type(e)])
+                                return {
+                                    "choices": [
+                                        {
+                                            "message": {
+                                                "content": "Invalid Request: Prompt was filtered"  # noqa E501
+                                            }
                                         }
-                                    }
-                                ]
-                            }
-                        else:
-                            logging.warning(ERROR_ERRORS_TO_MESSAGES[type(e)])
-                        await asyncio.sleep(10)
-                return {"choices": [{"message": {"content": ""}}]}
+                                    ]
+                                }
+                            else:
+                                logging.warning(ERROR_ERRORS_TO_MESSAGES[type(e)])
+                            await asyncio.sleep(10)
+                    return {"choices": [{"message": {"content": ""}}]}
 
-        # num_prompt_tokens = max(count_tokens_from_string(prompt) for prompt in prompts)
-        # if self.max_tokens:
-        #     max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
-        # else:
-        #     max_tokens = 3 * num_prompt_tokens
-        max_tokens = self.max_tokens
+            # num_prompt_tokens = max(count_tokens_from_string(prompt) for prompt in prompts)
+            # if self.max_tokens:
+            #     max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
+            # else:
+            #     max_tokens = 3 * num_prompt_tokens
+            max_tokens = self.max_tokens
 
-        async_responses = [
-            _throttled_completion_acreate(
-                model=self.model_name,
-                messages=[
-                    {"role": "user", "content": f"{prompt}"},
-                ],
-                temperature=temperature,
-                max_tokens=max_tokens,
-                n=responses_per_request,
-                top_p=1,
-                limiter=limiter,
-            )
-            for prompt in prompts
-        ]
-        responses = await tqdm_asyncio.gather(*async_responses)
+            async_responses = [
+                _throttled_completion_acreate(
+                    model=self.model_name,
+                    messages=[
+                        {"role": "user", "content": f"{prompt}"},
+                    ],
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    n=responses_per_request,
+                    top_p=1,
+                    limiter=limiter,
+                )
+                for prompt in prompts
+            ]
+            responses = await tqdm_asyncio.gather(*async_responses)
         # Note: will never be none because it's set, but mypy doesn't know that.
-        await openai.aiosession.get().close()
+        # await openai.aiosession.get().close()
         return responses
 
 
-MAX_RETRIES=5
+MAX_RETRIES = 5
+
+
 def handle_api_error(e, backoff_duration=1) -> None:
     """Handle OpenAI errors or related errors with exponential backoff.
 
@@ -234,8 +237,9 @@ def handle_api_error(e, backoff_duration=1) -> None:
 
     if isinstance(e, (openai.APIError, openai.APITimeoutError, openai.RateLimitError)):
         import re
+
         match = re.search(r"Please retry after (\d+) seconds", str(e))
-        if match is not None: 
+        if match is not None:
             BUFFER_DURATION = 2
             backoff_duration = int(match.group(1)) + BUFFER_DURATION
 
@@ -263,3 +267,24 @@ def count_tokens_from_string(string: str, encoding_name: str = "cl100k_base") ->
 # This is the default API agent that is used everywhere if a different agent is not
 # specified
 default_api_agent = APIAgent(max_tokens=4000)
+
+
+# import os
+# from dotenv import load_dotenv
+# load_dotenv()
+
+# os.environ["AZURE_API_BASE"] = "https://vijay-gpt-4-sweden.openai.azure.com/"
+# os.environ["AZURE_API_VERSION"] = "2023-05-15"
+
+# async def generate_responses(transform_prompts):
+#     responses = await APIAgent(model_name="azure/GPT-3-5-turbo-sweden", max_tokens=2000).generate_batch_completion(
+#         transform_prompts,
+#         temperature=0.1,
+#         responses_per_request=1,
+#         requests_per_minute=15,
+#     )
+#     return responses
+
+# loop = asyncio.get_event_loop()
+# responses = loop.run_until_complete(generate_responses(["What is the capital of Sweden?", "What is the capital of France?", "What is the capital of Germany?"]))
+# print(responses)
