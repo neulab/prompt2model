@@ -18,7 +18,7 @@ def find_and_parse_json(
 ) -> dict | None:
     """Parse stuctured fields from the API response.
 
-    Incase there are multiple json objects in the response, we take the rightmost one
+    In case there are multiple JSON objects in the response, take the final one.
 
     Args:
         response: API response.
@@ -31,7 +31,7 @@ def find_and_parse_json(
         final response as a Dictionary
         Else returns None.
     """
-    if type(response) != str and hasattr(response, "choices"):
+    if not isinstance(response, str) and hasattr(response, "choices"):
         response = response.choices[0]["message"]["content"]
     correct_json = find_rightmost_brackets(response)
 
@@ -83,12 +83,12 @@ def parse_dataset_config_responses(response: openai.ChatCompletion) -> dict:
     usually either between ** ** or as a sentence.
 
     Args:
-        response (str): The response containing the dataset configuration.
+        response: The response containing the dataset configuration.
 
     Returns:
-        dict: The extracted relevant information from the dataset configuration.
+        The extracted relevant information from the dataset configuration.
     """
-    if type(response) != str and hasattr(response, "choices"):
+    if not isinstance(response, str) and hasattr(response, "choices"):
         response_str = response.choices[0]["message"]["content"]
     else:
         response_str = response

@@ -14,7 +14,7 @@ def get_formatted_logger(logger_name: str):
         A logger object.
     """
     logger = logging.getLogger(logger_name)
-    # Check if the logger already has a StreamHandler to prevent adding another
+    # Check if the logger already has a StreamHandler to prevent adding another one.
     if not any(
         isinstance(handler, logging.StreamHandler) for handler in logger.handlers
     ):

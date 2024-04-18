@@ -51,7 +51,7 @@ class APIAgent:
         """Initialize APIAgent with model_name and max_tokens.
 
         Args:
-            model_name: Name fo the model to use (by default, gpt-4).
+            model_name: Name of the model to use (by default, gpt-4).
             max_tokens: The maximum number of tokens to generate. Defaults to the max
                 value for the model if available through litellm.
             api_base: Custom endpoint for Hugging Face's inference API.
@@ -98,6 +98,7 @@ class APIAgent:
             An OpenAI-like response object if there were no errors in generation.
             In case of API-specific error, Exception object is captured and returned.
         """
+        breakpoint()
         num_prompt_tokens = count_tokens_from_string(prompt)
         if self.max_tokens:
             max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
@@ -227,7 +228,7 @@ def handle_api_error(e, backoff_duration=1) -> None:
     Args:
         e: The error to handle. This could be an OpenAI error or a related
            non-fatal error, such as JSONDecodeError or AssertionError.
-        backoff_duration: The duration to wait before retrying the API call.
+        backoff_duration: The duration (in s) to wait before retrying.
 
     Raises:
         e: If the error is not an instance of APIError, Timeout, or RateLimitError.
@@ -237,7 +238,7 @@ def handle_api_error(e, backoff_duration=1) -> None:
     """
     logging.error(e)
 
-    if not isinstance(e, openai.error.OpenAIError):
+    if not isinstance(e, API_ERRORS):
         raise e
 
     if isinstance(
@@ -246,7 +247,8 @@ def handle_api_error(e, backoff_duration=1) -> None:
     ):
 
         match = re.search(r"Please retry after (\d+) seconds", str(e))
-        # If openai mentions how long to sleep use that, else do exponential backoff
+        # If OpenAI mentions how long to sleep, use that. Otherwise, do
+        # exponential backoff.
         if match is not None:
             backoff_duration = int(match.group(1)) + BUFFER_DURATION
 

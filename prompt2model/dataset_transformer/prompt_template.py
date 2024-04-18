@@ -404,14 +404,14 @@ def construct_prompt_for_plan(
     """Construct prompt for plan.
 
         Args:
-        task_description: str: Description of the task.
-        example: str: Example of the target task.
-        dataset: list[dict]: List of dictionaries containing the dataset rows
+        task_description: Description of the task.
+        example: Example of the target task.
+        dataset: List of dictionaries containing the dataset rows
             of the potentially relevant dataset for the task.
-        num_rows: int: Number of rows from `dataset` to add to the prompt.
+        num_rows: Number of rows from `dataset` to add to the prompt.
 
     Returns:
-        str: Prompt for creating plan. Plan will be used for dataset transformation
+        Prompt for creating plan. Plan will be used for dataset transformation
     """
     if not num_rows:
         num_rows = min(len(dataset), 5)
@@ -449,14 +449,14 @@ def construct_prompt_for_transform_data(
     """Construct prompt for dataset transformation.
 
     Args:
-        task_description: str: Description of the task.
-        example: str: Example of the target task.
-        plan: str: Plan for dataset transformation.
-        dataset_row: dict: A dictionary containing the dataset row of the
+        task_description: Description of the task.
+        example: Example of the target task.
+        plan: Plan for dataset transformation.
+        dataset_row: A dictionary containing the dataset row of the
             potentially relevant dataset to be transformed.
 
     Returns:
-        str: Prompt for dataset transformation.
+        Prompt for dataset transformation.
     """
     incontext_tasks = [VITAMINC]
     incontext_examples = []

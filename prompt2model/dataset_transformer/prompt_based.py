@@ -42,6 +42,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         transform_prompt_fn: Callable[
             [str, str, str, str], str
         ] = construct_prompt_for_transform_data,
+        num_retries: int = 10,
     ):
         """Initializes an instance of the PromptBasedDatasetTransformer class.
 
@@ -52,6 +53,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             plan_prompt_fn: The function to construct the prompt for plan
             transform_prompt_fn: The function to construct the prompt
                                  for transform data.
+            num_retries: The number of retries to attempt for each API call.
         """
         self.plan_prompt_fn = plan_prompt_fn
         self.transform_prompt_fn = transform_prompt_fn
@@ -59,13 +61,16 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         self.num_points_to_transform = num_points_to_transform
         self.curr_failed_transforms = 0
         self.max_allowed_failed_transforms = max_allowed_failed_transforms
+        self.num_retries = num_retries
 
     def generate_task_explanation(self, prompt_spec: PromptSpec) -> str:
         """Generate task explanation."""
         task_explanation_prompt = construct_prompt_for_task_explanation(
             prompt_spec.instruction, prompt_spec.examples
         )
-        return make_single_api_request(task_explanation_prompt, max_api_calls=10)
+        return make_single_api_request(
+            task_explanation_prompt, max_api_calls=self.num_retries
+        )
 
     def generate_plan(
         self, task_explanation: str, dataset: datasets.Dataset, prompt_spec: PromptSpec
@@ -74,7 +79,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         plan_prompt = self.plan_prompt_fn(
             task_explanation, prompt_spec.examples, dataset
         )
-        return make_single_api_request(plan_prompt, max_api_calls=10)
+        return make_single_api_request(plan_prompt, max_api_calls=self.num_retries)
 
     def generate_transform_prompts(
         self,
@@ -98,38 +103,51 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         """Generate responses for the given transform prompts.
 
         Args:
-            transform_prompts_batch (list[str]): A list of transform prompts.
-            model_name (str, optional): The name of the model to use. Defaults to
+            transform_prompts_batch: A list of transform prompts.
+            model_name: The name of the model to use. Defaults to
                     "gpt-3.5-turbo" to save costs.
 
         Returns:
-            list[str]: A list of generated responses.
+            A list of generated responses.
 
         Raises:
             API_ERRORS: If there is an error with the API.
 
         """
+        api_call_counter = 0
+        last_error = None
+        responses = []
+        while True:
+            api_call_counter += 1
 
-        async def generate_responses_async(transform_prompts):
-            """Generate responses asynchronously using the specified model."""
-            responses = await api_tools.APIAgent(
-                model_name=model_name
-            ).generate_batch_completion(
-                transform_prompts,
-                temperature=0,
-                responses_per_request=1,
-                requests_per_minute=15,
-            )
-            return responses
+            async def generate_responses_async(transform_prompts):
+                """Generate responses asynchronously using the specified model."""
+                responses = await api_tools.APIAgent(
+                    model_name=model_name
+                ).generate_batch_completion(
+                    transform_prompts,
+                    temperature=0,
+                    responses_per_request=1,
+                    requests_per_minute=15,
+                )
+                return responses
 
-        try:
-            loop = asyncio.get_event_loop()
-            responses = loop.run_until_complete(
-                generate_responses_async(transform_prompts_batch)
-            )
-        except API_ERRORS as e:
-            handle_api_error(e)
-            # TODO: What to return here?
+            try:
+                loop = asyncio.get_event_loop()
+                responses = loop.run_until_complete(
+                    generate_responses_async(transform_prompts_batch)
+                )
+                break
+            except API_ERRORS as e:
+                last_error = e
+                handle_api_error(e)
+            if api_call_counter > self.num_retries:
+                # In case we reach maximum number of API calls, we raise an error.
+                logger.error("Maximum number of API calls reached.")
+                raise RuntimeError(
+                    "Maximum number of API calls reached."
+                ) from last_error
+
         return responses
 
     def process_responses(
@@ -147,7 +165,7 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
             - outputs: A list of transformed output strings.
         """
         inputs, outputs = [], []
-        show_sample_flag = True
+        show_sample_flag = False
         for response in responses:
             try:
                 extraction = find_and_parse_json(response, ["input", "output"], [])
@@ -179,13 +197,14 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         """Transforms the given dataset based on the provided prompt specification.
 
         Args:
-            prompt_spec (PromptSpec): The prompt specification object that defines
+            prompt_spec: The prompt specification object that defines
                             the transformation rules.
-            dataset (datasets.Dataset): The dataset to be transformed.
+            dataset: The dataset to be transformed.
 
         Returns:
             A tuple containing two lists: inputs and outputs.
         """
+        
         task_explanation = self.generate_task_explanation(prompt_spec)
         self.plan = self.generate_plan(task_explanation, dataset, prompt_spec)
         logger.info(f"Plan created. Plan: {self.plan}")

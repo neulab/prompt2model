@@ -5,7 +5,6 @@ from __future__ import annotations  # noqa FI58
 import json
 import os
 import random
-import time
 import urllib.request
 
 import datasets
@@ -49,7 +48,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         allow_gated_datasets=False,
         auto_transform_data: bool = False,
         total_num_points_to_transform: int = 3000,
-        max_allowed_failed_transforms: int = None,
+        max_allowed_failure_rate: float = 0.333,
         max_datasets_to_choose: int = 3,
         num_votes=5,
     ):
@@ -68,9 +67,10 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             auto_transform_data: Automatically transform data to match the prompt.
             total_num_points_to_transform: Number of data points to transform across
                                     all datasets.
-            max_allowed_failed_transforms: Maximum number of failed transforms allowed
-                        for a given dataset. Skip the dataset if it exceed the
-                        maximum number of allowed transforms.
+            max_allowed_failure_rate:  Maximum number of failed transforms allowed
+                        for a given dataset, as a proportion of original dataset.
+                        Skip the dataset if it exceeds the maximum number of
+                        allowed transforms.
             max_datasets_to_choose: Maximum number of datasets to choose from.
             num_votes: Number of votes to consider for reranking.
         """
@@ -85,11 +85,9 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         self.allow_gated_datasets = allow_gated_datasets
         self.auto_transform_data = auto_transform_data
         self.total_num_points_to_transform = total_num_points_to_transform
-        if max_allowed_failed_transforms is None:
-            self.max_allowed_failed_transforms: int = total_num_points_to_transform // 3
-        else:
-            self.max_allowed_failed_transforms = max_allowed_failed_transforms
-
+        self.max_allowed_failed_transforms: int = int(
+            self.total_num_points_to_transform * max_allowed_failure_rate
+        )
         self.max_datasets_to_choose = max_datasets_to_choose
         self.num_votes = num_votes
         self.initialize_search_index()
@@ -448,12 +446,12 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         """Returns the dataset/config name with the highest number of votes.
 
         Args:
-            prompt (str): The prompt used for retrieving the dataset/config name.
-            infos_dict (dict): A dictionary containing dataset/config names as keys.
-            num_votes (int, optional): The number of votes to consider. Defaults to 3.
+            prompt: The prompt used for retrieving the dataset/config name.
+            infos_dict: A dictionary containing dataset/config names as keys.
+            num_votes: The number of votes to consider. Defaults to 3.
 
         Returns:
-            str: The dataset/config name with the highest number of votes,
+            The dataset/config name with the highest number of votes,
             or None if no dataset/config is found.
         """
         voting = []
@@ -469,7 +467,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         return chosen_one
 
     def rerank_datasets(
-        self, datasets_info_dict: dict, prompt_spec: PromptSpec
+        self, datasets_info: dict, prompt_spec: PromptSpec
     ) -> tuple[str | None, str | None]:
         """Rerank datasets based on relevance to a given prompt specification.
 
@@ -483,7 +481,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         recommendation.
 
         Args:
-            datasets_info_dict: The datasets to be considered
+            datasets_info: The datasets to be considered
             prompt_spec: An object containing the prompt specification,
                         ncluding instruction and examples, used for reranking datasets.
 
@@ -493,22 +491,20 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 in the recommendation is low.
         """
         dataset_selection_prompt = construct_prompt_for_dataset_reranking(
-            prompt_spec.instruction, prompt_spec.examples, datasets_info_dict
+            prompt_spec.instruction, prompt_spec.examples, datasets_info
         )
         dataset_name = self.get_rerank_with_highest_votes(
-            prompt=dataset_selection_prompt, infos_dict=datasets_info_dict
+            prompt=dataset_selection_prompt, infos_dict=datasets_info
         )
 
         if dataset_name is None:
             return None, None
 
-        time.sleep(10)  # To avoid rate limiting
-
-        if len(datasets_info_dict[dataset_name]["configs"].keys()) == 1:
-            config_name = list(datasets_info_dict[dataset_name]["configs"].keys())[0]
+        if len(datasets_info[dataset_name]["configs"].keys()) == 1:
+            config_name = list(datasets_info[dataset_name]["configs"].keys())[0]
 
         else:
-            curr_dataset = datasets_info_dict[dataset_name]
+            curr_dataset = datasets_info[dataset_name]
             if len(curr_dataset["configs"]) > 10:
                 curr_dataset["configs"] = dict(
                     random.sample(list(curr_dataset["configs"].items()), 10)
@@ -621,13 +617,13 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             return canonicalized_dataset
 
     def get_datasets_of_required_size(
-        self, datasets_info_dict: dict, prompt_spec: PromptSpec
+        self, datasets_info: dict, prompt_spec: PromptSpec
     ) -> datasets.DatasetDict:
         """Combine multiple datasets to get the required size.
 
         Args:
-            datasets_info_dict (dict): A list of dictionaries representing the datasets.
-            prompt_spec (PromptSpec): An object representing the prompt specification.
+            datasets_info: A list of dictionaries representing the datasets.
+            prompt_spec: An object representing the prompt specification.
 
         Returns:
             transformed_dataset: The transformed dataset containing the required
@@ -641,12 +637,10 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         number_of_chosen_datasets = 0
         while (
             curr_datasets_size < self.total_num_points_to_transform
-            and len(datasets_info_dict.keys()) > 0
+            and len(datasets_info.keys()) > 0
             and number_of_chosen_datasets <= self.max_datasets_to_choose
         ):
-            dataset_name, config_name = self.rerank_datasets(
-                datasets_info_dict, prompt_spec
-            )
+            dataset_name, config_name = self.rerank_datasets(datasets_info, prompt_spec)
             if dataset_name is None:
                 # If it couldn't find a relevant dataset from reranking
                 # (even after voting) stop trying to find more datasets.
@@ -654,10 +648,10 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             number_of_chosen_datasets += 1
 
             if config_name is None:
-                del datasets_info_dict[dataset_name]
+                del datasets_info[dataset_name]
                 continue  # If it couldn't find a relevant config, delete the entire dataset. # noqa: E501
 
-            dataset_info = datasets_info_dict[dataset_name]["configs"][config_name]
+            dataset_info = datasets_info[dataset_name]["configs"][config_name]
             canonicalized_dataset = self.canonicalize_dataset_automatically(
                 dataset_info,
                 prompt_spec,
@@ -670,10 +664,10 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 canonicalized_dataset["train"]["input_col"]
             )
 
-            if len(datasets_info_dict[dataset_name]["configs"]) == 1:
-                del datasets_info_dict[dataset_name]
+            if len(datasets_info[dataset_name]["configs"]) == 1:
+                del datasets_info[dataset_name]
             else:
-                del datasets_info_dict[dataset_name]["configs"][config_name]
+                del datasets_info[dataset_name]["configs"][config_name]
         logger.info(f"Chosen datasets: {dataset_contributions}")
         transformed_dataset = self.make_dataset_from_samples(inputs, outputs)
 
