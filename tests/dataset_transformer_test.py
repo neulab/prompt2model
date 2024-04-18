@@ -30,11 +30,13 @@ TRANSFORMED_DATA = partial(
 )
 @patch(
     "prompt2model.utils.APIAgent.generate_one_completion",
-    side_effect=[TASK_EXPLANATION,PLAN_RESPONSE],
+    side_effect=[TASK_EXPLANATION, PLAN_RESPONSE],
 )
 def test_transform_data(mock_batch_completion, mock_one_completion):
     """Test transform_data."""
-    dataset_transformer = PromptBasedDatasetTransformer(num_points_to_transform=1, max_allowed_failed_transforms=0) # noqa: E501
+    dataset_transformer = PromptBasedDatasetTransformer(
+        num_points_to_transform=1, max_allowed_failed_transforms=0
+    )  # noqa: E501
     prompt_spec = MockPromptSpec(
         TaskType.TEXT_GENERATION,
         instruction="instruction",
@@ -56,11 +58,8 @@ def test_transform_data(mock_batch_completion, mock_one_completion):
     inputs, outputs = dataset_transformer.transform_data(
         prompt_spec=prompt_spec,
         dataset=dataset["train"],
-
     )
-    breakpoint()
-    assert (
-        inputs
-        == ["context: Albany, the state capital, is the sixth-largest city in the State of New York.\nquestion: What is the capital of New York?"]  # noqa E501
-    )
+    assert inputs == [
+        "context: Albany, the state capital, is the sixth-largest city in the State of New York.\nquestion: What is the capital of New York?"  # noqa E501
+    ]  # noqa E501
     assert outputs == ["Albany"]

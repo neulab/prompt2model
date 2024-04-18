@@ -204,7 +204,6 @@ class PromptBasedDatasetTransformer(DatasetTransformer):
         Returns:
             A tuple containing two lists: inputs and outputs.
         """
-        
         task_explanation = self.generate_task_explanation(prompt_spec)
         self.plan = self.generate_plan(task_explanation, dataset, prompt_spec)
         logger.info(f"Plan created. Plan: {self.plan}")
