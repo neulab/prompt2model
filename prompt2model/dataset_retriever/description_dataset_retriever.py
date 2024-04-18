@@ -680,8 +680,8 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         """Creates the dataset based on the given prompt specification and sorted list.
 
         Args:
-            prompt_spec (PromptSpec): The prompt specification.
-            sorted_list (list[str]): The sorted list.
+            prompt_spec: The prompt specification.
+            sorted_list: The sorted list.
 
         Returns:
             The created dataset, or None if the dataset creation fails.
