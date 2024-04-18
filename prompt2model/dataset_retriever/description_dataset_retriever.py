@@ -265,7 +265,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
         output_column = response["output"]
         if len(input_columns) < 1 or len(output_column) != 1:
             raise RuntimeError(
-                f"Incorrect number of cols: {input_columns}, {output_column} "
+                f"Incorrect number of columns: {input_columns}, {output_column} "
             )  # noqa: E501
 
         dataset_columns = dataset_columns
