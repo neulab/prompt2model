@@ -649,7 +649,8 @@ class DescriptionDatasetRetriever(DatasetRetriever):
 
             if config_name is None:
                 del datasets_info[dataset_name]
-                # If it couldn't find a relevant config, delete the entire dataset. noqa: E501
+                # If it couldn't find a relevant config,
+                # delete the entire dataset.
                 continue
 
             dataset_info = datasets_info[dataset_name]["configs"][config_name]
