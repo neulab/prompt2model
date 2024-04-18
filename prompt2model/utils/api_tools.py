@@ -11,7 +11,6 @@ import time
 import aiolimiter
 import litellm.utils
 import openai
-import openai.error
 import tiktoken
 from aiohttp import ClientSession
 from litellm import acompletion, completion
@@ -20,22 +19,22 @@ from tqdm.asyncio import tqdm_asyncio
 # Note that litellm converts all API errors into openai errors,
 # so openai errors are valid even when using other services.
 API_ERRORS = (
-    openai.error.APIError,
-    openai.error.Timeout,
-    openai.error.RateLimitError,
-    openai.error.ServiceUnavailableError,
-    openai.error.InvalidRequestError,
+    openai.APIError,
+    openai.APITimeoutError,
+    openai.RateLimitError,
+    openai.BadRequestError,
+    openai.APIStatusError,
     json.decoder.JSONDecodeError,
     AssertionError,
 )
 
 ERROR_ERRORS_TO_MESSAGES = {
-    openai.error.InvalidRequestError: "API Invalid Request: Prompt was filtered",
-    openai.error.RateLimitError: "API rate limit exceeded. Sleeping for 10 seconds.",
-    openai.error.APIConnectionError: "Error Communicating with API",
-    openai.error.Timeout: "API Timeout Error: API Timeout",
-    openai.error.ServiceUnavailableError: "API service unavailable error: {e}",
-    openai.error.APIError: "API error: {e}",
+    openai.BadRequestError: "API Invalid Request: Prompt was filtered",
+    openai.RateLimitError: "API rate limit exceeded. Sleeping for 10 seconds.",
+    openai.APIConnectionError: "Error Communicating with API",
+    openai.APITimeoutError: "API Timeout Error: API Timeout",
+    openai.APIStatusError: "API service unavailable error: {e}",
+    openai.APIError: "API error: {e}",
 }
 BUFFER_DURATION = 2
 
@@ -171,14 +170,14 @@ class APIAgent:
                         if isinstance(
                             e,
                             (
-                                openai.error.ServiceUnavailableError,
-                                openai.error.APIError,
+                                openai.APIStatusError,
+                                openai.APIError,
                             ),
                         ):
                             logging.warning(
                                 ERROR_ERRORS_TO_MESSAGES[type(e)].format(e=e)
                             )
-                        elif isinstance(e, openai.error.InvalidRequestError):
+                        elif isinstance(e, openai.BadRequestError):
                             logging.warning(ERROR_ERRORS_TO_MESSAGES[type(e)])
                             return {
                                 "choices": [
@@ -242,7 +241,8 @@ def handle_api_error(e, backoff_duration=1) -> None:
         raise e
 
     if isinstance(
-        e, (openai.error.APIError, openai.error.Timeout, openai.error.RateLimitError)
+        e,
+        (openai.APIError, openai.APITimeoutError, openai.RateLimitError),
     ):
 
         match = re.search(r"Please retry after (\d+) seconds", str(e))
