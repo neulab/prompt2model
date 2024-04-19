@@ -5,6 +5,7 @@ from __future__ import annotations  # noqa FI58
 import asyncio
 import json
 import logging
+import re
 import time
 
 import aiolimiter
@@ -35,6 +36,7 @@ ERROR_ERRORS_TO_MESSAGES = {
     openai.APIStatusError: "API service unavailable error: {e}",
     openai.APIError: "API error: {e}",
 }
+BUFFER_DURATION = 2
 
 
 class APIAgent:
@@ -42,14 +44,14 @@ class APIAgent:
 
     def __init__(
         self,
-        model_name: str = "gpt-3.5-turbo",
-        max_tokens: int | None = None,
+        model_name: str = "gpt-4",
+        max_tokens: int | None = 4000,
         api_base: str | None = None,
     ):
         """Initialize APIAgent with model_name and max_tokens.
 
         Args:
-            model_name: Name fo the model to use (by default, gpt-3.5-turbo).
+            model_name: Name of the model to use (by default, gpt-4).
             max_tokens: The maximum number of tokens to generate. Defaults to the max
                 value for the model if available through litellm.
             api_base: Custom endpoint for Hugging Face's inference API.
@@ -101,7 +103,6 @@ class APIAgent:
             max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
         else:
             max_tokens = 3 * num_prompt_tokens
-
         response = completion(  # completion gets the key from os.getenv
             model=self.model_name,
             messages=[
@@ -219,22 +220,40 @@ class APIAgent:
         return responses
 
 
-def handle_api_error(e) -> None:
+def handle_api_error(e, backoff_duration=1) -> None:
     """Handle OpenAI errors or related errors that the API may raise.
+
+    Sleeps incase error is some type of timeout, else throws error.
 
     Args:
         e: The error to handle. This could be an OpenAI error or a related
            non-fatal error, such as JSONDecodeError or AssertionError.
+        backoff_duration: The duration (in s) to wait before retrying.
+
+    Raises:
+        e: If the error is not an instance of APIError, Timeout, or RateLimitError.
+
+    Returns:
+        None
     """
     logging.error(e)
+
     if not isinstance(e, API_ERRORS):
         raise e
+
     if isinstance(
         e,
         (openai.APIError, openai.APITimeoutError, openai.RateLimitError),
     ):
-        # For these errors, OpenAI recommends waiting before retrying.
-        time.sleep(1)
+
+        match = re.search(r"Please retry after (\d+) seconds", str(e))
+        # If OpenAI mentions how long to sleep, use that. Otherwise, do
+        # exponential backoff.
+        if match is not None:
+            backoff_duration = int(match.group(1)) + BUFFER_DURATION
+
+        logging.info(f"Retrying in {backoff_duration} seconds...")
+        time.sleep(backoff_duration)
 
 
 def count_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> int:
