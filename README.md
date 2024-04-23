@@ -99,7 +99,7 @@ If you're interested in contributing to the `prompt2model` project, please
 
 ## Cite
 
-We have written a paper describing [Prompt2Model ](https://arxiv.org/abs/2308.12261) and [DataTune]() in detail .
+We have written a paper describing [Prompt2Model ](https://arxiv.org/abs/2308.12261) and [DataTune](https://arxiv.org/abs/2404.14361) in detail .
 
 If you use Prompt2Model or DataTune in your research, please cite our paper:
 
