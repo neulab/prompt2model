@@ -56,6 +56,12 @@ API. For best results, run
 this script on a device with a GPU for training
 your model.
 
+## Data Tune
+We also introduce DataTune, an integration within Prompt2Model, which performs dataset transformation, allowing the repurposing of
+publicly available datasets into a format that is
+directly aligned with the specific requirements
+of target tasks.
+
 ## Demo
 
 <https://github.com/neulab/prompt2model/assets/2577384/8d73394b-3028-4a0b-bdc3-c127082868f2>
@@ -93,9 +99,9 @@ If you're interested in contributing to the `prompt2model` project, please
 
 ## Cite
 
-We have [written a paper describing Prompt2Model in detail](https://arxiv.org/abs/2308.12261).
+We have written a paper describing [Prompt2Model ](https://arxiv.org/abs/2308.12261) and [DataTune]() in detail .
 
-If you use Prompt2Model in your research, please cite our paper:
+If you use Prompt2Model or DataTune in your research, please cite our paper:
 
 ```bibtex
 @misc{prompt2model,
@@ -103,6 +109,16 @@ If you use Prompt2Model in your research, please cite our paper:
       author={Vijay Viswanathan and Chenyang Zhao and Amanda Bertsch and Tongshuang Wu and Graham Neubig},
       year={2023},
       eprint={2308.12261},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL}
+}
+```
+```bibtex
+@misc{gandhi2024better,
+      title={Better Synthetic Data by Retrieving and Transforming Existing Datasets}, 
+      author={Saumya Gandhi and Ritu Gala and Vijay Viswanathan and Tongshuang Wu and Graham Neubig},
+      year={2024},
+      eprint={2404.14361},
       archivePrefix={arXiv},
       primaryClass={cs.CL}
 }
