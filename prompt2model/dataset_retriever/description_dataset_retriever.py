@@ -116,7 +116,7 @@ class DescriptionDatasetRetriever(DatasetRetriever):
             # Download the reranking index if one is not on disk already.
             logger.info("Downloading the Reranking Dataset Index File")
             urllib.request.urlretrieve(
-                "http://phontron.com/data/prompt2model/dataset_reranking_index.json",
+                "http://phontron.com/data/prompt2model/reranking_dataset_index.json",
                 self.reranking_dataset_info_file,
             )
         with open(self.reranking_dataset_info_file, "r") as f:
@@ -659,12 +659,14 @@ class DescriptionDatasetRetriever(DatasetRetriever):
                 prompt_spec,
                 self.total_num_points_to_transform - curr_datasets_size,
             )
-            curr_datasets_size += len(canonicalized_dataset["train"]["input_col"])
-            inputs += canonicalized_dataset["train"]["input_col"]
-            outputs += canonicalized_dataset["train"]["output_col"]
-            dataset_contributions[f"{dataset_name}_{config_name}"] = len(
-                canonicalized_dataset["train"]["input_col"]
-            )
+            if canonicalized_dataset is not None and "train" in canonicalized_dataset:
+
+                curr_datasets_size += len(canonicalized_dataset["train"]["input_col"])
+                inputs += canonicalized_dataset["train"]["input_col"]
+                outputs += canonicalized_dataset["train"]["output_col"]
+                dataset_contributions[f"{dataset_name}_{config_name}"] = len(
+                    canonicalized_dataset["train"]["input_col"]
+                )
 
             if len(datasets_info[dataset_name]["configs"]) == 1:
                 del datasets_info[dataset_name]
