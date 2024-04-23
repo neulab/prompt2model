@@ -95,8 +95,9 @@ If you're interested in contributing to the `prompt2model` project, please
 
 We have [written a paper describing Prompt2Model in detail](https://arxiv.org/abs/2308.12261).
 
-If you use Prompt2Model in your research, please cite our paper:
+If you use Prompt2Model in your research, please cite us!
 
+If you discuss or use the overall prompt2model framework, please reference
 ```bibtex
 @misc{prompt2model,
       title={Prompt2Model: Generating Deployable Models from Natural Language Instructions},
@@ -106,7 +107,10 @@ If you use Prompt2Model in your research, please cite our paper:
       archivePrefix={arXiv},
       primaryClass={cs.CL}
 }
+```
 
+If you discuss or use our dataset retrieval and transformation tools, please reference
+```
 @misc{prompt2modeldatatune,
       title={Better Synthetic Data by Retrieving and Transforming Existing Datasets}, 
       author={Saumya Gandhi and Ritu Gala and Vijay Viswanathan and Tongshuang Wu and Graham Neubig},
