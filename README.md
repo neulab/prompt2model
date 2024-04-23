@@ -106,4 +106,13 @@ If you use Prompt2Model in your research, please cite our paper:
       archivePrefix={arXiv},
       primaryClass={cs.CL}
 }
+
+@misc{prompt2modeldatatune,
+      title={Better Synthetic Data by Retrieving and Transforming Existing Datasets}, 
+      author={Saumya Gandhi and Ritu Gala and Vijay Viswanathan and Tongshuang Wu and Graham Neubig},
+      year={2024},
+      eprint={2404.14361},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL}
+}
 ```
