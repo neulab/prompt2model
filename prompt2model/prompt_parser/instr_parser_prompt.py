@@ -14,10 +14,12 @@ METAPROMPT_EXAMPLES = [
 
 Entity: "fictional character"
 Context Sentence: "Jenna Marshall is a fictional character created by Sara Shepard for the `` Pretty Little Liars '' book series , and later developed for the Freeform television series adaptation by I. Marlene King and portrayed by Tammin Sursok ."
+explanation="Based on the entity and the context sentence, the alternate entity names could be fictional characters since the context sentence talks about Jenna Marshall, a fictional character or just a character."
 Alternate Entity Names: ["fictional characters", "characters", "character"]
 
 Entity: "Catholicism"
 Context Sentence: "At home , significantly more electorate residents spoke Italian , Cantonese , Mandarin and Greek at home , and whilst the top three religions (Catholicism , no religion and Anglicanism) differed little from other parts of Perth , Buddhism and Eastern Orthodox adherents outnumbered those of the Uniting Church ."
+explanation="Based on the entity and the context sentence reference of Italian, religion etc, the alternate entities could be catholic church, roman catholic etc "
 Alternate Entity Names: ["Catholic Church", "Roman Catholic", "Catholic"]
 
 Entity: "Wind"
@@ -27,10 +29,12 @@ Context Sentence: "Illinois musicians with a # 1 Billboard Hot 100 hit include a
             "Instruction": """I am trying to cluster entity strings on Wikipedia according to the Wikipedia article title they refer to. To help me with this, for a given entity name, please provide me with a comprehensive set of alternative names that could refer to the same entity. Entities may be weirdly truncated or ambiguous - e.g. "Wind" may refer to the band "Earth, Wind, and Fire" or to "rescue service". For each entity, I will provide you with a sentence where this entity is used to help you understand what this entity refers to. Generate a comprehensive set of alternate entity names as a JSON-formatted list.""",  # noqa: E501
             "Demonstrations": """Entity: "fictional character"
 Context Sentence: "Jenna Marshall is a fictional character created by Sara Shepard for the `` Pretty Little Liars '' book series , and later developed for the Freeform television series adaptation by I. Marlene King and portrayed by Tammin Sursok ."
+explanation="Based on the entity and the context sentence, the alternate entity names could be fictional characters since the context sentence talks about Jenna Marshall, a fictional character or just a character."
 Alternate Entity Names: ["fictional characters", "characters", "character"]
 
 Entity: "Catholicism"
 Context Sentence: "At home , significantly more electorate residents spoke Italian , Cantonese , Mandarin and Greek at home , and whilst the top three religions (Catholicism , no religion and Anglicanism) differed little from other parts of Perth , Buddhism and Eastern Orthodox adherents outnumbered those of the Uniting Church ."
+explanation="Based on the entity and the context sentence reference of Italian, religion etc, the alternate entities could be catholic church, roman catholic etc "
 Alternate Entity Names: ["Catholic Church", "Roman Catholic", "Catholic"]""",  # noqa: E501
         },
     ),
@@ -40,11 +44,11 @@ Alternate Entity Names: ["Catholic Church", "Roman Catholic", "Catholic"]""",  #
 Example conversation:
 
 User: Hey can you help me with something
-
+explanation="The agent has to reply what the user needs help with since the user requested for help" # noqa E501
 Agent: Sure! What do you need help with?
 
 User: I want to bake a cake but don't know what temperature to set the oven to.
-
+explanation="The user asks what temperature should the oven be set to since he wants to bake a cake. So the agent must reply the temperature the over should be preheated to, i.e 350°F (177°C)" # noqa E501
 Agent: For most cakes, the oven should be preheated to 350°F (177°C).
 
 Current conversation:
@@ -58,11 +62,11 @@ Agent:""",
                 + "questions. Reply as agent."
             ),
             "Demonstrations": """User: Hey can you help me with something
-
+explanation="The agent has to reply what the user needs help with since the user requested for help" # noqa E501
 Agent: Sure! What do you need help with?
 
 User: I want to bake a cake but don't know what temperature to set the oven to.
-
+explanation="The user asks what temperature should the oven be set to since he wants to bake a cake. So the agent must reply the temperature the over should be preheated to, i.e 350°F (177°C)" # noqa E501
 Agent: For most cakes, the oven should be preheated to 350°F (177°C).""",
         },
     ),
@@ -74,24 +78,24 @@ Agent: For most cakes, the oven should be preheated to 350°F (177°C).""",
         },
     ),
     (
-        "I am learning Japanese. Please translate some Japanese sentences to English. For example, Japanese: その日、人類は思い出した。ヤツらに支配されていた恐怖を鳥籠の中に囚われていた屈辱を English: On that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage.",  # noqa: E501
+        "I am learning Japanese. Please translate some Japanese sentences to English. For example, Japanese: その日、人類は思い出した。ヤツらに支配されていた恐怖を鳥籠の中に囚われていた屈辱を English: On that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage.The explanation for the example is that the input is a Japanese sentence which is conveying that on that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage.",  # noqa: E501
         {
             "Instruction": "I am learning Japanese. Please translate some Japanese sentences to English.",  # noqa: E501
-            "Demonstrations": "Japanese: その日、人類は思い出した。ヤツらに支配されていた恐怖を鳥籠の中に囚われていた屈辱を English: On that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage.",  # noqa: E501
+            "Demonstrations": "Japanese: その日、人類は思い出した。ヤツらに支配されていた恐怖を鳥籠の中に囚われていた屈辱を English: On that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage. The explanation for the example is that the input is a Japanese sentence which is conveying that on that day, humanity remembered the fear of being dominated by them and the humiliation of being trapped in a birdcage.",  # noqa: E501",
         },
     ),
     (
-        "来到美国后，我需要学习如何自己做饭。你能告诉我一些菜需要准备的原料么？这里有一些例子：1. 菜名：西红柿炒蛋。原料：2. 菜名：青椒肉丝炒肉。原料：瘦肉、青椒、调味料（如大蒜、姜、料酒、生抽、盐、糖、鸡精或味精、胡椒粉）、植物油。",  # noqa: E501
+        "来到美国后，我需要学习如何自己做饭。你能告诉我一些菜需要准备的原料么？这里有一些例子：1. 菜名：西红柿炒蛋。原料：2. 菜名：青椒肉丝炒肉。原料：瘦肉、青椒、调味料（如大蒜、姜、料酒、生抽、盐、糖、鸡精或味精、胡椒粉）、植物油。The explanation is that the instruction is to provide the ingredients for the input dish, '青椒肉丝炒肉' which appears to be a Chinese dish, commonly known as Stir-Fried Pork with Green Peppers. Thus the output should be a list of ingredients used in preparing this dish: 'Lean meat, green peppers, seasonings (such as garlic, ginger, cooking wine, light soy sauce, salt, sugar, chicken bouillon or monosodium glutamate, pepper), vegetable oil.'",  # noqa: E501
         {
             "Instruction": "来到美国后，我需要学习如何自己做饭。你能告诉我一些菜需要准备的原料么？",  # noqa: E501
-            "Demonstrations": "2. 菜名：青椒肉丝炒肉。原料：瘦肉、青椒、调味料（如大蒜、姜、料酒、生抽、盐、糖、鸡精或味精、胡椒粉）、植物油。",  # noqa: E501
+            "Demonstrations": "2. 菜名：青椒肉丝炒肉。原料：瘦肉、青椒、调味料（如大蒜、姜、料酒、生抽、盐、糖、鸡精或味精、胡椒粉）、植物油。The explanation is that the instruction is to provide the ingredients for the input dish, '青椒肉丝炒肉' which appears to be a Chinese dish, commonly known as Stir-Fried Pork with Green Peppers. Thus the output should be a list of ingredients used in preparing this dish: 'Lean meat, green peppers, seasonings (such as garlic, ginger, cooking wine, light soy sauce, salt, sugar, chicken bouillon or monosodium glutamate, pepper), vegetable oil.'",  # noqa: E501
         },
     ),
     (
-        "As a programer, I am learning software development. Here are some of my problems. Input: What is CI/CD? Output: CI/CD is a way to automate and speed up software development by continuously integrating code changes and deploying them quickly and reliably. Input: What is Git? Output:",  # noqa: E501
+        "As a programer, I am learning software development. Here are some of my problems. Input: What is CI/CD? Output: CI/CD is a way to automate and speed up software development by continuously integrating code changes and deploying them quickly and reliably. The explanation is that the input is a question asking about what the term CI/CD mean. So the output should be the xplanation of CI/CD, which is way to automate and speed up the sofwatre devolopment by efficient integration and deployment of the code changes. Input: What is Git? Output:",  # noqa: E501
         {
             "Instruction": "As a programer, I am learning software development. Here are some of my problems.",  # noqa: E501
-            "Demonstrations": " Input: What is CI/CD? Output: CI/CD is a way to automate and speed up software development by continuously integrating code changes and deploying them quickly and reliably.",  # noqa: E501
+            "Demonstrations": " Input: What is CI/CD? Output: CI/CD is a way to automate and speed up software development by continuously integrating code changes and deploying them quickly and reliably. The explanation is that the input is a question asking about what the term CI/CD mean. So the output should be the xplanation of CI/CD, which is way to automate and speed up the sofwatre devolopment by efficient integration and deployment of the code changes",  # noqa: E501
         },
     ),
 ]

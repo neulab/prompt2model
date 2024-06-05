@@ -29,41 +29,41 @@ logger = logging.getLogger("DatasetGenerator")
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1"}',
+    content='{"input": "This is a great movie!", "explanation":"x", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "label": "1"}',
+    content='{"input": "This is a great movie!", "explanation":"x", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1}',
+    content='{"input": "This is a great movie!", "explanation":"x", "output": "1}',
 )
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1"}',
+    content='{"input": "This is a great movie!", "explanation":"x", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "label": "1"}',
+    content='{"input": "This is a great movie!", "explanation":"x", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1}',
+    content='{"input": "This is a great movie!", "explanation":"x", "output": "1}',
 )
 
 MOCK_CLASSIFICATION_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1"}',
+    content='{"input": "This is a great movie!", "explanation":"x", "output": "1"}',
 )
 MOCK_WRONG_KEY_EXAMPLE = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "label": "1"}',
+    content='{"input": "This is a great movie!", "explanation":"x", "label": "1"}',
 )
 MOCK_INVALID_JSON = partial(
     mock_batch_api_response_identical_completions,
-    content='{"input": "This is a great movie!", "output": "1}',
+    content='{"input": "This is a great movie!", "explanation":"x", "output": "1}',
 )
 
 
@@ -86,7 +86,7 @@ def test_generate_dataset(mocked_generate_example):
     # the length of the dataset is num_examples + 5, where 5 is the
     # default number of responses per API call.
     assert len(dataset) < num_examples + 5
-    expected_columns = {"input_col", "output_col"}
+    expected_columns = {"input_col", "explain_col", "output_col"}
     assert set(dataset.column_names) == expected_columns
     return dataset
 
@@ -116,7 +116,7 @@ def test_generate_dataset_dict(mocked_generate_example):
         # generated dataset is num_examples + 5, where
         # 5 is the default number of responses per API call.
         assert len(dataset_dict[split.value]) < num + 5
-    expected_columns = {"input_col", "output_col"}
+    expected_columns = {"input_col", "explain_col", "output_col"}
     for dataset in dataset_dict.values():
         assert set(dataset.column_names) == expected_columns
 
@@ -169,7 +169,7 @@ def test_generator_without_filter_dict(mocked_generate_example):
         # generated dataset is num_examples + 5, where
         # 5 is the default number of responses per API call.
         assert len(dataset_dict[split.value]) < num + 5
-    expected_columns = {"input_col", "output_col"}
+    expected_columns = {"input_col", "explain_col", "output_col"}
     for dataset in dataset_dict.values():
         assert set(dataset.column_names) == expected_columns
 
@@ -247,6 +247,7 @@ def test_generator_with_filter_first_batch(mocked_generate_example):
     expected_dataset = Dataset.from_dict(
         {
             "input_col": ["1", "2"],
+            "explain_col": ["x", "x"],
             "output_col": ["a", "a"],
         }
     )
@@ -300,6 +301,7 @@ def test_generator_with_filter_second_batch(mocked_generate_example):
     expected_dataset = Dataset.from_dict(
         {
             "input_col": ["1", "2", "3"],
+            "explain_col": ["x", "x", "x"],
             "output_col": ["a", "a", "a"],
         }
     )
@@ -354,6 +356,7 @@ def test_generator_with_filter_third_batch(mocked_generate_example):
     expected_dataset = Dataset.from_dict(
         {
             "input_col": ["1", "2", "3"],
+            "explain_col": ["x", "x", "x"],
             "output_col": ["b", "a", "a"],
         }
     )
@@ -391,6 +394,7 @@ def test_generator_with_filter_forth_batch(mocked_generate_example):
     expected_dataset = Dataset.from_dict(
         {
             "input_col": ["1", "2", "3", "4", "5"],
+            "explain_col": ["x", "x", "x", "x", "x"],
             "output_col": ["b", "a", "a", "c", "a"],
         }
     )
@@ -428,6 +432,7 @@ def test_generator_with_filter_unlimited_api_calls(mocked_generate_example):
     expected_dataset = Dataset.from_dict(
         {
             "input_col": ["1", "2", "3", "4", "5"],
+            "explain_col": ["x", "x", "x", "x", "x"],
             "output_col": ["b", "a", "a", "c", "a"],
         }
     )
@@ -473,18 +478,21 @@ def test_generator_with_filter_to_generate_datasetdict(mocked_generate_example):
             "train": Dataset.from_dict(
                 {
                     "input_col": ["1", "2", "3", "4"],
+                    "explain_col": ["x", "x", "x", "x"],
                     "output_col": ["b", "a", "a", "c"],
                 }
             ),
             "val": Dataset.from_dict(
                 {
                     "input_col": ["1", "2"],
+                    "explain_col": ["x", "x"],
                     "output_col": ["a", "a"],
                 }
             ),
             "test": Dataset.from_dict(
                 {
                     "input_col": [],
+                    "explain_col": [],
                     "output_col": [],
                 }
             ),
@@ -557,7 +565,9 @@ def test_wrong_key_example(mocked_generate_example):
         prompt_spec, num_examples, split
     )
     assert mocked_generate_example.call_count == 3
-    expected_dataset = Dataset.from_dict({"input_col": [], "output_col": []})
+    expected_dataset = Dataset.from_dict(
+        {"input_col": [], "explain_col": [], "output_col": []}
+    )  # noqa E501
     assert list(expected_dataset) == list(generated_dataset)
 
 
@@ -574,7 +584,9 @@ def test_invalid_json_response(mocked_generate_example):
     split = DatasetSplit.VAL
     dataset = dataset_generator.generate_dataset_split(prompt_spec, num_examples, split)
     assert mocked_generate_example.call_count == 3
-    expected_dataset = Dataset.from_dict({"input_col": [], "output_col": []})
+    expected_dataset = Dataset.from_dict(
+        {"input_col": [], "explain_col": [], "output_col": []}
+    )  # noqa E501
     assert list(dataset) == list(expected_dataset)
 
 
@@ -602,17 +614,17 @@ def test_filter_with_duplicate_inputs_unique_outputs():
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     data_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=True)
     generated_examples = [
-        Example(input_col="apple", output_col="A"),
-        Example(input_col="banana", output_col="B"),
-        Example(input_col="apple", output_col="E"),
-        Example(input_col="orange", output_col="O"),
-        Example(input_col="apple", output_col="D"),
+        Example(input_col="apple", explain_col="a", output_col="A"),  # noqa E501
+        Example(input_col="banana", explain_col="b", output_col="B"),  # noqa E501
+        Example(input_col="apple", explain_col="c", output_col="E"),  # noqa E501
+        Example(input_col="orange", explain_col="d", output_col="O"),  # noqa E501
+        Example(input_col="apple", explain_col="e", output_col="D"),  # noqa E501
     ]
     filtered_examples = data_generator.apply_multi_vote_filtering(generated_examples)
     expected_examples = [
-        Example(input_col="apple", output_col="A"),
-        Example(input_col="banana", output_col="B"),
-        Example(input_col="orange", output_col="O"),
+        Example(input_col="apple", explain_col="a", output_col="A"),  # noqa E501
+        Example(input_col="banana", explain_col="b", output_col="B"),  # noqa E501
+        Example(input_col="orange", explain_col="d", output_col="O"),  # noqa E501
     ]
     assert sorted(expected_examples) == sorted(filtered_examples)
 
@@ -622,22 +634,22 @@ def test_filter_duplicate_inputs_duplicate_outputs():
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     data_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=True)
     generated_examples = [
-        Example(input_col="apple", output_col="A"),
-        Example(input_col="banana", output_col="C"),
-        Example(input_col="apple", output_col="A"),
-        Example(input_col="banana", output_col="B"),
-        Example(input_col="apple", output_col="G"),
-        Example(input_col="apple", output_col="A"),
-        Example(input_col="orange", output_col="O"),
-        Example(input_col="apple", output_col="D"),
-        Example(input_col="banana", output_col="B"),
-        Example(input_col="orange", output_col="F"),
+        Example(input_col="apple", explain_col="a", output_col="A"),
+        Example(input_col="banana", explain_col="a", output_col="C"),
+        Example(input_col="apple", explain_col="a", output_col="A"),
+        Example(input_col="banana", explain_col="a", output_col="B"),
+        Example(input_col="apple", explain_col="a", output_col="G"),
+        Example(input_col="apple", explain_col="a", output_col="A"),
+        Example(input_col="orange", explain_col="a", output_col="O"),
+        Example(input_col="apple", explain_col="a", output_col="D"),
+        Example(input_col="banana", explain_col="a", output_col="B"),
+        Example(input_col="orange", explain_col="a", output_col="F"),
     ]
     filtered_examples = data_generator.apply_multi_vote_filtering(generated_examples)
     expected_examples = [
-        Example(input_col="apple", output_col="A"),
-        Example(input_col="banana", output_col="B"),
-        Example(input_col="orange", output_col="O"),
+        Example(input_col="apple", explain_col="a", output_col="A"),
+        Example(input_col="banana", explain_col="a", output_col="B"),
+        Example(input_col="orange", explain_col="a", output_col="O"),
     ]
     assert expected_examples == filtered_examples
 
@@ -647,9 +659,9 @@ def test_create_all_examples_dataset_and_generated_dataset_with_unique_inputs_ou
     os.environ["OPENAI_API_KEY"] = "fake_api_key"
     data_generator = PromptBasedDatasetGenerator(filter_duplicated_examples=True)
     generated_examples = [
-        Example(input_col="apple", output_col="A"),
-        Example(input_col="banana", output_col="B"),
-        Example(input_col="orange", output_col="O"),
+        Example(input_col="apple", explain_col="a", output_col="A"),
+        Example(input_col="banana", explain_col="a", output_col="B"),
+        Example(input_col="orange", explain_col="a", output_col="O"),
     ]
     filtered_examples = data_generator.apply_multi_vote_filtering(generated_examples)
     assert generated_examples == filtered_examples
@@ -722,23 +734,23 @@ def test_extract_responses():
     """Test the extract_responses function of DatasetGenerator."""
     mock_completion_1 = MockCompletion()
     mock_completion_1.choices = [
-        {"message": {"content": '{"input": "1", "output": "a"}'}},
-        {"message": {"content": '{"input": "1", "output": "b"}'}},
-        {"message": {"content": '{"input": "1", "output": "a"}'}},
+        {"message": {"content": '{"input": "1", "explanation": "x", "output": "a"}'}},
+        {"message": {"content": '{"input": "1", "explanation": "x", "output": "b"}'}},
+        {"message": {"content": '{"input": "1", "explanation": "x", "output": "a"}'}},
     ]
     mock_completion_2 = MockCompletion()
     mock_completion_2.choices = [
-        {"message": {"content": '{"input": "3", "output": "a"}'}},
+        {"message": {"content": '{"input": "3", "explanation": "x", "output": "a"}'}},
         # Note that the following choice miss the right quote of JSON.
         # So it should be discarded. And will log a warning.
-        {"message": {"content": '{"input": "3", "output": "a}'}},
-        {"message": {"content": '{"input": "3", "output": "b"}'}},
+        {"message": {"content": '{"input": "3", "explanation": "x", "output": "a}'}},
+        {"message": {"content": '{"input": "3", "explanation": "x", "output": "b"}'}},
     ]
     mock_completion_3 = MockCompletion()
     mock_completion_3.choices = [
-        {"message": {"content": '{"input": "4", "output": "c"}'}},
-        {"message": {"content": '{"input": "4", "output": "c"}'}},
-        {"message": {"content": '{"input": "5", "output": "a"}'}},
+        {"message": {"content": '{"input": "4", "explanation": "x", "output": "c"}'}},
+        {"message": {"content": '{"input": "4", "explanation": "x", "output": "c"}'}},
+        {"message": {"content": '{"input": "5", "explanation": "x", "output": "a"}'}},
     ]
     # choices should be list of dicts. So mock_completion_4
     # is invalid. Which will be discarded and log a warning.
@@ -755,31 +767,31 @@ def test_extract_responses():
             [mock_completion_1, mock_completion_2], generated_examples
         )
         mock_warning.assert_called_once_with(
-            'Error happened parsing API choice: {\'message\': {\'content\': \'{"input": "3", "output": "a}\'}}'  # noqa E501
+            'Error happened parsing API choice: {\'message\': {\'content\': \'{"input": "3", "explanation": "x", "output": "a}\'}}'  # noqa E501
         )
         # There are 5 valid examples. Each input
         # and output will be logged once as info.
-        assert mock_info.call_count == 5 * 2
+        assert mock_info.call_count == 5 * 3
 
     # The second choice in mock_completion_2
     # is invalid. So it should be discarded.
     assert generated_examples == [
-        Example(input_col="1", output_col="a"),
-        Example(input_col="1", output_col="b"),
-        Example(input_col="1", output_col="a"),
-        Example(input_col="3", output_col="a"),
-        Example(input_col="3", output_col="b"),
+        Example(input_col="1", explain_col="x", output_col="a"),
+        Example(input_col="1", explain_col="x", output_col="b"),
+        Example(input_col="1", explain_col="x", output_col="a"),
+        Example(input_col="3", explain_col="x", output_col="a"),
+        Example(input_col="3", explain_col="x", output_col="b"),
     ]
     data_generator.extract_and_append_responses([mock_completion_3], generated_examples)
     assert generated_examples == [
-        Example(input_col="1", output_col="a"),
-        Example(input_col="1", output_col="b"),
-        Example(input_col="1", output_col="a"),
-        Example(input_col="3", output_col="a"),
-        Example(input_col="3", output_col="b"),
-        Example(input_col="4", output_col="c"),
-        Example(input_col="4", output_col="c"),
-        Example(input_col="5", output_col="a"),
+        Example(input_col="1", explain_col="x", output_col="a"),
+        Example(input_col="1", explain_col="x", output_col="b"),
+        Example(input_col="1", explain_col="x", output_col="a"),
+        Example(input_col="3", explain_col="x", output_col="a"),
+        Example(input_col="3", explain_col="x", output_col="b"),
+        Example(input_col="4", explain_col="x", output_col="c"),
+        Example(input_col="4", explain_col="x", output_col="c"),
+        Example(input_col="5", explain_col="x", output_col="a"),
     ]
     with patch.object(logger, "info") as mock_info, patch.object(
         logger, "warning"
@@ -793,14 +805,14 @@ def test_extract_responses():
         mock_info.assert_not_called()
         # The generated_examples should be the same.
         assert generated_examples == [
-            Example(input_col="1", output_col="a"),
-            Example(input_col="1", output_col="b"),
-            Example(input_col="1", output_col="a"),
-            Example(input_col="3", output_col="a"),
-            Example(input_col="3", output_col="b"),
-            Example(input_col="4", output_col="c"),
-            Example(input_col="4", output_col="c"),
-            Example(input_col="5", output_col="a"),
+            Example(input_col="1", explain_col="x", output_col="a"),
+            Example(input_col="1", explain_col="x", output_col="b"),
+            Example(input_col="1", explain_col="x", output_col="a"),
+            Example(input_col="3", explain_col="x", output_col="a"),
+            Example(input_col="3", explain_col="x", output_col="b"),
+            Example(input_col="4", explain_col="x", output_col="c"),
+            Example(input_col="4", explain_col="x", output_col="c"),
+            Example(input_col="5", explain_col="x", output_col="a"),
         ]
 
 
@@ -809,24 +821,24 @@ def test_extract_some_empty_responses():
     mock_completion_1 = MockCompletion()
     mock_completion_1.choices = [
         # Note that this choice's input is empty. So it should be discarded.
-        {"message": {"content": '{"input": "", "output": "a"}'}},
-        {"message": {"content": '{"input": "5", "output": "b"}'}},
+        {"message": {"content": '{"input": "", "explanation": "x", "output": "a"}'}},
+        {"message": {"content": '{"input": "5", "explanation": "x", "output": "b"}'}},
         # Note that this choice's output is empty. So it should be discarded.
-        {"message": {"content": '{"input": "1", "output": ""}'}},
+        {"message": {"content": '{"input": "1", "explanation": "x", "output": ""}'}},
     ]
     mock_completion_2 = MockCompletion()
     mock_completion_2.choices = [
-        {"message": {"content": '{"input": "3", "output": "a"}'}},
+        {"message": {"content": '{"input": "3", "explanation": "x", "output": "a"}'}},
         # Note that the following choice misses the right quote of JSON.
         # So it should be discarded. And will log a warning.
-        {"message": {"content": '{"input": "3", "output": "a}'}},
-        {"message": {"content": '{"input": "3", "output": "b"}'}},
+        {"message": {"content": '{"input": "3", "explanation": "x", "output": "a}'}},
+        {"message": {"content": '{"input": "3", "explanation": "x", "output": "b"}'}},
     ]
     mock_completion_3 = MockCompletion()
     mock_completion_3.choices = [
-        {"message": {"content": '{"input": "4", "output": "c"}'}},
-        {"message": {"content": '{"input": "4", "output": "c"}'}},
-        {"message": {"content": '{"input": "5", "output": "a"}'}},
+        {"message": {"content": '{"input": "4", "explanation": "x", "output": "c"}'}},
+        {"message": {"content": '{"input": "4", "explanation": "x", "output": "c"}'}},
+        {"message": {"content": '{"input": "5", "explanation": "x",  "output": "a"}'}},
     ]
     # choices should be list of dicts. So mock_completion_4
     # is invalid. Which will be discarded and log a warning.
@@ -846,7 +858,7 @@ def test_extract_some_empty_responses():
                 [mock_completion_1, mock_completion_2], generated_examples
             )
             mock_warning.assert_called_once_with(
-                'Error happened parsing API choice: {\'message\': {\'content\': \'{"input": "3", "output": "a}\'}}'  # noqa E501
+                'Error happened parsing API choice: {\'message\': {\'content\': \'{"input": "3", "explanation": "x", "output": "a}\'}}'  # noqa E501
             )
             # There are 3 valid examples in [mock_completion_1,
             # mock_completion_2] Each input
@@ -854,25 +866,25 @@ def test_extract_some_empty_responses():
             # And there are 2 examples with empty
             # input or output, which should be discarded
             # and be logged as info.
-            assert mock_info.call_count == 3 * 2 + 2
+            assert mock_info.call_count == 3 * 3 + 2
 
         # The second choice in mock_completion_2
         # is invalid. So it should be discarded.
         assert generated_examples == [
-            Example(input_col="5", output_col="b"),
-            Example(input_col="3", output_col="a"),
-            Example(input_col="3", output_col="b"),
+            Example(input_col="5", explain_col="x", output_col="b"),
+            Example(input_col="3", explain_col="x", output_col="a"),
+            Example(input_col="3", explain_col="x", output_col="b"),
         ]
         data_generator.extract_and_append_responses(
             [mock_completion_3], generated_examples
         )
         assert generated_examples == [
-            Example(input_col="5", output_col="b"),
-            Example(input_col="3", output_col="a"),
-            Example(input_col="3", output_col="b"),
-            Example(input_col="4", output_col="c"),
-            Example(input_col="4", output_col="c"),
-            Example(input_col="5", output_col="a"),
+            Example(input_col="5", explain_col="x", output_col="b"),
+            Example(input_col="3", explain_col="x", output_col="a"),
+            Example(input_col="3", explain_col="x", output_col="b"),
+            Example(input_col="4", explain_col="x", output_col="c"),
+            Example(input_col="4", explain_col="x", output_col="c"),
+            Example(input_col="5", explain_col="x", output_col="a"),
         ]
         with patch.object(logger, "info") as mock_info, patch.object(
             logger, "warning"
@@ -886,12 +898,12 @@ def test_extract_some_empty_responses():
             mock_info.assert_not_called()
             # The generated_examples should be the same.
             assert generated_examples == [
-                Example(input_col="5", output_col="b"),
-                Example(input_col="3", output_col="a"),
-                Example(input_col="3", output_col="b"),
-                Example(input_col="4", output_col="c"),
-                Example(input_col="4", output_col="c"),
-                Example(input_col="5", output_col="a"),
+                Example(input_col="5", explain_col="x", output_col="b"),
+                Example(input_col="3", explain_col="x", output_col="a"),
+                Example(input_col="3", explain_col="x", output_col="b"),
+                Example(input_col="4", explain_col="x", output_col="c"),
+                Example(input_col="4", explain_col="x", output_col="c"),
+                Example(input_col="5", explain_col="x", output_col="a"),
             ]
 
 
@@ -947,13 +959,13 @@ def test_dataset_generator_terminates(mocked_generate_example):
     )
     generated_df = generated_dataset.to_pandas()
     assert len(generated_dataset) == 100
-    assert list(generated_df.columns) == ["input_col", "output_col"]
+    assert list(generated_df.columns) == ["input_col", "explain_col", "output_col"]
 
 
 def test_generate_dataset_agent_switch():
     """Test if dataset generation can use a user-set API agent."""
     my_agent = MockAPIAgent(
-        default_content='{"input": "This is input.", "output": "This is an output."}'
+        default_content='{"input": "This is input.", "explanation": "This is an explanation", "output": "This is an output."}'  # noqa E501
     )
     with temp_setattr(api_tools, "default_api_agent", my_agent):
         prompt_spec = MockPromptSpec(TaskType.CLASSIFICATION)
